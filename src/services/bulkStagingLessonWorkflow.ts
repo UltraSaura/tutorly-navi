@@ -22,7 +22,21 @@ export type BulkStagingProgress = {
   totalLevels: number;
   providerCalls: number;
   status: BulkStagingStatus;
+  validation?: {
+    canonicalValid?: boolean;
+    pedagogicalValid?: boolean;
+    prerequisiteValid?: boolean;
+    geometryValid?: boolean;
+    interactionValid?: boolean;
+    diagnostics?: string[];
+  };
+  requestId?: string;
+  promptVersion?: string;
+  build?: string;
+  tokenUsage?: unknown;
 };
+
+export type BulkStagingLevelResult = NonNullable<StagingGeneration['levelResults']>[number];
 
 export type BulkStagingFailure = {
   topicId: string;
@@ -52,6 +66,7 @@ export type BulkStagingResult = {
   promptVersion?: string;
   providerCalls?: number;
   validation?: ReturnType<typeof validateLessonVersion>;
+  levelResults?: BulkStagingLevelResult[];
   failure?: BulkStagingFailure;
 };
 
@@ -97,7 +112,18 @@ function failedLevel(error: unknown): number | undefined {
 }
 
 function dryRunGeneration(topicId: string, content: unknown): StagingGeneration {
-  return { success: true, lesson_content: content, topic_id: topicId, providerCalls: 0, canonicalValid: true, pedagogicalValid: true, geometryValid: true, progress: [] } as StagingGeneration;
+  const progress = [1, 2, 3, 4].map((level) => ({
+    level,
+    status: 'complete' as const,
+    providerCalls: 0,
+    tokenUsage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    validation: { canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, geometryValid: true, interactionValid: true, diagnostics: [] },
+    diagnostics: [],
+    requestId: 'provider-free-dry-run',
+    promptVersion: 'provider-free-dry-run',
+    build: 'provider-free-dry-run',
+  }));
+  return { success: true, lesson_content: content, topic_id: topicId, providerCalls: 0, canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, geometryValid: true, interactionValid: true, progress, levelResults: progress, requestId: 'provider-free-dry-run', promptVersion: 'provider-free-dry-run', build: 'provider-free-dry-run' } as StagingGeneration;
 }
 
 export async function runBulkStagingGeneration(
@@ -128,15 +154,16 @@ export async function runBulkStagingGeneration(
       if (!dependencies.dryRun && providerCalls !== STAGING_LEVEL_COUNT) throw new Error(`staging_provider_call_count_invalid: expected ${STAGING_LEVEL_COUNT}, received ${providerCalls}`);
       assertReturnedTopicMatches(topicId, generated.topic_id);
       for (let level = 1; level <= STAGING_LEVEL_COUNT; level += 1) {
-        onProgress?.({ ...base, level, providerCalls, status: 'validating' });
+        const levelMetadata = generated.progress?.find((entry) => entry.level === level);
+        onProgress?.({ ...base, level, providerCalls, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
       }
       const validation = validate(generated.lesson_content);
-      if (!validation.canonicalValid || !validation.pedagogicalValid || !validation.geometryValid) {
+      if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) {
         throw new Error(JSON.stringify({ code: 'staging_validation_failed', validation }));
       }
       const version = await save(topicId, generated.lesson_content, generated.topic_id);
-      onProgress?.({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, status: 'saved' });
-      results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation, build: generated.build, promptVersion: generated.promptVersion });
+      onProgress?.({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, status: 'saved', validation: { canonicalValid: validation.canonicalValid, pedagogicalValid: validation.pedagogicalValid, prerequisiteValid: validation.prerequisiteValid, geometryValid: validation.geometryValid, interactionValid: validation.interactionValid }, requestId: generated.requestId, promptVersion: generated.promptVersion, build: generated.build });
+      results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation, levelResults: generated.levelResults ?? generated.progress, build: generated.build, promptVersion: generated.promptVersion });
     } catch (error) {
       const details = getGenerationErrorDetails(error);
       providerCalls = Number(details.providerCalls ?? providerCalls) || providerCalls;
@@ -162,8 +189,9 @@ export async function runBulkStagingGeneration(
         build: details.build,
         promptVersion: details.promptVersion,
       };
+      const failedLevelResults = Array.isArray(details.progress) ? details.progress as BulkStagingLevelResult[] : undefined;
       onProgress?.({ ...base, level: failure.failedLevel ?? 1, providerCalls, status: 'failed' });
-      results.push({ topicId, topicTitle: topic.name, status: 'failed', failure });
+      results.push({ topicId, topicTitle: topic.name, status: 'failed', failure, levelResults: failedLevelResults });
     }
   }
   return results;

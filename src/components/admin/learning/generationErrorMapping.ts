@@ -23,6 +23,8 @@ export type GenerationErrorDetails = {
   stage?: string;
   build?: string;
   promptVersion?: string;
+  progress?: unknown[];
+  validation?: unknown;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -61,6 +63,8 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       stage: error.stage ?? error.failureStage,
       build: error.build,
       promptVersion: error.promptVersion,
+      progress: error.progress,
+      validation: error.validation,
     }, fallback);
     return details;
   }
@@ -94,6 +98,8 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     stage: stringValue(nested.stage) ?? stringValue(root.stage) ?? stringValue(nested.failureStage) ?? stringValue(root.failureStage),
     build: stringValue(nested.build) ?? stringValue(root.build),
     promptVersion: stringValue(nested.promptVersion) ?? stringValue(root.promptVersion),
+    progress: Array.isArray(nested.progress) ? nested.progress : Array.isArray(root.progress) ? root.progress : undefined,
+    validation: nested.validation ?? root.validation,
   };
   return details;
 }

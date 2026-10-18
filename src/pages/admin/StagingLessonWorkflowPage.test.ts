@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
 import { runBulkStagingGeneration } from '@/services/bulkStagingLessonWorkflow';
 import { playerLesson, previewVisualKinds, providerFreeFourLevelLesson } from './StagingLessonWorkflowPage';
 
 describe('independent staging lesson-version workflow', () => {
+  it('keeps destructive legacy controls isolated and clearly labelled', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/BulkLessonGenerator.tsx'), 'utf8');
+    expect(source).toContain('Afficher les contrôles legacy');
+    expect(source).toContain('Générateur legacy (modifie topics.lesson_content)');
+    expect(source).toContain('Le bouton staging ci-dessus n’utilise jamais cette persistance.');
+  });
+
   it('adapts every stored level for the shared student player and keeps visuals', () => {
     const level = storedGeometryVisualFixture.levels[3];
     const player = playerLesson(level);
@@ -19,6 +28,9 @@ describe('independent staging lesson-version workflow', () => {
     expect(one[0]).toMatchObject({ status: 'saved', providerCalls: 0 });
     expect(many).toHaveLength(2);
     expect(many.every((result) => result.status === 'saved')).toBe(true);
+    expect(one[0].providerCalls).toBe(0);
+    expect(one[0].levelResults).toHaveLength(4);
+    expect(JSON.stringify(one[0])).not.toContain('[object Object]');
   });
 
   it('continues after a failed topic and preserves per-topic diagnostics', async () => {

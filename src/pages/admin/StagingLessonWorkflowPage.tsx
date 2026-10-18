@@ -47,6 +47,18 @@ function diagnostics(result: BulkStagingResult): string {
   return `${failure?.failureStage ?? 'unknown'} · ${failure?.technicalDiagnostic ?? 'No diagnostic'} · providerCalls=${failure?.providerCalls ?? 0}${failure?.requestId ? ` · requestId=${failure.requestId}` : ''}${failure?.build ? ` · build=${failure.build}` : ''}${failure?.promptVersion ? ` · promptVersion=${failure.promptVersion}` : ''}`;
 }
 
+function validationSummary(result: BulkStagingResult): string {
+  const validation = result.validation;
+  if (!validation) return 'Validation metadata unavailable';
+  return [
+    `canonical=${validation.canonicalValid}`,
+    `pedagogical=${validation.pedagogicalValid}`,
+    `prerequisite=${validation.prerequisiteValid ?? validation.canonicalValid}`,
+    `geometry=${validation.geometryValid}`,
+    `interaction=${validation.interactionValid ?? validation.canonicalValid}`,
+  ].join(' · ');
+}
+
 export function StagingLessonWorkflowPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -100,13 +112,13 @@ export function StagingLessonWorkflowPage() {
     <Card><CardHeader><CardTitle>1. Choose explicit topic UUIDs</CardTitle></CardHeader><CardContent className="space-y-3">
       <div className="flex gap-2"><Button variant={mode === 'single' ? 'default' : 'outline'} onClick={() => setMode('single')}>Single topic</Button><Button variant={mode === 'bulk' ? 'default' : 'outline'} onClick={() => setMode('bulk')}>Bulk topics</Button></div>
       {loading ? <p>Loading topics…</p> : <div className="grid gap-2 md:grid-cols-2">{topics.map((topic) => <label key={topic.id} className="flex items-start gap-3 rounded border p-3"><input type="checkbox" checked={selected.has(topic.id)} onChange={() => toggle(topic.id)} /><span><span className="block font-medium">{topic.name}</span><span className="block text-xs text-muted-foreground">{topic.id} · {topic.curriculum_level_code ?? '—'}</span></span></label>)}</div>}
-      <p className="text-xs text-muted-foreground">CM2 staging topic guard: {CM2_GEOMETRY_TOPIC_ID}. Fixture topics are rejected before any provider call.</p>
+      <p className="text-xs text-muted-foreground">Explicit topic UUIDs are required. The default CM2 topic is {CM2_GEOMETRY_TOPIC_ID}; fixture topics are rejected before any provider call.</p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button onClick={run} disabled={loading || progress?.status === 'generating' || progress?.status === 'validating'}>{dryRun ? 'Run provider-free dry-run' : mode === 'single' ? 'Generate one draft' : 'Generate selected drafts'}</Button>
     </CardContent></Card>
     <Card><CardHeader><CardTitle>2. Progress and diagnostics</CardTitle></CardHeader><CardContent className="space-y-3">
       {progress && <div data-testid="staging-progress" className="rounded border p-3 text-sm"><p>Topic {progress.topicIndex} of {progress.totalTopics}</p><p>Level {progress.level} of {progress.totalLevels}</p><p>Provider calls: {progress.providerCalls}</p><p>Status: {progress.status}</p><p className="text-xs text-muted-foreground">{progress.topicId} · {progress.topicTitle}</p></div>}
-      {results.map((result) => <div key={result.topicId} className="rounded border p-3 text-sm"><p className="font-medium">{result.topicTitle} · {result.topicId}</p><p>Status: {result.status}</p><p>{diagnostics(result)}</p>{result.version && <Button size="sm" variant="outline" className="mt-2" onClick={() => navigate(`/admin/staging-lessons/preview/${result.version?.id}`)}>Open draft preview</Button>}</div>)}
+      {results.map((result) => <div key={result.topicId} className="rounded border p-3 text-sm"><p className="font-medium">{result.topicTitle} · {result.topicId}</p><p>Status: {result.status}</p><p>{diagnostics(result)}</p>{result.status === 'saved' && <p className="text-xs text-muted-foreground">{validationSummary(result)}</p>}{result.levelResults && <div className="mt-2 space-y-1 text-xs" data-testid={`level-results-${result.topicId}`}><p className="font-medium">Per-level results</p>{result.levelResults.map((level) => <p key={String(level.level)}>Level {String(level.level)}: {String(level.status)} · calls={String(level.providerCalls)} · canonical={String(level.canonicalValid ?? 'n/a')} · pedagogical={String(level.pedagogicalValid ?? 'n/a')} · prerequisite={String(level.prerequisiteValid ?? 'n/a')} · geometry={String(level.geometryValid ?? 'n/a')} · interaction={String(level.interactionValid ?? 'n/a')}{Array.isArray(level.diagnostics) && level.diagnostics.length > 0 ? ` · ${level.diagnostics.join(' | ')}` : ''}</p>)}</div>}{result.version && <Button size="sm" variant="outline" className="mt-2" onClick={() => navigate(`/admin/staging-lessons/preview/${result.version?.id}`)}>Open draft preview</Button>}</div>)}
       {!progress && results.length === 0 && <p className="text-sm text-muted-foreground">No run started.</p>}
     </CardContent></Card>
   </div>;
@@ -152,7 +164,7 @@ export function StagingLessonDraftPreviewPage() {
   return <div className="space-y-6">
     <PageMeta title={`Draft preview · ${topic.name}`} description="Protected admin preview using the student lesson player" />
     <div className="flex flex-wrap items-center justify-between gap-3"><div><Badge variant="outline">PROTECTED ADMIN DRAFT</Badge><h1 className="mt-2 text-3xl font-bold">{topic.name}</h1><p className="text-xs text-muted-foreground">{row.id} · topic {row.topic_id} · status={row.status}</p></div><Button asChild variant="outline"><Link to="/admin/staging-lessons">Back to staging workflow</Link></Button></div>
-    <Card><CardHeader><CardTitle>Validation and visual inventory</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><p>Canonical: {String(validation.canonicalValid)} · pedagogical: {String(validation.pedagogicalValid)} · geometry: {String(validation.geometryValid)}</p><p>All levels: {levels.length} · visuals: {kinds.length}</p><p data-testid="draft-visual-kinds">{kinds.join(', ')}</p></CardContent></Card>
+    <Card><CardHeader><CardTitle>Validation and visual inventory</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><p>Canonical: {String(validation.canonicalValid)} · pedagogical: {String(validation.pedagogicalValid)} · prerequisite: {String(validation.prerequisiteValid ?? validation.canonicalValid)} · geometry: {String(validation.geometryValid)} · interaction: {String(validation.interactionValid ?? validation.canonicalValid)}</p><p>All levels: {levels.length} · visuals: {kinds.length}</p><p data-testid="draft-visual-kinds">{kinds.join(', ')}</p></CardContent></Card>
     <div className="flex flex-wrap gap-2">{levels.map((level, index) => <Button key={level.id ?? index} size="sm" variant={index === levelIndex ? 'default' : 'outline'} onClick={() => setLevelIndex(index)}>Niveau {level.level_number ?? index + 1}: {level.title}</Button>)}</div>
     <Card><CardHeader><CardTitle>{current.title}</CardTitle></CardHeader><CardContent><div className="min-h-[600px]"><LessonV2Player topicId={row.topic_id} subjectId={topic.curriculum_subject_id} topicName={topic.name} lesson={playerLesson(current)} readOnly /></div></CardContent></Card>
   </div>;

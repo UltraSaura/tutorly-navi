@@ -30,6 +30,30 @@ export type RunnerDependencies = {
 
 export type RunnerResult = Record<string, unknown>;
 
+export type StagingLevelResult = {
+  level: number;
+  status: 'complete' | 'failed';
+  providerCalls: number;
+  tokenUsage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
+  canonicalValid?: boolean;
+  pedagogicalValid?: boolean;
+  prerequisiteValid?: boolean;
+  geometryValid?: boolean;
+  interactionValid?: boolean;
+  diagnostics?: string[];
+  requestId?: string;
+  promptVersion?: string;
+  build?: string;
+};
+
+export type StagingValidationEnvelope = {
+  canonical: boolean;
+  pedagogical: boolean;
+  prerequisite: boolean;
+  geometry: boolean;
+  interaction: boolean;
+};
+
 export type TopicSummary = {
   id: string;
   name: string;
@@ -118,7 +142,11 @@ export function validateGenerationResponse(body: unknown): {
   lessonContent: Record<string, unknown>;
   providerCalls: number;
   progress: Array<Record<string, unknown>>;
-  validation: { canonical: boolean; pedagogical: boolean; geometry: boolean };
+  validation: StagingValidationEnvelope;
+  levelResults: StagingLevelResult[];
+  requestId?: string;
+  promptVersion?: string;
+  build?: string;
 } {
   if (!isRecord(body) || body.success !== true) throw new Error('generation_response_unsuccessful');
   if (body.providerCalls !== LEVEL_COUNT) throw new Error('provider_call_count_mismatch');
@@ -135,11 +163,31 @@ export function validateGenerationResponse(body: unknown): {
   const validation = {
     canonical: body.canonicalValid === true,
     pedagogical: body.pedagogicalValid === true,
+    prerequisite: body.prerequisiteValid !== false && (!isRecord(body.validation) || body.validation.prerequisiteValid !== false),
     geometry: body.geometryValid === true,
+    interaction: body.interactionValid !== false && (!isRecord(body.validation) || body.validation.interactionValid !== false),
   };
-  if (!validation.canonical || !validation.pedagogical || !validation.geometry) throw new Error('generation_validation_failed');
+  const levelResults = progress.map((entry) => ({
+    level: Number(entry.level),
+    status: entry.status as 'complete',
+    providerCalls: Number(entry.providerCalls),
+    tokenUsage: isRecord(entry.tokenUsage) ? entry.tokenUsage as StagingLevelResult['tokenUsage'] : undefined,
+    canonicalValid: isRecord(entry.validation) ? entry.validation.canonicalValid === true : undefined,
+    pedagogicalValid: isRecord(entry.validation) ? entry.validation.pedagogicalValid === true : undefined,
+    prerequisiteValid: isRecord(entry.validation) ? entry.validation.prerequisiteValid === true : undefined,
+    geometryValid: isRecord(entry.validation) ? entry.validation.geometryValid === true : undefined,
+    interactionValid: isRecord(entry.validation) ? entry.validation.interactionValid === true : undefined,
+    diagnostics: Array.isArray(entry.diagnostics) ? entry.diagnostics.filter((item): item is string => typeof item === 'string') : [],
+    requestId: typeof entry.requestId === 'string' ? entry.requestId : undefined,
+    promptVersion: typeof entry.promptVersion === 'string' ? entry.promptVersion : undefined,
+    build: typeof entry.build === 'string' ? entry.build : undefined,
+  }));
+  if (levelResults.some((level) => [level.canonicalValid, level.pedagogicalValid, level.prerequisiteValid, level.geometryValid, level.interactionValid].some((value) => value === false))) {
+    throw new Error('generation_validation_failed');
+  }
+  if (!validation.canonical || !validation.pedagogical || !validation.prerequisite || !validation.geometry || !validation.interaction) throw new Error('generation_validation_failed');
   if (!isRecord(body.lesson_content)) throw new Error('generation_lesson_content_missing');
-  return { lessonContent: body.lesson_content, providerCalls: body.providerCalls, progress, validation };
+  return { lessonContent: body.lesson_content, providerCalls: body.providerCalls, progress, validation, levelResults, requestId: typeof body.requestId === 'string' ? body.requestId : undefined, promptVersion: typeof body.promptVersion === 'string' ? body.promptVersion : undefined, build: typeof body.build === 'string' ? body.build : undefined };
 }
 
 function responseRequestId(response: SafeResponse): string {
@@ -154,7 +202,7 @@ function responseErrorFields(body: unknown): Record<string, unknown> {
   if (!isRecord(body) || !isRecord(body.error)) return {};
   const error = body.error;
   const result: Record<string, unknown> = {};
-  for (const key of ['code', 'message', 'technicalDetail', 'level', 'stage', 'providerCalls', 'requestId']) {
+  for (const key of ['code', 'message', 'technicalDetail', 'level', 'stage', 'providerCalls', 'requestId', 'promptVersion', 'build']) {
     if (typeof error[key] === 'string' || typeof error[key] === 'number') result[key] = error[key];
   }
   return result;
@@ -163,7 +211,7 @@ function responseErrorFields(body: unknown): Record<string, unknown> {
 function safeErrorResponseBody(body: unknown): Record<string, unknown> {
   if (!isRecord(body)) return {};
   const result: Record<string, unknown> = {};
-  for (const key of ['success', 'ok', 'progress', 'paidRepairSkipped']) {
+  for (const key of ['success', 'ok', 'progress', 'validation', 'promptVersion', 'build', 'paidRepairSkipped']) {
     if (body[key] !== undefined) result[key] = body[key];
   }
   const error = responseErrorFields(body);
@@ -212,8 +260,11 @@ export async function executeStagingDraft(deps: RunnerDependencies, explicitTopi
     ok: true,
     requestId: responseRequestId(response),
     providerCalls: generated.providerCalls,
-    progress: generated.progress.map((entry) => ({ level: entry.level, status: entry.status, tokenUsage: entry.tokenUsage })),
+    progress: generated.progress.map((entry) => ({ level: entry.level, status: entry.status, providerCalls: entry.providerCalls, tokenUsage: entry.tokenUsage, validation: entry.validation, diagnostics: entry.diagnostics, requestId: entry.requestId, promptVersion: entry.promptVersion, build: entry.build })),
+    levelResults: generated.levelResults,
     validation: generated.validation,
+    promptVersion: generated.promptVersion,
+    build: generated.build,
     draftVersionId,
     visualKinds: extractVisualKinds(generated.lessonContent),
     topicLessonContentUnchanged: true,

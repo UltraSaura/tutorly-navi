@@ -26,9 +26,11 @@ import {
   classifyGenerationFailure,
   stagingTokenUsage,
   stagingValidationFailure,
+  summarizeStagingValidation,
   validateStagingLevel,
   type StagingLevelMetadata,
   type StagingLevelProgress,
+  type StagingDraftResponse,
 } from './staging-level-workflow.ts';
 
 const configuredOrigins = (Deno.env.get('STAGING_FRONTEND_ORIGINS') ?? Deno.env.get('STAGING_FRONTEND_ORIGIN') ?? '')
@@ -211,7 +213,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   if (noPaidMode) {
     const mode = String(requestBody.mode);
     if (mode === 'healthcheck') {
-      return new Response(JSON.stringify({
+      const responseBody = {
         ok: true,
         success: true,
         requestId,
@@ -222,7 +224,8 @@ export async function handleRequest(req: Request): Promise<Response> {
         prerequisiteContract: { type: 'numeric', prompt: 'non-empty string', expected_answer: 'number' },
         providerCalls: 0,
         databaseWrite: false,
-      }), { status: 200, headers: responseHeaders() });
+      };
+      return new Response(JSON.stringify(responseBody), { status: 200, headers: responseHeaders() });
     }
     const fixtureVariant = String(requestBody.fixtureVariant ?? 'fenced_repeated');
     const fixtureTopic = String(requestBody.fixtureTopic ?? 'Fractions');
@@ -794,8 +797,11 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
       for (const levelMetadata of metadata) {
         const levelIndex = levelMetadata.level_number;
+        let levelTokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+        let levelValidation;
         try {
           const result = await callStagingLevelAI(stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, objectives.map((o) => o.text).join('; ')), levelMetadata);
+          levelTokenUsage = result.tokenUsage;
           const normalized = normalizeGeneratedLesson(result.value, topic.name, { preserveProviderSequence: true });
           // Staging keeps provider key_points/content byte-for-byte intact.
           // Semantic duplication is a validation failure, never a cleanup
@@ -803,6 +809,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           const lesson = normalized.lesson;
           const validation = validateStagingLevel(lesson, levelMetadata, topic.name, rawLevel);
           const requiredIssues = requiredGeometryKindsIssues(lesson, levelMetadata.required_geometry_kinds);
+          levelValidation = summarizeStagingValidation(validation, requiredIssues);
           const issues = [...validation.canonicalIssues, ...validation.pedagogicalIssues, ...validation.geometryIssues, ...requiredIssues];
           if (issues.length > 0) {
             const validationError = new Error(stagingValidationFailure(levelIndex, issues, aiProviderCalls).technicalDetail);
@@ -810,7 +817,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             throw validationError;
           }
           validatedLevels.push({ metadata: levelMetadata, lesson });
-          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1, tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION });
+          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1, tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, requestId, validation: levelValidation, diagnostics: [] });
           console.info('[generate-lesson-content] staging level complete', { build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCalls: aiProviderCalls, tokenUsage: result.tokenUsage });
         } catch (error) {
           const structuredFailure = error && typeof error === 'object' && 'stagingFailure' in error
@@ -824,6 +831,17 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             : contractFailure
               ? { level: contractFailure.level, stage: contractFailure.stage, message: contractFailure.technicalDetail }
             : { level: levelIndex, stage: 'level_generation_or_validation', message: error instanceof Error ? error.message : String(error) };
+          stagingProgress.push({
+            level: levelIndex,
+            status: 'failed',
+            providerCalls: 1,
+            tokenUsage: levelTokenUsage,
+            build: GENERATOR_BUILD,
+            promptVersion: STAGING_PROMPT_VERSION,
+            requestId,
+            validation: levelValidation,
+            diagnostics: [stagingFailure.message ?? (error instanceof Error ? error.message : String(error))],
+          });
           throw error;
         }
       }
@@ -832,7 +850,20 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       const finalGeometryIssues = requiredGeometryIssues(candidate);
       if (!finalCanonical.success) throw new Error('staging_assembly_canonical_validation_failed: ' + finalCanonical.issues.slice(0, 8).map((issue) => issue.path + ': ' + issue.message).join('; '));
       if (finalGeometryIssues.length > 0) throw new Error('staging_assembly_geometry_validation_failed: ' + finalGeometryIssues.map((issue) => issue.message).join('; '));
-      return new Response(JSON.stringify({
+      const aggregateValidation = {
+        canonicalValid: true,
+        pedagogicalValid: true,
+        prerequisiteValid: true,
+        geometryValid: finalGeometryIssues.length === 0,
+        interactionValid: true,
+        canonicalIssues: [],
+        pedagogicalIssues: [],
+        prerequisiteIssues: [],
+        geometryIssues: finalGeometryIssues,
+        interactionIssues: [],
+        diagnostics: finalGeometryIssues.map((issue) => `${issue.path}: ${issue.message}`),
+      };
+      const responseBody: StagingDraftResponse = {
         success: true,
         ok: true,
         requestId,
@@ -842,11 +873,16 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         canonicalValid: true,
         pedagogicalValid: true,
         geometryValid: true,
+        prerequisiteValid: true,
+        interactionValid: true,
+        validation: aggregateValidation,
         providerCalls: aiProviderCalls,
         build: GENERATOR_BUILD,
         promptVersion: STAGING_PROMPT_VERSION,
         progress: stagingProgress,
-      }), { status: 200, headers: responseHeaders() });
+        levelResults: stagingProgress,
+      };
+      return new Response(JSON.stringify(responseBody), { status: 200, headers: responseHeaders() });
     }
 
     // Staging draft mode is deliberately a single provider request. It

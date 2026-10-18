@@ -15,17 +15,54 @@ export type StagingLevelMetadata = {
 
 export type StagingLevelProgress = {
   level: number;
-  status: 'complete';
+  status: 'complete' | 'failed';
   providerCalls: number;
   tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number };
   build?: string;
   promptVersion?: string;
+  requestId?: string;
+  validation?: StagingValidationSummary;
+  diagnostics?: string[];
+};
+
+export type StagingDraftResponse = {
+  success: true;
+  ok: true;
+  requestId: string;
+  mode: 'staging_draft';
+  topic_id: string;
+  lesson_content: Record<string, unknown>;
+  canonicalValid: boolean;
+  pedagogicalValid: boolean;
+  prerequisiteValid: boolean;
+  geometryValid: boolean;
+  interactionValid: boolean;
+  validation: StagingValidationSummary;
+  providerCalls: number;
+  build: string;
+  promptVersion: string;
+  progress: StagingLevelProgress[];
+  levelResults?: StagingLevelProgress[];
 };
 
 export type StagingValidation = {
   canonicalIssues: Array<{ path: string; message: string }>;
   pedagogicalIssues: Array<{ path: string; message: string }>;
   geometryIssues: Array<{ path: string; message: string }>;
+};
+
+export type StagingValidationSummary = {
+  canonicalValid: boolean;
+  pedagogicalValid: boolean;
+  prerequisiteValid: boolean;
+  geometryValid: boolean;
+  interactionValid: boolean;
+  canonicalIssues: Array<{ path: string; message: string }>;
+  pedagogicalIssues: Array<{ path: string; message: string }>;
+  prerequisiteIssues: Array<{ path: string; message: string }>;
+  geometryIssues: Array<{ path: string; message: string }>;
+  interactionIssues: Array<{ path: string; message: string }>;
+  diagnostics: string[];
 };
 
 export const STAGING_SEQUENCE_BLOCK_TYPES = ['concept', 'concept', 'guided_example', 'student_try', 'mastery_check'] as const;
@@ -370,6 +407,38 @@ export function validateStagingLevel(lesson: Record<string, unknown>, metadata: 
     canonicalIssues: [...(canonical.success ? [] : canonical.issues.map((issue) => ({ path: localPath(issue.path), message: issue.message }))), ...stagingSequenceContractIssues(lesson, metadata)],
     pedagogicalIssues: pedagogicalIssues(lesson, grade, topicName),
     geometryIssues: visualGeometryIssues(lesson),
+  };
+}
+
+function isPrerequisiteIssue(issue: { path: string; message: string }): boolean {
+  return /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message);
+}
+
+function isInteractionIssue(issue: { path: string; message: string }): boolean {
+  return /answer_type|correct_answer|questions|interaction|mastery/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message);
+}
+
+export function summarizeStagingValidation(validation: StagingValidation, extraGeometryIssues: Array<{ path: string; message: string }> = []): StagingValidationSummary {
+  const geometryIssues = [...validation.geometryIssues, ...extraGeometryIssues];
+  const prerequisiteIssues = validation.canonicalIssues.filter(isPrerequisiteIssue);
+  const interactionIssues = validation.canonicalIssues.filter(isInteractionIssue);
+  const diagnostics = [
+    ...validation.canonicalIssues,
+    ...validation.pedagogicalIssues,
+    ...geometryIssues,
+  ].map((issue) => `${issue.path}: ${issue.message}`);
+  return {
+    canonicalValid: validation.canonicalIssues.length === 0,
+    pedagogicalValid: validation.pedagogicalIssues.length === 0,
+    prerequisiteValid: prerequisiteIssues.length === 0,
+    geometryValid: geometryIssues.length === 0,
+    interactionValid: interactionIssues.length === 0,
+    canonicalIssues: validation.canonicalIssues,
+    pedagogicalIssues: validation.pedagogicalIssues,
+    prerequisiteIssues,
+    geometryIssues,
+    interactionIssues,
+    diagnostics,
   };
 }
 

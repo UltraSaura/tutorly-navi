@@ -81,6 +81,7 @@ export function BulkLessonGenerator() {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [dryRun, setDryRun] = useState(false);
+  const [showLegacyControls, setShowLegacyControls] = useState(false);
 
   useEffect(() => {
     if (!isRunning || runStartedAt === null) return;
@@ -470,7 +471,7 @@ export function BulkLessonGenerator() {
                           <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
                             {ui("Leçon ✓")}
                           </Badge>
-                          <button
+                          {showLegacyControls && <button
                             onClick={(e) => handleDeleteOne(topic.id, e)}
                             disabled={deletingIds.has(topic.id)}
                             title={ui("Supprimer la leçon")}
@@ -479,7 +480,7 @@ export function BulkLessonGenerator() {
                             {deletingIds.has(topic.id)
                               ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               : <Trash2 className="h-3.5 w-3.5" />}
-                          </button>
+                          </button>}
                         </>
                       ) : (
                         <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
@@ -497,7 +498,7 @@ export function BulkLessonGenerator() {
                 {selected.length} {ui("sélectionné")}{selected.length !== 1 ? 's' : ''}
               </span>
               <div className="flex gap-2">
-                {selected.some(id => topics.find(t => t.id === id)?.lesson_content) && (
+                {showLegacyControls && selected.some(id => topics.find(t => t.id === id)?.lesson_content) && (
                   <Button
                     variant="outline"
                     onClick={handleDeleteSelected}
@@ -512,11 +513,15 @@ export function BulkLessonGenerator() {
                   <Wand2 className="h-4 w-4" />
                   {`${dryRun ? 'Tester' : 'Générer'} ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''} (staging)`}
                 </Button>
-                <Button variant="ghost" onClick={handleLegacyGenerate} disabled={!selected.length || isRunning} title="Ancien générateur; utilise l'ancien contrat et peut modifier le contenu public.">
-                  Générateur legacy (ancien)
+                <Button variant="ghost" onClick={() => setShowLegacyControls((value) => !value)} aria-expanded={showLegacyControls}>
+                  {showLegacyControls ? 'Masquer les contrôles legacy' : 'Afficher les contrôles legacy'}
                 </Button>
+                {showLegacyControls && <Button variant="ghost" onClick={handleLegacyGenerate} disabled={!selected.length || isRunning} title="Ancien générateur; utilise l'ancien contrat et peut modifier le contenu public.">
+                  Générateur legacy (modifie topics.lesson_content)
+                </Button>}
               </div>
             </div>
+            {showLegacyControls && <p className="text-xs text-amber-700">Legacy uniquement : ces contrôles peuvent modifier ou supprimer topics.lesson_content. Le bouton staging ci-dessus n’utilise jamais cette persistance.</p>}
           </>
         )}
       </DialogContent>

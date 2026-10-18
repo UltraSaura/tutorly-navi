@@ -29,8 +29,13 @@ const successfulBody = {
   canonicalValid: true,
   pedagogicalValid: true,
   geometryValid: true,
+  prerequisiteValid: true,
+  interactionValid: true,
+  promptVersion: 'staging-v21-prerequisite-contract-v2',
+  build: 'practice-v21-compiler-1',
+  validation: { canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, geometryValid: true, interactionValid: true },
   lesson_content: lessonContent,
-  progress: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1, tokenUsage: { promptTokens: 100, completionTokens: 500, totalTokens: 600 } })),
+  progress: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1, tokenUsage: { promptTokens: 100, completionTokens: 500, totalTokens: 600 }, validation: { canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, geometryValid: true, interactionValid: true, diagnostics: [] }, requestId: 'request-1', promptVersion: 'staging-v21-prerequisite-contract-v2', build: 'practice-v21-compiler-1', diagnostics: [] })),
 };
 
 function deps(overrides: Partial<Parameters<typeof executeStagingDraft>[0]> = {}) {
@@ -87,7 +92,9 @@ describe('staging terminal runner', () => {
   it('accepts exactly four complete levels and inserts one draft', async () => {
     const d = deps();
     const result = await executeStagingDraft(d);
-    expect(result).toMatchObject({ ok: true, providerCalls: 4, draftVersionId: 'version-1', topicLessonContentUnchanged: true });
+    expect(result).toMatchObject({ ok: true, providerCalls: 4, draftVersionId: 'version-1', topicLessonContentUnchanged: true, requestId: 'request-1', promptVersion: 'staging-v21-prerequisite-contract-v2', build: 'practice-v21-compiler-1', validation: { prerequisite: true, interaction: true } });
+    expect(result.levelResults).toHaveLength(4);
+    expect(result.levelResults?.[0]).toMatchObject({ level: 1, providerCalls: 1, prerequisiteValid: true, interactionValid: true, requestId: 'request-1' });
     expect(d.invoke).toHaveBeenCalledTimes(1);
     expect(d.insertDraft).toHaveBeenCalledTimes(1);
     expect(extractVisualKinds(lessonContent)).toEqual(['angle', 'circle', 'rectangle', 'symmetry', 'triangle']);
@@ -126,6 +133,13 @@ describe('staging terminal runner', () => {
     expect(output).not.toContain('secret-token');
     expect(output).not.toContain('password');
     expect(output).not.toContain('anon-key');
+  });
+
+  it('rejects an explicitly failed per-level validation even when the aggregate is true', () => {
+    expect(() => validateGenerationResponse({
+      ...successfulBody,
+      progress: successfulBody.progress.map((entry, index) => index === 1 ? { ...entry, validation: { ...entry.validation, prerequisiteValid: false } } : entry),
+    })).toThrow('generation_validation_failed');
   });
 
   it('refuses the fixture topic 185f20b5 for CM2 generation before any provider call', async () => {

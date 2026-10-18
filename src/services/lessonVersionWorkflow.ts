@@ -23,6 +23,8 @@ export type ValidationIssue = { path: string; message: string };
 export type LessonValidation = {
   canonicalValid: boolean;
   pedagogicalValid: boolean;
+  prerequisiteValid?: boolean;
+  interactionValid?: boolean;
   geometryValid: boolean;
   canonicalIssues: ValidationIssue[];
   pedagogicalIssues: ValidationIssue[];
@@ -125,9 +127,13 @@ export function validateLessonVersion(lesson: unknown): LessonValidation {
   const canonicalIssues = !('issues' in canonical) ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
   const pedagogicalIssues = validatePedagogicalLesson(lesson);
   const geometryIssues = validateDrawableGeometry(lesson);
+  const prerequisiteIssues = canonicalIssues.filter((issue) => /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message));
+  const interactionIssues = canonicalIssues.filter((issue) => /sequence|interaction|answer_type|correct_answer|questions/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message));
   return {
     canonicalValid: canonical.success,
     pedagogicalValid: pedagogicalIssues.length === 0,
+    prerequisiteValid: prerequisiteIssues.length === 0,
+    interactionValid: interactionIssues.length === 0,
     geometryValid: geometryIssues.length === 0,
     canonicalIssues,
     pedagogicalIssues,
@@ -227,7 +233,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
     });
   }
   assertReturnedTopicMatches(requested, data.topic_id);
-  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; geometryValid: true; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown; build?: string; promptVersion?: string }> };
+  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 
 export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = CM2_GEOMETRY_TOPIC_ID): Promise<LessonVersion> {
@@ -235,7 +241,7 @@ export async function saveDraftVersion(topicId: string, lessonContent: unknown, 
   else assertGenerationTopic(topicId, expectedTopicId);
   assertReturnedTopicMatches(topicId, returnedTopicId);
   const validation = validateLessonVersion(lessonContent);
-  if (!validation.canonicalValid || !validation.pedagogicalValid || !validation.geometryValid) {
+  if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) {
     throw Object.assign(new Error('Draft validation failed.'), { code: 'draft_validation_failed', stage: 'validation_failure', technicalDetail: JSON.stringify(validation) });
   }
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -247,7 +253,7 @@ export async function saveDraftVersion(topicId: string, lessonContent: unknown, 
 
 export async function validateSavedDraft(version: LessonVersion): Promise<LessonVersion> {
   const validation = validateLessonVersion(version.lesson_content);
-  if (!validation.canonicalValid || !validation.pedagogicalValid || !validation.geometryValid) throw new Error(JSON.stringify({ code: 'draft_validation_failed', validation }));
+  if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) throw new Error(JSON.stringify({ code: 'draft_validation_failed', validation }));
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw new Error('You must be signed in as an admin to validate a lesson draft.');
   const { data, error } = await supabase.from('topic_lesson_versions').update({ status: 'validated', validated_at: new Date().toISOString(), validated_by: user.id, updated_at: new Date().toISOString() }).eq('id', version.id).eq('status', 'draft').select('*').single();

@@ -12,7 +12,7 @@ const generated = (topicId: string, providerCalls = 4) => ({
   geometryValid: true as const,
 });
 
-const valid = () => ({ canonicalValid: true, pedagogicalValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
+const valid = () => ({ canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, interactionValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
 
 describe('bulk staging lesson workflow', () => {
   it('saves one topic only after a complete four-call result', async () => {
@@ -73,6 +73,15 @@ describe('bulk staging lesson workflow', () => {
     expect(results[0].failure?.technicalDiagnostic).not.toContain('[object Object]');
   });
 
+  it('keeps failed per-level metadata from the Edge response for the UI', async () => {
+    const progress = [{ level: 2, status: 'failed', providerCalls: 1, requestId: 'req-failed', promptVersion: 'staging-v21-prerequisite-contract-v2', build: 'practice-v21-compiler-1', diagnostics: ['prerequisites[0].expected_answer: missing'], validation: { canonicalValid: false, pedagogicalValid: true, prerequisiteValid: false, geometryValid: true, interactionValid: true } }];
+    const results = await runBulkStagingGeneration([{ id: 'bad', name: 'Bad' }], undefined, {
+      generate: async () => { throw { code: 'staging_level_validation_failed', message: 'Level validation failed', stage: 'level_validation', providerCalls: 1, level: 2, progress }; },
+    });
+    expect(results[0].levelResults).toEqual(progress);
+    expect(JSON.stringify(results[0])).not.toContain('[object Object]');
+  });
+
   it.each([
     ['topic lookup failure', { code: 'topic_lookup_failed', message: 'Topic could not be loaded.', stage: 'pre_generation' }, 'pre_generation'],
     ['duplicate-version refusal', { code: 'duplicate_staging_version_refused', message: 'A draft already exists.', stage: 'pre_generation' }, 'pre_generation'],
@@ -123,10 +132,11 @@ describe('bulk staging lesson workflow', () => {
   });
 
   it('uses one shared four-level generation result for a valid Aires-like topic', async () => {
-    const generate = vi.fn(async (id: string) => ({ ...generated(id), providerCalls: 4, build: 'practice-v21-compiler-1', promptVersion: 'staging-v21-prerequisite-contract-v2' }));
+    const levelResults = [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: 1, canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, geometryValid: true, interactionValid: true, requestId: `req-${level}`, promptVersion: 'staging-v21-prerequisite-contract-v2', build: 'practice-v21-compiler-1', diagnostics: [], tokenUsage: { totalTokens: 30 } }));
+    const generate = vi.fn(async (id: string) => ({ ...generated(id), providerCalls: 4, build: 'practice-v21-compiler-1', promptVersion: 'staging-v21-prerequisite-contract-v2', requestId: 'req-topic', levelResults, progress: levelResults }));
     const save = vi.fn(async (id: string) => ({ id } as any));
     const results = await runBulkStagingGeneration([{ id: 'aires-topic', name: 'Aires' }], undefined, { generate, save, validate: valid });
-    expect(results[0]).toMatchObject({ status: 'saved', providerCalls: 4, build: 'practice-v21-compiler-1', promptVersion: 'staging-v21-prerequisite-contract-v2' });
+    expect(results[0]).toMatchObject({ status: 'saved', providerCalls: 4, build: 'practice-v21-compiler-1', promptVersion: 'staging-v21-prerequisite-contract-v2', requestId: 'req-topic', levelResults });
     expect(generate).toHaveBeenCalledTimes(1);
     expect(save).toHaveBeenCalledTimes(1);
   });

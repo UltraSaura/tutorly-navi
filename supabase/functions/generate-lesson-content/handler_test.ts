@@ -74,6 +74,13 @@ test('four valid levels return 200 with providerCalls=4 and no database write', 
   assertEquals(body.providerCalls, 4);
   assertEquals(calls.provider, 4);
   assertEquals(body.progress.length, 4);
+  assertEquals(body.validation.prerequisiteValid, true);
+  assertEquals(body.validation.interactionValid, true);
+  assertEquals(body.progress[0].validation.prerequisiteValid, true);
+  assertEquals(body.progress[0].validation.interactionValid, true);
+  assertEquals(body.progress[0].requestId, 'req-1');
+  assertEquals(body.progress[0].promptVersion, 'staging-v21-prerequisite-contract-v2');
+  assert(typeof body.progress[0].build === 'string');
   assertEquals(body.lesson_content.levels.length, 4);
   assertEquals(calls.dbWrites, []);
 });
