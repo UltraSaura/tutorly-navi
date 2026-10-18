@@ -11,6 +11,26 @@ import type { Question } from '@/types/quiz-bank';
 
 type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void; readOnly?: boolean };
 
+export function lessonPlayerSessionKey(topicId: string, lesson: LessonV2): string {
+  return JSON.stringify({
+    topicId,
+    lessonGoal: lesson.lesson_goal,
+    prerequisites: lesson.prerequisites.map((item) => {
+      const prerequisite = item as unknown as Record<string, unknown>;
+      return {
+        id: String(prerequisite.id),
+        prompt: String(prerequisite.prompt ?? prerequisite.check_question ?? ''),
+        type: String(prerequisite.type ?? prerequisite.answer_type ?? ''),
+      };
+    }),
+    sequence: lesson.sequence.map((block) => ({
+      id: String(block.id),
+      type: block.type,
+      title: 'title' in block ? String(block.title) : '',
+    })),
+  });
+}
+
 function sameAnswer(expected: unknown, actual: string): boolean {
   if (typeof expected === 'number') return Number(actual) === expected;
   if (Array.isArray(expected)) return actual.trim() === expected.join(',');
@@ -148,7 +168,7 @@ function ConceptPresentation({ block }: { block: any }) {
   );
 }
 
-export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMasteryResult, onSequencePosition, readOnly = false }: Props) {
+function LessonV2PlayerSession({ topicId, subjectId, topicName, lesson, onMasteryResult, onSequencePosition, readOnly = false }: Props) {
   const { user } = useLearner();
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -399,4 +419,8 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
       </div>
     </div>
   );
+}
+
+export function LessonV2Player(props: Props) {
+  return <LessonV2PlayerSession key={lessonPlayerSessionKey(props.topicId, props.lesson)} {...props} />;
 }

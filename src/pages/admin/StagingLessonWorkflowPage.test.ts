@@ -14,7 +14,7 @@ describe('independent staging lesson-version workflow', () => {
   });
 
   it('adapts every stored level for the shared student player and keeps visuals', () => {
-    const level = storedGeometryVisualFixture.levels[3];
+    const level = storedGeometryVisualFixture.levels[3] as Parameters<typeof playerLesson>[0];
     const player = playerLesson(level);
     expect(player.version).toBe('2.0');
     expect(player.sequence.length).toBeGreaterThan(0);
