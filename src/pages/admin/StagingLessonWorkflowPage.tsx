@@ -10,7 +10,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
 import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 import { discoverLessonVisuals } from '@/components/admin/learning/GeneratedLessonsPage';
-import { assertExplicitStagingTopicId, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
+import { assertExplicitStagingTopicId, classifyStagingTopic, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
 import { runBulkStagingGeneration, type BulkStagingProgress, type BulkStagingResult } from '@/services/bulkStagingLessonWorkflow';
 import type { LessonV2, LessonV21 } from '@/types/lesson-generator';
 
@@ -158,7 +158,7 @@ export function StagingLessonDraftPreviewPage() {
   if (!lesson) return <p role="alert">Draft lesson content is not valid JSON.</p>;
   const levels = Array.isArray(lesson.levels) ? lesson.levels : [];
   const current = levels[levelIndex];
-  const validation = validateLessonVersion(row.lesson_content);
+  const validation = validateLessonVersion(row.lesson_content, { topicKind: classifyStagingTopic(topic.name) });
   const kinds = levels.flatMap((level) => previewVisualKinds(level.lesson));
   if (!current) return <p role="alert">Draft has no lesson levels.</p>;
   return <div className="space-y-6">
