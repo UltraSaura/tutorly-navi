@@ -192,7 +192,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   let response: Response | null | undefined;
   try {
     ({ data, error, response } = await withStagingBrowserTimeout(supabase.functions.invoke('generate-lesson-content', {
-      body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false },
+      body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false, rejectionInBody: true },
     })));
   } catch (requestError) {
     const timeout = requestError instanceof Error && requestError.message === 'staging_browser_timeout';
@@ -227,6 +227,21 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       providerCalls: details.providerCalls ?? 0,
       failedLevel: details.level,
       failureStage: details.stage ?? 'pre_generation',
+    });
+  }
+  // Validation rejections arrive as a 200 body (rejectionInBody) so the
+  // preview doesn't show a crash dialog; surface them exactly like a 422.
+  if (data && data.success === false && data.error && Number(data.httpStatus) >= 400) {
+    const details = getGenerationErrorDetails(data, 'The Edge Function returned an error.');
+    const errorMessage = details.technicalDetail ? `${details.message}\n${details.technicalDetail}` : details.message;
+    throw Object.assign(new Error(errorMessage), {
+      ...details,
+      message: errorMessage,
+      httpStatus: Number(data.httpStatus),
+      requestId: details.requestId ?? data.requestId,
+      providerCalls: details.providerCalls ?? 0,
+      failedLevel: details.level,
+      failureStage: details.stage,
     });
   }
   // Staging generation makes one provider request per level (the server
