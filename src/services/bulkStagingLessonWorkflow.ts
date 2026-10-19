@@ -1,10 +1,12 @@
 import {
   assertExplicitStagingTopicId,
   assertReturnedTopicMatches,
+  classifyStagingTopic,
   generateStagingDraft,
   saveDraftVersion,
   validateLessonVersion,
   type LessonVersion,
+  type StagingTopicKind,
 } from './lessonVersionWorkflow';
 import { formatGenerationDiagnostic, getGenerationErrorDetails, type GenerationErrorDetails } from '@/components/admin/learning/generationErrorMapping';
 
@@ -74,8 +76,8 @@ export type StagingGeneration = Awaited<ReturnType<typeof generateStagingDraft>>
 
 export type BulkStagingDependencies = {
   generate?: (topicId: string) => Promise<StagingGeneration>;
-  save?: (topicId: string, content: unknown, returnedTopicId?: unknown) => Promise<LessonVersion>;
-  validate?: (content: unknown) => ReturnType<typeof validateLessonVersion>;
+  save?: (topicId: string, content: unknown, returnedTopicId?: unknown, topicKind?: StagingTopicKind) => Promise<LessonVersion>;
+  validate?: (content: unknown, topicKind?: StagingTopicKind) => ReturnType<typeof validateLessonVersion>;
   dryRun?: boolean;
   dryRunContent?: unknown;
   language?: 'fr' | 'en';
