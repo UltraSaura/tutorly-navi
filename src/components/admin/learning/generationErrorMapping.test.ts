@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatGenerationError, formatGenerationErrorDetails, getGenerationErrorDetails, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
+import { formatAdminGenerationError, formatGenerationError, formatGenerationErrorDetails, getGenerationErrorDetails, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
 
 describe('generation error mapping', () => {
   it('maps structured canonical errors', () => expect(formatGenerationError({ error: { code: 'canonical_validation_failed', message: 'raw' } })).toBe('La leçon générée n’a pas le format attendu.'));
@@ -55,6 +55,29 @@ describe('generation error mapping', () => {
     expect(details).toMatchObject({ httpStatus: 422, code: 'staging_level_validation_failed', requestId: 'req-1', providerCalls: 1, level: 1, stage: 'level_validation' });
     expect(formatGenerationErrorDetails(details)).toContain('Level validation failed.');
     expect(JSON.stringify(details)).not.toContain('[object Object]');
+  });
+
+  it('renders exact time-visual diagnostics with level, category, request ID, and technical detail', () => {
+    const message = formatAdminGenerationError({
+      httpStatus: 422,
+      error: {
+        code: 'staging_level_validation_failed',
+        message: 'A staging level failed validation.',
+        requestId: 'req-clock',
+        providerCalls: 2,
+        level: 2,
+        stage: 'level_validation',
+        validationCategory: 'geometry',
+        technicalDetail: 'sequence[2].visual.data.hour: Clock hour must be an integer from 1 to 12; received 3.5.',
+      },
+    });
+    expect(message).toContain('Validation failed in level 2: the clock visual has an invalid hour or minute.');
+    expect(message).toContain('HTTP 422');
+    expect(message).toContain('code=staging_level_validation_failed');
+    expect(message).toContain('requestId=req-clock');
+    expect(message).toContain('validation=geometry');
+    expect(message).toContain('sequence[2].visual.data.hour');
+    expect(message).not.toContain('[object Object]');
   });
 
   it.each([

@@ -5,6 +5,12 @@ const finite = (value: unknown): value is number => typeof value === 'number' &&
 const point = (value: unknown): value is Obj => obj(value) && finite(value.x) && finite(value.y);
 
 const issue = (path: string, code: string, message: string): GeometryContractIssue => ({ path, code, message });
+const received = (value: unknown): string => {
+  if (value === undefined) return '<missing>';
+  if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value);
+  if (typeof value === 'string') return JSON.stringify(value);
+  try { return JSON.stringify(value); } catch { return '<unserializable>'; }
+};
 const points = (data: Obj, field: string, min: number, path: string, aliases: string[] = []): GeometryContractIssue[] => {
   const key = [field, ...aliases].find((candidate) => Array.isArray(data[candidate]));
   if (!key) return [issue(`${path}.${field}`, 'missing_geometry_data', `Renderable ${field} coordinates are required.`)];
@@ -19,10 +25,14 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
   const d = data;
   switch (kind) {
     case 'clock':
-      return Number.isInteger(d.hour) && Number(d.hour) >= 1 && Number(d.hour) <= 12
-        && Number.isInteger(d.minute) && Number(d.minute) >= 0 && Number(d.minute) <= 59
-        ? []
-        : [issue(basePath, 'missing_geometry_data', 'Clock requires integer hour 1–12 and minute 0–59.')];
+      return [
+        ...(Number.isInteger(d.hour) && Number(d.hour) >= 1 && Number(d.hour) <= 12
+          ? []
+          : [issue(`${basePath}.hour`, 'invalid_clock_hour', `Clock hour must be an integer from 1 to 12; received ${received(d.hour)}.`)]),
+        ...(Number.isInteger(d.minute) && Number(d.minute) >= 0 && Number(d.minute) <= 59
+          ? []
+          : [issue(`${basePath}.minute`, 'invalid_clock_minute', `Clock minute must be an integer from 0 to 59; received ${received(d.minute)}.`)]),
+      ];
     case 'timeline': {
       const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
       const relations = Array.isArray(d.relations) ? d.relations : [];

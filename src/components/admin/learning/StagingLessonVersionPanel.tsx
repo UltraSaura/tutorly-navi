@@ -14,6 +14,7 @@ import {
   assertExplicitStagingTopicId,
   type LessonVersion,
 } from '@/services/lessonVersionWorkflow';
+import { formatAdminGenerationError } from './generationErrorMapping';
 
 type TopicOption = { id: string; name: string; curriculum_level_code: string | null };
 
@@ -45,7 +46,7 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
   const run = async (action: string, fn: () => Promise<void>) => {
     setBusy(action); setError(null);
     try { await fn(); }
-    catch (actionError) { const message = actionError instanceof Error ? actionError.message : String(actionError); setError(message); toast({ title: 'Staging workflow failed', description: message, variant: 'destructive' }); }
+    catch (actionError) { const message = formatAdminGenerationError(actionError); setError(message); toast({ title: 'Staging workflow failed', description: message, variant: 'destructive' }); }
     finally { setBusy(null); }
   };
 

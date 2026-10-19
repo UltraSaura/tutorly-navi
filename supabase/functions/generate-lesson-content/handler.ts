@@ -162,7 +162,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   let requestAllowsPaidRepair = false;
   let aiProviderCalls = 0;
   let stagingProgress: StagingLevelProgress[] = [];
-  let stagingFailure: { level?: number; stage?: string; message?: string } | undefined;
+  let stagingFailure: { level?: number; stage?: string; message?: string; validationCategory?: string } | undefined;
   const requestOrigin = requestOriginOf(req);
   const corsHeaders = corsHeadersFor(requestOrigin, allowedOrigins);
   const responseHeaders = (contentType = true): Record<string, string> => ({
@@ -822,15 +822,15 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           console.info('[generate-lesson-content] staging level complete', { build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCalls: aiProviderCalls, tokenUsage: result.tokenUsage });
         } catch (error) {
           const structuredFailure = error && typeof error === 'object' && 'stagingFailure' in error
-            ? (error as { stagingFailure?: { level?: number; stage?: string; technicalDetail?: string } }).stagingFailure
+            ? (error as { stagingFailure?: { level?: number; stage?: string; technicalDetail?: string; validationCategory?: string } }).stagingFailure
             : undefined;
           const contractFailure = error instanceof StagingLevelContractError
             ? stagingValidationFailure(levelIndex, error.issues, aiProviderCalls)
             : undefined;
           stagingFailure = structuredFailure
-            ? { level: structuredFailure.level, stage: structuredFailure.stage, message: structuredFailure.technicalDetail }
+            ? { level: structuredFailure.level, stage: structuredFailure.stage, message: structuredFailure.technicalDetail, validationCategory: structuredFailure.validationCategory }
             : contractFailure
-              ? { level: contractFailure.level, stage: contractFailure.stage, message: contractFailure.technicalDetail }
+              ? { level: contractFailure.level, stage: contractFailure.stage, message: contractFailure.technicalDetail, validationCategory: contractFailure.validationCategory }
             : { level: levelIndex, stage: 'level_generation_or_validation', message: error instanceof Error ? error.message : String(error) };
           stagingProgress.push({
             level: levelIndex,
@@ -1317,6 +1317,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       providerCalls: aiProviderCalls,
       level: stagingFailure?.level,
       stage: classified.stage ?? stagingFailure?.stage,
+      validationCategory: stagingFailure?.validationCategory,
       requestId,
     };
     return new Response(

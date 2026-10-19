@@ -477,6 +477,7 @@ describe('staging level workflow', () => {
       code: 'staging_level_validation_failed',
       level: 1,
       stage: 'level_validation',
+      validationCategory: 'prerequisite',
       technicalDetail: 'levels[0].lesson.prerequisites[0]: Expected object',
       providerCalls: 1,
     });
@@ -505,6 +506,8 @@ describe('time-topic visual contract (providerCalls=0)', () => {
     expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[1], 'Lire une horloge')).toContain('Visuels obligatoires dans ce niveau: clock, timeline');
     expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[0], 'Convertir des durées')).toContain(JSON.stringify(STAGING_VISUAL_EXAMPLES.unit_conversion));
     expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[1], 'Lire une horloge')).toContain(JSON.stringify(STAGING_VISUAL_EXAMPLES.clock));
+    expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[1], 'Lire une horloge')).toContain('hour doit être un entier JavaScript compris entre 1 et 12');
+    expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[1], 'Lire une horloge')).toContain('minute doit être un entier JavaScript compris entre 0 et 59');
   });
 
   it('accepts complete time visuals through the real geometry and pedagogical validators', () => {

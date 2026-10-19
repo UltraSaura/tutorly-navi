@@ -21,6 +21,7 @@ export type GenerationErrorDetails = {
   providerCalls?: number;
   level?: number;
   stage?: string;
+  validationCategory?: string;
   build?: string;
   promptVersion?: string;
   progress?: unknown[];
@@ -61,6 +62,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       providerCalls: error.providerCalls,
       level: error.level ?? error.failedLevel,
       stage: error.stage ?? error.failureStage,
+      validationCategory: error.validationCategory,
       build: error.build,
       promptVersion: error.promptVersion,
       progress: error.progress,
@@ -96,6 +98,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     providerCalls: finiteNumber(nested.providerCalls) ?? finiteNumber(root.providerCalls),
     level: finiteNumber(nested.level) ?? finiteNumber(root.level),
     stage: stringValue(nested.stage) ?? stringValue(root.stage) ?? stringValue(nested.failureStage) ?? stringValue(root.failureStage),
+    validationCategory: stringValue(nested.validationCategory) ?? stringValue(root.validationCategory),
     build: stringValue(nested.build) ?? stringValue(root.build),
     promptVersion: stringValue(nested.promptVersion) ?? stringValue(root.promptVersion),
     progress: Array.isArray(nested.progress) ? nested.progress : Array.isArray(root.progress) ? root.progress : undefined,
@@ -105,11 +108,30 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
 }
 
 export function formatGenerationErrorDetails(details: GenerationErrorDetails): string {
+  if (details.validationCategory === 'geometry' && details.level !== undefined && /clock/i.test(details.technicalDetail ?? '')) {
+    return `Validation failed in level ${details.level}: the clock visual has an invalid hour or minute.`;
+  }
   const prefix = details.stage === 'pre_generation' ? 'Generation did not start' :
     details.stage === 'provider_failure' ? 'Provider failure' :
       details.stage === 'validation_failure' ? 'Validation failure' :
         details.stage === 'database_save' ? 'Database save failure' : 'Generation failed';
   return `${prefix}: ${details.message}`;
+}
+
+export function formatAdminGenerationError(payload: unknown, fallback = generationErrorMessages.unknown): string {
+  const details = getGenerationErrorDetails(payload, fallback);
+  const summary = formatGenerationErrorDetails(details);
+  const diagnostic = [
+    details.httpStatus !== undefined ? `HTTP ${details.httpStatus}` : undefined,
+    details.code ? `code=${details.code}` : undefined,
+    details.requestId ? `requestId=${details.requestId}` : undefined,
+    details.level !== undefined ? `level=${details.level}` : undefined,
+    details.validationCategory ? `validation=${details.validationCategory}` : undefined,
+    details.stage ? `stage=${details.stage}` : undefined,
+    details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
+    details.technicalDetail,
+  ].filter(Boolean).join(' · ');
+  return diagnostic ? `${summary} — ${diagnostic}` : summary;
 }
 
 export function formatGenerationDiagnostic(payload: unknown, fallback = generationErrorMessages.unknown): string {

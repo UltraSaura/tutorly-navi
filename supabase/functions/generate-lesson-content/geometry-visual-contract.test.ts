@@ -11,6 +11,22 @@ const complete = {
 
 describe('canonical geometry visual contract', () => {
   it.each(Object.entries(complete).filter(([kind]) => kind !== 'symmetry'))('accepts complete %s data', (kind, data) => expect(geometryVisualDataErrors(kind, data)).toEqual([]));
+  it('accepts a clock only when hour and minute are integers in their allowed ranges', () => {
+    expect(geometryVisualDataErrors('clock', { hour: 1, minute: 0 })).toEqual([]);
+    expect(geometryVisualDataErrors('clock', { hour: 12, minute: 59 })).toEqual([]);
+  });
+  it.each([
+    [{ hour: 3.5, minute: 15 }, 'visual.data.hour', 'received 3.5'],
+    [{ hour: 3, minute: 15.5 }, 'visual.data.minute', 'received 15.5'],
+    [{ hour: 0, minute: 15 }, 'visual.data.hour', 'received 0'],
+    [{ hour: 13, minute: 15 }, 'visual.data.hour', 'received 13'],
+    [{ hour: 3, minute: -1 }, 'visual.data.minute', 'received -1'],
+    [{ hour: 3, minute: 60 }, 'visual.data.minute', 'received 60'],
+  ])('reports the exact invalid clock field and received value', (data, path, received) => {
+    const errors = geometryVisualDataErrors('clock', data);
+    expect(errors.map((error) => error.path)).toContain(path);
+    expect(errors.map((error) => error.message).join(' ')).toContain(received);
+  });
   it('accepts complete symmetry data', () => expect(geometryVisualDataErrors('symmetry', complete.symmetry)).toEqual([]));
   it('rejects diagram labels without coordinates', () => expect(geometryVisualDataErrors('diagram', { points: ['A', 'B'], segments: [{ from: 'A', to: 'B' }] })[0].path).toBe('visual.data.points[0]'));
   it('rejects a circle without centre or radius', () => expect(geometryVisualDataErrors('circle', { center: 'O' }) .map((error) => error.path)).toEqual(['visual.data.center', 'visual.data.radius']));

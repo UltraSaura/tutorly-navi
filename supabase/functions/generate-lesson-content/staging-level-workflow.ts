@@ -75,11 +75,20 @@ export class StagingLevelContractError extends Error {
   }
 }
 
+function validationCategory(issues: Array<{ path: string; message: string }>): string {
+  if (issues.some((issue) => /visual\.data|visual|geometry|clock|timeline|unit conversion/i.test(`${issue.path} ${issue.message}`))) return 'geometry';
+  if (issues.some((issue) => /prerequisite/i.test(`${issue.path} ${issue.message}`))) return 'prerequisite';
+  if (issues.some((issue) => /answer_type|correct_answer|interaction|mastery/i.test(`${issue.path} ${issue.message}`))) return 'interaction';
+  if (issues.some((issue) => /takeaway|key_points|content|pedagogical/i.test(`${issue.path} ${issue.message}`))) return 'pedagogical';
+  return 'canonical';
+}
+
 export function stagingValidationFailure(level: number, issues: Array<{ path: string; message: string }>, providerCalls: number) {
   return {
     code: 'staging_level_validation_failed',
     level,
     stage: 'level_validation',
+    validationCategory: validationCategory(issues),
     technicalDetail: issues.map((issue) => issue.path + ': ' + issue.message).join('; '),
     providerCalls,
   };
@@ -283,6 +292,7 @@ export const PREREQUISITE_ANSWER_RULE = 'expected_answer est OBLIGATOIRE dans CH
 export const TAKEAWAY_RULE = "Le takeaway est une action-mémoire très courte pour l’élève: 8 mots maximum, sous la forme « Astuce : pense à … » avec une image ou un objet du quotidien (porte, roue, papillon, horloge, main). RÈGLE ZÉRO RÉPÉTITION: il ne reformule ni le content ni les key_points et ne réutilise AUCUN mot important (4 lettres ou plus) du content, du title ou des key_points, même conjugué ou au pluriel. Interdit: les étapes de la méthode, les mots de la notion (figure, symétrique, axe, plier, pliage, côté, sommet, angle, rayon, carreaux, compter, reporter, vérifier) et la copie d’un exemple. Exemples REJETÉS: « Je compte les carreaux jusqu’à l’axe puis je reporte de l’autre côté », « Astuce : je compte et je reporte », « Si je plie la figure le long de l’axe, les bords coïncident : elle est symétrique », « Pour reconnaître un triangle, je compte ses trois sommets et ses trois côtés ». Relis chaque concept avant de répondre: si un mot du takeaway apparaît dans le content ou les key_points, remplace-le.";
 export const CONCEPT_LENGTH_RULE = 'Le content de chaque concept compte au plus 40 mots (limite stricte 55, au-delà la leçon est rejetée): 1 à 3 phrases courtes. Les détails vont dans key_points, le visual ou un autre concept, jamais dans un long paragraphe.';
 export const KEY_POINT_RULE = 'Chaque key_point (label + text ensemble) contient au plus 5 mots importants et ne réutilise pas les mots du content: il nomme l’idée en 2 à 4 mots (ex. {"label":"Sommet","text":"Le point O"}), jamais une reformulation de la phrase du content (interdit: {"label":"Sommet","text":"Point de départ des deux demi-droites"} si le content parle déjà des deux demi-droites).';
+export const CLOCK_VISUAL_RULE = 'Pour chaque visual de kind "clock", visual.data.hour doit être un entier JavaScript compris entre 1 et 12 inclus, et visual.data.minute doit être un entier JavaScript compris entre 0 et 59 inclus. Les décimaux, chaînes, valeurs nulles, valeurs manquantes et valeurs hors limites sont interdits et rejetés: ne les arrondis, ne les bloques et ne les inventes jamais. Exemple valide: {"kind":"clock","data":{"hour":3,"minute":15}}.';
 
 /** Complete, valid example level used in the prompt (validated in tests). */
 export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<string, unknown> {
@@ -335,6 +345,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     KEY_POINT_RULE,
     TAKEAWAY_RULE,
     PREREQUISITE_ANSWER_RULE,
+    CLOCK_VISUAL_RULE,
     `Le content du concept explique progressivement le concept mathématique en 1 à 3 phrases courtes et en ${PEDAGOGICAL_CONCEPT_MAX_WORDS} mots maximum (limite exacte du validateur pour un concept structuré); key_points contient 2 ou 3 rappels factuels courts, sous forme de labels ou d’énoncés concis; takeaway donne une méthode pratique, une vérification ou une action à faire par l’élève en ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum. Le takeaway ne doit jamais reformuler le content ou les key_points: emploie une formulation différente et centre-toi sur ce que l’élève doit faire. Le content de guided_example explique un exemple résolu de façon concise mais complète; celui de student_try demande une action à l’élève avec une consigne et un feedback concis; celui de mastery_check vérifie sa compréhension avec des questions complètes et concises. Tous les cinq blocs doivent avoir un content réaliste en français.`,
     `Les concepts exigent title, key_points (exactement 2 ou 3 objets {label, text}, rappels factuels courts et distincts, pas une phrase copiée du content), takeaway actionnable de ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum et visual. Tous les blocs interactifs (student_try et les questions de mastery_check) doivent utiliser exactement l’un de ces answer_type: ${ANSWER_TYPE_VALUES.join(', ')}; ne convertis jamais une valeur inconnue. guided_example exige context et steps concis mais complets; student_try exige question, answer_type autorisé, correct_answer, success_feedback et error_feedback concis; mastery_check exige 1 à 4 questions complètes et concises avec answer_type autorisé.`,
     'mastery doit être exactement {"skills":["étiquette courte 1","étiquette courte 2"],"threshold":0.8}: skills est un tableau de chaînes non vides, jamais un tableau d’objets, un objet ou un paragraphe.',
