@@ -870,7 +870,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         ok: true,
         requestId,
         mode: 'staging_draft',
-        topic_id: topicId,
+        topic_id: String(topicId),
         lesson_content: candidate,
         canonicalValid: true,
         pedagogicalValid: true,

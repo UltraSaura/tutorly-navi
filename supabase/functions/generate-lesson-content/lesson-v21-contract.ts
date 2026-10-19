@@ -8,7 +8,7 @@ export const ANSWER_TYPE_VALUES = ['multiple_choice', 'numeric', 'time', 'short_
 const answers = ANSWER_TYPE_VALUES;
 const visuals = ['clock','timeline','number_line','fraction_bar','fraction_circle','triangle','rectangle','circle','polygon','angle','symmetry','coordinate_plane','geometric_solid','solid_section','measurement','unit_conversion','groups','comparison','part_whole','table','equation','diagram','sequence'];
 
-export function validateLessonV21(value: unknown): { success: true } | { success: false; issues: ContractIssue[] } {
+export function validateLessonV21(value: unknown, _options?: { prerequisiteFormat?: string }): { success: true } | { success: false; issues: ContractIssue[] } {
   const issues: ContractIssue[] = [];
   const bad = (path: string, message: string, expected?: string, received?: unknown) => issues.push({ path, message, expected, received: received === undefined ? undefined : Array.isArray(received) ? 'array' : typeof received });
   const unsupportedAnswerType = (path: string, value: unknown) => bad(path, `Unsupported answer type ${JSON.stringify(value)}. Allowed values: ${ANSWER_TYPE_VALUES.join(', ')}`, ANSWER_TYPE_VALUES.join(', '), value);
