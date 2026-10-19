@@ -334,6 +334,15 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       failureStage: details.stage,
     });
   }
+  if (providerCalls !== STAGING_LEVEL_COUNT) {
+    throw Object.assign(new Error(`The generation reported ${providerCalls} provider calls instead of exactly ${STAGING_LEVEL_COUNT} (one per level). The draft was not saved.`), {
+      code: 'staging_provider_call_count_invalid',
+      stage: 'response_parsing',
+      technicalDetail: `expected ${STAGING_LEVEL_COUNT} provider calls (one per level), received ${providerCalls}`,
+      providerCalls,
+      requestId: data?.requestId,
+    });
+  }
   assertReturnedTopicMatches(requested, data.topic_id);
   return data as { lesson_content: unknown; topic_id: string; providerCalls: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
@@ -363,9 +372,9 @@ export async function validateSavedDraft(version: LessonVersion, topicKind?: Sta
   return data as unknown as LessonVersion;
 }
 
-export async function publishValidatedDraft(versionId: string, topicId: string, lessonContent: unknown, confirmed: boolean): Promise<LessonVersion> {
+export async function publishValidatedDraft(versionId: string, topicId: string, lessonContent: unknown, confirmed: boolean, topicKind?: StagingTopicKind): Promise<LessonVersion> {
   if (!confirmed) throw new Error('Explicit admin confirmation is required before publishing.');
-  const validation = validateLessonVersion(lessonContent);
+  const validation = validateLessonVersion(lessonContent, { topicKind });
   if (!validation.canonicalValid || !validation.pedagogicalValid || !validation.geometryValid) {
     throw new Error(JSON.stringify({ code: 'publish_validation_failed', validation }));
   }
