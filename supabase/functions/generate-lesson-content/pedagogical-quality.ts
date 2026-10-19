@@ -67,18 +67,64 @@ function keyPointsTakeawayOverlap(keyPoints: unknown, takeaway: unknown): Semant
   };
 }
 
+// Vocabulary that legitimately repeats between a concept and its key points:
+// instructional connectors and time-unit names (a time lesson must name
+// seconde/minute/heure/jour in both places). Only used for the
+// content↔key_point comparison; takeaway checks stay strict.
+export const KEY_POINT_EXPECTED_VOCABULARY = new Set((
+  'puis donc alors ensuite aussi encore toujours faut peut veut font fait faire mesure mesurer compte compter lire regarde observe '
+  + 'unite unites seconde secondes minute minutes heure heures jour jours semaine semaines mois annee annees siecle siecles duree durees '
+  + 'temps horloge aiguille aiguilles petite grande midi minuit matin soir avant apres pendant entre plus moins egale egal vaut valent'
+).split(/\s+/));
+
+function keyPointContentTokens(value: unknown): Set<string> {
+  return new Set([...meaningfulTokens(value)].filter((token) => !KEY_POINT_EXPECTED_VOCABULARY.has(token)));
+}
+
+function normalizedStatement(value: unknown): string {
+  return String(value ?? '').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+export function keyPointContentOverlap(content: unknown, pointText: unknown): SemanticOverlapDiagnostic {
+  const left = keyPointContentTokens(content); const right = keyPointContentTokens(pointText);
+  const rawPoint = normalizedStatement(pointText);
+  // A key point whose whole statement is copied verbatim from the content is a
+  // genuine duplicate, whatever its vocabulary.
+  if (rawPoint.split(' ').length >= 4 && normalizedStatement(content).includes(rawPoint)) {
+    return { overlap: right.size || rawPoint.split(' ').length, ratio: 1, leftTokens: [...left], rightTokens: [...right] };
+  }
+  if (left.size < 2 || right.size < 2) return { overlap: 0, ratio: 0, leftTokens: [...left], rightTokens: [...right] };
+  const overlap = [...right].filter((token) => left.has(token)).length;
+  return { overlap, ratio: overlap / right.size, leftTokens: [...left], rightTokens: [...right] };
+}
+
 export function semanticDuplicationDiagnostics(block: Record<string, unknown>): Array<{ fieldA: string; fieldB: string; diagnostic: SemanticOverlapDiagnostic; reason: string }> {
   const keyPoints = Array.isArray(block.key_points) ? block.key_points as Array<Record<string, unknown>> : [];
   const duplicateReason = 'partagent trop de tokens pédagogiquement significatifs.';
   const keyPointDuplicates = keyPoints.flatMap((point, index) => {
     const pointText = `${String(point.label ?? '')} ${String(point.text ?? '')}`;
+    const diagnostic = keyPointContentOverlap(block.content, String(point.text ?? ''));
+    if (diagnostic.ratio === 1 && diagnostic.overlap > 0 && normalizedStatement(block.content).includes(normalizedStatement(point.text))) {
+      return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: duplicateReason }];
+    }
     // Short learning takeaways are intentionally allowed to name the same
     // essential terms as the explanation (for example “4 angles droits”).
     // Reject only a long key point that copies most of the explanation.
-    if (meaningfulTokens(pointText).size <= 5) return [];
-    const diagnostic = semanticOverlap(block.content, pointText);
-    if (diagnostic.overlap < 2 || diagnostic.ratio < 0.65) return [];
-    return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: duplicateReason }];
+    if (keyPointContentTokens(pointText).size <= 5) return [];
+    const full = keyPointContentOverlap(block.content, pointText);
+    if (full.overlap < 3 || full.ratio < 0.8) return [];
+    return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic: full, reason: duplicateReason }];
+  });
+  // Near-identical key points (same statement after normalisation).
+  const seenStatements = new Map<string, number>();
+  keyPoints.forEach((point, index) => {
+    const statement = normalizedStatement(point.text);
+    if (!statement) return;
+    const previous = seenStatements.get(statement);
+    if (previous !== undefined) {
+      const tokens = [...meaningfulTokens(point.text)];
+      keyPointDuplicates.push({ fieldA: `key_points[${previous}]`, fieldB: `key_points[${index}]`, diagnostic: { overlap: tokens.length, ratio: 1, leftTokens: tokens, rightTokens: tokens }, reason: 'Les key_points répètent la même idée.' });
+    } else seenStatements.set(statement, index);
   });
   const keyPointText = keyPoints.map((point) => `${String(point.label ?? '')} ${String(point.text ?? '')}`).join(' ');
   const pairs: Array<[string, unknown, string, unknown]> = [
