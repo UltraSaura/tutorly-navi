@@ -164,7 +164,7 @@ export async function runBulkStagingGeneration(
       if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) {
         throw new Error(JSON.stringify({ code: 'staging_validation_failed', validation }));
       }
-      const version = await save(topicId, generated.lesson_content, generated.topic_id);
+      const version = await save(topicId, generated.lesson_content, generated.topic_id, topicKind);
       onProgress?.({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, status: 'saved', validation: { canonicalValid: validation.canonicalValid, pedagogicalValid: validation.pedagogicalValid, prerequisiteValid: validation.prerequisiteValid, geometryValid: validation.geometryValid, interactionValid: validation.interactionValid }, requestId: generated.requestId, promptVersion: generated.promptVersion, build: generated.build });
       results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation, levelResults: generated.levelResults ?? generated.progress, build: generated.build, promptVersion: generated.promptVersion });
     } catch (error) {
