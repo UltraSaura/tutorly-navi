@@ -11,12 +11,15 @@ import {
   saveDraftVersion,
   validateSavedDraft,
   publishValidatedDraft,
-  assertGenerationTopic,
-  CM2_GEOMETRY_TOPIC_ID,
+  assertExplicitStagingTopicId,
   type LessonVersion,
 } from '@/services/lessonVersionWorkflow';
 
 type TopicOption = { id: string; name: string; curriculum_level_code: string | null };
+
+export function formatStagingTopicLabel(topic: TopicOption): string {
+  return `${topic.name} · ${topic.curriculum_level_code ?? '—'}`;
+}
 
 export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] }) {
   const navigate = useNavigate();
@@ -47,12 +50,15 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
   };
 
   const generate = () => run('generate', async () => {
-    assertGenerationTopic(topicId);
+    assertExplicitStagingTopicId(topicId);
     const topic = topicNames.get(topicId);
     if (!topic) throw new Error(`Topic ${topicId} is not in the loaded topic list.`);
+    const existing = await supabase.from('topic_lesson_versions').select('id,status').eq('topic_id', topic.id).in('status', ['draft', 'validated', 'published']).limit(1);
+    if (existing.error) throw new Error(`Duplicate draft check failed: ${existing.error.message}`);
+    if ((existing.data ?? []).length > 0) throw new Error(`A staging lesson version already exists for ${topic.name}. Generation blocked to preserve draft history.`);
     if (!window.confirm(`Generate a staging draft for:\n${topic.name}\n${topic.id}\n\nThis calls the AI (up to 4 calls).`)) return;
-    const generated = await generateStagingDraft(topicId);
-    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id);
+    const generated = await generateStagingDraft(topicId, undefined, null);
+    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id, null);
     await refresh();
     navigate(`/admin/generated-lessons?version=${encodeURIComponent(saved.id)}`);
   });
@@ -80,14 +86,13 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
       <div className="flex flex-wrap items-center gap-2">
         <Select value={topicId} onValueChange={setTopicId}>
           <SelectTrigger className="w-[300px]"><SelectValue placeholder="Choose a topic" /></SelectTrigger>
-          <SelectContent>{topics.map((topic) => <SelectItem key={topic.id} value={topic.id}>{topic.name} · {topic.curriculum_level_code ?? '—'}</SelectItem>)}</SelectContent>
+          <SelectContent>{topics.map((topic) => <SelectItem key={topic.id} value={topic.id}>{formatStagingTopicLabel(topic)}</SelectItem>)}</SelectContent>
         </Select>
-        <Button onClick={generate} disabled={busy !== null || topicId !== CM2_GEOMETRY_TOPIC_ID} data-testid="generate-draft">{busy === 'generate' ? 'Generating…' : 'Generate draft'}</Button>
+        <Button onClick={generate} disabled={busy !== null || !topicId} data-testid="generate-draft">{busy === 'generate' ? 'Generating…' : 'Generate draft'}</Button>
         <Button asChild variant="outline"><Link to="/admin/generated-lessons?draft=geometry">Preview geometry draft</Link></Button>
       </div>
       <p className="text-xs text-muted-foreground" data-testid="selected-topic">
-        Selected: {topicId ? `${topicNames.get(topicId)?.name ?? '?'} · ${topicId}` : 'none'} — required: {CM2_GEOMETRY_TOPIC_ID}
-        {topicId && topicId !== CM2_GEOMETRY_TOPIC_ID && <span className="ml-1 text-destructive">(not the intended CM2 topic — generation blocked)</span>}
+        Selected: {topicId ? `${topicNames.get(topicId)?.name ?? '?'} · ${topicId}` : 'none'}
       </p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <div className="space-y-2" data-testid="lesson-version-list">

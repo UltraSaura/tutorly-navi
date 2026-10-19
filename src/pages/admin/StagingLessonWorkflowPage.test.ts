@@ -3,9 +3,20 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
 import { runBulkStagingGeneration } from '@/services/bulkStagingLessonWorkflow';
+import { formatStagingTopicLabel } from '@/components/admin/learning/StagingLessonVersionPanel';
 import { playerLesson, previewVisualKinds, providerFreeFourLevelLesson } from './StagingLessonWorkflowPage';
 
 describe('independent staging lesson-version workflow', () => {
+  it('maps the CM2 time topic to its database UUID and selector label', () => {
+    const topic = { id: '7588497a-6173-4144-864e-25bcab6b4011', name: 'Le repérage dans le temps et les durées', curriculum_level_code: 'cm2' };
+    expect(formatStagingTopicLabel(topic)).toBe('Le repérage dans le temps et les durées · cm2');
+    const panelSource = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/StagingLessonVersionPanel.tsx'), 'utf8');
+    expect(panelSource).toContain('assertExplicitStagingTopicId');
+    expect(panelSource).toContain('generateStagingDraft(topicId, undefined, null)');
+    expect(panelSource).not.toContain('topicId !== CM2_GEOMETRY_TOPIC_ID');
+    expect(panelSource).not.toContain('required: {CM2_GEOMETRY_TOPIC_ID}');
+  });
+
   it('keeps destructive legacy controls isolated and clearly labelled', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/BulkLessonGenerator.tsx'), 'utf8');
     expect(source).toContain('Afficher les contrôles legacy');

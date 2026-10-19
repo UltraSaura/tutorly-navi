@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 const { authGetUser, from, invoke } = vi.hoisted(() => ({ authGetUser: vi.fn(), from: vi.fn(), invoke: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { auth: { getUser: authGetUser }, from, functions: { invoke }, rpc: vi.fn() } }));
 
-import { assertGenerationTopic, CM2_GEOMETRY_TOPIC_ID, generateStagingDraft, saveDraftVersion, validateDrawableGeometry } from './lessonVersionWorkflow';
+import { assertExplicitStagingTopicId, assertGenerationTopic, CM2_GEOMETRY_TOPIC_ID, generateStagingDraft, saveDraftVersion, validateDrawableGeometry } from './lessonVersionWorkflow';
 import { PedagogicalVisual } from '@/components/learning/PedagogicalVisual';
 
 const FIXTURE = '185f20b5-d698-446d-80e8-c3c462819b94';
@@ -32,6 +32,11 @@ describe('symmetry drawable contract', () => {
 });
 
 describe('topic guard', () => {
+  it('accepts any explicit non-fixture topic for the staging workflow', () => {
+    expect(assertExplicitStagingTopicId('7588497a-6173-4144-864e-25bcab6b4011')).toBe('7588497a-6173-4144-864e-25bcab6b4011');
+    expect(assertExplicitStagingTopicId('another-topic')).toBe('another-topic');
+  });
+
   it('refuses the fixture topic and any other topic for CM2 generation', () => {
     expect(() => assertGenerationTopic(FIXTURE)).toThrow('fixture_topic_refused');
     expect(() => assertGenerationTopic('')).toThrow('staging_topic_id_required');

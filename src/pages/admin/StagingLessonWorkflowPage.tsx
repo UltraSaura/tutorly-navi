@@ -10,7 +10,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
 import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 import { discoverLessonVisuals } from '@/components/admin/learning/GeneratedLessonsPage';
-import { assertExplicitStagingTopicId, CM2_GEOMETRY_TOPIC_ID, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
+import { assertExplicitStagingTopicId, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
 import { runBulkStagingGeneration, type BulkStagingProgress, type BulkStagingResult } from '@/services/bulkStagingLessonWorkflow';
 import type { LessonV2, LessonV21 } from '@/types/lesson-generator';
 
@@ -112,7 +112,7 @@ export function StagingLessonWorkflowPage() {
     <Card><CardHeader><CardTitle>1. Choose explicit topic UUIDs</CardTitle></CardHeader><CardContent className="space-y-3">
       <div className="flex gap-2"><Button variant={mode === 'single' ? 'default' : 'outline'} onClick={() => setMode('single')}>Single topic</Button><Button variant={mode === 'bulk' ? 'default' : 'outline'} onClick={() => setMode('bulk')}>Bulk topics</Button></div>
       {loading ? <p>Loading topics…</p> : <div className="grid gap-2 md:grid-cols-2">{topics.map((topic) => <label key={topic.id} className="flex items-start gap-3 rounded border p-3"><input type="checkbox" checked={selected.has(topic.id)} onChange={() => toggle(topic.id)} /><span><span className="block font-medium">{topic.name}</span><span className="block text-xs text-muted-foreground">{topic.id} · {topic.curriculum_level_code ?? '—'}</span></span></label>)}</div>}
-      <p className="text-xs text-muted-foreground">Explicit topic UUIDs are required. The default CM2 topic is {CM2_GEOMETRY_TOPIC_ID}; fixture topics are rejected before any provider call.</p>
+      <p className="text-xs text-muted-foreground">Explicit topic UUIDs are required. Fixture topics are rejected before any provider call.</p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button onClick={run} disabled={loading || progress?.status === 'generating' || progress?.status === 'validating'}>{dryRun ? 'Run provider-free dry-run' : mode === 'single' ? 'Generate one draft' : 'Generate selected drafts'}</Button>
     </CardContent></Card>

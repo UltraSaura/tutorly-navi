@@ -179,7 +179,7 @@ export function buildDraftInsertPayload(topicId: string, lessonContent: unknown,
   return { topic_id: topicId, lesson_content: lessonContent, status: 'draft' as const, created_by: userId };
 }
 
-export async function generateStagingDraft(topicId: string, modelId?: string, expectedTopicId: string | null = CM2_GEOMETRY_TOPIC_ID, language: 'fr' | 'en' = 'fr') {
+export async function generateStagingDraft(topicId: string, modelId?: string, expectedTopicId: string | null = null, language: 'fr' | 'en' = 'fr') {
   const requested = topicId.trim();
   if (!requested) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
   if (expectedTopicId === null) {
@@ -258,7 +258,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   return data as { lesson_content: unknown; topic_id: string; providerCalls: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 
-export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = CM2_GEOMETRY_TOPIC_ID): Promise<LessonVersion> {
+export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null): Promise<LessonVersion> {
   if (expectedTopicId === null) assertExplicitStagingTopicId(topicId);
   else assertGenerationTopic(topicId, expectedTopicId);
   assertReturnedTopicMatches(topicId, returnedTopicId);
