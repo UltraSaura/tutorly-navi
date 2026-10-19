@@ -203,3 +203,18 @@ describe('staging 01a14518: folding takeaway regression (providerCalls=0)', () =
     expect(semanticDuplicationDiagnostics({ ...failed, takeaway }).filter((d) => d.fieldB === 'takeaway')).toEqual([]);
   });
 });
+
+describe('recognition prerequisites use a choice type', () => {
+  it('rule forbids numeric/time for recognition prompts and its example passes the check', async () => {
+    const { PREREQUISITE_ANSWER_RULE: rule } = await import('./staging-level-workflow');
+    expect(rule).toMatch(/JAMAIS "numeric" ni "time"/);
+    const { validateLessonV21: v } = await import('./lesson-v21-contract');
+    const issuesFor = (prereq: Record<string, unknown>) => {
+      const r = v({ levels: [{ lesson: { prerequisites: [prereq] } }] } as never) as { success: boolean; issues?: Array<{ path: string; message: string }> };
+      return (r.issues ?? []).filter((i) => i.message.startsWith('Identification question'));
+    };
+    expect(issuesFor({ id: 'p', description: 'd', type: 'multiple_choice', prompt: 'Quelle forme a trois côtés ?', choices: ['Le triangle', 'Le carré', 'Le cercle'], expected_answer: 'Le triangle', remediation_hint: 'h' })).toEqual([]);
+    // The check is unchanged: a numeric recognition question is still rejected.
+    expect(issuesFor({ id: 'p', description: 'd', type: 'numeric', prompt: 'Comment reconnaître un triangle : combien de sommets ?', expected_answer: 3, remediation_hint: 'h' }).length).toBeGreaterThan(0);
+  });
+});
