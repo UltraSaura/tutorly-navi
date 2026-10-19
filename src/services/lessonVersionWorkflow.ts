@@ -184,11 +184,11 @@ export function validatePedagogicalLesson(lesson: unknown): ValidationIssue[] {
   return issues;
 }
 
-export function validateLessonVersion(lesson: unknown): LessonValidation {
+export function validateLessonVersion(lesson: unknown, options?: { topicKind?: StagingTopicKind }): LessonValidation {
   const canonical = validateLessonV21(lesson, { prerequisiteFormat: 'staging' });
   const canonicalIssues = !('issues' in canonical) ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
   const pedagogicalIssues = validatePedagogicalLesson(lesson);
-  const geometryIssues = validateDrawableGeometry(lesson);
+  const geometryIssues = options?.topicKind === 'time' ? validateDrawableTimeVisuals(lesson) : validateDrawableGeometry(lesson);
   const prerequisiteIssues = canonicalIssues.filter((issue) => /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message));
   const interactionIssues = canonicalIssues.filter((issue) => /sequence|interaction|answer_type|correct_answer|questions/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message));
   return {
