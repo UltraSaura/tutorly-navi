@@ -203,6 +203,9 @@ export function validateLessonVersion(lesson: unknown, options?: { topicKind?: S
   };
 }
 
+/** Staging generation makes exactly one provider call per level. */
+export const STAGING_LEVEL_COUNT = 4;
+
 /** The only topic the CM2 geometry staging generation may target. */
 export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
 /** Fixture/staging copies that must never be silently selected for CM2 generation. */
@@ -308,8 +311,8 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   }
   // Staging generation makes one provider request per level (the server
   // validates each level and the assembled lesson), so providerCalls is the
-  // number of levels, not 1. Accept any positive count reported by a
-  // successful response that carries lesson content.
+  // number of levels, not 1. A successful response must report exactly one
+  // call per level; anything else means the run was partial or unexpected.
   const providerCalls = Number(data?.providerCalls);
   if (!data?.success || !data.lesson_content || !Number.isInteger(providerCalls) || providerCalls < 1) {
     const technicalDetail = getGenerationErrorTechnicalDetail(data)
