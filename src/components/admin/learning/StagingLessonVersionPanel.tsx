@@ -12,6 +12,7 @@ import {
   validateSavedDraft,
   publishValidatedDraft,
   assertExplicitStagingTopicId,
+  classifyStagingTopic,
   type LessonVersion,
 } from '@/services/lessonVersionWorkflow';
 import { formatAdminGenerationError } from './generationErrorMapping';
@@ -31,6 +32,8 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
   const [error, setError] = useState<string | null>(null);
 
   const topicNames = useMemo(() => new Map(topics.map((topic) => [topic.id, topic])), [topics]);
+  const topicKindOf = (id: string | null | undefined) => classifyStagingTopic(id ? topicNames.get(id)?.name : undefined);
+  const selectedKind = topicId ? topicKindOf(topicId) : null;
 
   const refresh = async () => {
     const { data, error: queryError } = await supabase
