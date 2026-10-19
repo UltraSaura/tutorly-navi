@@ -93,7 +93,9 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
           <SelectContent>{topics.map((topic) => <SelectItem key={topic.id} value={topic.id}>{formatStagingTopicLabel(topic)}</SelectItem>)}</SelectContent>
         </Select>
         <Button onClick={generate} disabled={busy !== null || !topicId} data-testid="generate-draft">{busy === 'generate' ? 'Generating…' : 'Generate draft'}</Button>
-        <Button asChild variant="outline"><Link to="/admin/generated-lessons?draft=geometry">Preview geometry draft</Link></Button>
+        {selectedKind && selectedKind !== 'geometry'
+          ? <Button variant="outline" disabled title="The geometry draft preview only applies to geometry topics." data-testid="preview-geometry-draft-disabled">Preview geometry draft (geometry topics only)</Button>
+          : <Button asChild variant="outline"><Link to="/admin/generated-lessons?draft=geometry">Preview geometry draft</Link></Button>}
       </div>
       <p className="text-xs text-muted-foreground" data-testid="selected-topic">
         Selected: {topicId ? `${topicNames.get(topicId)?.name ?? '?'} · ${topicId}` : 'none'}
