@@ -79,6 +79,68 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
   return [];
 }
 
+/** Time-topic drawable visual kinds (clock, timeline, unit conversion). */
+export const TIME_VISUAL_KINDS = ['clock', 'timeline', 'unit_conversion'] as const;
+export type StagingTopicKind = 'time' | 'geometry';
+
+/**
+ * Mirrors the server's isTimeTopic classification in
+ * supabase/functions/generate-lesson-content/staging-level-workflow.ts so the
+ * client applies the same visual contract the generator was prompted with.
+ */
+const TIME_TOPIC_PATTERN = /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i;
+
+export function classifyStagingTopic(topicName: string | null | undefined): StagingTopicKind {
+  return TIME_TOPIC_PATTERN.test(topicName ?? '') ? 'time' : 'geometry';
+}
+
+function timeVisualDataIssues(kind: string, data: unknown, path: string): ValidationIssue[] {
+  const d = object(data);
+  if (!d) return [{ path: `${path}.data`, message: 'Drawable time visual data must be an object.' }];
+  if (kind === 'clock') {
+    const issues: ValidationIssue[] = [];
+    if (!(Number.isInteger(d.hour) && Number(d.hour) >= 1 && Number(d.hour) <= 12)) issues.push({ path: `${path}.data.hour`, message: 'Clock hour must be an integer from 1 to 12.' });
+    if (!(Number.isInteger(d.minute) && Number(d.minute) >= 0 && Number(d.minute) <= 59)) issues.push({ path: `${path}.data.minute`, message: 'Clock minute must be an integer from 0 to 59.' });
+    return issues;
+  }
+  if (kind === 'timeline') {
+    const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
+    const relations = Array.isArray(d.relations) ? d.relations : [];
+    return units.length >= 2 || relations.length >= 1
+      ? [] : [{ path: `${path}.data`, message: 'Timeline requires at least two non-empty units or one relation.' }];
+  }
+  if (kind === 'unit_conversion') {
+    const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
+    const relations = Array.isArray(d.relations) ? d.relations : [];
+    const pair = typeof d.from === 'string' && d.from.trim().length > 0
+      && typeof d.to === 'string' && d.to.trim().length > 0
+      && Number.isFinite(Number(d.factor)) && Number(d.factor) > 0;
+    return pair || (units.length >= 2 && relations.length >= 1)
+      ? [] : [{ path: `${path}.data`, message: 'Unit conversion requires from/to/factor or declared units and relations.' }];
+  }
+  return [];
+}
+
+/**
+ * Time-topic visual contract: at least one clock/timeline/unit_conversion
+ * visual must exist and every time visual must carry complete drawable data.
+ * Geometry visuals are never required here, but when present their data is
+ * still checked so incomplete figures cannot slip through.
+ */
+export function validateDrawableTimeVisuals(lesson: unknown): ValidationIssue[] {
+  const visuals = allVisuals(lesson);
+  const issues: ValidationIssue[] = [];
+  const timeVisuals = visuals.filter(({ visual }) => (TIME_VISUAL_KINDS as readonly string[]).includes(String(visual.kind)));
+  if (timeVisuals.length === 0) {
+    issues.push({ path: 'levels', message: `Missing required drawable visual: ${TIME_VISUAL_KINDS.join(', ')}.` });
+  }
+  timeVisuals.forEach(({ visual, path }) => issues.push(...timeVisualDataIssues(String(visual.kind), visual.data, path)));
+  visuals
+    .filter(({ visual }) => !(TIME_VISUAL_KINDS as readonly string[]).includes(String(visual.kind)))
+    .forEach(({ visual, path }) => issues.push(...geometryIssuesForVisual(String(visual.kind), visual.data, path)));
+  return issues;
+}
+
 export function validateDrawableGeometry(lesson: unknown): ValidationIssue[] {
   const visuals = allVisuals(lesson);
   const required = [
@@ -122,11 +184,11 @@ export function validatePedagogicalLesson(lesson: unknown): ValidationIssue[] {
   return issues;
 }
 
-export function validateLessonVersion(lesson: unknown): LessonValidation {
+export function validateLessonVersion(lesson: unknown, options?: { topicKind?: StagingTopicKind }): LessonValidation {
   const canonical = validateLessonV21(lesson, { prerequisiteFormat: 'staging' });
   const canonicalIssues = !('issues' in canonical) ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
   const pedagogicalIssues = validatePedagogicalLesson(lesson);
-  const geometryIssues = validateDrawableGeometry(lesson);
+  const geometryIssues = options?.topicKind === 'time' ? validateDrawableTimeVisuals(lesson) : validateDrawableGeometry(lesson);
   const prerequisiteIssues = canonicalIssues.filter((issue) => /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message));
   const interactionIssues = canonicalIssues.filter((issue) => /sequence|interaction|answer_type|correct_answer|questions/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message));
   return {
@@ -273,11 +335,11 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   return data as { lesson_content: unknown; topic_id: string; providerCalls: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 
-export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null): Promise<LessonVersion> {
+export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind): Promise<LessonVersion> {
   if (expectedTopicId === null) assertExplicitStagingTopicId(topicId);
   else assertGenerationTopic(topicId, expectedTopicId);
   assertReturnedTopicMatches(topicId, returnedTopicId);
-  const validation = validateLessonVersion(lessonContent);
+  const validation = validateLessonVersion(lessonContent, { topicKind });
   if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) {
     throw Object.assign(new Error('Draft validation failed.'), { code: 'draft_validation_failed', stage: 'validation_failure', technicalDetail: JSON.stringify(validation) });
   }
@@ -288,8 +350,8 @@ export async function saveDraftVersion(topicId: string, lessonContent: unknown, 
   return data as unknown as LessonVersion;
 }
 
-export async function validateSavedDraft(version: LessonVersion): Promise<LessonVersion> {
-  const validation = validateLessonVersion(version.lesson_content);
+export async function validateSavedDraft(version: LessonVersion, topicKind?: StagingTopicKind): Promise<LessonVersion> {
+  const validation = validateLessonVersion(version.lesson_content, { topicKind });
   if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) throw new Error(JSON.stringify({ code: 'draft_validation_failed', validation }));
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw new Error('You must be signed in as an admin to validate a lesson draft.');

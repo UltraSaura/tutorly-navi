@@ -12,6 +12,7 @@ import {
   validateSavedDraft,
   publishValidatedDraft,
   assertExplicitStagingTopicId,
+  classifyStagingTopic,
   type LessonVersion,
 } from '@/services/lessonVersionWorkflow';
 import { formatAdminGenerationError } from './generationErrorMapping';
@@ -31,6 +32,8 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
   const [error, setError] = useState<string | null>(null);
 
   const topicNames = useMemo(() => new Map(topics.map((topic) => [topic.id, topic])), [topics]);
+  const topicKindOf = (id: string | null | undefined) => classifyStagingTopic(id ? topicNames.get(id)?.name : undefined);
+  const selectedKind = topicId ? topicKindOf(topicId) : null;
 
   const refresh = async () => {
     const { data, error: queryError } = await supabase
@@ -59,13 +62,13 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
     if ((existing.data ?? []).length > 0) throw new Error(`A staging lesson version already exists for ${topic.name}. Generation blocked to preserve draft history.`);
     if (!window.confirm(`Generate a staging draft for:\n${topic.name}\n${topic.id}\n\nThis calls the AI (up to 4 calls).`)) return;
     const generated = await generateStagingDraft(topicId, undefined, null);
-    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id, null);
+    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id, null, classifyStagingTopic(topic.name));
     await refresh();
     navigate(`/admin/generated-lessons?version=${encodeURIComponent(saved.id)}`);
   });
 
   const validate = (version: LessonVersion) => run(`validate:${version.id}`, async () => {
-    await validateSavedDraft(version);
+    await validateSavedDraft(version, topicKindOf(version.topic_id));
     await refresh();
   });
 
@@ -90,7 +93,9 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
           <SelectContent>{topics.map((topic) => <SelectItem key={topic.id} value={topic.id}>{formatStagingTopicLabel(topic)}</SelectItem>)}</SelectContent>
         </Select>
         <Button onClick={generate} disabled={busy !== null || !topicId} data-testid="generate-draft">{busy === 'generate' ? 'Generating…' : 'Generate draft'}</Button>
-        <Button asChild variant="outline"><Link to="/admin/generated-lessons?draft=geometry">Preview geometry draft</Link></Button>
+        {selectedKind && selectedKind !== 'geometry'
+          ? <Button variant="outline" disabled title="The geometry draft preview only applies to geometry topics." data-testid="preview-geometry-draft-disabled">Preview geometry draft (geometry topics only)</Button>
+          : <Button asChild variant="outline"><Link to="/admin/generated-lessons?draft=geometry">Preview geometry draft</Link></Button>}
       </div>
       <p className="text-xs text-muted-foreground" data-testid="selected-topic">
         Selected: {topicId ? `${topicNames.get(topicId)?.name ?? '?'} · ${topicId}` : 'none'}
