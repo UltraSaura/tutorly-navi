@@ -1320,9 +1320,13 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       validationCategory: stagingFailure?.validationCategory,
       requestId,
     };
+    // The admin page opts in to receiving validation rejections (422) as a
+    // normal reply body so the preview does not treat them as app crashes.
+    // The rejection is unchanged: success=false, same error, httpStatus kept.
+    const softRejection = classified.status === 422 && (requestBody as Record<string, unknown> | undefined)?.rejectionInBody === true;
     return new Response(
-      JSON.stringify({ success: false, ok: false, requestId, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
-      { status: classified.status, headers: responseHeaders() }
+      JSON.stringify({ success: false, ok: false, requestId, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, httpStatus: classified.status, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
+      { status: softRejection ? 200 : classified.status, headers: responseHeaders() }
     );
   }
 }
