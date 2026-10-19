@@ -75,7 +75,7 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
   const publish = (version: LessonVersion) => run(`publish:${version.id}`, async () => {
     if (version.status !== 'validated') throw new Error('Only a validated draft can be published.');
     if (!window.confirm('Publish this validated lesson version to the selected topic? This updates the topic for learners.')) return;
-    await publishValidatedDraft(version.id, version.topic_id, version.lesson_content, true);
+    await publishValidatedDraft(version.id, version.topic_id, version.lesson_content, true, topicKindOf(version.topic_id));
     await refresh();
   });
 
