@@ -1,20 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 
-const { authGetUser, from, invoke } = vi.hoisted(() => ({ authGetUser: vi.fn(), from: vi.fn(), invoke: vi.fn() }));
+const { authGetUser, from, invoke, rpc } = vi.hoisted(() => ({ authGetUser: vi.fn(), from: vi.fn(), invoke: vi.fn(), rpc: vi.fn() }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: authGetUser },
     from,
     functions: { invoke },
-    rpc: vi.fn(),
+    rpc,
   },
 }));
 
 import {
   buildDraftInsertPayload,
   generateStagingDraft,
+  publishValidatedDraft,
   saveDraftVersion,
   validateDrawableGeometry,
   validateLessonVersion,
@@ -57,7 +58,7 @@ describe('lesson version workflow', () => {
   });
 
   it('makes exactly one staging edge request and does not retry', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 1, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
     await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(invoke).toHaveBeenCalledTimes(1);
     expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({ body: expect.objectContaining({ mode: 'staging_draft', allowPaidRepair: false }) }));
@@ -156,5 +157,41 @@ describe('lesson version workflow', () => {
     expect(from).toHaveBeenCalledTimes(1);
     expect(from).toHaveBeenCalledWith('topic_lesson_versions');
     expect(from).not.toHaveBeenCalledWith('topics');
+  });
+
+  it('rejects a success response that reports fewer than four provider calls and saves nothing', async () => {
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 3, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81' }, error: null, response: null });
+    const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+    expect(error).toMatchObject({ code: 'staging_provider_call_count_invalid', stage: 'response_parsing', providerCalls: 3 });
+    expect(error.message).toContain('exactly 4');
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('rejects a success response that reports more than four provider calls and saves nothing', async () => {
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 5, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81' }, error: null, response: null });
+    const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+    expect(error).toMatchObject({ code: 'staging_provider_call_count_invalid', providerCalls: 5 });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('publishes a time-topic draft without requiring geometry visuals', async () => {
+    const timeLesson = structuredClone(geometryDraftLesson) as any;
+    timeLesson.levels[0].lesson.sequence = [
+      { kind: 'clock', alt_text: 'Horloge.', purpose: 'Lire l’heure.', data: { hour: 3, minute: 15 } },
+      { kind: 'timeline', alt_text: 'Frise.', purpose: 'Ordonner.', data: { units: ['seconde', 'minute', 'heure'] } },
+      { kind: 'unit_conversion', alt_text: 'Conversion.', purpose: 'Convertir.', data: { from: 'minute', to: 'seconde', factor: 60 } },
+    ].map((visual, index) => ({ id: `time-${index}`, type: 'visual', title: `Bloc ${index + 1}`, content: 'On observe la représentation pour raisonner sur les durées.', visual }));
+    rpc.mockResolvedValue({ data: { id: 'version-1', status: 'published' }, error: null });
+    await publishValidatedDraft('version-1', '7588497a-6173-4144-864e-25bcab6b4011', timeLesson, true, 'time');
+    expect(rpc).toHaveBeenCalledWith('publish_topic_lesson_version', { p_version_id: 'version-1', p_topic_id: '7588497a-6173-4144-864e-25bcab6b4011', p_confirm: true });
+  });
+
+  it('blocks publishing a time-topic draft when the geometry contract is applied by mistake', async () => {
+    const timeLesson = structuredClone(geometryDraftLesson) as any;
+    timeLesson.levels[0].lesson.sequence = [
+      { kind: 'clock', alt_text: 'Horloge.', purpose: 'Lire l’heure.', data: { hour: 3, minute: 15 } },
+    ].map((visual, index) => ({ id: `time-${index}`, type: 'visual', title: `Bloc ${index + 1}`, content: 'On observe la représentation pour raisonner sur les durées.', visual }));
+    await expect(publishValidatedDraft('version-1', '7588497a-6173-4144-864e-25bcab6b4011', timeLesson, true)).rejects.toThrow(/publish_validation_failed/);
+    expect(rpc).not.toHaveBeenCalled();
   });
 });

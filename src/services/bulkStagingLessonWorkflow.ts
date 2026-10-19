@@ -4,13 +4,14 @@ import {
   classifyStagingTopic,
   generateStagingDraft,
   saveDraftVersion,
+  STAGING_LEVEL_COUNT,
   validateLessonVersion,
   type LessonVersion,
   type StagingTopicKind,
 } from './lessonVersionWorkflow';
 import { formatGenerationDiagnostic, getGenerationErrorDetails, type GenerationErrorDetails } from '@/components/admin/learning/generationErrorMapping';
 
-export const STAGING_LEVEL_COUNT = 4;
+export { STAGING_LEVEL_COUNT };
 
 export type BulkStagingTopic = { id?: string | null; name: string };
 export type BulkStagingStatus = 'idle' | 'generating' | 'validating' | 'saved' | 'failed';
