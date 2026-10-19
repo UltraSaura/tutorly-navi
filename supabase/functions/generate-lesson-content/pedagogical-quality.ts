@@ -112,7 +112,7 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
     // Reject only a long key point that copies most of the explanation.
     if (keyPointContentTokens(pointText).size <= 5) return [];
     const full = keyPointContentOverlap(block.content, pointText);
-    if (full.overlap < 3 || full.ratio < 0.8) return [];
+    if (full.overlap < 2 || full.ratio < 0.65) return [];
     return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic: full, reason: duplicateReason }];
   });
   // Near-identical key points (same statement after normalisation).
