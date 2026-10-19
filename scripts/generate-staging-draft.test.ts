@@ -10,6 +10,9 @@ import {
   formatTopicListResult,
   requireExplicitTopicId,
   CM2_GEOMETRY_TOPIC_ID,
+  processTerminationDiagnostic,
+  responseDiagnostics,
+  withTimeout,
 } from './generate-staging-draft.ts';
 
 const lessonContent = {
@@ -157,5 +160,39 @@ describe('staging terminal runner', () => {
     expect(error.message).toBe('topic_id_mismatch');
     expect(error.safeResult).toMatchObject({ databaseWrite: false, requestedTopicId: 'topic-1', returnedTopicId: 'other-topic' });
     expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
+  it('reports an empty response and never inserts a draft', async () => {
+    const d = deps({ invoke: vi.fn(async () => ({ ok: true, status: 200, body: null, bodyAvailable: false })) });
+    const error = await executeStagingDraft(d).catch((e) => e);
+    expect(error.safeResult).toMatchObject({ stage: 'response_validation', responseBodyAvailable: false, databaseWrite: false });
+    expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
+  it('reports a truncated or malformed response body and never inserts a draft', async () => {
+    const d = deps({ invoke: vi.fn(async () => ({ ok: false, status: 502, body: null, bodyAvailable: true, bodyLength: 17, bodyParseError: 'malformed_json' })) });
+    const error = await executeStagingDraft(d).catch((e) => e);
+    expect(error.safeResult).toMatchObject({ stage: 'edge_function_response', httpStatus: 502, responseBodyAvailable: true, responseBodyLength: 17, responseBodyParseError: 'malformed_json', databaseWrite: false });
+    expect(error.safeResult).not.toHaveProperty('requestId');
+    expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
+  it('reports invocation timeout without retrying or inserting', async () => {
+    const invoke = vi.fn(async () => { throw new Error('staging_function_timeout'); });
+    const d = deps({ invoke });
+    const error = await executeStagingDraft(d).catch((e) => e);
+    expect(error.safeResult).toMatchObject({ stage: 'edge_function_timeout', code: 'staging_function_timeout', responseBodyAvailable: false, databaseWrite: false });
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
+  it('captures missing request IDs and process termination metadata safely', () => {
+    const response = { ok: false, status: 504, body: null, bodyAvailable: false };
+    expect(responseDiagnostics(response)).toMatchObject({ httpStatus: 504, responseBodyAvailable: false });
+    expect(processTerminationDiagnostic({ stage: 'process_termination', topicId: 'topic-1', processSignal: 'SIGTERM' })).toMatchObject({ code: 'staging_runner_terminated', stage: 'process_termination', topicId: 'topic-1', processSignal: 'SIGTERM', databaseWrite: false, responseBodyAvailable: false });
+  });
+
+  it('rejects a promise after the timeout and does not fabricate a response', async () => {
+    await expect(withTimeout(new Promise<void>(() => {}), 1)).rejects.toThrow('staging_function_timeout');
   });
 });

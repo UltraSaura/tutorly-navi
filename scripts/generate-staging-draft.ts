@@ -15,6 +15,18 @@ type SafeResponse = {
   status: number;
   headers?: Headers;
   body: unknown;
+  bodyAvailable?: boolean;
+  bodyLength?: number;
+  bodyParseError?: string;
+};
+
+export const STAGING_FUNCTION_TIMEOUT_MS = 120_000;
+
+export type RunnerResponseDiagnostics = {
+  httpStatus?: number;
+  responseBodyAvailable: boolean;
+  responseBodyLength?: number;
+  responseBodyParseError?: string;
 };
 
 export type RunnerDependencies = {
@@ -81,6 +93,43 @@ export function safeErrorCode(error: unknown): string {
 
 export function safeDiagnostics(value: RunnerResult): string {
   return JSON.stringify(value);
+}
+
+export function responseDiagnostics(response: SafeResponse): RunnerResponseDiagnostics {
+  return {
+    httpStatus: response.status,
+    responseBodyAvailable: response.bodyAvailable ?? (response.body !== undefined && response.body !== null),
+    responseBodyLength: response.bodyLength,
+    responseBodyParseError: response.bodyParseError,
+  };
+}
+
+export function withTimeout<T>(promise: Promise<T>, timeoutMs = STAGING_FUNCTION_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('staging_function_timeout')), timeoutMs);
+    promise.then((value) => { clearTimeout(timer); resolve(value); }, (error) => { clearTimeout(timer); reject(error); });
+  });
+}
+
+export function processTerminationDiagnostic(input: {
+  stage: string;
+  topicId?: string;
+  requestId?: string;
+  providerCalls?: number;
+  processExitCode?: number;
+  processSignal?: string;
+  errorCode?: string;
+  httpStatus?: number;
+  responseBodyAvailable?: boolean;
+}): RunnerResult {
+  const result: RunnerResult = {
+    ok: false,
+    code: 'staging_runner_terminated',
+    databaseWrite: false,
+    responseBodyAvailable: input.responseBodyAvailable ?? false,
+  };
+  for (const [key, value] of Object.entries(input)) if (value !== undefined) result[key] = value;
+  return result;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -190,12 +239,21 @@ export function validateGenerationResponse(body: unknown): {
   return { lessonContent: body.lesson_content, providerCalls: body.providerCalls, progress, validation, levelResults, requestId: typeof body.requestId === 'string' ? body.requestId : undefined, promptVersion: typeof body.promptVersion === 'string' ? body.promptVersion : undefined, build: typeof body.build === 'string' ? body.build : undefined };
 }
 
-function responseRequestId(response: SafeResponse): string {
+function responseRequestId(response: SafeResponse): string | undefined {
   if (response.headers?.get('x-request-id')) return response.headers.get('x-request-id') as string;
   if (response.headers?.get('x-supabase-request-id')) return response.headers.get('x-supabase-request-id') as string;
   if (isRecord(response.body) && typeof response.body.requestId === 'string') return response.body.requestId;
   if (isRecord(response.body) && isRecord(response.body.error) && typeof response.body.error.requestId === 'string') return response.body.error.requestId;
-  return 'not-provided';
+  return undefined;
+}
+
+function invokeFailureDiagnostic(topicId: string, error: unknown): RunnerResult {
+  return {
+    ...processTerminationDiagnostic({ stage: error instanceof Error && error.message === 'staging_function_timeout' ? 'edge_function_timeout' : 'edge_function_invocation', topicId }),
+    code: safeErrorCode(error),
+    error: error instanceof Error ? error.message : 'unknown_invocation_error',
+    providerCalls: 0,
+  };
 }
 
 function responseErrorFields(body: unknown): Record<string, unknown> {
@@ -231,10 +289,15 @@ export async function executeStagingDraft(deps: RunnerDependencies, explicitTopi
   const initialTopicLessonContent = topic.lessonContent;
   if (await deps.countExistingDrafts(topic.id) > 0) throw new Error('duplicate_staging_version_refused');
 
-  const response = await deps.invoke(auth.accessToken, topic.id);
+  let response: SafeResponse;
+  try {
+    response = await deps.invoke(auth.accessToken, topic.id);
+  } catch (error) {
+    throw Object.assign(new Error('edge_function_invocation_failed'), { safeResult: invokeFailureDiagnostic(topic.id, error) });
+  }
   if (!response.ok) {
     const fields = responseErrorFields(response.body);
-    const failure = { ok: false, requestId: responseRequestId(response), httpStatus: response.status, providerCalls: Number(fields.providerCalls ?? 0), databaseWrite: false, responseBody: safeErrorResponseBody(response.body), ...fields };
+    const failure = { ...processTerminationDiagnostic({ stage: String(fields.stage ?? 'edge_function_response'), topicId: topic.id, requestId: responseRequestId(response), providerCalls: Number(fields.providerCalls ?? 0), ...responseDiagnostics(response) }), responseBody: safeErrorResponseBody(response.body), ...fields };
     throw Object.assign(new Error('edge_function_failed'), { safeResult: failure });
   }
 
@@ -242,7 +305,7 @@ export async function executeStagingDraft(deps: RunnerDependencies, explicitTopi
   try {
     generated = validateGenerationResponse(response.body);
   } catch (error) {
-    const failure = { ok: false, requestId: responseRequestId(response), providerCalls: isRecord(response.body) && typeof response.body.providerCalls === 'number' ? response.body.providerCalls : 0, databaseWrite: false, validation: safeErrorCode(error) };
+    const failure = { ...processTerminationDiagnostic({ stage: 'response_validation', topicId: topic.id, requestId: responseRequestId(response), providerCalls: isRecord(response.body) && typeof response.body.providerCalls === 'number' ? response.body.providerCalls : 0, ...responseDiagnostics(response) }), validation: safeErrorCode(error) };
     throw Object.assign(new Error('generation_validation_failed'), { safeResult: failure });
   }
 
@@ -329,14 +392,24 @@ async function createDependencies(url: string, anonKey: string, email: string, p
       return result.data?.length ?? 0;
     },
     invoke: async (token, topicId) => {
-      const result = await client.functions.invoke(FUNCTION_NAME, { body: { mode: 'staging_draft', topicId, allowPaidRepair: false }, headers: { Authorization: `Bearer ${token}` } });
+      const result = await withTimeout(client.functions.invoke(FUNCTION_NAME, { body: { mode: 'staging_draft', topicId, allowPaidRepair: false }, headers: { Authorization: `Bearer ${token}` } }));
       // On non-2xx responses supabase-js leaves data null; read the structured
       // error body so code/level/stage/technicalDetail survive to the report.
       let body: unknown = result.data;
-      if (result.error && result.response) {
-        try { body = await result.response.clone().json(); } catch { body = null; }
+      let bodyAvailable = result.data !== undefined && result.data !== null;
+      let bodyLength: number | undefined;
+      let bodyParseError: string | undefined;
+      if (result.response && (result.error || !bodyAvailable)) {
+        try {
+          const rawBody = await result.response.clone().text();
+          bodyLength = rawBody.length;
+          bodyAvailable = rawBody.length > 0;
+          if (rawBody.length > 0) {
+            try { body = JSON.parse(rawBody); } catch { body = null; bodyParseError = 'malformed_json'; }
+          } else body = null;
+        } catch { body = null; bodyParseError = 'response_body_read_failed'; }
       }
-      return { ok: !result.error, status: result.response?.status ?? (result.error ? 500 : 200), headers: result.response?.headers, body };
+      return { ok: !result.error, status: result.response?.status ?? (result.error ? 500 : 200), headers: result.response?.headers, body, bodyAvailable, bodyLength, bodyParseError };
     },
     insertDraft: async ({ topicId, lessonContent, createdBy }) => {
       const result = await client.from('topic_lesson_versions').insert({ topic_id: topicId, lesson_content: lessonContent, status: 'draft', created_by: createdBy }).select('id').single();
@@ -352,23 +425,48 @@ async function createDependencies(url: string, anonKey: string, email: string, p
 }
 
 export async function main(argv = process.argv.slice(2), env = process.env): Promise<void> {
+  let emitted = false;
+  const topicId = env.STAGING_TOPIC_ID;
+  const emitTermination = (signal?: string, error?: unknown) => {
+    if (emitted) return;
+    emitted = true;
+    const processExitCode = error ? 1 : signal === 'SIGTERM' ? 143 : signal === 'SIGINT' ? 130 : undefined;
+    if (processExitCode !== undefined) process.exitCode = processExitCode;
+    console.error(safeDiagnostics(processTerminationDiagnostic({ stage: error ? 'uncaught_exception' : 'process_termination', topicId, processSignal: signal, processExitCode, errorCode: error ? safeErrorCode(error) : undefined })));
+  };
+  const onSigterm = () => emitTermination('SIGTERM');
+  const onSigint = () => emitTermination('SIGINT');
+  const onUncaught = (error: unknown) => emitTermination(undefined, error);
+  const onUnhandled = (error: unknown) => emitTermination(undefined, error);
+  process.once('SIGTERM', onSigterm);
+  process.once('SIGINT', onSigint);
+  process.once('uncaughtException', onUncaught);
+  process.once('unhandledRejection', onUnhandled);
   try {
     const dryRun = argv.includes('--dry-run');
     const configuredUrl = env.STAGING_SUPABASE_URL || STAGING_URL;
     assertSafeProjectUrl(configuredUrl);
     if (dryRun) {
-      console.log(safeDiagnostics({ ok: true, dryRun: true, project: STAGING_PROJECT_REF, function: FUNCTION_NAME, topicId: env.STAGING_TOPIC_ID ?? null, plannedProviderCalls: LEVEL_COUNT, maxTokensPerCall: MAX_TOKENS_PER_LEVEL, databaseWrite: false }));
+      emitted = true;
+      console.log(safeDiagnostics({ ok: true, dryRun: true, project: STAGING_PROJECT_REF, function: FUNCTION_NAME, topicId: env.STAGING_TOPIC_ID ?? null, plannedProviderCalls: LEVEL_COUNT, maxTokensPerCall: MAX_TOKENS_PER_LEVEL, databaseWrite: false, processExitCode: 0, processSignal: null }));
       return;
     }
     if (!env.STAGING_SUPABASE_URL || !env.STAGING_SUPABASE_ANON_KEY || !env.STAGING_ADMIN_EMAIL || !env.STAGING_ADMIN_PASSWORD) throw new Error('staging_credentials_required');
     const expectedTopicId = env.STAGING_EXPECTED_TOPIC_ID?.trim() || CM2_GEOMETRY_TOPIC_ID;
     requireExplicitTopicId(env.STAGING_TOPIC_ID, expectedTopicId);
     const deps = await createDependencies(configuredUrl, env.STAGING_SUPABASE_ANON_KEY, env.STAGING_ADMIN_EMAIL, env.STAGING_ADMIN_PASSWORD, expectedTopicId);
-    console.log(safeDiagnostics(await executeStagingDraft(deps, env.STAGING_TOPIC_ID)));
+    emitted = true;
+    console.log(safeDiagnostics({ ...(await executeStagingDraft(deps, env.STAGING_TOPIC_ID)), processExitCode: 0, processSignal: null }));
   } catch (error) {
-    const safeResult = isRecord(error) && isRecord(error.safeResult) ? error.safeResult : { ok: false, code: safeErrorCode(error), providerCalls: 0, databaseWrite: false };
+    emitted = true;
+    const safeResult = isRecord(error) && isRecord(error.safeResult) ? { ...error.safeResult, processExitCode: 1, processSignal: null } : { ...processTerminationDiagnostic({ stage: 'runner_exception', topicId, processExitCode: 1 }), code: safeErrorCode(error) };
     console.error(safeDiagnostics(safeResult));
     process.exitCode = 1;
+  } finally {
+    process.removeListener('SIGTERM', onSigterm);
+    process.removeListener('SIGINT', onSigint);
+    process.removeListener('uncaughtException', onUncaught);
+    process.removeListener('unhandledRejection', onUnhandled);
   }
 }
 
