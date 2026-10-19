@@ -145,6 +145,14 @@ export function validateLessonVersion(lesson: unknown): LessonValidation {
 export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
 /** Fixture/staging copies that must never be silently selected for CM2 generation. */
 export const FIXTURE_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'] as const;
+export const STAGING_BROWSER_TIMEOUT_MS = 120_000;
+
+export function withStagingBrowserTimeout<T>(promise: Promise<T>, timeoutMs = STAGING_BROWSER_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = globalThis.setTimeout(() => reject(new Error('staging_browser_timeout')), timeoutMs);
+    promise.then((value) => { globalThis.clearTimeout(timer); resolve(value); }, (error) => { globalThis.clearTimeout(timer); reject(error); });
+  });
+}
 
 export function assertExplicitStagingTopicId(topicId: string | null | undefined): string {
   const value = (topicId ?? '').trim();
@@ -179,9 +187,23 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   } else {
     assertGenerationTopic(requested, expectedTopicId);
   }
-  const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', {
-    body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false },
-  });
+  let data: any;
+  let error: any;
+  let response: Response | null | undefined;
+  try {
+    ({ data, error, response } = await withStagingBrowserTimeout(supabase.functions.invoke('generate-lesson-content', {
+      body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false },
+    })));
+  } catch (requestError) {
+    const timeout = requestError instanceof Error && requestError.message === 'staging_browser_timeout';
+    throw Object.assign(new Error(timeout ? 'The staging generation request timed out before a response was received.' : 'The staging generation request could not start.'), {
+      code: timeout ? 'staging_browser_timeout' : 'staging_browser_request_failed',
+      stage: timeout ? 'provider_failure' : 'pre_generation',
+      providerCalls: 0,
+      databaseWrite: false,
+      responseBodyAvailable: false,
+    });
+  }
   if (error && response) {
     const payload = await response.clone().json().catch(() => null);
     const details = getGenerationErrorDetails(payload ?? error, 'The Edge Function returned an error.');

@@ -101,6 +101,21 @@ describe('lesson version workflow', () => {
     expect(error.message).toContain('Failed to send');
   });
 
+  it('times out a hanging browser invocation without retrying or writing', async () => {
+    vi.useFakeTimers();
+    try {
+      invoke.mockReturnValue(new Promise(() => {}));
+      const pending = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+      await vi.advanceTimersByTimeAsync(120_000);
+      const error = await pending;
+      expect(error).toMatchObject({ code: 'staging_browser_timeout', stage: 'provider_failure', providerCalls: 0, databaseWrite: false, responseBodyAvailable: false });
+      expect(invoke).toHaveBeenCalledTimes(1);
+      expect(from).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('preserves structured 4xx and 5xx response diagnostics without saving', async () => {
     for (const [status, code] of [[422, 'staging_level_validation_failed'], [502, 'provider_error']] as const) {
       vi.clearAllMocks();
