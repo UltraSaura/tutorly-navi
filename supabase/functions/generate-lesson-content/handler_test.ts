@@ -209,3 +209,32 @@ test('time-topic rectangle/polygon output is rejected before any partial draft w
   assertEquals(calls.provider, 1);
   assertEquals(calls.dbWrites, []);
 });
+
+const runInBody = async (reply: ProviderReply) => {
+  const calls = installFakes(reply);
+  const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', rejectionInBody: true }),
+  }));
+  return { status: res.status, body: await res.json(), calls };
+};
+
+test('admin opt-in: validation rejection is delivered as 200 body with httpStatus 422 and no write', async () => {
+  const { status, body, calls } = await runInBody(withLevel(2, (lesson) => {
+    const angle = lesson.sequence.find((b: any) => b.visual?.kind === 'angle');
+    angle.visual.data = { vertex: angle.visual.data.vertex, ray1: { x: 1, y: 1 }, ray2: { x: 2, y: 2 }, degrees: 45 };
+  }));
+  assertEquals(status, 200);
+  assertEquals(body.success, false);
+  assertEquals(body.httpStatus, 422);
+  assertEquals(body.error.code, 'staging_level_validation_failed');
+  assertEquals(calls.dbWrites, []);
+});
+
+test('admin opt-in: truncated provider output is delivered as 200 body with httpStatus 502', async () => {
+  const { status, body } = await runInBody(() => ({ content: stagingFullLevelExample(levels[0]), finishReason: 'length' }));
+  assertEquals(status, 200);
+  assertEquals(body.httpStatus, 502);
+  assertEquals(body.error.code, 'provider_output_truncated');
+});
