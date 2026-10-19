@@ -137,8 +137,8 @@ export async function runBulkStagingGeneration(
   const generate = dependencies.dryRun
     ? async (topicId: string) => dryRunGeneration(topicId, dependencies.dryRunContent)
     : (dependencies.generate ?? ((topicId) => generateStagingDraft(topicId, undefined, null, dependencies.language ?? 'fr')));
-  const save = dependencies.dryRun ? async () => ({ id: `dry-run-${Date.now()}` } as LessonVersion) : (dependencies.save ?? ((topicId, content, returnedTopicId) => saveDraftVersion(topicId, content, returnedTopicId, null)));
-  const validate = dependencies.validate ?? validateLessonVersion;
+  const save = dependencies.dryRun ? async () => ({ id: `dry-run-${Date.now()}` } as LessonVersion) : (dependencies.save ?? ((topicId, content, returnedTopicId, topicKind) => saveDraftVersion(topicId, content, returnedTopicId, null, topicKind)));
+  const validate = dependencies.validate ?? ((content, topicKind) => validateLessonVersion(content, { topicKind }));
   const results: BulkStagingResult[] = [];
 
   for (const [index, topic] of topics.entries()) {
@@ -159,7 +159,8 @@ export async function runBulkStagingGeneration(
         const levelMetadata = generated.progress?.find((entry) => entry.level === level);
         onProgress?.({ ...base, level, providerCalls, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
       }
-      const validation = validate(generated.lesson_content);
+      const topicKind = classifyStagingTopic(topic.name);
+      const validation = validate(generated.lesson_content, topicKind);
       if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) {
         throw new Error(JSON.stringify({ code: 'staging_validation_failed', validation }));
       }
