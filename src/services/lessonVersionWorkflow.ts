@@ -79,6 +79,68 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
   return [];
 }
 
+/** Time-topic drawable visual kinds (clock, timeline, unit conversion). */
+export const TIME_VISUAL_KINDS = ['clock', 'timeline', 'unit_conversion'] as const;
+export type StagingTopicKind = 'time' | 'geometry';
+
+/**
+ * Mirrors the server's isTimeTopic classification in
+ * supabase/functions/generate-lesson-content/staging-level-workflow.ts so the
+ * client applies the same visual contract the generator was prompted with.
+ */
+const TIME_TOPIC_PATTERN = /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i;
+
+export function classifyStagingTopic(topicName: string | null | undefined): StagingTopicKind {
+  return TIME_TOPIC_PATTERN.test(topicName ?? '') ? 'time' : 'geometry';
+}
+
+function timeVisualDataIssues(kind: string, data: unknown, path: string): ValidationIssue[] {
+  const d = object(data);
+  if (!d) return [{ path: `${path}.data`, message: 'Drawable time visual data must be an object.' }];
+  if (kind === 'clock') {
+    const issues: ValidationIssue[] = [];
+    if (!(Number.isInteger(d.hour) && Number(d.hour) >= 1 && Number(d.hour) <= 12)) issues.push({ path: `${path}.data.hour`, message: 'Clock hour must be an integer from 1 to 12.' });
+    if (!(Number.isInteger(d.minute) && Number(d.minute) >= 0 && Number(d.minute) <= 59)) issues.push({ path: `${path}.data.minute`, message: 'Clock minute must be an integer from 0 to 59.' });
+    return issues;
+  }
+  if (kind === 'timeline') {
+    const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
+    const relations = Array.isArray(d.relations) ? d.relations : [];
+    return units.length >= 2 || relations.length >= 1
+      ? [] : [{ path: `${path}.data`, message: 'Timeline requires at least two non-empty units or one relation.' }];
+  }
+  if (kind === 'unit_conversion') {
+    const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
+    const relations = Array.isArray(d.relations) ? d.relations : [];
+    const pair = typeof d.from === 'string' && d.from.trim().length > 0
+      && typeof d.to === 'string' && d.to.trim().length > 0
+      && Number.isFinite(Number(d.factor)) && Number(d.factor) > 0;
+    return pair || (units.length >= 2 && relations.length >= 1)
+      ? [] : [{ path: `${path}.data`, message: 'Unit conversion requires from/to/factor or declared units and relations.' }];
+  }
+  return [];
+}
+
+/**
+ * Time-topic visual contract: at least one clock/timeline/unit_conversion
+ * visual must exist and every time visual must carry complete drawable data.
+ * Geometry visuals are never required here, but when present their data is
+ * still checked so incomplete figures cannot slip through.
+ */
+export function validateDrawableTimeVisuals(lesson: unknown): ValidationIssue[] {
+  const visuals = allVisuals(lesson);
+  const issues: ValidationIssue[] = [];
+  const timeVisuals = visuals.filter(({ visual }) => (TIME_VISUAL_KINDS as readonly string[]).includes(String(visual.kind)));
+  if (timeVisuals.length === 0) {
+    issues.push({ path: 'levels', message: `Missing required drawable visual: ${TIME_VISUAL_KINDS.join(', ')}.` });
+  }
+  timeVisuals.forEach(({ visual, path }) => issues.push(...timeVisualDataIssues(String(visual.kind), visual.data, path)));
+  visuals
+    .filter(({ visual }) => !(TIME_VISUAL_KINDS as readonly string[]).includes(String(visual.kind)))
+    .forEach(({ visual, path }) => issues.push(...geometryIssuesForVisual(String(visual.kind), visual.data, path)));
+  return issues;
+}
+
 export function validateDrawableGeometry(lesson: unknown): ValidationIssue[] {
   const visuals = allVisuals(lesson);
   const required = [
