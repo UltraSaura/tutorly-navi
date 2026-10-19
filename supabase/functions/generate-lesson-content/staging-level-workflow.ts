@@ -468,7 +468,7 @@ export function summarizeStagingValidation(validation: StagingValidation, extraG
   };
 }
 
-export function requiredGeometryIssues(lesson: Record<string, unknown>, requiredKinds = [...STAGING_ALL_GEOMETRY_KINDS]): Array<{ path: string; message: string }> {
+export function requiredGeometryIssues(lesson: Record<string, unknown>, requiredKinds: readonly string[] = [...STAGING_ALL_GEOMETRY_KINDS]): Array<{ path: string; message: string }> {
   const sequence = (Array.isArray(lesson.levels) ? lesson.levels : []).flatMap((level: any) => Array.isArray(level?.lesson?.sequence) ? level.lesson.sequence : []);
   const visuals = sequence.map((block: any) => block?.visual).filter(Boolean);
   const has = (kind: string) => visuals.some((visual: any) => visual.kind === kind || (kind === 'triangle' && visual.kind === 'polygon' && visual.data?.shape === 'triangle'));
