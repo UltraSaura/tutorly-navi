@@ -94,6 +94,19 @@ describe('lesson version workflow', () => {
     expect(from).not.toHaveBeenCalled();
   });
 
+  it('treats a rejection delivered in a 200 body as a 422 failure and saves nothing', async () => {
+    invoke.mockResolvedValue({
+      data: { success: false, ok: false, httpStatus: 422, requestId: 'r1', error: { code: 'staging_level_validation_failed', message: 'Rejected.', technicalDetail: 'sequence[1].takeaway: overlap=4', providerCalls: 3, level: 3 } },
+      error: null,
+      response: null,
+    });
+    const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+    expect(error).toMatchObject({ httpStatus: 422, code: 'staging_level_validation_failed', providerCalls: 3 });
+    expect(String(error.message)).toMatch(/overlap=4/);
+    expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({ body: expect.objectContaining({ rejectionInBody: true }) }));
+    expect(from).not.toHaveBeenCalled();
+  });
+
   it('preserves transport failures as pre-generation diagnostics with zero provider calls', async () => {
     invoke.mockResolvedValue({ data: null, error: Object.assign(new Error('Failed to send a request to the Edge Function'), { code: 'FunctionsFetchError' }), response: null });
     const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
