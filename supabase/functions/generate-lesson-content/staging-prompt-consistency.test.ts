@@ -210,7 +210,7 @@ describe('recognition prerequisites use a choice type', () => {
     expect(rule).toMatch(/JAMAIS "numeric" ni "time"/);
     const { validateLessonV21: v } = await import('./lesson-v21-contract');
     const issuesFor = (prereq: Record<string, unknown>) => {
-      const r = v({ prerequisites: [prereq] } as never) as { success: boolean; issues?: Array<{ path: string; message: string }> };
+      const r = v({ levels: [{ lesson: { prerequisites: [prereq] } }] } as never) as { success: boolean; issues?: Array<{ path: string; message: string }> };
       return (r.issues ?? []).filter((i) => i.message.startsWith('Identification question'));
     };
     expect(issuesFor({ id: 'p', description: 'd', type: 'multiple_choice', prompt: 'Quelle forme a trois côtés ?', choices: ['Le triangle', 'Le carré', 'Le cercle'], expected_answer: 'Le triangle', remediation_hint: 'h' })).toEqual([]);
