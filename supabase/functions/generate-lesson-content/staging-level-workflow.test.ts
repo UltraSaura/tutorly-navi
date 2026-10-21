@@ -250,8 +250,8 @@ describe('staging level workflow', () => {
     const result = validateStagingLevel(validLevel1, metadata[0], topicName, 'CM2');
     expect(result.pedagogicalIssues).toEqual([]);
     expect(validLevel1.sequence[0].key_points).toEqual([
-      { label: 'Forme', text: '4 côtés' },
-      { label: 'Angles', text: '4 angles droits' },
+      { label: 'Forme', text: 'La figure possède quatre côtés.' },
+      { label: 'Angles', text: 'Chaque coin forme un angle droit.' },
     ]);
   });
 

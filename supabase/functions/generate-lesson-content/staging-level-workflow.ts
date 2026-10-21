@@ -367,7 +367,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
 
 export function parseStagingLevelResponse(raw: unknown, metadata?: StagingLevelMetadata): { value: Record<string, unknown>; attemptedRepair: boolean } {
   const parsed = parseProviderJsonSafely(raw);
-  if (!parsed.ok) throw new Error('staging_level_json_parse_failed: ' + parsed.category);
+  if (parsed.ok === false) throw new Error('staging_level_json_parse_failed: ' + parsed.category);
   const value = object(parsed.value);
   if (!value) throw new Error('staging_level_json_parse_failed: response must be an object');
   const level = object(value.lesson) ?? value;
@@ -430,7 +430,7 @@ export function validateStagingLevel(lesson: Record<string, unknown>, metadata: 
   const canonical = validateLessonV21(candidate, { prerequisiteFormat: 'staging' });
   const localPath = (path: string) => path.replace(/^levels\[0\]\.lesson\.?/, '');
   return {
-    canonicalIssues: [...(canonical.success ? [] : canonical.issues.map((issue) => ({ path: localPath(issue.path), message: issue.message }))), ...stagingSequenceContractIssues(lesson, metadata)],
+    canonicalIssues: [...(canonical.success === false ? canonical.issues.map((issue) => ({ path: localPath(issue.path), message: issue.message })) : []), ...stagingSequenceContractIssues(lesson, metadata)],
     pedagogicalIssues: pedagogicalIssues(lesson, grade, topicName),
     geometryIssues: visualGeometryIssues(lesson),
   };
