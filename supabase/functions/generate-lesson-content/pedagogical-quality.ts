@@ -123,7 +123,7 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
     const previous = seenStatements.get(statement);
     if (previous !== undefined) {
       const tokens = [...meaningfulTokens(point.text)];
-      keyPointDuplicates.push({ fieldA: `key_points[${previous}]`, fieldB: `key_points[${index}]`, diagnostic: { overlap: tokens.length, ratio: 1, leftTokens: tokens, rightTokens: tokens }, reason: 'Les key_points répètent la même idée.' });
+      keyPointDuplicates.push({ fieldA: `key_points[${previous}]`, fieldB: `key_points[${index}]`, diagnostic: { overlap: tokens.length, ratio: 1, leftTokens: tokens, rightTokens: tokens }, reason: `Les key_points répètent la même idée : key_points[${previous}].text et key_points[${index}].text sont identiques après normalisation (${JSON.stringify(statement)}). Fournir deux phrases complètes exprimant des idées distinctes.` });
     } else seenStatements.set(statement, index);
   });
   const keyPointText = keyPoints.map((point) => `${String(point.label ?? '')} ${String(point.text ?? '')}`).join(' ');
