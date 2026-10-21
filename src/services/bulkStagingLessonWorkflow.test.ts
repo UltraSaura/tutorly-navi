@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 import { runBulkStagingGeneration, validateBulkTopicIds } from './bulkStagingLessonWorkflow';
+import { semanticDuplicationDiagnostics } from '../../supabase/functions/generate-lesson-content/pedagogical-quality';
+import { stagingValidationFailure } from '../../supabase/functions/generate-lesson-content/staging-level-workflow';
 
 const generated = (topicId: string, providerCalls = 4) => ({
   success: true,
@@ -15,6 +17,23 @@ const generated = (topicId: string, providerCalls = 4) => ({
 const valid = () => ({ canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, interactionValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
 
 describe('bulk staging lesson workflow', () => {
+  it('never saves or retries after the level-1 multiplier duplicate rejection', async () => {
+    const diagnostics = semanticDuplicationDiagnostics({
+      content: 'Une conversion relie deux unités de durée.',
+      key_points: [{ label: 'A', text: 'multiplier' }, { label: 'B', text: 'Multiplier !' }],
+      takeaway: 'Astuce : pense à une échelle.',
+    });
+    const failure = stagingValidationFailure(1, diagnostics.map((d) => ({ path: 'sequence[1].key_points', message: d.reason })), 1);
+    const generate = vi.fn(async () => { throw { ...failure, httpStatus: 422, requestId: 'req-multiplier', message: failure.technicalDetail }; });
+    const save = vi.fn();
+    const results = await runBulkStagingGeneration([{ id: '7588497a-6173-4144-864e-25bcab6b4011', name: 'Le repérage dans le temps et les durées' }], undefined, { generate, save });
+    expect(diagnostics).toHaveLength(1);
+    expect(results[0].status).toBe('failed');
+    expect(results[0].failure).toMatchObject({ httpStatus: 422, failedLevel: 1, providerCalls: 1, requestId: 'req-multiplier' });
+    expect(results[0].failure?.technicalDiagnostic).toContain('key_points[0].text et key_points[1].text');
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(save).not.toHaveBeenCalled();
+  });
   it('saves one topic only after a complete four-call result', async () => {
     const generate = vi.fn(async (id: string) => generated(id));
     const save = vi.fn(async (id: string) => ({ id: `version-${id}` } as any));
