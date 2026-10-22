@@ -113,9 +113,9 @@ describe('level-2 staging regressions: numeric prerequisite and key-point overla
     expect(semanticDuplicationDiagnostics(example as any)).toEqual([]);
   });
 
-  it('still rejects the observed overlapping angle key point at sequence[1]', () => {
+  it('does not reject an angle key point solely for shared subject vocabulary at sequence[1]', () => {
     const v = validate((lesson) => { lesson.sequence[1].key_points = [{ label: 'Sommet', text: 'Point de départ des deux demi-droites' }, { label: 'Mesure', text: 'En degrés' }]; });
-    expect(v.pedagogicalIssues.some((i) => i.path === 'sequence[1].key_points' && i.message.includes('partagent trop de tokens'))).toBe(true);
+    expect(v.pedagogicalIssues.filter((i) => i.path === 'sequence[1].key_points')).toEqual([]);
   });
 });
 

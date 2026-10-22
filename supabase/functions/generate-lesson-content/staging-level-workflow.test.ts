@@ -406,7 +406,7 @@ describe('staging level workflow', () => {
 
   it('rejects copied or repetitive key_points without rewriting them', () => {
     const candidate = structuredClone(validLevel1) as any;
-    candidate.sequence[0].key_points = [{ label: 'Résumé', text: 'Un rectangle est un quadrilatère dont les quatre angles sont droits' }];
+    candidate.sequence[0].key_points = [{ label: 'Résumé', text: candidate.sequence[0].content.split('.')[0] }];
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
     expect(result.pedagogicalIssues.some((issue) => issue.path === 'sequence[0].key_points' && issue.message.includes('partagent trop de tokens'))).toBe(true);
     expect(candidate.sequence[0].key_points[0].text).toContain('quadrilatère');
