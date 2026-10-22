@@ -21,6 +21,26 @@ describe('statement-based geometry key-point validation (provider-free)', () => 
     expect(diagnostics(distinctGeometryPoints)).toEqual([]);
   });
 
+  it('accepts the reported angle explanation and distinct vertex fact despite overlap=4, ratio=0.67', () => {
+    expect(semanticDuplicationDiagnostics({
+      content: 'Un angle est formé par deux demi-droites qui partent du même sommet. Son ouverture se mesure en degrés avec un rapporteur.',
+      key_points: [
+        { label: 'Sommet', text: 'Le sommet est le point commun des deux demi-droites.' },
+        { label: 'Lecture', text: 'La lettre du milieu indique où placer le centre.' },
+      ],
+      takeaway: 'Astuce : pense à un éventail.',
+    })).toEqual([]);
+  });
+
+  it('keeps a complete explanation subset invalid', () => {
+    const result = semanticDuplicationDiagnostics({
+      content: 'Un triangle possède trois sommets et trois côtés. Un côté relie deux sommets.',
+      key_points: [{ label: 'Lien', text: 'Un côté relie deux sommets.' }],
+      takeaway: 'Astuce : pense à une tente.',
+    });
+    expect(result.some((issue) => issue.fieldA === 'content' && issue.fieldB === 'key_points[0]')).toBe(true);
+  });
+
   it('accepts those facts through the actual staging pedagogical validator', () => {
     const level = stagingLevelMetadata('7be61901-cc83-4cb3-90bb-b7056c4542bc', 'Les aires', [])[0];
     const lesson = structuredClone(stagingFullLevelExample(level));

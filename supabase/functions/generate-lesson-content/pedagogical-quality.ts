@@ -123,18 +123,25 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
   const keyPoints = Array.isArray(block.key_points) ? block.key_points as Array<Record<string, unknown>> : [];
   const duplicateReason = 'partagent trop de tokens pédagogiquement significatifs.';
   const keyPointDuplicates = keyPoints.flatMap((point, index) => {
-    const pointText = `${String(point.label ?? '')} ${String(point.text ?? '')}`;
     const diagnostic = keyPointContentOverlap(block.content, String(point.text ?? ''));
     if (diagnostic.ratio === 1 && diagnostic.overlap > 0 && normalizedStatement(block.content).includes(normalizedStatement(point.text))) {
       return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: duplicateReason }];
     }
-    // Short learning takeaways are intentionally allowed to name the same
-    // essential terms as the explanation (for example “4 angles droits”).
-    // Reject only a long key point that copies most of the explanation.
-    if (keyPointContentTokens(pointText).size <= 5) return [];
-    const full = keyPointContentOverlap(block.content, pointText);
-    if (full.overlap < 2 || full.ratio < 0.65) return [];
-    return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic: full, reason: duplicateReason }];
+    // Require a complete factual copy within a single explanation sentence.
+    // Shared domain vocabulary alone cannot establish that facts are identical.
+    const words = statementWords(point.text);
+    const sentences = String(block.content ?? '').split(/[.!?;]+/);
+    const copiesSentence = words.length >= 3 && sentences.some((sentence) => {
+      if (copiedKeyPoint(sentence, point.text)) return true;
+      const source = statementWords(sentence);
+      let matched = 0;
+      for (const word of source) {
+        if (word === words[matched]) matched += 1;
+      }
+      return matched === words.length;
+    });
+    if (!copiesSentence) return [];
+    return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: 'Le key_point contient une copie ou un sous-ensemble du même énoncé du content.' }];
   });
   // Exact/normalized duplicates and whole-statement copies/subsets. No raw
   // token-overlap threshold is used to reject a pair of key points.
