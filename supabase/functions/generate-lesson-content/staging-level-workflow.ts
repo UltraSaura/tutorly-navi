@@ -331,12 +331,18 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '. Chaque bloc concept DOIT contenir un visual dessinable complet.'
     : 'Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: ' + kinds.join(', ') + '. Un concept sans figure est refusé.';
   const examples = kinds.map((kind) => 'Exemple de bloc conceptuel ' + kind + ' valide: ' + JSON.stringify(STAGING_VISUAL_EXAMPLES[kind as keyof typeof STAGING_VISUAL_EXAMPLES]));
+  const levelOneGeometryCoverage = metadata.level_number === 1
+    && metadata.required_geometry_kinds.includes('rectangle')
+    && metadata.required_geometry_kinds.includes('triangle')
+    ? 'NIVEAU 1 GÉOMÉTRIE — couverture obligatoire, pas un choix entre figures: sequence[0] est un concept avec visual.kind="rectangle" et quatre sommets étiquetés; sequence[1] est un AUTRE concept avec visual.kind="polygon", visual.data.shape="triangle", exactement trois sommets {x:number,y:number,label:string} et trois side_labels {from,to,label}. Les deux figures sont exigées dans CE niveau. Deux rectangles, un carré ou la simple mention du triangle dans le texte, une question ou alt_text ne remplacent pas le dessin du triangle. Utilise le bloc triangle complet de l’exemple ci-dessous comme contrat de structure, avec des données cohérentes avec ton explication. Avant de terminer la réponse initiale, vérifie que les deux visual.data sont complets et que le triangle porte bien data.shape="triangle"; aucun dessin manquant ne sera ajouté après la réponse, aucun autre niveau ne compense cette omission.'
+    : '';
   return [
     'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4 — PROMPT ' + STAGING_PROMPT_VERSION,
     'Sujet: ' + topicName + '; niveau scolaire: ' + grade + '; langue: ' + language + '.',
     'But de ce niveau: ' + metadata.purpose,
     'Objectifs autorisés: ' + (objectiveText || 'aucun objectif précisé'),
     required,
+    levelOneGeometryCoverage,
     'Retourne UNIQUEMENT le JSON direct de CE niveau, jamais de wrapper, jamais les autres niveaux.',
     'Le JSON doit contenir lesson_goal, success_criteria, prerequisites, sequence, misconceptions et mastery.',
     'sequence doit contenir exactement cinq blocs, dans cet ordre et avec ces types: concept, concept, guided_example, student_try, mastery_check.',
@@ -361,6 +367,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     ...examples,
     'Exemple complet des cinq blocs et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelExample(metadata)),
     'La sequence doit contenir deux explications concises illustrées, un exemple guidé, une question interactive avant mastery_check, un contrôle de compréhension, un takeaway et les métadonnées de maîtrise.',
+    levelOneGeometryCoverage,
     'Ne dis jamais «voir la figure». JSON strict, sans Markdown.'
   ].join('\n');
 }
