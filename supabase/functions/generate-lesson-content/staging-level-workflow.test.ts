@@ -73,6 +73,13 @@ describe('staging level workflow', () => {
     expect(() => parseStagingLevelResponse('not json')).toThrow('staging_level_json_parse_failed');
   });
 
+  it('parses level 4 without rewriting valid quoted lesson text', () => {
+    const level = metadata[3];
+    const example = stagingFullLevelExample(level);
+    example.lesson_goal = 'Comparer les “aires” d’une figure.';
+    expect(parseStagingLevelResponse(JSON.stringify(example), level)).toEqual({ value: example, attemptedRepair: false });
+  });
+
   it('rejects incomplete geometry in one level', () => {
     const incomplete = structuredClone(validLevel1) as any;
     incomplete.sequence[0].visual.data.vertices = [{ x: 1, y: 1 }];

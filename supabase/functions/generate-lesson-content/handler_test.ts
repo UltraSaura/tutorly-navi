@@ -185,6 +185,34 @@ test('malformed provider JSON returns 502 provider_malformed_json without repair
   assertEquals(calls.dbWrites, []);
 });
 
+test('valid quoted JSON at level 4 completes exactly four fake calls without writes', async () => {
+  const { status, body, calls } = await run((level) => {
+    const lesson = stagingFullLevelExample(levels[level - 1]);
+    if (level === 4) lesson.lesson_goal = 'Comparer les “aires” d’une figure.';
+    return { content: JSON.stringify(lesson) };
+  });
+  assertEquals(status, 200);
+  assertEquals(body.lesson_content.levels[3].lesson.lesson_goal, 'Comparer les “aires” d’une figure.');
+  assertEquals(body.providerCalls, 4);
+  assertEquals(calls.provider, 4);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('genuinely malformed JSON at level 4 stops without retry or partial writes', async () => {
+  const { status, body, calls } = await run((level) => level === 4
+    ? { content: '{"lesson_goal":"incomplete","sequence":[' }
+    : valid(level), 'level-four-malformed');
+  assertEquals(status, 502);
+  assertEquals(body.error.code, 'provider_malformed_json');
+  assertEquals(body.error.level, 4);
+  assertEquals(body.error.stage, 'provider_parse');
+  assertEquals(body.error.requestId, 'level-four-malformed');
+  assertEquals(body.error.technicalDetail, 'staging_level_json_parse_failed: malformed_json');
+  assertEquals(body.error.providerCalls, 4);
+  assertEquals(calls.provider, 4);
+  assertEquals(calls.dbWrites, []);
+});
+
 test('provider HTTP failure returns 502 provider_error', async () => {
   const { status, body, calls } = await run(() => new Response('upstream down', { status: 503 }));
   assertEquals(status, 502);

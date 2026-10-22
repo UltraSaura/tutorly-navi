@@ -1,3 +1,8 @@
+# Level 4 JSON boundary
+
+- [x] Reproduce valid JSON corruption from French quotation marks and parse verbatim before legacy cleanup; the historical raw provider response remains unavailable.
+- [x] Add level-four malformed-output/no-write and valid-output regressions; 805 Vitest tests and 15 mocked handler tests passed, automatic build OK, whitespace checks clean.
+
 # Geometry key-point duplicate refinement
 
 - [x] Reproduce bulk angle false positive without providers and remove remaining content/key-point ratio-only rejection.
