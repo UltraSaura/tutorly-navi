@@ -1,3 +1,8 @@
+# Level 4 JSON boundary
+
+- [ ] Reproduce JSON corruption without providers and preserve valid provider JSON before legacy cleanup.
+- [ ] Add level-four malformed-output/no-write and valid-output regressions; run relevant provider-free checks.
+
 # Geometry key-point duplicate refinement
 
 - [x] Reproduce bulk angle false positive without providers and remove remaining content/key-point ratio-only rejection.
