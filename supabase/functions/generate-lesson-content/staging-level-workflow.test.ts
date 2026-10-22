@@ -105,7 +105,7 @@ describe('staging level workflow', () => {
 
   it('rejects a named triangle with incomplete drawable data', () => {
     const level = metadata[0];
-    const example = stagingFullLevelExample(level) as any;
+    const example = structuredClone(stagingFullLevelExample(level)) as any;
     example.sequence[1].visual.data.vertices.pop();
     expect(validateStagingLevel(example, level, topicName, 'CM2').geometryIssues.some((issue) => issue.path === 'sequence[1].visual.data.vertices')).toBe(true);
   });
