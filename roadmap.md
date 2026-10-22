@@ -1,5 +1,8 @@
 # Geometry key-point duplicate refinement
 
+- [x] Reproduce bulk angle false positive without providers and remove remaining content/key-point ratio-only rejection.
+- [ ] Run provider-free regression suite for the remaining bulk overlap fix.
+
 - [x] Use normalized statement/copy detection for key-point pairs; preserve geometry and time contracts.
 - [x] Add provider-free geometry, duplicate, no-save, and exact five-topic Batch 2 regressions.
 - [x] Run the full test suite and whitespace checks; inspect automatic TypeScript/build results (801/801 passed; automatic build OK).
