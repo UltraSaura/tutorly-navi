@@ -42,6 +42,11 @@ function balancedCandidates(text: string): string[] {
 export function parseProviderJsonSafely(raw: unknown): SafeJsonResult {
   if (raw && typeof raw === 'object') return { ok: true, value: raw, attemptedRepair: false };
   if (typeof raw !== 'string' || !raw.trim()) return { ok: false, attemptedRepair: false, category: 'empty' };
+  // JSON string values may legitimately contain curly quotation marks and
+  // control-character escapes. Never normalize valid JSON before parsing it.
+  try {
+    return { ok: true, value: JSON.parse(raw), attemptedRepair: false };
+  } catch { /* retain the existing bounded legacy-envelope handling */ }
   const cleaned = cleanText(raw);
   const candidates = [cleaned.text, ...balancedCandidates(cleaned.text)].filter((value, index, all) => all.indexOf(value) === index);
   let attemptedRepair = cleaned.changed;
