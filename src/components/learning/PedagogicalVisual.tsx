@@ -162,6 +162,35 @@ function GridSymmetry({ d }: { d: Data }) {
 }
 function Symmetry({ d }: { d: Data }) { const gridSvg = GridSymmetry({ d }); if (gridSvg) return gridSvg; const rawOriginal = d.original ?? d.figure; const rawReflected = d.reflected ?? d.symmetric ?? d.symmetric_figure; const original = points(rawOriginal); const reflected = points(rawReflected); const rawAxis = point(d.axis); const coordinateArrays = (value: unknown): number[][] => Array.isArray(value) ? value.filter((v): v is number[] => Array.isArray(v) && typeof v[0] === 'number' && typeof v[1] === 'number') : []; const originalGrid = coordinateArrays(rawOriginal); const reflectedGrid = coordinateArrays(rawReflected); const allX = [...originalGrid, ...reflectedGrid].map((v) => v[0]); const maxX = Math.max(...allX, 0); const minX = Math.min(...allX, 0); const scale = (x: number) => 35 + ((x - minX) / Math.max(1, maxX - minX)) * 230; const gridOriginal = original.length >= 2 ? original : originalGrid.map(([x, y]) => ({ x: scale(x), y: 180 - y * 35 })); const gridReflected = reflected.length >= 2 ? reflected : reflectedGrid.map(([x, y]) => ({ x: scale(x), y: 180 - y * 35 })); const axis = rawAxis || (typeof d.axis === 'string' && d.axis.toLowerCase().includes('vertical') ? { x: scale((Math.min(...allX, 0) + Math.max(...allX, 0)) / 2), y: 0 } : null); if (gridOriginal.length < 2 || gridReflected.length < 2 || !axis) return fallback('La grille, la figure et l’axe de symétrie ne sont pas tous disponibles.', 'Symétrie incomplète'); const grid = data(d.grid); const gridSize = n(grid.size ?? grid.width, Math.max(4, Math.ceil(maxX - minX))); return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label="Figure de symétrie">{(grid === d.grid || d.grid === true) && <>{Array.from({length: Math.min(12, gridSize + 1)}, (_, i) => <line key={`grid-v-${i}`} x1={20 + i * (260 / gridSize)} y1="20" x2={20 + i * (260 / gridSize)} y2="180" stroke="#E2E8F0"/>)}{Array.from({length: 9}, (_, i) => <line key={`grid-h-${i}`} x1="20" y1={20 + i * 20} x2="280" y2={20 + i * 20} stroke="#E2E8F0"/>)}</>}<line x1={axis.x} y1="15" x2={axis.x} y2="185" stroke="#F59E0B" strokeWidth="3" strokeDasharray="7 5"/><polygon points={gridOriginal.map(p => `${p.x},${p.y}`).join(' ')} fill="#CCFBF1" stroke="#3448A5" strokeWidth="3"/><polygon points={gridReflected.map(p => `${p.x},${p.y}`).join(' ')} fill="#DBEAFE" stroke="#0F766E" strokeWidth="3"/></svg>; }
 function Geometry({ kind, d }: { kind: string; d: Data }) { if (kind === 'diagram') return <Diagram d={d}/>; if (kind === 'angle') return <Angle d={d}/>; if (kind === 'circle') return <Circle d={d}/>; if (['triangle','rectangle','polygon'].includes(kind)) return <Polygon d={d} kind={kind}/>; if (kind === 'symmetry') return <Symmetry d={d}/>; return <svg viewBox="0 0 300 180" className="mx-auto w-full max-w-sm" role="img" aria-label={kind === 'solid_section' ? 'Solide avec plan de coupe' : kind === 'coordinate_plane' ? 'Repère cartésien' : 'Figure géométrique'}>{kind==='coordinate_plane'?<><line x1="25" y1="90" x2="275" y2="90" stroke="#0f766e" strokeWidth="2"/><line x1="150" y1="165" x2="150" y2="15" stroke="#0f766e" strokeWidth="2"/></>:<path d="M70 55 150 20 230 55 150 90Z M70 55V140L150 175V90 M230 55V140L150 175" fill="#ccfbf1" stroke="#0f766e" strokeWidth="3"/>}</svg>; }
+/** French unit plural: 60 minute → 60 minutes; units already ending in s/x stay unchanged. */
+export function pluralizeUnit(unit: string, count: number): string {
+  return count > 1 && !/[sx]$/i.test(unit.trim()) ? `${unit}s` : unit;
+}
+function UnitConversion({ d }: { d: Data }) {
+  const rows: { from: string; to: string; factor: number }[] = [];
+  const push = (from: unknown, to: unknown, factor: unknown) => {
+    const f = s(from), t = s(to), nFactor = Number(factor);
+    if (f.trim() && t.trim() && Number.isFinite(nFactor) && nFactor > 0) rows.push({ from: f, to: t, factor: nFactor });
+  };
+  push(d.from, d.to, d.factor);
+  for (const item of arr(d.conversions ?? d.equivalences ?? d.pairs)) push(item.from ?? item.source ?? item.unit, item.to ?? item.target, item.factor ?? item.value ?? item.multiplier);
+  if (rows.length === 0) {
+    const units = Array.isArray(d.units) ? d.units.filter((u): u is string => typeof u === 'string' && u.trim().length > 0) : [];
+    const relations = Array.isArray(d.relations) ? d.relations : [];
+    for (let i = 0; i < units.length - 1; i++) {
+      const relation = relations[i];
+      push(units[i], units[i + 1], typeof relation === 'number' ? relation : data(relation).factor ?? data(relation).value ?? data(relation).multiplier);
+    }
+  }
+  if (rows.length === 0) return fallback('Facteurs de conversion absents des données.', 'Conversion non affichable');
+  return <div className="space-y-2" role="list" aria-label="Facteurs de conversion">
+    {rows.map((row, i) => <div key={`${row.from}-${row.to}-${i}`} role="listitem" className="flex flex-wrap items-center justify-center gap-2 rounded-xl border-2 border-[#D8E1F0] bg-white px-3 py-2 text-center shadow-sm">
+      <span className="text-base font-extrabold text-[#111827]">1 {row.from}</span>
+      <span className="text-lg font-bold text-[#4F6FD8]" aria-hidden>=</span>
+      <span className="text-base font-extrabold text-[#0F766E]">{row.factor} {pluralizeUnit(row.to, row.factor)}</span>
+    </div>)}
+  </div>;
+}
 function Generic({ d }: { d: Data }) {
   const xs = arr(d.items ?? d.nodes ?? d.groups ?? d.labels);
   if (xs.length === 0 && typeof d.text === 'string') return <p className="rounded-lg bg-white p-3 text-center text-lg font-semibold text-[#111827]">{d.text}</p>;
