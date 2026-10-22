@@ -85,6 +85,27 @@ function normalizedStatement(value: unknown): string {
   return String(value ?? '').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
+// Compare statements, not the proportion of shared domain vocabulary. Keep
+// units, geometry nouns, quantities and negation: they can distinguish facts.
+function statementWords(value: unknown): string[] {
+  const grammar = new Set('le la les un une des de du et en avec pour sur dans est sont ce cette ces que qui comme au aux par chaque il elle on se l d'.split(' '));
+  return normalizedStatement(value).split(' ').filter((word) => word && !grammar.has(word))
+    .map((word) => word.length > 4 && word.endsWith('s') ? word.slice(0, -1) : word);
+}
+
+function copiedKeyPoint(a: unknown, b: unknown): boolean {
+  const left = statementWords(a);
+  const right = statementWords(b);
+  const shorter = left.length <= right.length ? left : right;
+  const longer = left.length <= right.length ? right : left;
+  if (shorter.length < 3) return false;
+  // Reordered copies still express the same complete fact.
+  if (left.length === right.length && [...left].sort().join(' ') === [...right].sort().join(' ')) return true;
+  // A whole factual statement embedded in another is a copy/subset. Merely
+  // sharing rectangle/sommets/quatre is insufficient without the other words.
+  return longer.some((_word, index) => shorter.every((word, offset) => longer[index + offset] === word));
+}
+
 export function keyPointContentOverlap(content: unknown, pointText: unknown): SemanticOverlapDiagnostic {
   const left = keyPointContentTokens(content); const right = keyPointContentTokens(pointText);
   const rawPoint = normalizedStatement(pointText);
@@ -115,16 +136,17 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
     if (full.overlap < 2 || full.ratio < 0.65) return [];
     return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic: full, reason: duplicateReason }];
   });
-  // Near-identical key points (same statement after normalisation).
-  const seenStatements = new Map<string, number>();
+  // Exact/normalized duplicates and whole-statement copies/subsets. No raw
+  // token-overlap threshold is used to reject a pair of key points.
   keyPoints.forEach((point, index) => {
     const statement = normalizedStatement(point.text);
     if (!statement) return;
-    const previous = seenStatements.get(statement);
-    if (previous !== undefined) {
-      const tokens = [...meaningfulTokens(point.text)];
-      keyPointDuplicates.push({ fieldA: `key_points[${previous}]`, fieldB: `key_points[${index}]`, diagnostic: { overlap: tokens.length, ratio: 1, leftTokens: tokens, rightTokens: tokens }, reason: `Les key_points répètent la même idée : key_points[${previous}].text et key_points[${index}].text sont identiques après normalisation (${JSON.stringify(statement)}). Fournir deux phrases complètes exprimant des idées distinctes.` });
-    } else seenStatements.set(statement, index);
+    keyPoints.slice(0, index).forEach((previousPoint, previous) => {
+      const identical = normalizedStatement(previousPoint.text) === statement;
+      if (!identical && !copiedKeyPoint(previousPoint.text, point.text)) return;
+      const diagnostic = semanticOverlap(previousPoint.text, point.text);
+      keyPointDuplicates.push({ fieldA: `key_points[${previous}]`, fieldB: `key_points[${index}]`, diagnostic, reason: `Les key_points répètent la même idée : key_points[${previous}].text et key_points[${index}].text ${identical ? 'sont identiques après normalisation' : 'contiennent une copie ou un sous-ensemble du même énoncé'} (${JSON.stringify(statement)}). Fournir deux phrases complètes exprimant des idées distinctes.` });
+    });
   });
   const keyPointText = keyPoints.map((point) => `${String(point.label ?? '')} ${String(point.text ?? '')}`).join(' ');
   const pairs: Array<[string, unknown, string, unknown]> = [

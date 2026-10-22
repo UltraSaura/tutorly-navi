@@ -1,3 +1,10 @@
+# Geometry key-point duplicate refinement
+
+- [ ] Replace pairwise overlap-only rejection with normalized statement/copy detection; preserve geometry and time contracts.
+- [ ] Add provider-free geometry, duplicate, no-save, and exact five-topic Batch 2 regressions.
+- [ ] Run the full test suite and whitespace checks; inspect automatic TypeScript/build results.
+- [ ] Commit on lowercase practice (blocked: Git state is managed by Lovable; workspace is an edit branch).
+
 # Key-point instructions fix
 
 - [x] Strengthen staging instructions and examples; retain strict duplicate validation and clarify diagnostics.
