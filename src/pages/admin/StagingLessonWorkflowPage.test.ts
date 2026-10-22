@@ -35,9 +35,12 @@ describe('independent staging lesson-version workflow', () => {
   it('supports one-topic and multi-topic provider-free runs without writes', async () => {
     const save = async () => { throw new Error('save must not be called in dry-run'); };
     const one = await runBulkStagingGeneration([{ id: 'topic-one', name: 'One' }], undefined, { dryRun: true, dryRunContent: providerFreeFourLevelLesson, save });
-    const many = await runBulkStagingGeneration([{ id: 'topic-one', name: 'One' }, { id: 'topic-two', name: 'Two' }], undefined, { dryRun: true, dryRunContent: providerFreeFourLevelLesson, save });
+    const batch2Ids = ['0dae3396-adbf-4464-8fa5-48726069977b', '7be61901-cc83-4cb3-90bb-b7056c4542bc', 'bad44ee1-7063-4d99-9875-e7cd4d2a517b', '07fe506e-71f4-44c9-bf7f-98c51a2ca68a', 'b19a95bd-ea70-487f-b5fb-0b9f7893c35e'];
+    const many = await runBulkStagingGeneration(batch2Ids.map((id) => ({ id, name: 'Batch 2' })), undefined, { dryRun: true, dryRunContent: providerFreeFourLevelLesson, save });
     expect(one[0]).toMatchObject({ status: 'saved', providerCalls: 0 });
-    expect(many).toHaveLength(2);
+    expect(many).toHaveLength(5);
+    expect(many.map((result) => result.topicId)).toEqual(batch2Ids);
+    expect(many.every((result) => result.providerCalls === 0)).toBe(true);
     expect(many.every((result) => result.status === 'saved')).toBe(true);
     expect(one[0].providerCalls).toBe(0);
     expect(one[0].levelResults).toHaveLength(4);
