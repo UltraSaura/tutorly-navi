@@ -17,6 +17,21 @@ const generated = (topicId: string, providerCalls = 4) => ({
 const valid = () => ({ canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, interactionValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
 
 describe('bulk staging lesson workflow', () => {
+  it('never saves or retries after a genuine level-1 geometry duplicate rejection', async () => {
+    const diagnostics = semanticDuplicationDiagnostics({
+      content: 'Une aire décrit la surface occupée par une figure.',
+      key_points: [{ label: 'A', text: 'Le rectangle possède quatre sommets.' }, { label: 'B', text: 'LE RECTANGLE possède quatre sommets !' }],
+      takeaway: 'Astuce : pense à un tapis.',
+    });
+    expect(diagnostics).toHaveLength(1);
+    const failure = stagingValidationFailure(1, diagnostics.map((d) => ({ path: 'sequence[0].key_points', message: d.reason })), 1);
+    const generate = vi.fn(async () => { throw { ...failure, httpStatus: 422, requestId: 'req-aires', message: failure.technicalDetail }; });
+    const save = vi.fn();
+    const results = await runBulkStagingGeneration([{ id: '7be61901-cc83-4cb3-90bb-b7056c4542bc', name: 'Les aires' }], undefined, { generate, save });
+    expect(results[0].failure).toMatchObject({ httpStatus: 422, failedLevel: 1, providerCalls: 1, requestId: 'req-aires' });
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(save).not.toHaveBeenCalled();
+  });
   it('never saves or retries after the level-1 multiplier duplicate rejection', async () => {
     const diagnostics = semanticDuplicationDiagnostics({
       content: 'Une conversion relie deux unités de durée.',
