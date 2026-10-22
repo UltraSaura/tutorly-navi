@@ -37,7 +37,7 @@ export const providerFreeFourLevelLesson = {
   levels: [1, 2, 3, 4].map((levelNumber) => ({ ...geometryDraftLesson.levels[0], id: `provider-free-level-${levelNumber}`, level_number: levelNumber })),
 };
 
-function topicIds(topics: Topic[], selected: Set<string>): string[] {
+export function topicIds(topics: Topic[], selected: Set<string>): string[] {
   return topics.filter((topic) => selected.has(topic.id)).map((topic) => topic.id);
 }
 

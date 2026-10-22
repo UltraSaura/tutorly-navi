@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
 import { runBulkStagingGeneration } from '@/services/bulkStagingLessonWorkflow';
 import { formatStagingTopicLabel } from '@/components/admin/learning/StagingLessonVersionPanel';
-import { playerLesson, previewVisualKinds, providerFreeFourLevelLesson } from './StagingLessonWorkflowPage';
+import { playerLesson, previewVisualKinds, providerFreeFourLevelLesson, topicIds } from './StagingLessonWorkflowPage';
 
 describe('independent staging lesson-version workflow', () => {
   it('maps the CM2 time topic to its database UUID and selector label', () => {
@@ -36,7 +36,11 @@ describe('independent staging lesson-version workflow', () => {
     const save = async () => { throw new Error('save must not be called in dry-run'); };
     const one = await runBulkStagingGeneration([{ id: 'topic-one', name: 'One' }], undefined, { dryRun: true, dryRunContent: providerFreeFourLevelLesson, save });
     const batch2Ids = ['0dae3396-adbf-4464-8fa5-48726069977b', '7be61901-cc83-4cb3-90bb-b7056c4542bc', 'bad44ee1-7063-4d99-9875-e7cd4d2a517b', '07fe506e-71f4-44c9-bf7f-98c51a2ca68a', 'b19a95bd-ea70-487f-b5fb-0b9f7893c35e'];
-    const many = await runBulkStagingGeneration(batch2Ids.map((id) => ({ id, name: 'Batch 2' })), undefined, { dryRun: true, dryRunContent: providerFreeFourLevelLesson, save });
+    const available = [...batch2Ids, 'unselected-topic'].map((id) => ({ id, name: 'Batch 2', curriculum_level_code: 'cm2' }));
+    const selectedIds = topicIds(available, new Set(batch2Ids));
+    expect(selectedIds).toEqual(batch2Ids);
+    expect(selectedIds).toHaveLength(5);
+    const many = await runBulkStagingGeneration(available.filter((topic) => selectedIds.includes(topic.id)), undefined, { dryRun: true, dryRunContent: providerFreeFourLevelLesson, save });
     expect(one[0]).toMatchObject({ status: 'saved', providerCalls: 0 });
     expect(many).toHaveLength(5);
     expect(many.map((result) => result.topicId)).toEqual(batch2Ids);

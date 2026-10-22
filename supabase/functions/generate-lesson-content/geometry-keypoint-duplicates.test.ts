@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { semanticDuplicationDiagnostics } from './pedagogical-quality';
 import { stagingFullLevelExample, stagingLevelMetadata, validateStagingLevel } from './staging-level-workflow';
 
-export const distinctGeometryPoints = [
+const distinctGeometryPoints = [
   { label: 'Nombre', text: 'Le rectangle possède quatre sommets.' },
   { label: 'Repérage', text: 'Les sommets du rectangle se nomment A, B, C et D.' },
 ];
 
-export const duplicateGeometryPoints = [
+const duplicateGeometryPoints = [
   { label: 'Nombre', text: 'Le rectangle possède quatre sommets.' },
   { label: 'Rappel', text: 'LE RECTANGLE possède quatre sommets !' },
 ];
