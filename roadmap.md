@@ -1,3 +1,8 @@
+# Level 1 triangle instructions
+
+- [ ] Make rectangle and triangle coverage explicit in the initial geometry response, without changing validators.
+- [ ] Test complete/missing/incomplete triangle output and no-write rejection using fake providers; rerun checks.
+
 # Level 4 JSON boundary
 
 - [x] Reproduce valid JSON corruption from French quotation marks and parse verbatim before legacy cleanup; the historical raw provider response remains unavailable.

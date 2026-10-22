@@ -167,6 +167,22 @@ test('missing required level-4 visual returns 422', async () => {
   assertEquals(calls.dbWrites, []);
 });
 
+test('level-one triangle omission returns strict 422 after one fake call with no partial write', async () => {
+  const { status, body, calls } = await run(withLevel(1, (lesson) => {
+    lesson.sequence[1].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+  }), 'level-one-missing-triangle');
+  assertEquals(status, 422);
+  assertEquals(body.error.code, 'staging_level_validation_failed');
+  assertEquals(body.error.level, 1);
+  assertEquals(body.error.stage, 'level_validation');
+  assertEquals(body.error.validationCategory, 'geometry');
+  assertEquals(body.error.requestId, 'level-one-missing-triangle');
+  assert(String(body.error.technicalDetail).includes('Missing required drawable visual for this level: triangle.'));
+  assertEquals(body.error.providerCalls, 1);
+  assertEquals(calls.provider, 1);
+  assertEquals(calls.dbWrites, []);
+});
+
 test('truncated provider output returns 502 provider_output_truncated', async () => {
   const { status, body, calls } = await run(() => ({ content: stagingFullLevelExample(levels[0]), finishReason: 'length' }));
   assertEquals(status, 502);

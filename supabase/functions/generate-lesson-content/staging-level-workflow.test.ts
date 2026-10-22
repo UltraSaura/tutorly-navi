@@ -87,6 +87,29 @@ describe('staging level workflow', () => {
     expect(result.geometryIssues.some((issue) => issue.path.includes('vertices'))).toBe(true);
   });
 
+  it('accepts the complete level-one rectangle and polygon-triangle prompt example', () => {
+    const level = metadata[0];
+    const example = stagingFullLevelExample(level);
+    expect(requiredGeometryKindsIssues(example, level.required_geometry_kinds)).toEqual([]);
+    expect(validateStagingLevel(example, level, topicName, 'CM2')).toEqual({ canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
+  });
+
+  it('rejects two rectangle visuals even when the lesson text mentions a triangle', () => {
+    const level = metadata[0];
+    const example = stagingFullLevelExample(level) as any;
+    example.sequence[1].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+    expect(requiredGeometryKindsIssues(example, level.required_geometry_kinds)).toEqual([
+      { path: 'lesson.sequence', message: 'Missing required drawable visual for this level: triangle.' },
+    ]);
+  });
+
+  it('rejects a named triangle with incomplete drawable data', () => {
+    const level = metadata[0];
+    const example = stagingFullLevelExample(level) as any;
+    example.sequence[1].visual.data.vertices.pop();
+    expect(validateStagingLevel(example, level, topicName, 'CM2').geometryIssues.some((issue) => issue.path === 'sequence[1].visual.data.vertices')).toBe(true);
+  });
+
   it('accepts valid prerequisite and misconception objects with the staging field names', () => {
     const candidate = structuredClone(validLevel1) as any;
     candidate.prerequisites = [{ id: 'p1', description: 'Lire une longueur', type: 'short_text', prompt: 'Quel segment mesure 6 cm ?', expected_answer: 'AB', remediation_hint: 'Observe les extrémités.' }];
