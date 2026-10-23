@@ -1,3 +1,8 @@
+# Server-side key-point false positives
+
+- [ ] Reject only textual explanation copies, genuinely duplicate points and meaningless points; preserve geometry/time contracts and generation limits.
+- [ ] Run provider-free regression tests and deploy only generate-lesson-content to staging sibprjxhbxahouejygeu; no generation or data writes.
+
 # Level 1 triangle instructions
 
 - [x] Make rectangle and triangle coverage explicit in the initial geometry response, without changing validators or time-topic requirements.

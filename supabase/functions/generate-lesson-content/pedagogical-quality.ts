@@ -101,9 +101,10 @@ function copiedKeyPoint(a: unknown, b: unknown): boolean {
   if (shorter.length < 3) return false;
   // Reordered copies still express the same complete fact.
   if (left.length === right.length && [...left].sort().join(' ') === [...right].sort().join(' ')) return true;
-  // A whole factual statement embedded in another is a copy/subset. Merely
-  // sharing rectangle/sommets/quatre is insufficient without the other words.
-  return longer.some((_word, index) => shorter.every((word, offset) => longer[index + offset] === word));
+  // An appended naming clause does not make an otherwise identical fact new.
+  // Do not infer duplication from a subset of a longer, multi-fact statement.
+  const samePrefix = shorter.every((word, index) => longer[index] === word);
+  return samePrefix && /^(nomme|appele)$/.test(longer[shorter.length] ?? '');
 }
 
 export function keyPointContentOverlap(content: unknown, pointText: unknown): SemanticOverlapDiagnostic {
@@ -124,26 +125,18 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
   const duplicateReason = 'partagent trop de tokens pédagogiquement significatifs.';
   const keyPointDuplicates = keyPoints.flatMap((point, index) => {
     const diagnostic = keyPointContentOverlap(block.content, String(point.text ?? ''));
-    if (diagnostic.ratio === 1 && diagnostic.overlap > 0 && normalizedStatement(block.content).includes(normalizedStatement(point.text))) {
-      return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: duplicateReason }];
+    const statement = normalizedStatement(point.text);
+    if (statement.split(' ').filter(Boolean).length < 2) {
+      return [{ fieldA: `key_points[${index}]`, fieldB: `key_points[${index}]`, diagnostic, reason: `key_points[${index}].text est vide ou sans valeur pédagogique : fournir une phrase ou une relation significative, pas un mot isolé.` }];
     }
-    // Require a complete factual copy within a single explanation sentence.
-    // Shared domain vocabulary alone cannot establish that facts are identical.
-    const words = statementWords(point.text);
-    const sentences = String(block.content ?? '').split(/[.!?;]+/);
-    const copiesSentence = words.length >= 3 && sentences.some((sentence) => {
-      if (copiedKeyPoint(sentence, point.text)) return true;
-      const source = statementWords(sentence);
-      let matched = 0;
-      for (const word of source) {
-        if (word === words[matched]) matched += 1;
-      }
-      return matched === words.length;
-    });
-    if (!copiesSentence) return [];
-    return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: 'Le key_point contient une copie ou un sous-ensemble du même énoncé du content.' }];
+    // Only a textual copy is forbidden here. Inferring the same fact from
+    // filtered tokens/subsequences mistakes ordinary geometry vocabulary for
+    // plagiarism (e.g. "Un côté relie deux sommets" versus "côté : relie...").
+    const source = ` ${normalizedStatement(block.content)} `;
+    if (!source.includes(` ${statement} `)) return [];
+    return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: 'Le key_point est copié textuellement depuis l’explication.' }];
   });
-  // Exact/normalized duplicates and whole-statement copies/subsets. No raw
+  // Exact/normalized duplicates and near-identical complete statements. No raw
   // token-overlap threshold is used to reject a pair of key points.
   keyPoints.forEach((point, index) => {
     const statement = normalizedStatement(point.text);

@@ -42,7 +42,7 @@ describe('bulk staging lesson workflow', () => {
     const generate = vi.fn(async () => { throw { ...failure, httpStatus: 422, requestId: 'req-multiplier', message: failure.technicalDetail }; });
     const save = vi.fn();
     const results = await runBulkStagingGeneration([{ id: '7588497a-6173-4144-864e-25bcab6b4011', name: 'Le repérage dans le temps et les durées' }], undefined, { generate, save });
-    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics.filter((d) => d.reason.includes('identiques après normalisation'))).toHaveLength(1);
     expect(results[0].status).toBe('failed');
     expect(results[0].failure).toMatchObject({ httpStatus: 422, failedLevel: 1, providerCalls: 1, requestId: 'req-multiplier' });
     expect(results[0].failure?.technicalDiagnostic).toContain('key_points[0].text et key_points[1].text');
