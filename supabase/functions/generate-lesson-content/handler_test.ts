@@ -87,6 +87,35 @@ test('four valid levels return 200 with providerCalls=4 and no database write', 
   assertEquals(calls.dbWrites, []);
 });
 
+test('geometry vocabulary summaries pass all four fake calls without writes', async () => {
+  const { status, body, calls } = await run(withLevel(1, (lesson) => {
+    lesson.sequence[0].content = 'Le rectangle est une figure plane à quatre côtés opposés égaux et à quatre angles droits.';
+    lesson.sequence[0].key_points = [{ label: 'Angles', text: 'Quatre angles droits.' }, { label: 'Sommets', text: 'Les coins se nomment A, B, C et D.' }];
+    lesson.sequence[1].content = 'Un triangle possède trois sommets et trois côtés. Un côté relie deux sommets.';
+    lesson.sequence[1].key_points = [{ label: 'Lien', text: 'Côté : relie deux sommets.' }, { label: 'Repérage', text: 'Les lettres A, B et C nomment les coins.' }];
+  }), 'geometry-vocabulary');
+  assertEquals(status, 200);
+  assertEquals(body.providerCalls, 4);
+  assertEquals(calls.provider, 4);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('real duplicate points stop at level one with strict 422 and no write or retry', async () => {
+  const { status, body, calls } = await run(withLevel(1, (lesson) => {
+    lesson.sequence[0].key_points = [
+      { label: 'A', text: 'Le rectangle possède quatre sommets.' },
+      { label: 'B', text: 'LE RECTANGLE possède quatre sommets !' },
+    ];
+  }), 'duplicate-points');
+  assertEquals(status, 422);
+  assertEquals(body.error.code, 'staging_level_validation_failed');
+  assertEquals(body.error.validationCategory, 'pedagogical');
+  assertEquals(body.error.level, 1);
+  assertEquals(body.error.providerCalls, 1);
+  assertEquals(calls.provider, 1);
+  assertEquals(calls.dbWrites, []);
+});
+
 test('successful response exposes the same request ID in JSON and headers', async () => {
   const calls = installFakes(valid);
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {

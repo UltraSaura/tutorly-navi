@@ -193,9 +193,7 @@ describe('staging level workflow', () => {
       expect.objectContaining({ path: 'prerequisites[1].expected_answer', message: 'Required value' }),
       expect.objectContaining({ path: 'prerequisites[1].expected_answer', message: 'Numeric prerequisite requires a numeric expected answer' }),
     ]));
-    expect(result.pedagogicalIssues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ path: 'sequence[1].key_points', message: expect.stringContaining('partagent trop de tokens') }),
-    ]));
+    expect(result.pedagogicalIssues.filter((issue) => issue.path === 'sequence[1].key_points')).toEqual([]);
     expect(candidate.prerequisites[1].expected_answer).toBeUndefined();
     expect(candidate.sequence[1].key_points[0].text).toContain('deux demi-droites');
   });
@@ -438,7 +436,7 @@ describe('staging level workflow', () => {
     const candidate = structuredClone(validLevel1) as any;
     candidate.sequence[0].key_points = [{ label: 'Résumé', text: candidate.sequence[0].content.split('.')[0] }];
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
-    expect(result.pedagogicalIssues.some((issue) => issue.path === 'sequence[0].key_points' && issue.message.includes('partagent trop de tokens'))).toBe(true);
+    expect(result.pedagogicalIssues.some((issue) => issue.path === 'sequence[0].key_points' && issue.message.includes('copié textuellement'))).toBe(true);
     expect(candidate.sequence[0].key_points[0].text).toContain('quadrilatère');
   });
 

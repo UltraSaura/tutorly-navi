@@ -148,12 +148,13 @@ describe('requested provider-free topic and failure matrix', () => {
     }
   });
 
-  it('keeps repeated explanatory content from becoming a validation failure after deterministic cleanup', () => {
+  it('keeps a textual explanation copy invalid even after legacy deterministic cleanup', () => {
     const repeated = topicFixture('CM2 — Fractions', 'fraction_bar', 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.', { parts: 4, filled: 1 });
     (repeated.sequence[0] as Record<string, unknown>).key_points = [{ label: 'Règle', text: 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.' }];
     (repeated.sequence[0] as Record<string, unknown>).takeaway = 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.';
     const result = runPipeline(JSON.stringify(repeated), 'CM2 — Fractions');
-    expect(result).toMatchObject({ success: true, providerCalls: 0 });
+    expect(result).toMatchObject({ success: false, providerCalls: 0 });
+    expect(result.qualityIssues).toEqual(expect.arrayContaining([expect.objectContaining({ message: expect.stringContaining('copié textuellement') })]));
     expect(result.compositionEvents?.length).toBeGreaterThan(0);
   });
 
