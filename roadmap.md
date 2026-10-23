@@ -1,7 +1,7 @@
 # Server-side key-point false positives
 
-- [ ] Reject only textual explanation copies, genuinely duplicate points and meaningless points; preserve geometry/time contracts and generation limits.
-- [ ] Run provider-free regression tests and deploy only generate-lesson-content to staging sibprjxhbxahouejygeu; no generation or data writes.
+- [x] Reject only complete textual explanation copies, genuinely duplicate points and meaningless points; preserve geometry/time contracts and generation limits.
+- [x] 815 Vitest and 18 mocked handler tests passed, automatic build OK and whitespace checks clean; deployed only generate-lesson-content to staging sibprjxhbxahouejygeu (source SHA-256 52c8227d25e6897a2dc9086527b71da091ca4c3b126525fdcbaa6e6357059a19). No generation or data writes.
 
 # Level 1 triangle instructions
 
