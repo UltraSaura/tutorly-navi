@@ -126,10 +126,10 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
   const keyPointDuplicates = keyPoints.flatMap((point, index) => {
     const diagnostic = keyPointContentOverlap(block.content, String(point.text ?? ''));
     const statement = normalizedStatement(point.text);
-    if (statement.split(' ').filter(Boolean).length < 2) {
+    if (statement.split(' ').filter(Boolean).length < 2 || statementWords(point.text).length === 0) {
       return [{ fieldA: `key_points[${index}]`, fieldB: `key_points[${index}]`, diagnostic, reason: `key_points[${index}].text est vide ou sans valeur pédagogique : fournir une phrase ou une relation significative, pas un mot isolé.` }];
     }
-    // Only a textual copy is forbidden here. Inferring the same fact from
+    // Only a complete textual statement copy is forbidden here. Inferring the same fact from
     // filtered tokens/subsequences mistakes ordinary geometry vocabulary for
     // plagiarism (e.g. "Un côté relie deux sommets" versus "côté : relie...").
     const source = normalizedStatement(block.content);

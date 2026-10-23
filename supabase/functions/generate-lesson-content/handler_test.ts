@@ -90,9 +90,9 @@ test('four valid levels return 200 with providerCalls=4 and no database write', 
 test('geometry vocabulary summaries pass all four fake calls without writes', async () => {
   const { status, body, calls } = await run(withLevel(1, (lesson) => {
     lesson.sequence[0].content = 'Le rectangle est une figure plane à quatre côtés opposés égaux et à quatre angles droits.';
-    lesson.sequence[0].key_points = [{ label: 'Angles', text: 'Quatre angles droits.' }];
+    lesson.sequence[0].key_points = [{ label: 'Angles', text: 'Quatre angles droits.' }, { label: 'Sommets', text: 'Les coins se nomment A, B, C et D.' }];
     lesson.sequence[1].content = 'Un triangle possède trois sommets et trois côtés. Un côté relie deux sommets.';
-    lesson.sequence[1].key_points = [{ label: 'Lien', text: 'Côté : relie deux sommets.' }];
+    lesson.sequence[1].key_points = [{ label: 'Lien', text: 'Côté : relie deux sommets.' }, { label: 'Repérage', text: 'Les lettres A, B et C nomment les coins.' }];
   }), 'geometry-vocabulary');
   assertEquals(status, 200);
   assertEquals(body.providerCalls, 4);
