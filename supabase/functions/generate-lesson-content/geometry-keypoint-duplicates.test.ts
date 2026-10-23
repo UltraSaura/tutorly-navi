@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { semanticDuplicationDiagnostics } from './pedagogical-quality';
-import { stagingFullLevelExample, stagingLevelMetadata, validateStagingLevel } from './staging-level-workflow';
+import { semanticDuplicationDiagnostics } from './pedagogical-quality.ts';
+import { stagingFullLevelExample, stagingLevelMetadata, validateStagingLevel } from './staging-level-workflow.ts';
 
 const distinctGeometryPoints = [
   { label: 'Nombre', text: 'Le rectangle possède quatre sommets.' },
