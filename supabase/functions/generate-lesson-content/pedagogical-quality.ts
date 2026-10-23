@@ -132,8 +132,9 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
     // Only a textual copy is forbidden here. Inferring the same fact from
     // filtered tokens/subsequences mistakes ordinary geometry vocabulary for
     // plagiarism (e.g. "Un côté relie deux sommets" versus "côté : relie...").
-    const source = ` ${normalizedStatement(block.content)} `;
-    if (!source.includes(` ${statement} `)) return [];
+    const source = normalizedStatement(block.content);
+    const sentences = String(block.content ?? '').split(/[.!?;]+/).map(normalizedStatement);
+    if (source !== statement && !sentences.includes(statement)) return [];
     return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: 'Le key_point est copié textuellement depuis l’explication.' }];
   });
   // Exact/normalized duplicates and near-identical complete statements. No raw
