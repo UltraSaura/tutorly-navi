@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { formatGenerationErrorDetails, generationErrorMessages, getGenerationErrorDetails, type GenerationErrorDetails } from './generationErrorMapping';
 import { geometryDraftLesson } from './geometryDraft';
 import { runBulkStagingGeneration, type BulkStagingProgress } from '@/services/bulkStagingLessonWorkflow';
+import { deriveBulkLessonStatus, type BulkLessonStatus } from './bulkLessonStatus';
 
 interface TopicRow {
   id: string;
@@ -121,6 +122,37 @@ export function BulkLessonGenerator() {
     enabled: open,
   });
 
+  const topicIds = useMemo(() => topics.map((topic) => topic.id), [topics]);
+  const { data: stagingVersions = [], isLoading: isLoadingStagingVersions } = useQuery({
+    queryKey: ['topic-lesson-versions-bulk-lesson', topicIds],
+    queryFn: async () => {
+      if (!topicIds.length) return [] as Array<{ topic_id: string; status: string }>;
+      const { data, error } = await (supabase as any)
+        .from('topic_lesson_versions')
+        .select('topic_id, status')
+        .in('topic_id', topicIds)
+        .in('status', ['draft', 'validated']);
+      if (error) throw error;
+      return (data ?? []) as Array<{ topic_id: string; status: string }>;
+    },
+    enabled: open && topicIds.length > 0,
+  });
+
+  const stagingStatusesByTopic = useMemo(() => {
+    const statuses = new Map<string, string[]>();
+    stagingVersions.forEach((version) => {
+      const current = statuses.get(version.topic_id) ?? [];
+      current.push(version.status);
+      statuses.set(version.topic_id, current);
+    });
+    return statuses;
+  }, [stagingVersions]);
+
+  const statusForTopic = (topic: TopicRow): BulkLessonStatus => deriveBulkLessonStatus({
+    lessonContent: topic.lesson_content,
+    stagingStatuses: stagingStatusesByTopic.get(topic.id) ?? [],
+  });
+
   const levels = useMemo(
     () => [...new Set(topics.map((t) => t.curriculum_level_code).filter(Boolean))].sort() as string[],
     [topics],
@@ -131,10 +163,10 @@ export function BulkLessonGenerator() {
       topics.filter((t) => {
         if (filterSubject !== 'all' && t.curriculum_subject_id !== filterSubject) return false;
         if (filterLevel !== 'all' && t.curriculum_level_code !== filterLevel) return false;
-        if (onlyMissing && t.lesson_content) return false;
+        if (onlyMissing && statusForTopic(t) !== 'none') return false;
         return true;
       }),
-    [topics, filterSubject, filterLevel, onlyMissing],
+    [topics, filterSubject, filterLevel, onlyMissing, stagingStatusesByTopic],
   );
 
   const toggle = (id: string) => {
@@ -429,7 +461,7 @@ export function BulkLessonGenerator() {
 
             <div className="flex gap-3 text-xs">
               <button
-                onClick={() => setSelected(visible.filter((t) => !t.lesson_content).map((t) => t.id))}
+                onClick={() => setSelected(visible.filter((t) => statusForTopic(t) === 'none').map((t) => t.id))}
                 className="text-primary hover:underline"
               >
                 {ui("Sélectionner sans leçon")}
@@ -445,7 +477,7 @@ export function BulkLessonGenerator() {
             </div>
 
             <div className="min-h-0 flex-1 divide-y overflow-y-auto rounded-lg border">
-              {isLoading ? (
+              {isLoading || isLoadingStagingVersions ? (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
@@ -466,10 +498,14 @@ export function BulkLessonGenerator() {
                           {topic.curriculum_level_code}
                         </Badge>
                       )}
-                      {topic.lesson_content ? (
+                      {statusForTopic(topic) === 'staging' ? (
+                        <Badge className="h-5 border-blue-200 bg-blue-50 text-xs text-blue-700 hover:bg-blue-50">
+                          {ui("Brouillon staging")}
+                        </Badge>
+                      ) : topic.lesson_content ? (
                         <>
                           <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
-                            {ui("Leçon ✓")}
+                            {ui("Leçon publiée")}
                           </Badge>
                           {showLegacyControls && <button
                             onClick={(e) => handleDeleteOne(topic.id, e)}
@@ -484,7 +520,7 @@ export function BulkLessonGenerator() {
                         </>
                       ) : (
                         <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
-                          {ui("Pas de leçon")}
+                          {ui("Aucune version")}
                         </Badge>
                       )}
                     </div>
