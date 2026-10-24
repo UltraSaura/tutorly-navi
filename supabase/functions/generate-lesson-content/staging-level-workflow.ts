@@ -1,7 +1,7 @@
 import { ANSWER_TYPE_VALUES, validateLessonV21 } from './lesson-v21-contract.ts';
 import { pedagogicalIssues, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
-import { parseProviderJsonSafely } from './provider-json.ts';
+import { parseProviderJsonSafely, type ProviderResponseDiagnostics } from './provider-json.ts';
 
 export type StagingLevelMetadata = {
   id: string;
@@ -19,6 +19,7 @@ export type StagingLevelProgress = {
   status: 'complete' | 'failed';
   providerCalls: number;
   retryCount?: number;
+  retryCategory?: string;
   parseStage?: string;
   tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number };
   build?: string;
@@ -80,7 +81,7 @@ export class StagingLevelContractError extends Error {
 }
 
 export class StagingLevelJsonParseError extends Error {
-  constructor(public readonly category: string) {
+  constructor(public readonly category: string, public readonly providerDiagnostics?: ProviderResponseDiagnostics) {
     super('staging_level_json_parse_failed: ' + category);
     this.name = 'StagingLevelJsonParseError';
   }
@@ -89,17 +90,19 @@ export class StagingLevelJsonParseError extends Error {
 export async function runWithBoundedJsonRetry<T>(
   call: (attempt: number) => Promise<T>,
   onRetry?: (retryCount: number, error: StagingLevelJsonParseError) => void,
-): Promise<{ value: T; retryCount: number }> {
+): Promise<{ value: T; retryCount: number; retryCategory?: string }> {
   let retryCount = 0;
+  let retryCategory: string | undefined;
   while (true) {
     try {
-      return { value: await call(retryCount), retryCount };
+      return { value: await call(retryCount), retryCount, ...(retryCategory ? { retryCategory } : {}) };
     } catch (error) {
       if (!(error instanceof StagingLevelJsonParseError) || retryCount >= 1) {
         if (error instanceof StagingLevelJsonParseError) Object.assign(error, { retryCount, parseStage: error.category });
         throw error;
       }
       retryCount += 1;
+      retryCategory = error.category;
       onRetry?.(retryCount, error);
     }
   }
@@ -128,8 +131,9 @@ const object = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 
 export const STAGING_LEVEL_COUNT = 4;
-export const STAGING_LEVEL_MAX_TOKENS = 3600;
+export const STAGING_LEVEL_MAX_TOKENS = 4096;
 export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v2';
+export const STAGING_JSON_OUTPUT_RULE = 'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau complet pour ce niveau; aucune fence Markdown (pas de ```json), aucun texte avant/après, aucun second objet JSON, aucun tableau racine ni wrapper. Respecte exactement le schéma demandé et arrête-toi après la dernière accolade.';
 
 const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 
@@ -391,7 +395,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'Objectifs autorisés: ' + (objectiveText || 'aucun objectif précisé'),
     required,
     levelOneGeometryCoverage,
-    'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau pour CE niveau. Aucun texte avant ou après, aucune fence Markdown (pas de ```json), aucune explication hors JSON, aucun second objet JSON, aucun tableau racine et aucun wrapper lesson supplémentaire. Le mode response_format=json_object est actif; respecte-le et arrête la réponse dès la dernière accolade fermante.',
+    STAGING_JSON_OUTPUT_RULE + ' Le mode response_format={"type":"json_object"} est actif.',
     'Le JSON doit contenir lesson_goal, success_criteria, prerequisites, sequence, misconceptions et mastery.',
     'sequence doit contenir exactement cinq blocs, dans cet ordre et avec ces types: concept, concept, guided_example, student_try, mastery_check.',
     'Chaque bloc doit contenir son propre id non vide, type canonique et content: une chaîne destinée à l’élève, non vide après trim. Aucun bloc ne peut contenir uniquement des métadonnées, une question ou des réponses sans content. Ne laisse jamais le compilateur inventer un id, un type ou du contenu.',
@@ -416,7 +420,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'Exemple complet des cinq blocs et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelExample(metadata)),
     'La sequence doit contenir deux explications concises illustrées, un exemple guidé, une question interactive avant mastery_check, un contrôle de compréhension, un takeaway et les métadonnées de maîtrise.',
     levelOneGeometryCoverage,
-    'Ne dis jamais «voir la figure». JSON strict, sans Markdown.'
+    'Ne dis jamais «voir la figure».'
   ].join('\n');
 }
 
@@ -563,8 +567,8 @@ export function classifyGenerationFailure(error: unknown, stagingStage?: string)
     return { status: 422, code: 'staging_level_validation_failed', message: 'A staging level failed canonical, pedagogical, or geometry validation.', stage: 'level_validation' };
   }
   if (/^staging_assembly_/.test(detail)) return { status: 422, code: 'staging_assembly_validation_failed', message: 'The assembled staging lesson failed validation.', stage: 'assembly_validation' };
-  if (/staging_level_json_parse_failed|provider JSON|malformed JSON|malformed_json|ambiguous_json/i.test(detail)) return { status: 502, code: 'provider_malformed_json', message: 'The AI provider returned malformed or ambiguous JSON.', stage: 'provider_parse' };
-  if (/provider_output_truncated|finish_reason=length/.test(detail)) return { status: 502, code: 'provider_output_truncated', message: 'The AI provider output was truncated.', stage: 'provider_call' };
+  if (/staging_level_json_parse_failed: truncated|provider_output_truncated|finish_reason=length/i.test(detail)) return { status: 502, code: 'provider_output_truncated', message: 'The AI provider output was truncated.', stage: 'provider_parse' };
+  if (/staging_level_json_parse_failed|provider JSON|malformed JSON|malformed_json|ambiguous_json|empty/i.test(detail)) return { status: 502, code: 'provider_malformed_json', message: 'The AI provider returned malformed or ambiguous JSON.', stage: 'provider_parse' };
   if (/staging_level_provider_unavailable/.test(detail)) return { status: 502, code: 'provider_unavailable', message: 'The AI provider could not be reached.', stage: 'provider_call' };
   if (/staging_level_provider_http_|AI generation failed|provider/i.test(detail)) return { status: 502, code: 'provider_error', message: 'The AI provider failed to generate content.', stage: 'provider_call' };
   if (/timeout|timed out/i.test(detail)) return { status: 502, code: 'timeout', message: 'The AI provider timed out.', stage: 'provider_call' };

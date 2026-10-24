@@ -10,6 +10,7 @@ export type ProviderResponseDiagnostics = {
   finishReason: string | null;
   contentPresent: boolean;
   contentNonEmpty: boolean;
+  contentLength: number;
   contentSha256: string | null;
   parseState: string;
 };
@@ -58,6 +59,7 @@ export async function buildProviderResponseDiagnostics(input: {
     finishReason: typeof metadata?.finishReason === 'string' ? metadata.finishReason : null,
     contentPresent,
     contentNonEmpty: contentText !== null && contentText.trim().length > 0,
+    contentLength: contentText?.length ?? 0,
     contentSha256: contentText === null ? null : await sha256Hex(contentText),
     parseState: input.parseState,
   };

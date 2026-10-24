@@ -350,7 +350,8 @@ JSON shape:
             isExercise,
             requestExplanation,
             maxTokens,
-            requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined
+            requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined,
+            requestMode === 'lessonGeneration' ? 0 : undefined
           );
           break;
         case 'Anthropic':
@@ -392,7 +393,8 @@ JSON shape:
             isExercise,
             requestExplanation,
             maxTokens,
-            requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined
+            requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined,
+            requestMode === 'lessonGeneration' ? 0 : undefined
           );
           break;
         case 'xAI':

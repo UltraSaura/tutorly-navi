@@ -212,12 +212,15 @@ test('level-one triangle omission returns strict 422 after one fake call with no
   assertEquals(calls.dbWrites, []);
 });
 
-test('truncated provider output returns 502 provider_output_truncated', async () => {
+test('truncated provider output gets one bounded retry and then returns 502', async () => {
   const { status, body, calls } = await run(() => ({ content: stagingFullLevelExample(levels[0]), finishReason: 'length' }));
   assertEquals(status, 502);
   assertEquals(body.error.code, 'provider_output_truncated');
   assertEquals(body.error.level, 1);
-  assertEquals(calls.provider, 1);
+  assertEquals(body.error.retryCount, 1);
+  assertEquals(body.error.parseStage, 'truncated');
+  assertEquals(body.error.providerDiagnostics.parseState, 'truncated');
+  assertEquals(calls.provider, 2);
   assertEquals(calls.dbWrites, []);
 });
 
@@ -228,6 +231,7 @@ test('malformed provider JSON is retried once and still fails safely', async () 
   assertEquals(body.error.level, 1);
   assertEquals(body.error.retryCount, 1);
   assertEquals(body.error.parseStage, 'malformed_json');
+  assertEquals(body.error.providerDiagnostics.parseState, 'malformed_json');
   assertEquals(calls.provider, 2);
   assertEquals(calls.dbWrites, []);
 });
@@ -247,7 +251,7 @@ test('one malformed provider response followed by valid JSON succeeds after one 
   assertEquals(body.progress[0].providerCalls, 2);
   assertEquals(body.progress[0].retryCount, 1);
   assertEquals(body.progress[0].parseStage, 'valid_json_after_bounded_retry');
-  assertEquals(body.progress[0].diagnostics[0], 'initial_response_parse_failed; bounded_json_retry_succeeded');
+  assertEquals(body.progress[0].diagnostics[0], 'initial_malformed_json_retry_succeeded');
   assertEquals(calls.provider, 5);
   assertEquals(calls.dbWrites, []);
 });
