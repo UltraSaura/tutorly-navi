@@ -25,12 +25,13 @@ describe('decimal-topic JSON syntax (provider-free)', () => {
     expect(parseProviderJsonSafely('{"expected_answer":"2,75","choices":["2,75","2,57"]}')).toMatchObject({ ok: true });
   });
 
-  it('reports the exact position and excerpt of the syntax error', async () => {
+  it('reports only the exact position and safe metadata, never an excerpt', async () => {
     const description = describeJsonSyntaxError(frenchDecimalNumber);
     expect(description?.position).toBe(frenchDecimalNumber.indexOf(',75}') + 1);
-    expect(description?.context).toContain('"expected_answer":2,⟦ICI⟧75');
+    expect(description).not.toHaveProperty('context');
     const diagnostics = await buildProviderResponseDiagnostics({ httpStatus: 200, contentType: 'application/json', bodyText: '{}', envelope: {}, content: frenchDecimalNumber, parseState: 'malformed_json' });
-    expect(diagnostics.syntaxError?.context).toContain('⟦ICI⟧');
+    expect(diagnostics.syntaxError).toMatchObject({ position: description?.position });
+    expect(diagnostics.syntaxError).not.toHaveProperty('context');
   });
 
   it('does not attach a syntax error to valid JSON', async () => {
@@ -53,7 +54,30 @@ describe('concept key order prevents dropped closing braces (provider-free)', ()
   it('keeps the observed provider failure (one missing brace before the next block) strictly invalid', () => {
     const broken = '{"sequence":[{"id":"c2","type":"concept","key_points":[],"visual":{"kind":"rectangle","data":{"side_labels":[{"from":"D","to":"A","label":"1 dixième"}]}},{"id":"g1","type":"guided_example","content":"x"}]}';
     expect(parseProviderJsonSafely(broken)).toMatchObject({ ok: false, category: 'malformed_json' });
-    expect(describeJsonSyntaxError(broken)?.context).toContain('}]}},⟦ICI⟧{"id":"g1"');
+    expect(describeJsonSyntaxError(broken)?.position).toBeTypeOf('number');
+    expect(describeJsonSyntaxError(broken)?.position).toBeLessThan(broken.length);
+    expect(describeJsonSyntaxError(broken)).not.toHaveProperty('context');
+  });
+
+  it('reproduces the observed premature close before guided_example with finishReason=stop', async () => {
+    const malformed = '{"sequence":[{"id":"c1","type":"concept","content":"Une fraction décimale se lit avec une virgule.","visual":{"kind":"rectangle","data":{"side_labels":[{"from":"D","to":"A","label":"1 dixième"}]}},{"id":"g1","type":"guided_example","content":"x"}]}';
+    const parsed = parseProviderJsonSafely(malformed);
+    expect(parsed).toMatchObject({ ok: false, category: 'malformed_json' });
+    const diagnostics = await buildProviderResponseDiagnostics({
+      httpStatus: 200,
+      contentType: 'application/json',
+      bodyText: JSON.stringify({ content: malformed, providerMetadata: { finishReason: 'stop', choiceCount: 1 } }),
+      envelope: { providerMetadata: { finishReason: 'stop', choiceCount: 1 } },
+      content: malformed,
+      parseState: 'malformed_json',
+    });
+    expect(diagnostics.finishReason).toBe('stop');
+    expect(diagnostics.parseState).toBe('malformed_json');
+    expect(diagnostics.contentLength).toBe(malformed.length);
+    expect(diagnostics.contentSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(diagnostics.syntaxError?.position).toBeTypeOf('number');
+    expect(diagnostics.syntaxError).not.toHaveProperty('context');
+    expect(JSON.stringify(diagnostics)).not.toContain('guided_example');
   });
 
   it('shows every concept example with visual right after content and takeaway last', () => {
