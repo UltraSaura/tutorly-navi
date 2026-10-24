@@ -132,8 +132,9 @@ const object = (value: unknown): Record<string, unknown> | null =>
 
 export const STAGING_LEVEL_COUNT = 4;
 export const STAGING_LEVEL_MAX_TOKENS = 4096;
-export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v2';
-export const STAGING_JSON_OUTPUT_RULE = 'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau complet pour ce niveau; aucune fence Markdown (pas de ```json), aucun texte avant/après, aucun second objet JSON, aucun tableau racine ni wrapper. Respecte exactement le schéma demandé et arrête-toi après la dernière accolade.';
+export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v3-json-syntax';
+export const STAGING_JSON_SYNTAX_RULE = 'SYNTAXE JSON STRICTE: un nombre JSON (expected_answer, correct_answer, radius, degrees, x, y, factor…) s’écrit TOUJOURS avec un point décimal et sans espace: 0.5, 2.75, 12 — JAMAIS 0,5, 2,75, 1 000, .5 ni 05. La virgule décimale française (« 2,75 ») n’est autorisée qu’À L’INTÉRIEUR d’une chaîne entre guillemets, par exemple "2,75". Si une réponse décimale doit s’afficher avec une virgule, mets-la en chaîne: "expected_answer":"2,75" (et la même chaîne dans choices). Dans le texte, n’écris jamais de guillemet droit " non échappé: utilise « » ou \\". N’utilise aucune barre oblique inverse (pas de LaTeX comme \\frac ou \\times): écris « × », « ÷ », « 3/4 ». Aucune virgule finale avant } ou ], aucun commentaire, aucun NaN/Infinity.';
+export const STAGING_JSON_OUTPUT_RULE = 'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau complet pour ce niveau; aucune fence Markdown (pas de ```json), aucun texte avant/après, aucun second objet JSON, aucun tableau racine ni wrapper. Respecte exactement le schéma demandé et arrête-toi après la dernière accolade. ' + STAGING_JSON_SYNTAX_RULE;
 
 const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 

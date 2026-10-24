@@ -81,7 +81,7 @@ test('four valid levels return 200 with providerCalls=4 and no database write', 
   assertEquals(body.progress[0].validation.prerequisiteValid, true);
   assertEquals(body.progress[0].validation.interactionValid, true);
   assertEquals(body.progress[0].requestId, 'req-1');
-  assertEquals(body.progress[0].promptVersion, 'staging-v21-prerequisite-contract-v2');
+  assertEquals(body.progress[0].promptVersion, 'staging-v21-prerequisite-contract-v3-json-syntax');
   assert(typeof body.progress[0].build === 'string');
   assertEquals(body.lesson_content.levels.length, 4);
   assertEquals(calls.dbWrites, []);
@@ -238,12 +238,13 @@ test('malformed provider JSON is retried once and still fails safely', async () 
 
 test('one malformed provider response followed by valid JSON succeeds after one bounded retry', async () => {
   let first = true;
-  const { status, body, calls } = await run((level) => {
+  // The fake receives the provider call number; after the retry, call N carries level N - 1.
+  const { status, body, calls } = await run((call) => {
     if (first) {
       first = false;
       return { content: '{"lesson_goal":"truncated","sequence":[' };
     }
-    return valid(level);
+    return valid(call - 1);
   }, 'bounded-retry-success');
   assertEquals(status, 200);
   assertEquals(body.providerCalls, 5);
@@ -270,15 +271,17 @@ test('valid quoted JSON at level 4 completes exactly four fake calls without wri
 });
 
 test('genuinely malformed JSON at level 4 stops after the one retry without partial writes', async () => {
-  const { status, body, calls } = await run((level) => level === 4
+  // Calls 4 and 5 are the level-4 attempt and its single bounded retry.
+  const { status, body, calls } = await run((call) => call >= 4
     ? { content: '{"lesson_goal":"incomplete","sequence":[' }
-    : valid(level), 'level-four-malformed');
+    : valid(call), 'level-four-malformed');
   assertEquals(status, 502);
   assertEquals(body.error.code, 'provider_malformed_json');
   assertEquals(body.error.level, 4);
   assertEquals(body.error.stage, 'provider_parse');
   assertEquals(body.error.requestId, 'level-four-malformed');
-  assertEquals(body.error.technicalDetail, 'staging_level_json_parse_failed: malformed_json');
+  assertEquals(body.error.technicalDetail, 'staging_level_json_parse_failed: malformed_json · Unexpected end of JSON input · près de: {"lesson_goal":"incomplete","sequence":[⟦ICI⟧');
+  assertEquals(body.error.providerDiagnostics.syntaxError.position, 40);
   assertEquals(body.error.providerCalls, 5);
   assertEquals(body.error.retryCount, 1);
   assertEquals(calls.provider, 5);
