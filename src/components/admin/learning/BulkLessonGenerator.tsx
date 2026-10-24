@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
-import { formatGenerationErrorDetails, generationErrorMessages, getGenerationErrorDetails, type GenerationErrorDetails } from './generationErrorMapping';
+import { formatGenerationErrorDetails, formatProviderDiagnostics, generationErrorMessages, getGenerationErrorDetails, type GenerationErrorDetails } from './generationErrorMapping';
 import { geometryDraftLesson } from './geometryDraft';
 import { runBulkStagingGeneration, type BulkStagingProgress } from '@/services/bulkStagingLessonWorkflow';
 import { deriveBulkLessonStatus, type BulkLessonStatus } from './bulkLessonStatus';
@@ -44,6 +44,7 @@ interface GenResult {
   httpStatus?: number;
   errorCode?: string;
   requestId?: string;
+  providerDiagnostics?: GenerationErrorDetails['providerDiagnostics'];
 }
 
 async function getFunctionErrorDetails(err: unknown, response?: Response): Promise<GenerationErrorDetails> {
@@ -239,6 +240,7 @@ export function BulkLessonGenerator() {
           httpStatus: workflowResult.failure?.httpStatus,
           errorCode: workflowResult.failure?.code,
           requestId: workflowResult.failure?.requestId,
+          providerDiagnostics: workflowResult.failure?.providerDiagnostics,
         };
       }));
     } catch (err) {
@@ -254,6 +256,7 @@ export function BulkLessonGenerator() {
         httpStatus: details.httpStatus,
         errorCode: details.code,
         requestId: details.requestId,
+        providerDiagnostics: details.providerDiagnostics,
       } : result));
     }
 
@@ -357,6 +360,7 @@ export function BulkLessonGenerator() {
                   message: r.error,
                   technicalDetail: r.technicalDetail,
                   stage: r.failureStage,
+                  providerDiagnostics: r.providerDiagnostics,
                 }) : undefined;
                 const visibleErrorMessage = formattedErrorMessage &&
                   typeof formattedErrorMessage === 'string' &&
@@ -385,7 +389,7 @@ export function BulkLessonGenerator() {
                   {r.progress && <span className="text-xs text-muted-foreground">Topic {r.progress.topicIndex} of {r.progress.totalTopics} · Level {r.progress.level} of 4 · Provider calls: {r.providerCalls ?? 0} · Status: {r.progress.status}</span>}
                   {r.status === 'failed' && <span className="text-xs text-red-500">{r.topicId} · Level {r.failedLevel ?? '?'} · {r.failureStage ?? 'failed'}{r.httpStatus ? ` · HTTP ${r.httpStatus}` : ''}</span>}
                   {visibleErrorMessage && <span title={r.technicalDetail ?? visibleErrorMessage} className="max-w-[360px] break-words text-right text-xs text-red-500">{visibleErrorMessage}</span>}
-                  {r.status === 'failed' && <span className="max-w-[360px] break-words text-right text-[11px] text-muted-foreground">{[r.errorCode, r.requestId, `providerCalls=${r.providerCalls ?? 0}`, r.technicalDetail].filter(Boolean).join(' · ')}</span>}
+                  {r.status === 'failed' && <span className="max-w-[360px] break-words text-right text-[11px] text-muted-foreground">{[r.errorCode, r.requestId, `providerCalls=${r.providerCalls ?? 0}`, r.technicalDetail, r.providerDiagnostics && `provider=${formatProviderDiagnostics(r.providerDiagnostics)}`].filter(Boolean).join(' · ')}</span>}
                 </div>
                 );
               })}

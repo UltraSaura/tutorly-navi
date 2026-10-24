@@ -51,6 +51,8 @@ describe('lesson generation AI request', () => {
     expect(source).toContain('STAGING_JSON_OUTPUT_RULE');
     expect(source).toContain('maxTokens: STAGING_LEVEL_MAX_TOKENS');
     expect(source).toContain('response_format');
+    expect(source).toContain("customPrompt: 'Use response_format={\"type\":\"json_object\"}.");
+    expect(source).not.toContain('customPrompt: `${STAGING_JSON_OUTPUT_RULE}');
   });
 });
 

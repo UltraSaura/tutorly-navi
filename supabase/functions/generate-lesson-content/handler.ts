@@ -612,7 +612,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message, modelId, history: [], language, maxTokens: STAGING_LEVEL_MAX_TOKENS,
-          customPrompt: `${STAGING_JSON_OUTPUT_RULE} response_format={"type":"json_object"} is enabled.`,
+          customPrompt: 'Use response_format={"type":"json_object"}. Return one complete JSON object for this level only; no prose, Markdown, second object, array root, or wrapper.',
           isUnified: true, requestMode: 'lessonGeneration',
           userContext: { grade_level: rawLevel, age_group: ageGroup, curriculum, country: countryLabel, response_language: responseLang, learning_style: 'visual', format: 'json' },
         }),

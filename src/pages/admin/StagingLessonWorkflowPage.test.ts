@@ -55,7 +55,7 @@ describe('independent staging lesson-version workflow', () => {
     const results = await runBulkStagingGeneration([{ id: 'bad', name: 'Bad' }, { id: 'good', name: 'Good' }], undefined, {
       generate: async (id) => id === 'bad'
         ? Promise.reject({ code: 'level_validation_failed', message: 'Bad level', technicalDetail: 'exact diagnostic', stage: 'validation_failure', providerCalls: 1, level: 2 })
-        : Promise.resolve({ success: true, lesson_content: storedGeometryVisualFixture, topic_id: id, providerCalls: 4, canonicalValid: true, pedagogicalValid: true, geometryValid: true }),
+        : Promise.resolve({ success: true, lesson_content: storedGeometryVisualFixture, topic_id: id, providerCalls: 4, canonicalValid: true, pedagogicalValid: true, geometryValid: true, levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })) }),
       validate: () => ({ canonicalValid: true, pedagogicalValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] }),
       save: async (id) => ({ id: `draft-${id}` } as any),
     });

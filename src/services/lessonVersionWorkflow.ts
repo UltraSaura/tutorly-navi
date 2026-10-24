@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { getGenerationErrorDetails, getGenerationErrorTechnicalDetail } from '@/components/admin/learning/generationErrorMapping';
+import { getGenerationErrorDetails } from '@/components/admin/learning/generationErrorMapping';
 import { validateLessonV21, type ContractIssue } from '@/types/lesson-v21-contract';
 
 export const LESSON_VERSION_STATUSES = ['draft', 'validated', 'published', 'rejected'] as const;
@@ -212,6 +212,68 @@ export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
 export const FIXTURE_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'] as const;
 export const STAGING_BROWSER_TIMEOUT_MS = 120_000;
 
+export type StagingLevelResult = {
+  level: number;
+  status: string;
+  providerCalls: number;
+  retryCount?: number;
+  retryCategory?: string;
+  parseStage?: string;
+  tokenUsage?: unknown;
+  build?: string;
+  promptVersion?: string;
+  requestId?: string;
+  validation?: Record<string, unknown>;
+  diagnostics?: string[];
+};
+
+/**
+ * Validate the all-or-nothing response envelope before any draft save. A
+ * successful JSON retry is counted in the level result and in the aggregate;
+ * it is not an extra workflow level and must not be rejected.
+ */
+export function validateStagingGenerationEnvelope(data: unknown): {
+  providerCalls: number;
+  levelResults: StagingLevelResult[];
+} {
+  const value = object(data);
+  const rawResults = Array.isArray(value?.levelResults)
+    ? value.levelResults
+    : Array.isArray(value?.progress) ? value.progress : [];
+  const levelResults = rawResults.filter((entry): entry is StagingLevelResult => {
+    const item = object(entry);
+    return !!item && typeof item.level === 'number' && Number.isInteger(item.level);
+  });
+  const missingLevels = [1, 2, 3, 4].filter((level) => !levelResults.some((entry) => entry.level === level));
+  const incompleteLevels = levelResults
+    .filter((entry) => [1, 2, 3, 4].includes(entry.level) && entry.status !== 'complete')
+    .map((entry) => entry.level);
+  const invalidLevelCalls = levelResults
+    .filter((entry) => [1, 2, 3, 4].includes(entry.level) && (!Number.isInteger(entry.providerCalls) || entry.providerCalls < 1))
+    .map((entry) => entry.level);
+  const providerCalls = value && Number.isInteger(value.providerCalls) ? Number(value.providerCalls) : NaN;
+  const expectedProviderCalls = levelResults
+    .filter((entry) => [1, 2, 3, 4].includes(entry.level))
+    .reduce((total, entry) => total + entry.providerCalls, 0);
+  if (!value?.success || !value.lesson_content || missingLevels.length || incompleteLevels.length || invalidLevelCalls.length || !Number.isInteger(providerCalls) || providerCalls < STAGING_LEVEL_COUNT || providerCalls !== expectedProviderCalls) {
+    const technicalDetail = [
+      missingLevels.length ? `missing levels: ${missingLevels.join(', ')}` : undefined,
+      incompleteLevels.length ? `incomplete levels: ${incompleteLevels.join(', ')}` : undefined,
+      invalidLevelCalls.length ? `invalid per-level providerCalls at levels: ${invalidLevelCalls.join(', ')}` : undefined,
+      !Number.isInteger(providerCalls) || providerCalls < STAGING_LEVEL_COUNT ? `providerCalls must be at least ${STAGING_LEVEL_COUNT}; received ${String(value?.providerCalls)}` : undefined,
+      Number.isInteger(providerCalls) && providerCalls !== expectedProviderCalls ? `providerCalls must equal the per-level sum ${expectedProviderCalls}; received ${providerCalls}` : undefined,
+    ].filter(Boolean).join('; ');
+    throw Object.assign(new Error(`The staging generation response was incomplete or inconsistent. ${technicalDetail}`), {
+      code: 'staging_generation_envelope_invalid',
+      stage: 'response_parsing',
+      technicalDetail,
+      providerCalls: Number.isFinite(providerCalls) ? providerCalls : 0,
+      databaseWrite: false,
+    });
+  }
+  return { providerCalls, levelResults: [1, 2, 3, 4].map((level) => levelResults.find((entry) => entry.level === level)!) };
+}
+
 export function withStagingBrowserTimeout<T>(promise: Promise<T>, timeoutMs = STAGING_BROWSER_TIMEOUT_MS): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = globalThis.setTimeout(() => reject(new Error('staging_browser_timeout')), timeoutMs);
@@ -309,42 +371,9 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       failureStage: details.stage,
     });
   }
-  // Staging generation makes one provider request per level (the server
-  // validates each level and the assembled lesson), so providerCalls is the
-  // number of levels, not 1. A successful response must report exactly one
-  // call per level; anything else means the run was partial or unexpected.
-  const providerCalls = Number(data?.providerCalls);
-  if (!data?.success || !data.lesson_content || !Number.isInteger(providerCalls) || providerCalls < 1) {
-    const technicalDetail = getGenerationErrorTechnicalDetail(data)
-      ?? (data?.success && data?.lesson_content ? `Unexpected providerCalls value: ${String(data?.providerCalls)}` : undefined);
-    const details = getGenerationErrorDetails({
-      ...(data ?? {}),
-      code: data?.code ?? 'malformed_response',
-      message: data?.message ?? 'The generation response was malformed or incomplete.',
-      technicalDetail,
-      stage: data?.stage ?? 'response_parsing',
-      providerCalls: Number(data?.providerCalls) || 0,
-    });
-    const errorMessage = technicalDetail ? `${details.message}\n${technicalDetail}` : details.message;
-    throw Object.assign(new Error(errorMessage), {
-      ...details,
-      message: errorMessage,
-      providerCalls: details.providerCalls ?? 0,
-      failedLevel: details.level,
-      failureStage: details.stage,
-    });
-  }
-  if (providerCalls !== STAGING_LEVEL_COUNT) {
-    throw Object.assign(new Error(`The generation reported ${providerCalls} provider calls instead of exactly ${STAGING_LEVEL_COUNT} (one per level). The draft was not saved.`), {
-      code: 'staging_provider_call_count_invalid',
-      stage: 'response_parsing',
-      technicalDetail: `expected ${STAGING_LEVEL_COUNT} provider calls (one per level), received ${providerCalls}`,
-      providerCalls,
-      requestId: data?.requestId,
-    });
-  }
+  const { providerCalls, levelResults } = validateStagingGenerationEnvelope(data);
   assertReturnedTopicMatches(requested, data.topic_id);
-  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
+  return { ...data, providerCalls, levelResults, progress: data.progress ?? levelResults } as { lesson_content: unknown; topic_id: string; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults: StagingLevelResult[]; progress: StagingLevelResult[] };
 }
 
 export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind): Promise<LessonVersion> {

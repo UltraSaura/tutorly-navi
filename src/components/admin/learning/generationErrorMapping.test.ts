@@ -108,4 +108,41 @@ describe('generation error mapping', () => {
     expect(retried).toContain('retryCount=1');
     expect(retried).toContain('parseStage=ambiguous_json');
   });
+
+  it('preserves safe provider diagnostics without exposing provider content or tokens', () => {
+    const payload = {
+      httpStatus: 502,
+      error: {
+        code: 'provider_malformed_json',
+        message: 'The provider response could not be parsed.',
+        providerDiagnostics: {
+          finishReason: 'stop',
+          contentLength: 42,
+          choiceCount: 1,
+          parseState: 'malformed_json',
+          bodyLength: 128,
+          content: '{"secretLesson":"do not show"}',
+          tokens: ['do-not-show'],
+          syntaxError: { message: 'Unexpected token', position: 17, raw: 'secret' },
+        },
+      },
+    };
+    const details = getGenerationErrorDetails(payload);
+    expect(details.providerDiagnostics).toEqual({
+      finishReason: 'stop',
+      contentLength: 42,
+      choiceCount: 1,
+      parseState: 'malformed_json',
+      bodyLength: 128,
+      syntaxError: { message: 'Unexpected token', position: 17 },
+    });
+    const visible = formatAdminGenerationError(payload);
+    expect(visible).toContain('finishReason=stop');
+    expect(visible).toContain('contentLength=42');
+    expect(visible).toContain('choiceCount=1');
+    expect(visible).toContain('parseState=malformed_json');
+    expect(visible).toContain('syntaxPosition=17');
+    expect(visible).not.toContain('secretLesson');
+    expect(visible).not.toContain('do-not-show');
+  });
 });

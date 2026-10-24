@@ -4,7 +4,7 @@ import { runBulkStagingGeneration, validateBulkTopicIds } from './bulkStagingLes
 import { semanticDuplicationDiagnostics } from '../../supabase/functions/generate-lesson-content/pedagogical-quality';
 import { stagingValidationFailure } from '../../supabase/functions/generate-lesson-content/staging-level-workflow';
 
-const generated = (topicId: string, providerCalls = 4) => ({
+const generated = (topicId: string, providerCalls = 4, calls = [1, 1, 1, 1]) => ({
   success: true,
   lesson_content: geometryDraftLesson,
   topic_id: topicId,
@@ -12,6 +12,7 @@ const generated = (topicId: string, providerCalls = 4) => ({
   canonicalValid: true as const,
   pedagogicalValid: true as const,
   geometryValid: true as const,
+  levelResults: calls.map((levelCalls, index) => ({ level: index + 1, status: 'complete' as const, providerCalls: levelCalls, retryCount: levelCalls - 1, canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, geometryValid: true, interactionValid: true })),
 });
 
 const valid = () => ({ canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, interactionValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
@@ -172,6 +173,36 @@ describe('bulk staging lesson workflow', () => {
     const results = await runBulkStagingGeneration([{ id: 'aires-topic', name: 'Aires' }], undefined, { generate, save, validate: valid });
     expect(results[0]).toMatchObject({ status: 'saved', providerCalls: 4, build: 'practice-v21-compiler-1', promptVersion: 'staging-v21-prerequisite-contract-v2', requestId: 'req-topic', levelResults });
     expect(generate).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts a successful bounded retry and sums calls across levels', async () => {
+    const save = vi.fn(async (id: string) => ({ id } as any));
+    const results = await runBulkStagingGeneration([{ id: 'retry-topic', name: 'Fractions' }], undefined, {
+      generate: async (id) => generated(id, 5, [2, 1, 1, 1]),
+      save,
+      validate: valid,
+    });
+    expect(results[0]).toMatchObject({ status: 'saved', providerCalls: 5 });
+    expect(results[0].levelResults?.[0]).toMatchObject({ providerCalls: 2, retryCount: 1 });
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts retries on two different levels and rejects an incomplete envelope without saving', async () => {
+    const save = vi.fn(async (id: string) => ({ id } as any));
+    const retried = await runBulkStagingGeneration([{ id: 'retry-topic', name: 'Fractions' }], undefined, {
+      generate: async (id) => generated(id, 6, [2, 2, 1, 1]),
+      save,
+      validate: valid,
+    });
+    expect(retried[0]).toMatchObject({ status: 'saved', providerCalls: 6 });
+    const incomplete = await runBulkStagingGeneration([{ id: 'incomplete', name: 'Incomplete' }], undefined, {
+      generate: async (id) => ({ ...generated(id), levelResults: generated(id).levelResults?.slice(0, 3) }),
+      save,
+      validate: valid,
+    });
+    expect(incomplete[0].status).toBe('failed');
+    expect(incomplete[0].failure?.failureStage).toBe('response_parsing');
     expect(save).toHaveBeenCalledTimes(1);
   });
 });

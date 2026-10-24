@@ -6,6 +6,7 @@ import {
   saveDraftVersion,
   STAGING_LEVEL_COUNT,
   validateLessonVersion,
+  validateStagingGenerationEnvelope,
   type LessonVersion,
   type StagingTopicKind,
 } from './lessonVersionWorkflow';
@@ -39,6 +40,7 @@ export type BulkStagingProgress = {
   tokenUsage?: unknown;
   retryCount?: number;
   parseStage?: string;
+  retryCategory?: string;
 };
 
 export type BulkStagingLevelResult = NonNullable<StagingGeneration['levelResults']>[number];
@@ -61,6 +63,7 @@ export type BulkStagingFailure = {
   stage?: string;
   retryCount?: number;
   parseStage?: string;
+  providerDiagnostics?: GenerationErrorDetails['providerDiagnostics'];
 };
 
 export type BulkStagingResult = {
@@ -157,12 +160,14 @@ export async function runBulkStagingGeneration(
         onProgress?.({ ...base, level, providerCalls: level - 1, status: 'generating' });
       }
       const generated = await generate(topicId);
-      providerCalls = Number(generated.providerCalls) || 0;
-      if (!dependencies.dryRun && providerCalls !== STAGING_LEVEL_COUNT) throw new Error(`staging_provider_call_count_invalid: expected ${STAGING_LEVEL_COUNT}, received ${providerCalls}`);
+      const envelope = dependencies.dryRun
+        ? { providerCalls: Number(generated.providerCalls) || 0, levelResults: (generated.levelResults ?? generated.progress ?? []) as BulkStagingLevelResult[] }
+        : validateStagingGenerationEnvelope(generated);
+      providerCalls = envelope.providerCalls;
       assertReturnedTopicMatches(topicId, generated.topic_id);
       for (let level = 1; level <= STAGING_LEVEL_COUNT; level += 1) {
-        const levelMetadata = generated.progress?.find((entry) => entry.level === level);
-        onProgress?.({ ...base, level, providerCalls, retryCount: levelMetadata?.retryCount, parseStage: levelMetadata?.parseStage, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
+        const levelMetadata = envelope.levelResults.find((entry) => entry.level === level);
+        onProgress?.({ ...base, level, providerCalls, retryCount: levelMetadata?.retryCount, retryCategory: levelMetadata?.retryCategory, parseStage: levelMetadata?.parseStage, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
       }
       const topicKind = classifyStagingTopic(topic.name);
       const validation = validate(generated.lesson_content, topicKind);
@@ -171,7 +176,7 @@ export async function runBulkStagingGeneration(
       }
       const version = await save(topicId, generated.lesson_content, generated.topic_id, topicKind);
       onProgress?.({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, status: 'saved', validation: { canonicalValid: validation.canonicalValid, pedagogicalValid: validation.pedagogicalValid, prerequisiteValid: validation.prerequisiteValid, geometryValid: validation.geometryValid, interactionValid: validation.interactionValid }, requestId: generated.requestId, promptVersion: generated.promptVersion, build: generated.build });
-      results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation, levelResults: generated.levelResults ?? generated.progress, build: generated.build, promptVersion: generated.promptVersion });
+      results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation, levelResults: envelope.levelResults, build: generated.build, promptVersion: generated.promptVersion });
     } catch (error) {
       const details = getGenerationErrorDetails(error);
       providerCalls = Number(details.providerCalls ?? providerCalls) || providerCalls;
@@ -198,6 +203,7 @@ export async function runBulkStagingGeneration(
         promptVersion: details.promptVersion,
         retryCount: details.retryCount,
         parseStage: details.parseStage,
+        providerDiagnostics: details.providerDiagnostics,
       };
       const failedLevelResults = Array.isArray(details.progress) ? details.progress as BulkStagingLevelResult[] : undefined;
       onProgress?.({ ...base, level: failure.failedLevel ?? 1, providerCalls, status: 'failed' });

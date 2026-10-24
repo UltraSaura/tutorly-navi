@@ -19,7 +19,24 @@ import {
   saveDraftVersion,
   validateDrawableGeometry,
   validateLessonVersion,
+  validateStagingGenerationEnvelope,
 } from './lessonVersionWorkflow';
+
+const completeLevelResults = (calls = [1, 1, 1, 1]) => calls.map((providerCalls, index) => ({
+  level: index + 1,
+  status: 'complete',
+  providerCalls,
+  retryCount: Math.max(0, providerCalls - 1),
+  validation: { canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, geometryValid: true, interactionValid: true },
+}));
+
+const completeEnvelope = (providerCalls = 4, calls = [1, 1, 1, 1]) => ({
+  success: true,
+  providerCalls,
+  lesson_content: geometryDraftLesson,
+  topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81',
+  levelResults: completeLevelResults(calls),
+});
 
 describe('lesson version workflow', () => {
   beforeEach(() => {
@@ -58,14 +75,14 @@ describe('lesson version workflow', () => {
   });
 
   it('makes exactly one staging edge request and does not retry', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
+    invoke.mockResolvedValue({ data: completeEnvelope(), error: null, response: null });
     await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(invoke).toHaveBeenCalledTimes(1);
     expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({ body: expect.objectContaining({ mode: 'staging_draft', allowPaidRepair: false }) }));
   });
 
   it('accepts a successful four-level staging result (one provider call per level)', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
+    invoke.mockResolvedValue({ data: completeEnvelope(), error: null, response: null });
     const result = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(result.lesson_content).toBe(geometryDraftLesson);
     expect(result.providerCalls).toBe(4);
@@ -73,8 +90,8 @@ describe('lesson version workflow', () => {
   });
 
   it('rejects a success response that reports no provider calls', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 0, lesson_content: geometryDraftLesson }, error: null, response: null });
-    await expect(generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81')).rejects.toThrow(/Unexpected providerCalls value: 0/);
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 0, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: completeLevelResults([0, 0, 0, 0]) }, error: null, response: null });
+    await expect(generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81')).rejects.toThrow(/providerCalls must be at least 4/);
   });
 
   it('surfaces exact staging validation paths to the admin UI', async () => {
@@ -146,8 +163,8 @@ describe('lesson version workflow', () => {
   it('rejects malformed success envelopes with a response-parsing diagnostic', async () => {
     invoke.mockResolvedValue({ data: { success: true, providerCalls: 0 }, error: null, response: new Response(null, { status: 200 }) });
     const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
-    expect(error).toMatchObject({ code: 'malformed_response', stage: 'response_parsing', providerCalls: 0 });
-    expect(error.message).toContain('malformed');
+    expect(error).toMatchObject({ code: 'staging_generation_envelope_invalid', stage: 'response_parsing', providerCalls: 0 });
+    expect(error.message).toContain('incomplete or inconsistent');
   });
 
   it('does not update existing topic lesson_content during draft insertion', async () => {
@@ -159,19 +176,27 @@ describe('lesson version workflow', () => {
     expect(from).not.toHaveBeenCalledWith('topics');
   });
 
-  it('rejects a success response that reports fewer than four provider calls and saves nothing', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 3, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81' }, error: null, response: null });
+  it('rejects an incomplete four-level response even when the aggregate is four', async () => {
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: completeLevelResults().slice(0, 3) }, error: null, response: null });
     const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
-    expect(error).toMatchObject({ code: 'staging_provider_call_count_invalid', stage: 'response_parsing', providerCalls: 3 });
-    expect(error.message).toContain('exactly 4');
+    expect(error).toMatchObject({ code: 'staging_generation_envelope_invalid', stage: 'response_parsing', providerCalls: 4 });
+    expect(error.message).toContain('missing levels: 4');
     expect(from).not.toHaveBeenCalled();
   });
 
-  it('rejects a success response that reports more than four provider calls and saves nothing', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 5, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81' }, error: null, response: null });
-    const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
-    expect(error).toMatchObject({ code: 'staging_provider_call_count_invalid', providerCalls: 5 });
-    expect(from).not.toHaveBeenCalled();
+  it('accepts a successful JSON retry and validates the per-level call sum', async () => {
+    invoke.mockResolvedValue({ data: completeEnvelope(5, [2, 1, 1, 1]), error: null, response: null });
+    const result = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+    expect(result.providerCalls).toBe(5);
+    expect(result.levelResults[0].retryCount).toBe(1);
+    expect(validateStagingGenerationEnvelope(result).providerCalls).toBe(5);
+  });
+
+  it('accepts two bounded retries on different levels', async () => {
+    invoke.mockResolvedValue({ data: completeEnvelope(6, [2, 2, 1, 1]), error: null, response: null });
+    const result = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+    expect(result.providerCalls).toBe(6);
+    expect(result.levelResults.map((entry) => entry.retryCount)).toEqual([1, 1, 0, 0]);
   });
 
   it('publishes a time-topic draft without requiring geometry visuals', async () => {

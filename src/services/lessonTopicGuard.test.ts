@@ -12,6 +12,7 @@ const FIXTURE = '185f20b5-d698-446d-80e8-c3c462819b94';
 const sym = (data: unknown) => ({ levels: [{ level_number: 4, lesson: { sequence: [{ visual: { kind: 'symmetry', data } }] } }] });
 const complete = { axis: { x: 5 }, grid: { width: 10, height: 8 }, figure: [{ x: 2, y: 2 }, { x: 3, y: 4 }, { x: 2, y: 5 }], symmetric_figure: [{ x: 8, y: 2 }, { x: 7, y: 4 }, { x: 8, y: 5 }] };
 const symIssues = (data: unknown) => validateDrawableGeometry(sym(data)).filter((i) => !i.message.startsWith('Missing required'));
+const completeLevelResults = [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 }));
 
 describe('symmetry drawable contract', () => {
   it('accepts and renders complete symmetry (axis {x} or {y})', () => {
@@ -48,7 +49,7 @@ describe('topic guard', () => {
     expect(invoke).not.toHaveBeenCalled();
   });
   it('rejects a returned topic id that differs before saving', async () => {
-    invoke.mockResolvedValueOnce({ data: { success: true, providerCalls: 4, lesson_content: {}, topic_id: FIXTURE }, error: null });
+    invoke.mockResolvedValueOnce({ data: { success: true, providerCalls: 4, lesson_content: {}, topic_id: FIXTURE, levelResults: completeLevelResults }, error: null });
     await expect(generateStagingDraft(CM2_GEOMETRY_TOPIC_ID)).rejects.toThrow('topic_id_mismatch');
     await expect(saveDraftVersion(CM2_GEOMETRY_TOPIC_ID, {}, FIXTURE)).rejects.toThrow('topic_id_mismatch');
     expect(from).not.toHaveBeenCalled();

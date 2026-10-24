@@ -28,6 +28,19 @@ export type GenerationErrorDetails = {
   parseStage?: string;
   progress?: unknown[];
   validation?: unknown;
+  providerDiagnostics?: ProviderDiagnostics;
+};
+
+export type ProviderDiagnostics = {
+  finishReason?: string;
+  contentLength?: number;
+  choiceCount?: number;
+  parseState?: string;
+  bodyLength?: number;
+  syntaxError?: {
+    message?: string;
+    position?: number;
+  };
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -48,6 +61,40 @@ function finiteNumber(value: unknown): number | undefined {
 
 function stringValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function mapProviderDiagnostics(value: unknown): ProviderDiagnostics | undefined {
+  if (!isRecord(value)) return undefined;
+  const diagnostics: ProviderDiagnostics = {
+    finishReason: stringValue(value.finishReason),
+    contentLength: finiteNumber(value.contentLength),
+    choiceCount: finiteNumber(value.choiceCount),
+    parseState: stringValue(value.parseState),
+    bodyLength: finiteNumber(value.bodyLength),
+  };
+  if (isRecord(value.syntaxError)) {
+    diagnostics.syntaxError = {
+      message: stringValue(value.syntaxError.message),
+      position: finiteNumber(value.syntaxError.position),
+    };
+  }
+  const hasValue = Object.values(diagnostics).some((item) => item !== undefined);
+  if (!hasValue) return undefined;
+  return diagnostics;
+}
+
+export function formatProviderDiagnostics(diagnostics?: ProviderDiagnostics): string | undefined {
+  if (!diagnostics) return undefined;
+  const fields = [
+    diagnostics.finishReason ? `finishReason=${diagnostics.finishReason}` : undefined,
+    diagnostics.contentLength !== undefined ? `contentLength=${diagnostics.contentLength}` : undefined,
+    diagnostics.choiceCount !== undefined ? `choiceCount=${diagnostics.choiceCount}` : undefined,
+    diagnostics.parseState ? `parseState=${diagnostics.parseState}` : undefined,
+    diagnostics.bodyLength !== undefined ? `bodyLength=${diagnostics.bodyLength}` : undefined,
+    diagnostics.syntaxError?.message ? `syntaxError=${diagnostics.syntaxError.message}` : undefined,
+    diagnostics.syntaxError?.position !== undefined ? `syntaxPosition=${diagnostics.syntaxError.position}` : undefined,
+  ].filter(Boolean);
+  return fields.length ? fields.join(', ') : undefined;
 }
 
 export function getGenerationErrorDetails(payload: unknown, fallback = generationErrorMessages.unknown): GenerationErrorDetails {
@@ -71,6 +118,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       parseStage: error.parseStage,
       progress: error.progress,
       validation: error.validation,
+      providerDiagnostics: error.providerDiagnostics,
     }, fallback);
     return details;
   }
@@ -109,6 +157,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     parseStage: stringValue(nested.parseStage) ?? stringValue(root.parseStage),
     progress: Array.isArray(nested.progress) ? nested.progress : Array.isArray(root.progress) ? root.progress : undefined,
     validation: nested.validation ?? root.validation,
+    providerDiagnostics: mapProviderDiagnostics(nested.providerDiagnostics ?? root.providerDiagnostics),
   };
   return details;
 }
@@ -142,6 +191,7 @@ export function formatAdminGenerationError(payload: unknown, fallback = generati
     details.retryCount !== undefined ? `retryCount=${details.retryCount}` : undefined,
     details.parseStage ? `parseStage=${details.parseStage}` : undefined,
     details.technicalDetail,
+    formatProviderDiagnostics(details.providerDiagnostics),
   ].filter(Boolean).join(' · ');
   return diagnostic ? `${summary} — ${diagnostic}` : summary;
 }
@@ -159,6 +209,7 @@ export function formatGenerationDiagnostic(payload: unknown, fallback = generati
     details.level !== undefined ? `level=${details.level}` : undefined,
     details.stage ? `stage=${details.stage}` : undefined,
     details.technicalDetail,
+    formatProviderDiagnostics(details.providerDiagnostics),
   ].filter(Boolean);
   return fields.join(' · ') || details.message;
 }
