@@ -906,7 +906,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             ? stagingValidationFailure(levelIndex, error.issues, aiProviderCalls)
             : undefined;
           const jsonParseFailure = error instanceof StagingLevelJsonParseError
-            ? { level: levelIndex, stage: 'provider_parse', message: error.message, validationCategory: 'provider_json', retryCount: Number((error as StagingLevelJsonParseError & { retryCount?: number }).retryCount ?? 0), parseStage: String((error as StagingLevelJsonParseError & { parseStage?: string }).parseStage ?? error.category), providerDiagnostics: error.providerDiagnostics as unknown as Record<string, unknown> | undefined }
+            ? { level: levelIndex, stage: 'provider_parse', message: error.message + (error.providerDiagnostics?.syntaxError ? ` · ${error.providerDiagnostics.syntaxError.message}${error.providerDiagnostics.syntaxError.context ? ` · près de: ${error.providerDiagnostics.syntaxError.context}` : ''}` : ''), validationCategory: 'provider_json', retryCount: Number((error as StagingLevelJsonParseError & { retryCount?: number }).retryCount ?? 0), parseStage: String((error as StagingLevelJsonParseError & { parseStage?: string }).parseStage ?? error.category), providerDiagnostics: error.providerDiagnostics as unknown as Record<string, unknown> | undefined }
             : undefined;
           stagingFailure = structuredFailure
             ? { level: structuredFailure.level, stage: structuredFailure.stage, message: structuredFailure.technicalDetail, validationCategory: structuredFailure.validationCategory, providerDiagnostics: structuredFailure.providerDiagnostics }

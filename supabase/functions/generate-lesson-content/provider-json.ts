@@ -99,6 +99,11 @@ export async function buildProviderResponseDiagnostics(input: {
     contentLength: contentText?.length ?? 0,
     contentSha256: contentText === null ? null : await sha256Hex(contentText),
     parseState: input.parseState,
+    ...(() => {
+      if (input.parseState !== 'malformed_json') return {};
+      const syntaxError = describeJsonSyntaxError(input.content);
+      return syntaxError ? { syntaxError } : {};
+    })(),
   };
 }
 
