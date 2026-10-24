@@ -9,6 +9,7 @@ export type VisualPolicy = {
 const GEOMETRY_KINDS = ['angle', 'triangle', 'rectangle', 'circle', 'polygon', 'symmetry', 'coordinate_plane', 'geometric_solid', 'solid_section', 'diagram'];
 
 const REQUIRED: Array<{ pattern: RegExp; kinds: string[]; reason: string }> = [
+  { pattern: /nombre(?:s)?[\s-]+d[ée]cimal(?:e|es)?|d[ée]cimaux|decimal/i, kinds: ['number_line', 'rectangle'], reason: 'La valeur de position décimale doit être montrée sur une droite graduée ou dans un modèle rectangulaire complet.' },
   { pattern: /heure exacte|lire l'heure|lire une heure|horloge|aiguille|minutes? sur une horloge/i, kinds: ['clock'], reason: "La lecture d'une horloge dépend de la position des aiguilles." },
   { pattern: /fraction|numérateur|dénominateur|parts? égales?|partie(?:s)?[- ]tout/i, kinds: ['fraction_bar', 'fraction_circle'], reason: 'La relation partie/tout doit être visible.' },
   { pattern: /droite graduée|ligne numérique|position(?:ner|nement)? .*nombre|repérer un nombre/i, kinds: ['number_line'], reason: 'La position et les écarts doivent être visibles.' },

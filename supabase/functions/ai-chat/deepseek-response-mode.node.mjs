@@ -17,4 +17,5 @@ test('DeepSeek provider remains non-streaming and extracts the first message con
   assert.match(provider, /data\.choices\[0\]\.message\.content/);
   assert.match(provider, /finishReason: data\.choices\?\.\[0\]\?\.finish_reason/);
   assert.match(provider, /completionTokens: data\.usage\?\.completion_tokens/);
+  assert.match(provider, /choiceCount: Array\.isArray\(data\.choices\) \? data\.choices\.length : 0/);
 });

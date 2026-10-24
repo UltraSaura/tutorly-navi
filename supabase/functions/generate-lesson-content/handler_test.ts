@@ -221,12 +221,34 @@ test('truncated provider output returns 502 provider_output_truncated', async ()
   assertEquals(calls.dbWrites, []);
 });
 
-test('malformed provider JSON returns 502 provider_malformed_json without repair', async () => {
+test('malformed provider JSON is retried once and still fails safely', async () => {
   const { status, body, calls } = await run(() => ({ content: '{"lesson_goal":"x","sequence":[' }));
   assertEquals(status, 502);
   assertEquals(body.error.code, 'provider_malformed_json');
   assertEquals(body.error.level, 1);
-  assertEquals(calls.provider, 1);
+  assertEquals(body.error.retryCount, 1);
+  assertEquals(body.error.parseStage, 'malformed_json');
+  assertEquals(calls.provider, 2);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('one malformed provider response followed by valid JSON succeeds after one bounded retry', async () => {
+  let first = true;
+  const { status, body, calls } = await run((level) => {
+    if (first) {
+      first = false;
+      return { content: '{"lesson_goal":"truncated","sequence":[' };
+    }
+    return valid(level);
+  }, 'bounded-retry-success');
+  assertEquals(status, 200);
+  assertEquals(body.providerCalls, 5);
+  assertEquals(body.retryCount, 1);
+  assertEquals(body.progress[0].providerCalls, 2);
+  assertEquals(body.progress[0].retryCount, 1);
+  assertEquals(body.progress[0].parseStage, 'valid_json_after_bounded_retry');
+  assertEquals(body.progress[0].diagnostics[0], 'initial_response_parse_failed; bounded_json_retry_succeeded');
+  assertEquals(calls.provider, 5);
   assertEquals(calls.dbWrites, []);
 });
 
@@ -243,7 +265,7 @@ test('valid quoted JSON at level 4 completes exactly four fake calls without wri
   assertEquals(calls.dbWrites, []);
 });
 
-test('genuinely malformed JSON at level 4 stops without retry or partial writes', async () => {
+test('genuinely malformed JSON at level 4 stops after the one retry without partial writes', async () => {
   const { status, body, calls } = await run((level) => level === 4
     ? { content: '{"lesson_goal":"incomplete","sequence":[' }
     : valid(level), 'level-four-malformed');
@@ -253,8 +275,9 @@ test('genuinely malformed JSON at level 4 stops without retry or partial writes'
   assertEquals(body.error.stage, 'provider_parse');
   assertEquals(body.error.requestId, 'level-four-malformed');
   assertEquals(body.error.technicalDetail, 'staging_level_json_parse_failed: malformed_json');
-  assertEquals(body.error.providerCalls, 4);
-  assertEquals(calls.provider, 4);
+  assertEquals(body.error.providerCalls, 5);
+  assertEquals(body.error.retryCount, 1);
+  assertEquals(calls.provider, 5);
   assertEquals(calls.dbWrites, []);
 });
 

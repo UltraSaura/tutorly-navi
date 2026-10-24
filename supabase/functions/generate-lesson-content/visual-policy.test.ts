@@ -19,3 +19,11 @@ it('pure duration conversion still rejects geometric figures (check not loosened
   expect(policy.suggestedKinds).toEqual(['unit_conversion', 'timeline']);
   expect(policy.suggestedKinds.includes('rectangle')).toBe(false);
 });
+
+it('decimal-number concepts accept a number line or a complete rectangle, without inheriting the fraction contract', () => {
+  const policy = determineVisualRequirement({ title: 'Les nombres décimaux', content: 'Place 1,4 sur une droite graduée et compare sa valeur.' });
+  expect(policy.requirement).toBe('required');
+  expect(policy.suggestedKinds).toEqual(expect.arrayContaining(['number_line', 'rectangle']));
+  expect(policy.suggestedKinds).not.toContain('fraction_bar');
+  expect(policy.suggestedKinds).not.toContain('fraction_circle');
+});

@@ -37,6 +37,8 @@ export type BulkStagingProgress = {
   promptVersion?: string;
   build?: string;
   tokenUsage?: unknown;
+  retryCount?: number;
+  parseStage?: string;
 };
 
 export type BulkStagingLevelResult = NonNullable<StagingGeneration['levelResults']>[number];
@@ -57,6 +59,8 @@ export type BulkStagingFailure = {
   promptVersion?: string;
   level?: number;
   stage?: string;
+  retryCount?: number;
+  parseStage?: string;
 };
 
 export type BulkStagingResult = {
@@ -158,7 +162,7 @@ export async function runBulkStagingGeneration(
       assertReturnedTopicMatches(topicId, generated.topic_id);
       for (let level = 1; level <= STAGING_LEVEL_COUNT; level += 1) {
         const levelMetadata = generated.progress?.find((entry) => entry.level === level);
-        onProgress?.({ ...base, level, providerCalls, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
+        onProgress?.({ ...base, level, providerCalls, retryCount: levelMetadata?.retryCount, parseStage: levelMetadata?.parseStage, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
       }
       const topicKind = classifyStagingTopic(topic.name);
       const validation = validate(generated.lesson_content, topicKind);
@@ -192,6 +196,8 @@ export async function runBulkStagingGeneration(
         stage,
         build: details.build,
         promptVersion: details.promptVersion,
+        retryCount: details.retryCount,
+        parseStage: details.parseStage,
       };
       const failedLevelResults = Array.isArray(details.progress) ? details.progress as BulkStagingLevelResult[] : undefined;
       onProgress?.({ ...base, level: failure.failedLevel ?? 1, providerCalls, status: 'failed' });

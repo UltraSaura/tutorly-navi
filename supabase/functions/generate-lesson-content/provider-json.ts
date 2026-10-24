@@ -1,6 +1,67 @@
 export type SafeJsonResult =
   | { ok: true; value: unknown; attemptedRepair: boolean }
-  | { ok: false; attemptedRepair: boolean; category: 'empty' | 'malformed_json' | 'unsupported_shape' };
+  | { ok: false; attemptedRepair: boolean; category: 'empty' | 'malformed_json' | 'ambiguous_json' | 'unsupported_shape' };
+
+export type ProviderResponseDiagnostics = {
+  httpStatus: number;
+  contentType: string | null;
+  bodyLength: number;
+  choiceCount: number | null;
+  finishReason: string | null;
+  contentPresent: boolean;
+  contentNonEmpty: boolean;
+  contentSha256: string | null;
+  parseState: string;
+};
+
+export function extractProviderContent(envelope: Record<string, unknown>): { found: boolean; value: unknown } {
+  if (Object.prototype.hasOwnProperty.call(envelope, 'content')) {
+    return { found: true, value: envelope.content };
+  }
+  const nested = envelope.data && typeof envelope.data === 'object' && !Array.isArray(envelope.data)
+    ? envelope.data as Record<string, unknown>
+    : null;
+  if (nested && Object.prototype.hasOwnProperty.call(nested, 'content')) {
+    return { found: true, value: nested.content };
+  }
+  return { found: false, value: undefined };
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+export async function buildProviderResponseDiagnostics(input: {
+  httpStatus: number;
+  contentType: string | null;
+  bodyText: string;
+  envelope?: Record<string, unknown> | null;
+  content: unknown;
+  parseState: string;
+}): Promise<ProviderResponseDiagnostics> {
+  const contentPresent = input.content !== undefined && input.content !== null;
+  const contentText = typeof input.content === 'string' ? input.content : null;
+  const providerMetadata = input.envelope?.providerMetadata;
+  const metadata = providerMetadata && typeof providerMetadata === 'object' && !Array.isArray(providerMetadata)
+    ? providerMetadata as Record<string, unknown>
+    : null;
+  const choices = Array.isArray(input.envelope?.choices)
+    ? input.envelope?.choices.length
+    : typeof metadata?.choiceCount === 'number' ? metadata.choiceCount : null;
+  return {
+    httpStatus: input.httpStatus,
+    contentType: input.contentType,
+    bodyLength: input.bodyText.length,
+    choiceCount: choices,
+    finishReason: typeof metadata?.finishReason === 'string' ? metadata.finishReason : null,
+    contentPresent,
+    contentNonEmpty: contentText !== null && contentText.trim().length > 0,
+    contentSha256: contentText === null ? null : await sha256Hex(contentText),
+    parseState: input.parseState,
+  };
+}
 
 const cleanText = (input: string): { text: string; changed: boolean } => {
   let text = input.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
@@ -15,8 +76,23 @@ const removeTrailingCommas = (value: string): string => value.replace(/,\s*([}\]
 function balancedCandidates(text: string): string[] {
   const candidates: string[] = [];
   for (let start = 0; start < text.length; start += 1) {
-    if (text.slice(0, start).includes('{') || text.slice(0, start).includes('[')) continue;
     if (text[start] !== '{' && text[start] !== '[') continue;
+    let prefixDepth = 0;
+    let prefixQuote = false;
+    let prefixEscaped = false;
+    for (let prefixIndex = 0; prefixIndex < start; prefixIndex += 1) {
+      const prefixChar = text[prefixIndex];
+      if (prefixQuote) {
+        if (prefixEscaped) prefixEscaped = false;
+        else if (prefixChar === '\\') prefixEscaped = true;
+        else if (prefixChar === '"') prefixQuote = false;
+        continue;
+      }
+      if (prefixChar === '"') prefixQuote = true;
+      else if (prefixChar === '{' || prefixChar === '[') prefixDepth += 1;
+      else if (prefixChar === '}' || prefixChar === ']') prefixDepth -= 1;
+    }
+    if (prefixDepth !== 0) continue;
     const opening = text[start];
     const closing = opening === '{' ? '}' : ']';
     let depth = 0;
@@ -36,7 +112,11 @@ function balancedCandidates(text: string): string[] {
       if (depth === 0) { candidates.push(text.slice(start, index + 1)); break; }
     }
   }
-  return candidates.sort((a, b) => b.length - a.length);
+  const unique = [...new Set(candidates)];
+  // Nested objects are part of the same response, not separate candidate
+  // responses. Keep only maximal balanced candidates so two top-level JSON
+  // values remain distinguishable and can be rejected as ambiguous.
+  return unique.filter((candidate) => !unique.some((other) => other !== candidate && other.includes(candidate))).sort((a, b) => b.length - a.length);
 }
 
 export function parseProviderJsonSafely(raw: unknown): SafeJsonResult {
@@ -50,14 +130,18 @@ export function parseProviderJsonSafely(raw: unknown): SafeJsonResult {
   const cleaned = cleanText(raw);
   const candidates = [cleaned.text, ...balancedCandidates(cleaned.text)].filter((value, index, all) => all.indexOf(value) === index);
   let attemptedRepair = cleaned.changed;
+  const parsedCandidates: unknown[] = [];
   for (const candidate of candidates) {
     try {
-      return { ok: true, value: JSON.parse(candidate), attemptedRepair };
+      parsedCandidates.push(JSON.parse(candidate));
+      continue;
     } catch {
       const repaired = removeTrailingCommas(candidate);
       if (repaired !== candidate) attemptedRepair = true;
-      try { return { ok: true, value: JSON.parse(repaired), attemptedRepair }; } catch { /* try the next bounded candidate */ }
+      try { parsedCandidates.push(JSON.parse(repaired)); } catch { /* try the next bounded candidate */ }
     }
   }
+  if (parsedCandidates.length === 1) return { ok: true, value: parsedCandidates[0], attemptedRepair: true };
+  if (parsedCandidates.length > 1) return { ok: false, attemptedRepair, category: 'ambiguous_json' };
   return { ok: false, attemptedRepair, category: 'malformed_json' };
 }
