@@ -17,6 +17,48 @@ export type SemanticOverlapDiagnostic = {
   rightTokens: string[];
 };
 
+const CONTEXTUAL_MATH_VOCABULARY = new Set((
+  'nombre nombres calcul calculer mesure mesurer valeur valeurs quantite quantites resultat resultats '
+  + 'unite unites partie parties tout parts fraction fractions decimale decimales '
+  + 'numerateur denominateur quotient entier entiers virgule chiffre chiffres '
+  + 'operation operations addition soustraction multiplication division facteur facteurs '
+  + 'seconde secondes minute minutes heure heures jour jours semaine semaines mois annees siecle siecles '
+  + 'duree durees temps horloge aiguille aiguilles petite grande midi minuit matin soir avant apres pendant entre '
+  + 'figure figures forme formes point points sommets sommet cote cotes angles angle '
+  + 'triangle triangles rectangle rectangles cercle cercles rayon rayons diametre diametres axe axes '
+  + 'symetrie symetrique symetriques carreaux distance distances droite droites polygone polygones '
+  + 'longueur longueurs largeur largeurs hauteur hauteurs quadrilatere quadrilateres '
+  + 'possede possedent chaque meme memes droits opposes quatre trois deux'
+).split(/\s+/));
+
+/** Words that naturally recur because they name the subject or its vocabulary. */
+export function contextualVocabulary(topicName = ''): Set<string> {
+  const context = new Set<string>(meaningfulTokens(topicName));
+  const topic = normalizedStatement(topicName);
+  const addMatching = (pattern: RegExp) => {
+    for (const token of CONTEXTUAL_MATH_VOCABULARY) if (pattern.test(token)) context.add(token);
+  };
+  if (/decimal|fraction|nombre|calcul|arithmet|quotient|division/.test(topic)) {
+    addMatching(/fraction|decim|numer|denomin|nombre|calcul|quotient|entier|virgule|chiffre|operation|addition|soustraction|multiplication|division|facteur|part|tout|valeur|quantite|resultat/);
+  }
+  if (/duree|temps|heure|horloge|conversion/.test(topic)) {
+    addMatching(/seconde|minute|heure|jour|semaine|mois|annee|siecle|duree|temps|horloge|aiguille|midi|minuit|matin|soir|unite|avant|apres|pendant|entre/);
+  }
+  if (/geometr|figure|triangle|rectangle|cercle|angle|symetr|aire|perimetre|surface/.test(topic)) {
+    addMatching(/figure|forme|point|sommet|cote|angle|triangle|rectangle|cercle|rayon|diametre|axe|symetr|carreau|distance|droite|polygone|longueur|largeur|hauteur|mesure|quadrilater|possede|chaque|meme|droit|oppose|quatre|trois|deux/);
+  }
+  return context;
+}
+
+function contextualTokens(value: unknown, topicName: string): Set<string> {
+  const ignored = contextualVocabulary(topicName);
+  return new Set([...meaningfulTokens(value)].filter((token) => !ignored.has(token)));
+}
+
+function normalizedWords(value: unknown): string[] {
+  return normalizedStatement(value).split(' ').filter(Boolean);
+}
+
 export type CompositionRepairOutput = {
   content: string;
   key_points: Array<{ label: string; text: string }>;
@@ -43,8 +85,9 @@ export function validateCompositionRepairOutput(value: unknown): { success: true
   return { success: true, value: { content: candidate.content as string, key_points: candidate.key_points as CompositionRepairOutput['key_points'], takeaway: candidate.takeaway as string } };
 }
 
-export function semanticOverlap(a: unknown, b: unknown): SemanticOverlapDiagnostic {
-  const left = meaningfulTokens(a); const right = meaningfulTokens(b);
+export function semanticOverlap(a: unknown, b: unknown, topicName = ''): SemanticOverlapDiagnostic {
+  const left = topicName ? contextualTokens(a, topicName) : meaningfulTokens(a);
+  const right = topicName ? contextualTokens(b, topicName) : meaningfulTokens(b);
   if (left.size < 2 || right.size < 2) return { overlap: 0, ratio: 0, leftTokens: [...left], rightTokens: [...right] };
   const overlap = [...left].filter((token) => right.has(token)).length;
   return { overlap, ratio: overlap / Math.min(left.size, right.size), leftTokens: [...left], rightTokens: [...right] };
@@ -55,9 +98,9 @@ function substantiallyRepeats(a: unknown, b: unknown): boolean {
   return diagnostic.overlap >= 2 && diagnostic.ratio >= 0.65;
 }
 
-function keyPointsTakeawayOverlap(keyPoints: unknown, takeaway: unknown): SemanticOverlapDiagnostic {
-  const diagnostic = semanticOverlap(keyPoints, takeaway);
-  const takeawayTokens = meaningfulTokens(takeaway);
+function keyPointsTakeawayOverlap(keyPoints: unknown, takeaway: unknown, topicName = ''): SemanticOverlapDiagnostic {
+  const diagnostic = semanticOverlap(keyPoints, takeaway, topicName);
+  const takeawayTokens = topicName ? contextualTokens(takeaway, topicName) : meaningfulTokens(takeaway);
   return {
     ...diagnostic,
     // A concise factual key-point list will naturally reuse the concept's
@@ -80,6 +123,8 @@ export const KEY_POINT_EXPECTED_VOCABULARY = new Set((
 function keyPointContentTokens(value: unknown): Set<string> {
   return new Set([...meaningfulTokens(value)].filter((token) => !KEY_POINT_EXPECTED_VOCABULARY.has(token)));
 }
+
+const ACTION_WORDS = new Set('reconnaitre reconnaitre verifie verifier compte compter compare comparer reporte reporter utilise utiliser mesure mesurer choisis choisir observe observer'.split(/\s+/));
 
 function normalizedStatement(value: unknown): string {
   return String(value ?? '').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -107,8 +152,9 @@ function copiedKeyPoint(a: unknown, b: unknown): boolean {
   return samePrefix && /^(nomme|appele)$/.test(longer[shorter.length] ?? '');
 }
 
-export function keyPointContentOverlap(content: unknown, pointText: unknown): SemanticOverlapDiagnostic {
-  const left = keyPointContentTokens(content); const right = keyPointContentTokens(pointText);
+export function keyPointContentOverlap(content: unknown, pointText: unknown, topicName = ''): SemanticOverlapDiagnostic {
+  const left = topicName ? contextualTokens(content, topicName) : keyPointContentTokens(content);
+  const right = topicName ? contextualTokens(pointText, topicName) : keyPointContentTokens(pointText);
   const rawPoint = normalizedStatement(pointText);
   // A key point whose whole statement is copied verbatim from the content is a
   // genuine duplicate, whatever its vocabulary.
@@ -120,22 +166,27 @@ export function keyPointContentOverlap(content: unknown, pointText: unknown): Se
   return { overlap, ratio: overlap / right.size, leftTokens: [...left], rightTokens: [...right] };
 }
 
-export function semanticDuplicationDiagnostics(block: Record<string, unknown>): Array<{ fieldA: string; fieldB: string; diagnostic: SemanticOverlapDiagnostic; reason: string }> {
+export function semanticDuplicationDiagnostics(block: Record<string, unknown>, topicName = ''): Array<{ fieldA: string; fieldB: string; diagnostic: SemanticOverlapDiagnostic; reason: string }> {
   const keyPoints = Array.isArray(block.key_points) ? block.key_points as Array<Record<string, unknown>> : [];
   const duplicateReason = 'partagent trop de tokens pédagogiquement significatifs.';
   const keyPointDuplicates = keyPoints.flatMap((point, index) => {
-    const diagnostic = keyPointContentOverlap(block.content, String(point.text ?? ''));
+    const pointText = `${String(point.label ?? '')} ${String(point.text ?? '')}`;
+    const diagnostic = keyPointContentOverlap(block.content, String(point.text ?? ''), topicName);
     const statement = normalizedStatement(point.text);
     if (statement.split(' ').filter(Boolean).length < 2 || statementWords(point.text).length === 0) {
       return [{ fieldA: `key_points[${index}]`, fieldB: `key_points[${index}]`, diagnostic, reason: `key_points[${index}].text est vide ou sans valeur pédagogique : fournir une phrase ou une relation significative, pas un mot isolé.` }];
     }
     // Only a complete textual statement copy is forbidden here. Inferring the same fact from
-    // filtered tokens/subsequences mistakes ordinary geometry vocabulary for
-    // plagiarism (e.g. "Un côté relie deux sommets" versus "côté : relie...").
+    // filtered tokens/subsequences mistakes ordinary subject vocabulary for plagiarism.
     const source = normalizedStatement(block.content);
     const sentences = String(block.content ?? '').split(/[.!?;]+/).map(normalizedStatement);
-    if (source !== statement && !sentences.includes(statement)) return [];
-    return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: 'Le key_point est copié textuellement depuis l’explication.' }];
+    if (source === statement || sentences.includes(statement)) {
+      return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: 'Le key_point est copié textuellement depuis l’explication.' }];
+    }
+    // Shared subject vocabulary is expected in concise factual key points.
+    // Content overlap is rejected only when the complete key-point statement
+    // was copied above; genuine key-point duplication is checked separately.
+    return [];
   });
   // Exact/normalized duplicates and near-identical complete statements. No raw
   // token-overlap threshold is used to reject a pair of key points.
@@ -155,10 +206,26 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
     ['key_points', keyPointText, 'takeaway', block.takeaway],
   ];
   return [...keyPointDuplicates, ...pairs.flatMap(([fieldA, valueA, fieldB, valueB]) => {
+    const leftStatement = normalizedStatement(valueA);
+    const rightStatement = normalizedStatement(valueB);
+    const copiedStatement = leftStatement.split(' ').length >= 4 && rightStatement.split(' ').length >= 4
+      && (leftStatement.includes(rightStatement) || rightStatement.includes(leftStatement));
+    if (copiedStatement) {
+      const diagnostic = semanticOverlap(valueA, valueB);
+      return [{ fieldA, fieldB, diagnostic, reason: `${fieldA} et ${fieldB} copient la même phrase pédagogique.` }];
+    }
     const diagnostic = fieldA === 'key_points' && fieldB === 'takeaway'
-      ? keyPointsTakeawayOverlap(valueA, valueB)
-      : semanticOverlap(valueA, valueB);
-    if (diagnostic.overlap < 2 || diagnostic.ratio < 0.65) return [];
+      ? keyPointsTakeawayOverlap(valueA, valueB, topicName)
+      : semanticOverlap(valueA, valueB, topicName);
+    const rawDiagnostic = semanticOverlap(valueA, valueB);
+    const takeawayWords = new Set(normalizedWords(valueB));
+    const geometryTakeawayFallback = fieldB === 'takeaway'
+      && /geometr|géom|figure|triangle|rectangle|cercle|angle|symetr|aire|perimetre|surface/i.test(topicName);
+    const actionableRedundancy = fieldB === 'takeaway'
+      && [...takeawayWords].some((word) => ACTION_WORDS.has(word))
+      && rawDiagnostic.overlap >= 3
+      && (diagnostic.overlap >= 1 || geometryTakeawayFallback);
+    if ((diagnostic.overlap < 2 || diagnostic.ratio < 0.65) && !actionableRedundancy) return [];
     return [{ fieldA, fieldB, diagnostic, reason: `${fieldA} et ${fieldB} ${duplicateReason}` }];
   })];
 }
@@ -208,7 +275,7 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
       if (typeof block.takeaway !== 'string' || !block.takeaway.trim()) issues.push({ path: `sequence[${conceptIndex}].takeaway`, message: 'Un concept visuel doit fournir un takeaway.' });
       else if (block.takeaway.trim().split(/\s+/).length > PEDAGOGICAL_TAKEAWAY_MAX_WORDS) issues.push({ path: `sequence[${conceptIndex}].takeaway`, message: 'Le takeaway doit rester concis.' });
     }
-    for (const duplicate of semanticDuplicationDiagnostics(block)) {
+    for (const duplicate of semanticDuplicationDiagnostics(block, topicName)) {
       const pathField = duplicate.fieldB === 'key_points' || duplicate.fieldB.startsWith('key_points[') ? 'key_points' : 'takeaway';
       const d = duplicate.diagnostic;
       issues.push({ path: `sequence[${conceptIndex}].${pathField}`, message: `${duplicate.reason} overlap=${d.overlap}, ratio=${d.ratio.toFixed(2)}, tokensA=[${d.leftTokens.join(', ')}], tokensB=[${d.rightTokens.join(', ')}].` });
