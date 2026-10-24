@@ -17,8 +17,8 @@ describe('decimal-topic JSON syntax (provider-free)', () => {
 
   it('reports the exact position and excerpt of the syntax error', async () => {
     const description = describeJsonSyntaxError(frenchDecimalNumber);
-    expect(description?.position).toBe(frenchDecimalNumber.indexOf(',75}'));
-    expect(description?.context).toContain('"expected_answer":2⟦ICI⟧,75');
+    expect(description?.position).toBe(frenchDecimalNumber.indexOf(',75}') + 1);
+    expect(description?.context).toContain('"expected_answer":2,⟦ICI⟧75');
     const diagnostics = await buildProviderResponseDiagnostics({ httpStatus: 200, contentType: 'application/json', bodyText: '{}', envelope: {}, content: frenchDecimalNumber, parseState: 'malformed_json' });
     expect(diagnostics.syntaxError?.context).toContain('⟦ICI⟧');
   });
