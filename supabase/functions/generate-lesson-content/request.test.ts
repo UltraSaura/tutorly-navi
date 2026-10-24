@@ -46,6 +46,12 @@ describe('lesson generation AI request', () => {
       expect(message).toContain('"wrong":');
     }
   });
+
+  it('uses the compact deterministic JSON contract for staging calls', () => {
+    expect(source).toContain('STAGING_JSON_OUTPUT_RULE');
+    expect(source).toContain('maxTokens: STAGING_LEVEL_MAX_TOKENS');
+    expect(source).toContain('response_format');
+  });
 });
 
   it('exposes provider-free healthcheck and fixture response contracts', () => {

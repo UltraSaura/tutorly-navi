@@ -14,6 +14,7 @@ import {
   STAGING_VISUAL_EXAMPLES,
   stagingSequenceContractIssues,
   stagingTokenUsage,
+  STAGING_LEVEL_MAX_TOKENS,
   stagingValidationFailure,
   runWithBoundedJsonRetry,
   StagingLevelJsonParseError,
@@ -58,6 +59,9 @@ const level2Candidate = () => {
 };
 
 describe('staging level workflow', () => {
+  it('keeps the staging completion budget bounded but above the compact contract size', () => {
+    expect(STAGING_LEVEL_MAX_TOKENS).toBe(4096);
+  });
   it('retries one malformed JSON response and then succeeds without repair content', async () => {
     const attempts: number[] = [];
     const result = await runWithBoundedJsonRetry(async (attempt) => {
@@ -65,7 +69,18 @@ describe('staging level workflow', () => {
       if (attempt === 0) throw new StagingLevelJsonParseError('malformed_json');
       return 'valid';
     });
-    expect(result).toEqual({ value: 'valid', retryCount: 1 });
+    expect(result).toEqual({ value: 'valid', retryCount: 1, retryCategory: 'malformed_json' });
+    expect(attempts).toEqual([0, 1]);
+  });
+
+  it('retries a level-3 malformed response once and records the parse category', async () => {
+    const attempts: number[] = [];
+    const result = await runWithBoundedJsonRetry(async (attempt) => {
+      attempts.push(attempt);
+      if (attempt === 0) throw new StagingLevelJsonParseError('malformed_json');
+      return { level: 3, valid: true };
+    });
+    expect(result).toMatchObject({ value: { level: 3, valid: true }, retryCount: 1, retryCategory: 'malformed_json' });
     expect(attempts).toEqual([0, 1]);
   });
 

@@ -43,6 +43,7 @@ describe('safe provider response diagnostics', () => {
       finishReason: null,
       contentPresent: true,
       contentNonEmpty: false,
+      contentLength: 0,
       parseState: 'content_empty',
     });
     expect(diagnostics.contentSha256).toMatch(/^[0-9a-f]{64}$/);

@@ -10,7 +10,8 @@ export async function callDeepSeek(
   isExercise: boolean = false,
   requestExplanation: boolean = false,
   maxTokens: number = 800,
-  responseFormat?: { type: 'json_object' | 'text' }
+  responseFormat?: { type: 'json_object' | 'text' },
+  temperature?: number,
 ): Promise<any> {
   const { value: deepseekApiKey, source } = await resolveProviderKey('DeepSeek');
 
@@ -30,7 +31,7 @@ export async function callDeepSeek(
   const requestBody: any = {
     model: model,
     messages: messages,
-    temperature: 0.7,
+    temperature: temperature ?? 0.7,
     max_tokens: maxTokens,
   };
   if (responseFormat) requestBody.response_format = responseFormat;
