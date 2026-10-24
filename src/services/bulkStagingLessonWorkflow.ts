@@ -6,6 +6,7 @@ import {
   saveDraftVersion,
   STAGING_LEVEL_COUNT,
   validateLessonVersion,
+  validateStagingGenerationEnvelope,
   type LessonVersion,
   type StagingTopicKind,
 } from './lessonVersionWorkflow';
@@ -158,7 +159,7 @@ export async function runBulkStagingGeneration(
       }
       const generated = await generate(topicId);
       providerCalls = Number(generated.providerCalls) || 0;
-      if (!dependencies.dryRun && providerCalls !== STAGING_LEVEL_COUNT) throw new Error(`staging_provider_call_count_invalid: expected ${STAGING_LEVEL_COUNT}, received ${providerCalls}`);
+      if (!dependencies.dryRun) validateStagingGenerationEnvelope(generated);
       assertReturnedTopicMatches(topicId, generated.topic_id);
       for (let level = 1; level <= STAGING_LEVEL_COUNT; level += 1) {
         const levelMetadata = generated.progress?.find((entry) => entry.level === level);

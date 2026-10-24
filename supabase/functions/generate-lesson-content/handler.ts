@@ -35,6 +35,7 @@ import {
   type StagingLevelProgress,
   type StagingDraftResponse,
 } from './staging-level-workflow.ts';
+import { stagingProviderOutputContract } from './staging-structured-output.ts';
 
 const configuredOrigins = (Deno.env.get('STAGING_FRONTEND_ORIGINS') ?? Deno.env.get('STAGING_FRONTEND_ORIGIN') ?? '')
   .split(',')
@@ -44,6 +45,7 @@ const configuredOrigins = (Deno.env.get('STAGING_FRONTEND_ORIGINS') ?? Deno.env.
 const allowedOrigins = new Set([...DEFAULT_ALLOWED_ORIGINS, ...configuredOrigins]);
 
 const GENERATOR_BUILD = 'practice-v21-compiler-1';
+const STAGING_PROVIDER_OUTPUT_CONTRACT = stagingProviderOutputContract();
 // Fixture topics must never receive generated staging drafts.
 const FIXTURE_STAGING_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'];
 const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
@@ -612,7 +614,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message, modelId, history: [], language, maxTokens: STAGING_LEVEL_MAX_TOKENS,
-          customPrompt: 'Use response_format={"type":"json_object"}. Return one complete JSON object for this level only; no prose, Markdown, second object, array root, or wrapper.',
+          customPrompt: `Use response_format=${JSON.stringify(STAGING_PROVIDER_OUTPUT_CONTRACT.responseFormat)}. Return one complete JSON object for this level only; no prose, Markdown, second object, array root, or wrapper. The application will validate the complete level contract before assembly or persistence.`,
           isUnified: true, requestMode: 'lessonGeneration',
           userContext: { grade_level: rawLevel, age_group: ageGroup, curriculum, country: countryLabel, response_language: responseLang, learning_style: 'visual', format: 'json' },
         }),

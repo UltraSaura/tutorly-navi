@@ -12,6 +12,8 @@ const generated = (topicId: string, providerCalls = 4) => ({
   canonicalValid: true as const,
   pedagogicalValid: true as const,
   geometryValid: true as const,
+  levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: providerCalls === 4 ? 1 : Math.max(1, providerCalls - 3) })),
+  progress: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: 1 })),
 });
 
 const valid = () => ({ canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, interactionValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });

@@ -44,7 +44,9 @@ The explicit prerequisite result is separate from canonical validation. A valid 
 
 Provider output with legacy `check_question` or `answer_type` fields is rejected. The normalizer does not rename fields, infer answers, or rewrite invalid educational content.
 
-DeepSeek's `response_format: { "type": "json_object" }` guarantees an object-oriented response mode, not application-level schema enforcement for this nested lesson contract. The staging prompt therefore requests one compact root object, but the application remains the authority: it parses exactly one object, validates every field and visual, and only then performs deterministic five-block assembly. A malformed response is rejected or receives the single bounded JSON retry; no content is guessed.
+DeepSeek's current staging integration uses Chat Completions at `/v1/chat/completions`. Its `response_format: { "type": "json_object" }` guarantees JSON output mode, not application-level schema enforcement for this nested lesson contract. The provider's strict JSON Schema format belongs to the Responses API, while strict tool calls are beta and do not support `minItems`/`maxItems`; those limits are needed to constrain `sequence` to exactly five blocks. Therefore strict provider schema mode is deliberately not activated or simulated here. The application remains the authority: it parses exactly one object, validates every field and visual, and only then performs deterministic five-block assembly. A malformed response is rejected or receives the single bounded JSON retry; no content is guessed.
+
+The default maximum remains 8 provider calls per topic: four initial level calls plus at most one JSON retry per level. A future five-output-per-level design would require 20 initial calls per topic and up to 40 with one retry per output; it is not enabled because it would increase paid calls and has not been costed against a configured model price.
 
 ## Persistence and safety
 
