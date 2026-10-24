@@ -281,7 +281,7 @@ test('genuinely malformed JSON at level 4 stops after the one retry without part
   assertEquals(body.error.stage, 'provider_parse');
   assertEquals(body.error.requestId, 'level-four-malformed');
   assertEquals(body.error.technicalDetail, 'staging_level_json_parse_failed: malformed_json · Unexpected end of JSON input · près de: {"lesson_goal":"incomplete","sequence":[⟦ICI⟧');
-  assertEquals(body.error.providerDiagnostics.syntaxError.position, 38);
+  assertEquals(body.error.providerDiagnostics.syntaxError.position, 40);
   assertEquals(body.error.providerCalls, 5);
   assertEquals(body.error.retryCount, 1);
   assertEquals(calls.provider, 5);
