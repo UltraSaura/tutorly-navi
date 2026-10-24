@@ -132,8 +132,9 @@ const object = (value: unknown): Record<string, unknown> | null =>
 
 export const STAGING_LEVEL_COUNT = 4;
 export const STAGING_LEVEL_MAX_TOKENS = 4096;
-export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v3-json-syntax';
-export const STAGING_JSON_SYNTAX_RULE = 'SYNTAXE JSON STRICTE: un nombre JSON (expected_answer, correct_answer, radius, degrees, x, y, factor…) s’écrit TOUJOURS avec un point décimal et sans espace: 0.5, 2.75, 12 — JAMAIS 0,5, 2,75, 1 000, .5 ni 05. La virgule décimale française (« 2,75 ») n’est autorisée qu’À L’INTÉRIEUR d’une chaîne entre guillemets, par exemple "2,75". Si une réponse décimale doit s’afficher avec une virgule, mets-la en chaîne: "expected_answer":"2,75" (et la même chaîne dans choices). Dans le texte, n’écris jamais de guillemet droit " non échappé: utilise « » ou \\". N’utilise aucune barre oblique inverse (pas de LaTeX comme \\frac ou \\times): écris « × », « ÷ », « 3/4 ». Aucune virgule finale avant } ou ], aucun commentaire, aucun NaN/Infinity.';
+export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v4-visual-first';
+export const STAGING_JSON_NESTING_RULE = 'ORDRE DES CLÉS D’UN CONCEPT: écris toujours id, type, title, content, PUIS visual (complet, avec purpose, alt_text et data), et SEULEMENT ENSUITE key_points puis takeaway en dernier. Ne place jamais visual à la fin d’un bloc. Après le dernier élément de visual.data.side_labels ou visual.data.vertices, ferme exactement: } ] } } puis écris ,"key_points". Chaque bloc de sequence se termine par "takeaway":"…"} (concept) ou par sa dernière clé simple, puis , avant le bloc suivant.';
+export const STAGING_JSON_SYNTAX_RULE = 'SYNTAXE JSON STRICTE: un nombre JSON (expected_answer, correct_answer, radius, degrees, x, y, factor…) s’écrit TOUJOURS avec un point décimal et sans espace: 0.5, 2.75, 12 — JAMAIS 0,5, 2,75, 1 000, .5 ni 05. La virgule décimale française (« 2,75 ») n’est autorisée qu’À L’INTÉRIEUR d’une chaîne entre guillemets, par exemple "2,75". Si une réponse décimale doit s’afficher avec une virgule, mets-la en chaîne: "expected_answer":"2,75" (et la même chaîne dans choices). Dans le texte, n’écris jamais de guillemet droit " non échappé: utilise « » ou \\". N’utilise aucune barre oblique inverse (pas de LaTeX comme \\frac ou \\times): écris « × », « ÷ », « 3/4 ». Aucune virgule finale avant } ou ], aucun commentaire, aucun NaN/Infinity. ' + STAGING_JSON_NESTING_RULE;
 export const STAGING_JSON_OUTPUT_RULE = 'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau complet pour ce niveau; aucune fence Markdown (pas de ```json), aucun texte avant/après, aucun second objet JSON, aucun tableau racine ni wrapper. Respecte exactement le schéma demandé et arrête-toi après la dernière accolade. ' + STAGING_JSON_SYNTAX_RULE;
 
 const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
@@ -309,7 +310,7 @@ type ConceptExample = Record<string, unknown> & { visual: { kind: string; purpos
 /** Canonical drawable-visual concept examples. Each one must pass the real
  * staging validators (see staging-prompt-consistency.test.ts); the prompt
  * embeds them verbatim so the provider sees exactly the accepted shapes. */
-export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion' | 'number_line', ConceptExample> = {
+const RAW_STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion' | 'number_line', ConceptExample> = {
   rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatère qui possède quatre angles droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Forme', text: 'La figure possède quatre côtés.' }, { label: 'Angles', text: 'Chaque coin forme un angle droit.' }], takeaway: 'Astuce : pense à une porte.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les côtés.', alt_text: 'Rectangle ABCD dessiné avec quatre sommets étiquetés.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
   triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle est un polygone formé de trois côtés et de trois sommets.', key_points: [{ label: 'Côtés', text: 'Trois segments ferment cette figure.' }, { label: 'Sommets', text: 'Chaque jonction constitue un sommet.' }], takeaway: 'Astuce : un doigt par coin.', visual: { kind: 'polygon', purpose: 'Nommer les côtés du triangle.', alt_text: 'Triangle ABC dessiné avec trois sommets étiquetés.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
   circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points d’un cercle sont à la même distance du centre O. Le diamètre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Un rayon rejoint le bord.' }, { label: 'Diamètre', text: 'Un diamètre traverse le milieu.' }], takeaway: 'Astuce : pense à une roue de vélo.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamètre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamètre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
@@ -320,6 +321,27 @@ export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle'
   unit_conversion: { id: 'unit-conversion-concept', type: 'concept', title: 'Convertir une durée', content: 'Pour convertir une durée, on relie les unités par leur facteur. Une minute correspond à 60 secondes.', key_points: [{ label: 'Facteur', text: 'Une minute vaut soixante secondes.' }, { label: 'Sens', text: 'Multiplier donne davantage de secondes.' }], takeaway: 'Astuce : choisis avant d’agir.', visual: { kind: 'unit_conversion', purpose: 'Montrer le facteur entre minute et seconde.', alt_text: 'Conversion d’une minute en secondes.', data: { from: 'minute', to: 'seconde', factor: 60 } } },
   number_line: { id: 'number-line-concept', type: 'concept', title: 'Placer un nombre décimal', content: 'Sur une droite graduée, chaque intervalle représente une même valeur. Un nombre décimal se place entre deux repères selon sa partie entière et sa partie décimale.', key_points: [{ label: 'Repères', text: 'Les graduations gardent un même écart.' }, { label: 'Position', text: 'La virgule indique la place du nombre.' }], takeaway: 'Astuce : avance graduation par graduation.', visual: { kind: 'number_line', purpose: 'Placer un nombre décimal entre deux repères.', alt_text: 'Droite graduée de zéro à deux avec un repère décimal.', data: { min: 0, max: 2, step: 0.1, value: 1.4 } } },
 };
+
+/** Concept key order shown to the provider: the deeply nested visual comes
+ * right after content and the block ends with flat fields (key_points,
+ * takeaway). A visual written last forces a long run of closing brackets
+ * ("}]}}}") that DeepSeek repeatedly shortened by one brace, producing
+ * malformed JSON. Same data, same validators — only the key order changes. */
+export function orderConceptKeysVisualFirst<T extends Record<string, unknown>>(block: T): T {
+  if (!('visual' in block)) return block;
+  const { visual, key_points, takeaway, ...rest } = block as Record<string, unknown>;
+  const ordered: Record<string, unknown> = {};
+  for (const key of ['id', 'type', 'title', 'content']) if (key in rest) ordered[key] = rest[key];
+  ordered.visual = visual;
+  for (const [key, value] of Object.entries(rest)) if (!(key in ordered)) ordered[key] = value;
+  if (key_points !== undefined) ordered.key_points = key_points;
+  if (takeaway !== undefined) ordered.takeaway = takeaway;
+  return ordered as T;
+}
+
+export const STAGING_VISUAL_EXAMPLES = Object.fromEntries(
+  Object.entries(RAW_STAGING_VISUAL_EXAMPLES).map(([kind, block]) => [kind, orderConceptKeysVisualFirst(block)]),
+) as typeof RAW_STAGING_VISUAL_EXAMPLES;
 
 export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'angle', 'symmetry'] as const;
 
