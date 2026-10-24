@@ -2,6 +2,12 @@ export type SafeJsonResult =
   | { ok: true; value: unknown; attemptedRepair: boolean }
   | { ok: false; attemptedRepair: boolean; category: 'empty' | 'malformed_json' | 'ambiguous_json' | 'unsupported_shape' };
 
+export type JsonSyntaxErrorDescription = {
+  message: string;
+  position: number | null;
+  context: string | null;
+};
+
 export type ProviderResponseDiagnostics = {
   httpStatus: number;
   contentType: string | null;
@@ -13,7 +19,38 @@ export type ProviderResponseDiagnostics = {
   contentLength: number;
   contentSha256: string | null;
   parseState: string;
+  syntaxError?: JsonSyntaxErrorDescription;
 };
+
+/**
+ * Describes where provider JSON stops being valid, without repairing it.
+ * The context is a short excerpt of generated lesson text (never credentials)
+ * so administrators can see the exact syntax problem.
+ */
+export function describeJsonSyntaxError(raw: unknown, radius = 40): JsonSyntaxErrorDescription | null {
+  if (typeof raw !== 'string' || !raw.trim()) return null;
+  try {
+    JSON.parse(raw);
+    return null;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const match = message.match(/position\s+(\d+)/i);
+    let position = match ? Number(match[1]) : null;
+    if (position === null) {
+      const lineColumn = message.match(/line\s+(\d+)\s+column\s+(\d+)/i);
+      if (lineColumn) {
+        const lines = raw.split('\n');
+        const line = Number(lineColumn[1]);
+        position = lines.slice(0, line - 1).reduce((total, current) => total + current.length + 1, 0) + Number(lineColumn[2]) - 1;
+      }
+    }
+    if (position === null && /unexpected end/i.test(message)) position = raw.length;
+    const context = position === null
+      ? null
+      : `${raw.slice(Math.max(0, position - radius), position)}⟦ICI⟧${raw.slice(position, position + radius)}`.replace(/\s+/g, ' ');
+    return { message: message.slice(0, 200), position, context };
+  }
+}
 
 export function extractProviderContent(envelope: Record<string, unknown>): { found: boolean; value: unknown } {
   if (Object.prototype.hasOwnProperty.call(envelope, 'content')) {
