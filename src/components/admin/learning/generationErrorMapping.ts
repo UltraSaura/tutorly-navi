@@ -24,6 +24,8 @@ export type GenerationErrorDetails = {
   validationCategory?: string;
   build?: string;
   promptVersion?: string;
+  retryCount?: number;
+  parseStage?: string;
   progress?: unknown[];
   validation?: unknown;
 };
@@ -65,6 +67,8 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       validationCategory: error.validationCategory,
       build: error.build,
       promptVersion: error.promptVersion,
+      retryCount: error.retryCount,
+      parseStage: error.parseStage,
       progress: error.progress,
       validation: error.validation,
     }, fallback);
@@ -101,6 +105,8 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     validationCategory: stringValue(nested.validationCategory) ?? stringValue(root.validationCategory),
     build: stringValue(nested.build) ?? stringValue(root.build),
     promptVersion: stringValue(nested.promptVersion) ?? stringValue(root.promptVersion),
+    retryCount: finiteNumber(nested.retryCount) ?? finiteNumber(root.retryCount),
+    parseStage: stringValue(nested.parseStage) ?? stringValue(root.parseStage),
     progress: Array.isArray(nested.progress) ? nested.progress : Array.isArray(root.progress) ? root.progress : undefined,
     validation: nested.validation ?? root.validation,
   };
@@ -110,6 +116,10 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
 export function formatGenerationErrorDetails(details: GenerationErrorDetails): string {
   if (details.validationCategory === 'geometry' && details.level !== undefined && /clock/i.test(details.technicalDetail ?? '')) {
     return `Validation failed in level ${details.level}: the clock visual has an invalid hour or minute.`;
+  }
+  if (details.code === 'provider_malformed_json') {
+    const attempt = details.retryCount && details.retryCount > 0 ? 'après le retry JSON borné' : 'sur la réponse initiale';
+    return `Le contenu généré n’a pas pu être lu correctement (${attempt}).`;
   }
   const prefix = details.stage === 'pre_generation' ? 'Generation did not start' :
     details.stage === 'provider_failure' ? 'Provider failure' :
@@ -129,6 +139,8 @@ export function formatAdminGenerationError(payload: unknown, fallback = generati
     details.validationCategory ? `validation=${details.validationCategory}` : undefined,
     details.stage ? `stage=${details.stage}` : undefined,
     details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
+    details.retryCount !== undefined ? `retryCount=${details.retryCount}` : undefined,
+    details.parseStage ? `parseStage=${details.parseStage}` : undefined,
     details.technicalDetail,
   ].filter(Boolean).join(' · ');
   return diagnostic ? `${summary} — ${diagnostic}` : summary;
@@ -142,6 +154,8 @@ export function formatGenerationDiagnostic(payload: unknown, fallback = generati
     details.code ? `code=${details.code}` : undefined,
     details.requestId ? `requestId=${details.requestId}` : undefined,
     details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
+    details.retryCount !== undefined ? `retryCount=${details.retryCount}` : undefined,
+    details.parseStage ? `parseStage=${details.parseStage}` : undefined,
     details.level !== undefined ? `level=${details.level}` : undefined,
     details.stage ? `stage=${details.stage}` : undefined,
     details.technicalDetail,

@@ -98,4 +98,14 @@ describe('generation error mapping', () => {
     expect(formatGenerationErrorDetails({ message: 'Invalid lesson.', stage: 'validation_failure' })).toContain('Validation failure');
     expect(formatGenerationErrorDetails({ message: 'Insert failed.', stage: 'database_save' })).toContain('Database save failure');
   });
+
+  it('identifies whether malformed JSON failed initially or after the bounded retry', () => {
+    const initial = formatAdminGenerationError({ error: { code: 'provider_malformed_json', retryCount: 0, parseStage: 'malformed_json', providerCalls: 1 } });
+    const retried = formatAdminGenerationError({ error: { code: 'provider_malformed_json', retryCount: 1, parseStage: 'ambiguous_json', providerCalls: 2 } });
+    expect(initial).toContain('sur la réponse initiale');
+    expect(initial).toContain('retryCount=0');
+    expect(retried).toContain('après le retry JSON borné');
+    expect(retried).toContain('retryCount=1');
+    expect(retried).toContain('parseStage=ambiguous_json');
+  });
 });

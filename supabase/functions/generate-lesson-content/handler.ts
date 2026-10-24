@@ -7,7 +7,7 @@ import { determineVisualRequirement, isSupportedVisualKind } from './visual-poli
 import { resolveEdition } from './curriculum-resolution.ts';
 import { normalizeGeneratedLesson, ensureRequiredVisuals } from './lesson-normalization.ts';
 import { normalizeLessonComposition } from './composition-normalization.ts';
-import { parseProviderJsonSafely } from './provider-json.ts';
+import { buildProviderResponseDiagnostics, extractProviderContent, parseProviderJsonSafely } from './provider-json.ts';
 import { normalizeCanonicalAnswers } from './canonical-normalization.ts';
 import { compileV21LessonDraft } from './v21-draft-compiler.ts';
 // The shared CORS policy also permits x-family-grant for family-access callers.
@@ -23,9 +23,11 @@ import {
   stagingLevelMetadata,
   stagingLevelPrompt,
   StagingLevelContractError,
+  StagingLevelJsonParseError,
   classifyGenerationFailure,
   stagingTokenUsage,
   stagingValidationFailure,
+  runWithBoundedJsonRetry,
   summarizeStagingValidation,
   validateStagingLevel,
   type StagingLevelMetadata,
@@ -162,7 +164,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   let requestAllowsPaidRepair = false;
   let aiProviderCalls = 0;
   let stagingProgress: StagingLevelProgress[] = [];
-  let stagingFailure: { level?: number; stage?: string; message?: string; validationCategory?: string } | undefined;
+  let stagingFailure: { level?: number; stage?: string; message?: string; validationCategory?: string; retryCount?: number; parseStage?: string } | undefined;
   const requestOrigin = requestOriginOf(req);
   const corsHeaders = corsHeadersFor(requestOrigin, allowedOrigins);
   const responseHeaders = (contentType = true): Record<string, string> => ({
@@ -589,14 +591,17 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
     };
 
     // Staging calls are intentionally isolated from the legacy generator:
-    // exactly one provider request per level, with no repair/retry path.
-    const callStagingLevelAI = async (message: string, metadata: StagingLevelMetadata) => {
+    // one initial request per level, with at most one retry only when the
+    // response cannot be parsed as exactly one JSON object.
+    const callStagingLevelAI = async (message: string, metadata: StagingLevelMetadata, attempt = 0) => {
       aiProviderCalls += 1;
       console.info('[generate-lesson-content] staging provider call', {
         build: GENERATOR_BUILD,
         promptVersion: STAGING_PROMPT_VERSION,
         topicId,
         level: metadata.level_number,
+        attempt: attempt + 1,
+        retryCount: attempt,
         providerCalls: aiProviderCalls,
       });
       let res: Response;
@@ -606,7 +611,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message, modelId, history: [], language, maxTokens: STAGING_LEVEL_MAX_TOKENS,
-          customPrompt: 'Return one compact, complete lesson-level JSON object only. No Markdown, wrapper, retry, or repair.',
+          customPrompt: 'JSON OUTPUT MODE is enabled with response_format={"type":"json_object"}. Return exactly one compact, complete lesson-level JSON object only. No text before or after, no Markdown fence, no second JSON object, no array root, no wrapper, no retry, and no repair. Stop after the final closing brace.',
           isUnified: true, requestMode: 'lessonGeneration',
           userContext: { grade_level: rawLevel, age_group: ageGroup, curriculum, country: countryLabel, response_language: responseLang, learning_style: 'visual', format: 'json' },
         }),
@@ -614,15 +619,92 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       } catch (networkError) {
         throw new Error('staging_level_provider_unavailable: ' + (networkError instanceof Error ? networkError.message : String(networkError)));
       }
-      if (!res.ok) throw new Error('staging_level_provider_http_' + res.status + ': ' + await res.text());
+      const responseBodyText = await res.text();
+      const responseContentType = res.headers.get('content-type');
+      if (!res.ok) {
+        const diagnostics = await buildProviderResponseDiagnostics({
+          httpStatus: res.status,
+          contentType: responseContentType,
+          bodyText: responseBodyText,
+          envelope: null,
+          content: undefined,
+          parseState: 'http_error',
+        });
+        console.warn('[generate-lesson-content] safe provider response diagnostics', diagnostics);
+        throw new Error('staging_level_provider_http_' + res.status);
+      }
       let data: Record<string, unknown>;
-      try { data = await res.json(); } catch { throw new Error('staging_level_json_parse_failed: ai-chat envelope is not JSON'); }
+      try {
+        const parsedEnvelope = JSON.parse(responseBodyText);
+        if (!parsedEnvelope || typeof parsedEnvelope !== 'object' || Array.isArray(parsedEnvelope)) throw new Error('unsupported envelope shape');
+        data = parsedEnvelope as Record<string, unknown>;
+      } catch {
+        const diagnostics = await buildProviderResponseDiagnostics({
+          httpStatus: res.status,
+          contentType: responseContentType,
+          bodyText: responseBodyText,
+          envelope: null,
+          content: undefined,
+          parseState: 'envelope_malformed_json',
+        });
+        console.warn('[generate-lesson-content] safe provider response diagnostics', diagnostics);
+        throw new StagingLevelJsonParseError('envelope_malformed_json');
+      }
       const providerMetadata = data.providerMetadata as { finishReason?: string; promptTokens?: number; completionTokens?: number; totalTokens?: number } | null;
+      const extracted = extractProviderContent(data);
+      const raw = extracted.value;
       const tokenUsage = stagingTokenUsage(providerMetadata);
-      const raw = data.content || (data.data as { content?: unknown } | undefined)?.content || data;
-      const parsed = parseStagingLevelResponse(raw, metadata);
-      return { value: parsed.value, tokenUsage };
+      const contentEmpty = !extracted.found || raw === null || (typeof raw === 'string' && raw.trim().length === 0);
+      if (contentEmpty) {
+        const diagnostics = await buildProviderResponseDiagnostics({
+          httpStatus: res.status,
+          contentType: responseContentType,
+          bodyText: responseBodyText,
+          envelope: data,
+          content: raw,
+          parseState: 'content_empty',
+        });
+        console.warn('[generate-lesson-content] safe provider response diagnostics', diagnostics);
+      }
+      try {
+        const parsed = parseStagingLevelResponse(raw, metadata);
+        const diagnostics = await buildProviderResponseDiagnostics({
+          httpStatus: res.status,
+          contentType: responseContentType,
+          bodyText: responseBodyText,
+          envelope: data,
+          content: raw,
+          parseState: parsed.attemptedRepair ? 'valid_json_repaired_boundary' : 'valid_json',
+        });
+        console.info('[generate-lesson-content] safe provider response diagnostics', diagnostics);
+        return { value: parsed.value, tokenUsage };
+      } catch (error) {
+        const parseState = error instanceof StagingLevelJsonParseError ? error.category : 'json_parsed_schema_rejected';
+        const diagnostics = await buildProviderResponseDiagnostics({
+          httpStatus: res.status,
+          contentType: responseContentType,
+          bodyText: responseBodyText,
+          envelope: data,
+          content: raw,
+          parseState,
+        });
+        console.warn('[generate-lesson-content] safe provider response diagnostics', diagnostics);
+        throw error;
+      }
     };
+
+    const callStagingLevelWithBoundedJsonRetry = async (message: string, metadata: StagingLevelMetadata) => runWithBoundedJsonRetry(
+      (attempt) => callStagingLevelAI(message, metadata, attempt),
+      (retryCount, error) => console.warn('[generate-lesson-content] bounded JSON retry', {
+        build: GENERATOR_BUILD,
+        promptVersion: STAGING_PROMPT_VERSION,
+        topicId,
+        level: metadata.level_number,
+        retryCount,
+        parseStage: error.category,
+        requestId,
+      }),
+    ).then(({ value, retryCount }) => ({ ...value, retryCount }));
 
     // Repair only missing concept visuals that the shared policy marks as
     // required. This is deliberately bounded and cannot rewrite pedagogy.
@@ -796,20 +878,22 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       const objectiveText = objectives.map((o) => o.text).join('; ');
       const metadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id), objectiveText);
       const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
+      let totalRetryCount = 0;
       for (const levelMetadata of metadata) {
         const levelIndex = levelMetadata.level_number;
         let levelTokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
         let levelValidation;
         try {
-          const result = await callStagingLevelAI(stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, objectives.map((o) => o.text).join('; ')), levelMetadata);
+          const result = await callStagingLevelWithBoundedJsonRetry(stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, objectives.map((o) => o.text).join('; ')), levelMetadata);
           levelTokenUsage = result.tokenUsage;
+          totalRetryCount += result.retryCount;
           const normalized = normalizeGeneratedLesson(result.value, topic.name, { preserveProviderSequence: true });
           // Staging keeps provider key_points/content byte-for-byte intact.
           // Semantic duplication is a validation failure, never a cleanup
           // opportunity; no provider educational text is fabricated or rewritten.
           const lesson = normalized.lesson;
           const validation = validateStagingLevel(lesson, levelMetadata, topic.name, rawLevel);
-          const requiredIssues = requiredGeometryKindsIssues(lesson, levelMetadata.required_geometry_kinds);
+          const requiredIssues = requiredGeometryKindsIssues(lesson, levelMetadata.required_geometry_kinds, levelMetadata.required_geometry_alternatives);
           levelValidation = summarizeStagingValidation(validation, requiredIssues);
           const issues = [...validation.canonicalIssues, ...validation.pedagogicalIssues, ...validation.geometryIssues, ...requiredIssues];
           if (issues.length > 0) {
@@ -818,7 +902,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             throw validationError;
           }
           validatedLevels.push({ metadata: levelMetadata, lesson });
-          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1, tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, requestId, validation: levelValidation, diagnostics: [] });
+          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1 + result.retryCount, retryCount: result.retryCount, parseStage: result.retryCount > 0 ? 'valid_json_after_bounded_retry' : 'valid_json', tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, requestId, validation: levelValidation, diagnostics: result.retryCount > 0 ? ['initial_response_parse_failed; bounded_json_retry_succeeded'] : [] });
           console.info('[generate-lesson-content] staging level complete', { build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCalls: aiProviderCalls, tokenUsage: result.tokenUsage });
         } catch (error) {
           const structuredFailure = error && typeof error === 'object' && 'stagingFailure' in error
@@ -827,15 +911,22 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           const contractFailure = error instanceof StagingLevelContractError
             ? stagingValidationFailure(levelIndex, error.issues, aiProviderCalls)
             : undefined;
+          const jsonParseFailure = error instanceof StagingLevelJsonParseError
+            ? { level: levelIndex, stage: 'provider_parse', message: error.message, validationCategory: 'provider_json', retryCount: Number((error as StagingLevelJsonParseError & { retryCount?: number }).retryCount ?? 0), parseStage: String((error as StagingLevelJsonParseError & { parseStage?: string }).parseStage ?? error.category) }
+            : undefined;
           stagingFailure = structuredFailure
             ? { level: structuredFailure.level, stage: structuredFailure.stage, message: structuredFailure.technicalDetail, validationCategory: structuredFailure.validationCategory }
             : contractFailure
               ? { level: contractFailure.level, stage: contractFailure.stage, message: contractFailure.technicalDetail, validationCategory: contractFailure.validationCategory }
-            : { level: levelIndex, stage: 'level_generation_or_validation', message: error instanceof Error ? error.message : String(error) };
+              : jsonParseFailure
+                ? jsonParseFailure
+            : { level: levelIndex, stage: 'level_generation_or_validation', message: error instanceof Error ? error.message : String(error), retryCount: 0 };
           stagingProgress.push({
             level: levelIndex,
             status: 'failed',
-            providerCalls: 1,
+            providerCalls: aiProviderCalls,
+            retryCount: Number(stagingFailure.retryCount ?? 0),
+            parseStage: stagingFailure.parseStage,
             tokenUsage: levelTokenUsage,
             build: GENERATOR_BUILD,
             promptVersion: STAGING_PROMPT_VERSION,
@@ -879,6 +970,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         interactionValid: true,
         validation: aggregateValidation,
         providerCalls: aiProviderCalls,
+        retryCount: totalRetryCount,
         build: GENERATOR_BUILD,
         promptVersion: STAGING_PROMPT_VERSION,
         progress: stagingProgress,
@@ -1319,6 +1411,8 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       stage: classified.stage ?? stagingFailure?.stage,
       validationCategory: stagingFailure?.validationCategory,
       requestId,
+      retryCount: Number(stagingFailure?.retryCount ?? 0),
+      parseStage: stagingFailure?.parseStage,
     };
     // The admin page opts in to receiving rejections (422/500/502) as a
     // normal reply body so the preview does not treat them as app crashes.

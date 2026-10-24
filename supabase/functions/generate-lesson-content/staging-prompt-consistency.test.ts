@@ -45,6 +45,9 @@ describe('staging prompt ↔ validator consistency (providerCalls=0)', () => {
     expect(prompt).toContain('data.rays');
     expect(prompt).toContain('data.symmetric_figure');
     expect(prompt).toContain('data.diameter');
+    expect(prompt).toContain('exactement UN objet JSON de premier niveau');
+    expect(prompt).toContain('pas de ```json');
+    expect(prompt).toContain('aucun second objet JSON');
   });
 });
 

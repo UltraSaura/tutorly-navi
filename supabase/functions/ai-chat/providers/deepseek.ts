@@ -119,6 +119,7 @@ export async function callDeepSeek(
   
   const data = await response.json();
   const metadata = {
+    choiceCount: Array.isArray(data.choices) ? data.choices.length : 0,
     finishReason: data.choices?.[0]?.finish_reason ?? null,
     promptTokens: data.usage?.prompt_tokens ?? null,
     completionTokens: data.usage?.completion_tokens ?? null,

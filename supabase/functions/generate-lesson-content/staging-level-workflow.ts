@@ -11,12 +11,15 @@ export type StagingLevelMetadata = {
   difficulty: string;
   objective_ids: string[];
   required_geometry_kinds: string[];
+  required_geometry_alternatives?: string[][];
 };
 
 export type StagingLevelProgress = {
   level: number;
   status: 'complete' | 'failed';
   providerCalls: number;
+  retryCount?: number;
+  parseStage?: string;
   tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number };
   build?: string;
   promptVersion?: string;
@@ -39,6 +42,7 @@ export type StagingDraftResponse = {
   interactionValid: boolean;
   validation: StagingValidationSummary;
   providerCalls: number;
+  retryCount?: number;
   build: string;
   promptVersion: string;
   progress: StagingLevelProgress[];
@@ -72,6 +76,32 @@ export class StagingLevelContractError extends Error {
   constructor(public readonly issues: Array<{ path: string; message: string }>) {
     super('staging_level_contract_failed: ' + issues.map((issue) => issue.path + ': ' + issue.message).join('; '));
     this.name = 'StagingLevelContractError';
+  }
+}
+
+export class StagingLevelJsonParseError extends Error {
+  constructor(public readonly category: string) {
+    super('staging_level_json_parse_failed: ' + category);
+    this.name = 'StagingLevelJsonParseError';
+  }
+}
+
+export async function runWithBoundedJsonRetry<T>(
+  call: (attempt: number) => Promise<T>,
+  onRetry?: (retryCount: number, error: StagingLevelJsonParseError) => void,
+): Promise<{ value: T; retryCount: number }> {
+  let retryCount = 0;
+  while (true) {
+    try {
+      return { value: await call(retryCount), retryCount };
+    } catch (error) {
+      if (!(error instanceof StagingLevelJsonParseError) || retryCount >= 1) {
+        if (error instanceof StagingLevelJsonParseError) Object.assign(error, { retryCount, parseStage: error.category });
+        throw error;
+      }
+      retryCount += 1;
+      onRetry?.(retryCount, error);
+    }
   }
 }
 
@@ -235,11 +265,24 @@ export function stagingTokenUsage(providerMetadata: { finishReason?: string; pro
   };
 }
 
+function isDecimalTopic(topicName: string, objectiveText = ''): boolean {
+  return /nombre(?:s)?[\s-]+d[ée]cimal(?:e|es)?|d[ée]cimaux|decimal/i.test(`${topicName} ${objectiveText}`);
+}
+
 function isTimeTopic(topicName: string, objectiveText = ''): boolean {
   return /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i.test(`${topicName} ${objectiveText}`);
 }
 
 export function stagingLevelMetadata(topicId: string, topicName: string, objectiveIds: string[], objectiveText = ''): StagingLevelMetadata[] {
+  if (isDecimalTopic(topicName, objectiveText)) {
+    const decimalModel = [['number_line', 'rectangle']];
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Comprendre la valeur de position', purpose: 'Lire la valeur de chaque chiffre dans un nombre décimal.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: decimalModel },
+      { id: topicId + '-level-2', level_number: 2, title: 'Comparer et placer des décimaux', purpose: 'Comparer des nombres décimaux et les placer sur une droite graduée.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: decimalModel },
+      { id: topicId + '-level-3', level_number: 3, title: 'Calculer avec des décimaux', purpose: 'Effectuer un calcul décimal en respectant la valeur de position.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: decimalModel },
+      { id: topicId + '-level-4', level_number: 4, title: 'Résoudre avec des décimaux', purpose: 'Résoudre une situation en choisissant une représentation décimale adaptée.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: decimalModel },
+    ];
+  }
   if (isTimeTopic(topicName, objectiveText)) {
     return [
       { id: topicId + '-level-1', level_number: 1, title: 'Comprendre les unités de durée', purpose: 'Comparer les unités de temps et leur ordre.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['unit_conversion', 'timeline'] },
@@ -261,7 +304,7 @@ type ConceptExample = Record<string, unknown> & { visual: { kind: string; purpos
 /** Canonical drawable-visual concept examples. Each one must pass the real
  * staging validators (see staging-prompt-consistency.test.ts); the prompt
  * embeds them verbatim so the provider sees exactly the accepted shapes. */
-export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion', ConceptExample> = {
+export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion' | 'number_line', ConceptExample> = {
   rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatère qui possède quatre angles droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Forme', text: 'La figure possède quatre côtés.' }, { label: 'Angles', text: 'Chaque coin forme un angle droit.' }], takeaway: 'Astuce : pense à une porte.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les côtés.', alt_text: 'Rectangle ABCD dessiné avec quatre sommets étiquetés.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
   triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle est un polygone formé de trois côtés et de trois sommets.', key_points: [{ label: 'Côtés', text: 'Trois segments ferment cette figure.' }, { label: 'Sommets', text: 'Chaque jonction constitue un sommet.' }], takeaway: 'Astuce : un doigt par coin.', visual: { kind: 'polygon', purpose: 'Nommer les côtés du triangle.', alt_text: 'Triangle ABC dessiné avec trois sommets étiquetés.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
   circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points d’un cercle sont à la même distance du centre O. Le diamètre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Un rayon rejoint le bord.' }, { label: 'Diamètre', text: 'Un diamètre traverse le milieu.' }], takeaway: 'Astuce : pense à une roue de vélo.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamètre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamètre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
@@ -270,6 +313,7 @@ export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle'
   clock: { id: 'clock-concept', type: 'concept', title: 'Lire une horloge', content: 'Une horloge indique une heure grâce à ses aiguilles. La petite aiguille montre les heures et la grande les minutes.', key_points: [{ label: 'Heures', text: 'La petite aiguille indique les heures.' }, { label: 'Minutes', text: 'La grande aiguille indique les minutes.' }], takeaway: 'Astuce : observe le cadran avant d’agir.', visual: { kind: 'clock', purpose: 'Lire une heure précise sur un cadran.', alt_text: 'Horloge indiquant 3 heures et 15 minutes.', data: { hour: 3, minute: 15 } } },
   timeline: { id: 'timeline-concept', type: 'concept', title: 'Ordre des unités', content: 'Les unités de durée se suivent de la seconde au jour. Une frise aide à comparer leur ordre.', key_points: [{ label: 'Ordre', text: 'Une minute contient soixante secondes.' }, { label: 'Repère', text: 'Une heure contient soixante minutes.' }], takeaway: 'Astuce : ordonne les cartes avant d’agir.', visual: { kind: 'timeline', purpose: 'Comparer l’ordre des unités de durée.', alt_text: 'Frise des unités seconde, minute et heure.', data: { units: ['seconde', 'minute', 'heure'] } } },
   unit_conversion: { id: 'unit-conversion-concept', type: 'concept', title: 'Convertir une durée', content: 'Pour convertir une durée, on relie les unités par leur facteur. Une minute correspond à 60 secondes.', key_points: [{ label: 'Facteur', text: 'Une minute vaut soixante secondes.' }, { label: 'Sens', text: 'Multiplier donne davantage de secondes.' }], takeaway: 'Astuce : choisis avant d’agir.', visual: { kind: 'unit_conversion', purpose: 'Montrer le facteur entre minute et seconde.', alt_text: 'Conversion d’une minute en secondes.', data: { from: 'minute', to: 'seconde', factor: 60 } } },
+  number_line: { id: 'number-line-concept', type: 'concept', title: 'Placer un nombre décimal', content: 'Sur une droite graduée, chaque intervalle représente une même valeur. Un nombre décimal se place entre deux repères selon sa partie entière et sa partie décimale.', key_points: [{ label: 'Repères', text: 'Les graduations gardent un même écart.' }, { label: 'Position', text: 'La virgule indique la place du nombre.' }], takeaway: 'Astuce : avance graduation par graduation.', visual: { kind: 'number_line', purpose: 'Placer un nombre décimal entre deux repères.', alt_text: 'Droite graduée de zéro à deux avec un repère décimal.', data: { min: 0, max: 2, step: 0.1, value: 1.4 } } },
 };
 
 export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'angle', 'symmetry'] as const;
@@ -278,7 +322,9 @@ export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'a
  * but still must draw every concept, because pedagogical validation requires
  * a figure for any geometric concept. */
 export function stagingPromptVisualKinds(metadata: StagingLevelMetadata): string[] {
-  return metadata.required_geometry_kinds.length > 0 ? metadata.required_geometry_kinds : [...STAGING_ALL_GEOMETRY_KINDS];
+  if (metadata.required_geometry_kinds.length > 0) return metadata.required_geometry_kinds;
+  if (metadata.required_geometry_alternatives?.length) return [...new Set(metadata.required_geometry_alternatives.flat())];
+  return [...STAGING_ALL_GEOMETRY_KINDS];
 }
 
 /** Numeric prerequisite shown to the provider (validated in tests). */
@@ -327,7 +373,9 @@ const VISUAL_FIELD_RULES = [
 
 export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string): string {
   const kinds = stagingPromptVisualKinds(metadata);
-  const required = metadata.required_geometry_kinds.length > 0
+  const required = metadata.required_geometry_alternatives?.length
+    ? 'Visuel obligatoire pour ce niveau: chaque concept doit utiliser une représentation décimale complète, avec kind "number_line" ou kind "rectangle". Un rectangle est accepté uniquement avec shape="rectangle", quatre sommets numériques et quatre side_labels; une droite graduée doit fournir ses bornes, son pas et sa valeur. Les visuels fraction_bar/fraction_circle sont réservés aux sujets de fractions explicites et ne remplacent pas ce contrat.'
+    : metadata.required_geometry_kinds.length > 0
     ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '. Chaque bloc concept DOIT contenir un visual dessinable complet.'
     : 'Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: ' + kinds.join(', ') + '. Un concept sans figure est refusé.';
   const examples = kinds.map((kind) => 'Exemple de bloc conceptuel ' + kind + ' valide: ' + JSON.stringify(STAGING_VISUAL_EXAMPLES[kind as keyof typeof STAGING_VISUAL_EXAMPLES]));
@@ -343,7 +391,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'Objectifs autorisés: ' + (objectiveText || 'aucun objectif précisé'),
     required,
     levelOneGeometryCoverage,
-    'Retourne UNIQUEMENT le JSON direct de CE niveau, jamais de wrapper, jamais les autres niveaux.',
+    'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau pour CE niveau. Aucun texte avant ou après, aucune fence Markdown (pas de ```json), aucune explication hors JSON, aucun second objet JSON, aucun tableau racine et aucun wrapper lesson supplémentaire. Le mode response_format=json_object est actif; respecte-le et arrête la réponse dès la dernière accolade fermante.',
     'Le JSON doit contenir lesson_goal, success_criteria, prerequisites, sequence, misconceptions et mastery.',
     'sequence doit contenir exactement cinq blocs, dans cet ordre et avec ces types: concept, concept, guided_example, student_try, mastery_check.',
     'Chaque bloc doit contenir son propre id non vide, type canonique et content: une chaîne destinée à l’élève, non vide après trim. Aucun bloc ne peut contenir uniquement des métadonnées, une question ou des réponses sans content. Ne laisse jamais le compilateur inventer un id, un type ou du contenu.',
@@ -374,7 +422,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
 
 export function parseStagingLevelResponse(raw: unknown, metadata?: StagingLevelMetadata): { value: Record<string, unknown>; attemptedRepair: boolean } {
   const parsed = parseProviderJsonSafely(raw);
-  if (parsed.ok === false) throw new Error('staging_level_json_parse_failed: ' + parsed.category);
+  if (parsed.ok === false) throw new StagingLevelJsonParseError(parsed.category);
   const value = object(parsed.value);
   if (!value) throw new Error('staging_level_json_parse_failed: response must be an object');
   const level = object(value.lesson) ?? value;
@@ -482,11 +530,17 @@ export function requiredGeometryIssues(lesson: Record<string, unknown>, required
   return requiredKinds.filter((kind) => !has(kind)).map((kind) => ({ path: 'levels', message: 'Missing required drawable visual: ' + kind + '.' }));
 }
 
-export function requiredGeometryKindsIssues(lesson: Record<string, unknown>, requiredKinds: string[]): Array<{ path: string; message: string }> {
+export function requiredGeometryKindsIssues(lesson: Record<string, unknown>, requiredKinds: string[], alternatives: string[][] = []): Array<{ path: string; message: string }> {
   const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
   const visuals = sequence.map((block) => object(block.visual)).filter(Boolean) as Array<Record<string, unknown>>;
-  return requiredKinds.filter((kind) => !visuals.some((visual) => visual.kind === kind || (kind === 'triangle' && visual.kind === 'polygon' && object(visual.data)?.shape === 'triangle')))
+  const issues = requiredKinds.filter((kind) => !visuals.some((visual) => visual.kind === kind || (kind === 'triangle' && visual.kind === 'polygon' && object(visual.data)?.shape === 'triangle')))
     .map((kind) => ({ path: 'lesson.sequence', message: 'Missing required drawable visual for this level: ' + kind + '.' }));
+  alternatives.forEach((allowedKinds) => {
+    if (!visuals.some((visual) => allowedKinds.includes(String(visual.kind)))) {
+      issues.push({ path: 'lesson.sequence', message: 'Missing required drawable visual; expected one of: ' + allowedKinds.join('|') + '.' });
+    }
+  });
+  return issues;
 }
 
 export function assembleStagingLesson(topicName: string, levels: Array<{ metadata: StagingLevelMetadata; lesson: Record<string, unknown> }>): Record<string, unknown> {
@@ -509,7 +563,7 @@ export function classifyGenerationFailure(error: unknown, stagingStage?: string)
     return { status: 422, code: 'staging_level_validation_failed', message: 'A staging level failed canonical, pedagogical, or geometry validation.', stage: 'level_validation' };
   }
   if (/^staging_assembly_/.test(detail)) return { status: 422, code: 'staging_assembly_validation_failed', message: 'The assembled staging lesson failed validation.', stage: 'assembly_validation' };
-  if (/staging_level_json_parse_failed|provider JSON|malformed JSON|malformed_json/i.test(detail)) return { status: 502, code: 'provider_malformed_json', message: 'The AI provider returned malformed JSON.', stage: 'provider_parse' };
+  if (/staging_level_json_parse_failed|provider JSON|malformed JSON|malformed_json|ambiguous_json/i.test(detail)) return { status: 502, code: 'provider_malformed_json', message: 'The AI provider returned malformed or ambiguous JSON.', stage: 'provider_parse' };
   if (/provider_output_truncated|finish_reason=length/.test(detail)) return { status: 502, code: 'provider_output_truncated', message: 'The AI provider output was truncated.', stage: 'provider_call' };
   if (/staging_level_provider_unavailable/.test(detail)) return { status: 502, code: 'provider_unavailable', message: 'The AI provider could not be reached.', stage: 'provider_call' };
   if (/staging_level_provider_http_|AI generation failed|provider/i.test(detail)) return { status: 502, code: 'provider_error', message: 'The AI provider failed to generate content.', stage: 'provider_call' };

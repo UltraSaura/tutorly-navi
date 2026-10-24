@@ -15,6 +15,8 @@ import {
   stagingSequenceContractIssues,
   stagingTokenUsage,
   stagingValidationFailure,
+  runWithBoundedJsonRetry,
+  StagingLevelJsonParseError,
   validateStagingLevel,
 } from './staging-level-workflow.ts';
 
@@ -56,6 +58,24 @@ const level2Candidate = () => {
 };
 
 describe('staging level workflow', () => {
+  it('retries one malformed JSON response and then succeeds without repair content', async () => {
+    const attempts: number[] = [];
+    const result = await runWithBoundedJsonRetry(async (attempt) => {
+      attempts.push(attempt);
+      if (attempt === 0) throw new StagingLevelJsonParseError('malformed_json');
+      return 'valid';
+    });
+    expect(result).toEqual({ value: 'valid', retryCount: 1 });
+    expect(attempts).toEqual([0, 1]);
+  });
+
+  it('stops after two malformed JSON responses and does not retry validation errors', async () => {
+    const malformed = async () => runWithBoundedJsonRetry(async () => { throw new StagingLevelJsonParseError('ambiguous_json'); });
+    await expect(malformed()).rejects.toMatchObject({ category: 'ambiguous_json', retryCount: 1, parseStage: 'ambiguous_json' });
+    let calls = 0;
+    await expect(runWithBoundedJsonRetry(async () => { calls += 1; throw new Error('schema rejected'); })).rejects.toThrow('schema rejected');
+    expect(calls).toBe(1);
+  });
   it('assembles four independently valid level responses into one canonical lesson', () => {
     const levels = metadata.map((item) => ({ metadata: item, lesson: structuredClone(validLevel1) }));
     const assembled = assembleStagingLesson(topicName, levels);
@@ -517,7 +537,7 @@ describe('staging level workflow', () => {
     expect(() => assembleStagingLesson(topicName, metadata.slice(0, 3).map((item) => ({ metadata: item, lesson })))).toThrow('expected 4 levels');
   });
 
-  it('keeps provider-free orchestration at one response per level with no retry helper', () => {
+  it('keeps provider-free orchestration at one level slot; bounded retry is an Edge handler concern', () => {
     const prompts = metadata.map((item) => item.level_number);
     expect(prompts).toEqual([1, 2, 3, 4]);
     expect(metadata).toHaveLength(4);
@@ -563,5 +583,42 @@ describe('time-topic visual contract (providerCalls=0)', () => {
       expect.objectContaining({ message: expect.stringContaining('timeline') }),
     ]));
     expect([...validation.geometryIssues, ...required]).not.toEqual([]);
+  });
+});
+
+describe('decimal-number visual contract (providerCalls=0)', () => {
+  const decimalTopic = 'Les nombres décimaux';
+  const decimalMetadata = stagingLevelMetadata('decimal-topic', decimalTopic, [], 'Comparer et placer des nombres décimaux.');
+
+  it('uses the decimal model contract instead of the fraction contract', () => {
+    expect(decimalMetadata).toHaveLength(4);
+    expect(decimalMetadata.every((level) => level.required_geometry_alternatives?.some((kinds) => kinds.includes('number_line') && kinds.includes('rectangle')))).toBe(true);
+    expect(decimalMetadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('fraction_bar');
+    expect(decimalMetadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('fraction_circle');
+  });
+
+  it('embeds complete decimal examples and accepts a complete rectangle without a paid call', () => {
+    for (const level of decimalMetadata) {
+      const example = structuredClone(stagingFullLevelExample(level));
+      const validation = validateStagingLevel(example, level, decimalTopic, 'CM2');
+      expect(validation.canonicalIssues).toEqual([]);
+      expect(validation.pedagogicalIssues).toEqual([]);
+      expect(validation.geometryIssues).toEqual([]);
+      expect(requiredGeometryKindsIssues(example, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([]);
+      expect(stagingLevelPrompt(decimalTopic, 'CM2', 'fr', level, 'Comparer des nombres décimaux')).toContain('kind "number_line" ou kind "rectangle"');
+    }
+  });
+
+  it('rejects a fraction-only output for a decimal topic', () => {
+    const level = decimalMetadata[3];
+    const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+    candidate.sequence[0].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+    candidate.sequence[1].visual = { kind: 'fraction_bar', purpose: 'Montrer une fraction.', alt_text: 'Barre de fraction.', data: { parts: 10, filled: 4 } };
+    expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([]);
+    candidate.sequence[0].visual = { kind: 'fraction_circle', purpose: 'Montrer une fraction.', alt_text: 'Disque fractionné.', data: { parts: 10, filled: 4 } };
+    candidate.sequence[1].visual = { kind: 'fraction_bar', purpose: 'Montrer une fraction.', alt_text: 'Barre de fraction.', data: { parts: 10, filled: 4 } };
+    expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([
+      expect.objectContaining({ message: expect.stringContaining('number_line|rectangle') }),
+    ]);
   });
 });
