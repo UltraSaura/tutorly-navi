@@ -67,8 +67,7 @@ export function extractDeepSeekResponsesContent(payload: Record<string, unknown>
   const textPart = parts.find((item) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'output_text') as Record<string, unknown> | undefined;
   const content = typeof textPart?.text === 'string' ? textPart.text : '';
   const status = typeof payload.status === 'string' ? payload.status : 'unknown';
-  if (status === 'failed') throw new Error('DeepSeek Responses API failed before structured output was returned.');
-  if (status === 'incomplete') throw new Error(`DeepSeek Responses API incomplete: ${String((payload.incomplete_details as Record<string, unknown> | null)?.reason ?? 'unknown')}`);
+  if (status !== 'completed') throw new Error(`DeepSeek Responses API returned non-completed status: ${status}.`);
   if (!content) throw new Error('DeepSeek Responses API returned no structured output text.');
   const usage = payload.usage && typeof payload.usage === 'object' ? payload.usage as Record<string, unknown> : {};
   return {

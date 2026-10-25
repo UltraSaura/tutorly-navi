@@ -92,10 +92,17 @@ describe('DeepSeek Responses API provider-free boundary', () => {
 
   it.each([
     [{ status: 'completed', output: [] }, 'no structured output'],
-    [{ status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } }, 'incomplete'],
-    [{ status: 'failed', error: { code: 'provider_error' } }, 'failed'],
+    [{ status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } }, 'non-completed status: incomplete'],
+    [{ status: 'failed', error: { code: 'provider_error' } }, 'non-completed status: failed'],
   ])('rejects %s without exposing provider content', (payload, message) => {
     expect(() => extractDeepSeekResponsesContent(payload as Record<string, unknown>)).toThrow(message);
     expect(() => extractDeepSeekResponsesContent(payload as Record<string, unknown>)).toThrowError(/^(?!.*lesson).*$/);
+  });
+
+  it('rejects any non-completed status even when output_text is present', () => {
+    expect(() => extractDeepSeekResponsesContent({
+      status: 'queued',
+      output: [{ type: 'message', content: [{ type: 'output_text', text: '{"unexpected":true}' }] }],
+    })).toThrow('non-completed status: queued');
   });
 });
