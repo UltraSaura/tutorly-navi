@@ -76,8 +76,8 @@ describe('staging structured output boundary', () => {
       for (const field of fields) expect(dataFields).toContain(field);
     }
     expect(visualSchema.properties.data).toBeDefined();
-    expect(schema.properties.student_try.properties.choices.anyOf).toEqual(expect.arrayContaining([{ type: 'null' }]));
-    expect(schema.properties.student_try.properties.hints.anyOf).toEqual(expect.arrayContaining([{ type: 'null' }]));
+    expect(schema.properties.student_try.properties.choices.type).toBe('array');
+    expect(schema.properties.student_try.properties.hints.type).toBe('array');
     expect(schema.properties.prerequisites.items.properties.visual.anyOf).toEqual(expect.arrayContaining([{ type: 'null' }]));
   });
 

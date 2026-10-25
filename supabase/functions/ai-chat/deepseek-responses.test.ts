@@ -27,7 +27,7 @@ describe('DeepSeek Responses API provider-free boundary', () => {
     expect(shouldUseDeepSeekResponsesJsonSchema(flags)).toBe(true);
     const request = buildDeepSeekResponsesRequest({
       model: flags.responsesModel,
-      instructions: 'structured lesson instructions',
+      instructions: { role: 'system', content: 'structured lesson instructions' },
       input: 'one level input',
       schema: flags.structuredOutputSchema,
       maxOutputTokens: 4096,
@@ -35,6 +35,7 @@ describe('DeepSeek Responses API provider-free boundary', () => {
     });
     expect(request).toMatchObject({
       model: 'deepseek-flash',
+      instructions: 'structured lesson instructions',
       temperature: 0,
       text: { format: { type: 'json_schema', schema: STAGING_LEVEL_STRICT_SCHEMA } },
     });

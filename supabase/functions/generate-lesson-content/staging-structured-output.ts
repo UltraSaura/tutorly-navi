@@ -57,6 +57,7 @@ const strictRelation = strictObject({
 const strictItem = { anyOf: [strictString, strictNumber, strictRelation] };
 const strictPointArray = { type: 'array', items: strictPoint };
 const strictRelationArray = { type: 'array', items: strictRelation };
+const strictAxis = { anyOf: [strictObject({ x: strictNumber }), strictObject({ y: strictNumber })] };
 const strictVisualData = strictObject({
   // The renderer accepts these fields across the supported visual families.
   // They are nullable because Responses strict schemas require every property
@@ -69,7 +70,7 @@ const strictVisualData = strictObject({
   degrees: nullable(strictNumber), angle: nullable(strictNumber), value: nullable(strictNumber), rightAngle: nullable({ type: 'boolean' }),
   rays: nullable(strictPointArray), points: nullable(strictPointArray), vertices: nullable(strictPointArray), coordinates: nullable(strictPointArray),
   segments: nullable(strictRelationArray), lines: nullable(strictRelationArray), arrows: nullable(strictRelationArray),
-  axis: nullable(strictObject({ x: nullable(strictNumber), y: nullable(strictNumber) })),
+  axis: nullable(strictAxis),
   grid: nullable(strictObject({ width: nullable(strictNumber), height: nullable(strictNumber), size: nullable(strictNumber) })),
   figure: nullable(strictPointArray), original: nullable(strictPointArray), symmetric_figure: nullable(strictPointArray), reflected: nullable(strictPointArray),
   units: nullable({ type: 'array', items: strictString }), relations: nullable({ type: 'array', items: strictItem }), relationships: nullable({ type: 'array', items: strictString }),
@@ -82,27 +83,27 @@ const strictVisualData = strictObject({
   groups: nullable({ type: 'array', items: strictItem }), columns: nullable({ type: 'array', items: strictItem }), rows: nullable({ type: 'array', items: strictItem }),
   equations: nullable({ type: 'array', items: strictString }), terms: nullable({ type: 'array', items: strictItem }),
 });
-const strictVisual = strictObject({ kind: strictString, purpose: nullable(strictString), alt_text: nullable(strictString), data: strictVisualData });
+const strictVisual = strictObject({ kind: strictString, purpose: strictString, alt_text: strictString, data: strictVisualData });
 const strictKeyPoint = strictObject({ label: strictString, text: strictString });
 const strictConcept = strictObject({
   id: strictString, type: { const: 'concept' }, title: strictString, content: strictString,
   key_points: { type: 'array', items: strictKeyPoint }, takeaway: strictString, visual: nullable(strictVisual),
 });
-const strictStep = strictObject({ instruction: strictString, representation: nullable(strictString), reason: strictString });
+const strictStep = strictObject({ instruction: strictString, representation: strictString, reason: strictString });
 const strictGuidedExample = strictObject({ id: strictString, type: { const: 'guided_example' }, content: strictString, context: strictString, steps: { type: 'array', items: strictStep } });
 const strictInteractive = strictObject({
   id: strictString, type: { enum: ['student_try', 'feedback_checkpoint'] }, content: strictString,
   question: strictString, answer_type: { enum: ['multiple_choice', 'numeric', 'time', 'short_text', 'text', 'selection', 'ordering'] },
-  choices: nullable({ type: 'array', items: strictString }), correct_answer: strictAnswer, hints: nullable({ type: 'array', items: strictString }),
+  choices: { type: 'array', items: strictString }, correct_answer: strictAnswer, hints: { type: 'array', items: strictString },
   success_feedback: strictString, error_feedback: strictString,
 });
 const strictMasteryQuestion = strictObject({
   id: strictString, question: strictString, answer_type: { enum: ['multiple_choice', 'numeric', 'time', 'short_text', 'text', 'selection', 'ordering'] },
-  choices: nullable({ type: 'array', items: strictString }), correct_answer: strictAnswer, skill: strictString, difficulty: { anyOf: [strictString, strictNumber] },
+  choices: { type: 'array', items: strictString }, correct_answer: strictAnswer, skill: strictString, difficulty: { anyOf: [strictString, strictNumber] },
   success_feedback: strictString, error_feedback: strictString,
 });
 const strictMasteryCheck = strictObject({ id: strictString, type: { const: 'mastery_check' }, content: strictString, questions: { type: 'array', items: strictMasteryQuestion } });
-const strictPrerequisite = strictObject({ id: strictString, description: strictString, type: { enum: ['multiple_choice', 'numeric', 'time', 'short_text', 'text', 'selection', 'ordering'] }, prompt: strictString, choices: nullable({ type: 'array', items: strictString }), expected_answer: { anyOf: [{ type: 'string' }, { type: 'number' }] }, remediation_hint: strictString, visual: nullable(strictVisual) });
+const strictPrerequisite = strictObject({ id: strictString, description: strictString, type: { enum: ['multiple_choice', 'numeric', 'time', 'short_text', 'text', 'selection', 'ordering'] }, prompt: strictString, choices: { type: 'array', items: strictString }, expected_answer: { anyOf: [{ type: 'string' }, { type: 'number' }] }, remediation_hint: strictString, visual: nullable(strictVisual) });
 const strictMisconception = strictObject({ id: strictString, description: strictString, detect_if: strictString, feedback: strictString, remediation_strategy: strictString });
 
 /** Full nested prototype for Responses json_schema. It is only passed when

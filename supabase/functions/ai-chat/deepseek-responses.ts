@@ -41,9 +41,14 @@ export function buildDeepSeekResponsesRequest(args: {
   maxOutputTokens: number;
   temperature: number;
 }) {
+  const instructions = typeof args.instructions === 'string'
+    ? args.instructions
+    : args.instructions && typeof args.instructions === 'object' && typeof (args.instructions as Record<string, unknown>).content === 'string'
+      ? (args.instructions as Record<string, unknown>).content as string
+      : '';
   return {
     model: args.model,
-    instructions: args.instructions,
+    instructions,
     input: args.input,
     reasoning: { effort: 'none' },
     max_output_tokens: args.maxOutputTokens,

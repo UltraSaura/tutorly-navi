@@ -8,9 +8,9 @@ const index = readFileSync(new URL('./index.ts', import.meta.url), 'utf8');
 test('DeepSeek request supports explicit JSON Output mode', () => {
   assert.match(provider, /requestBody\.response_format\s*=\s*responseFormat/);
   const jsonModeCount = index.match(/requestMode === 'lessonGeneration' \? \{ type: 'json_object' \} : undefined/g)?.length ?? 0;
-  assert.equal(jsonModeCount, 1, 'JSON mode remains the fallback for the legacy Chat Completions path');
+  assert.equal(jsonModeCount, 2, 'JSON mode remains enabled for OpenAI and the legacy DeepSeek Chat Completions fallback');
   assert.match(index, /callDeepSeekResponses/);
-  assert.match(index, /useResponsesJsonSchema === true/);
+  assert.match(index, /shouldUseDeepSeekResponsesJsonSchema/);
   assert.match(index, /case 'DeepSeek':[\s\S]*?maxTokens,[\s\S]*?requestMode === 'lessonGeneration'/);
   assert.match(index, /case 'DeepSeek':[\s\S]*?requestMode === 'lessonGeneration' \? 0 : undefined/);
   assert.match(provider, /temperature: temperature \?\? 0\.7/);
