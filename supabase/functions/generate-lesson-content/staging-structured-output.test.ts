@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   assessDeepSeekStrictSchemaCompatibility,
+  STAGING_LEVEL_OUTPUT_SCHEMA,
   stagingProviderOutputContract,
 } from './staging-structured-output';
 import {
   assembleStagingLesson,
+  assembleStagingSequenceFromCompact,
+  parseStagingLevelResponse,
+  stagingFullLevelCompactExample,
   stagingFullLevelExample,
   stagingLevelMetadata,
   stagingSequenceContractIssues,
@@ -25,9 +29,16 @@ describe('staging structured output boundary', () => {
     const result = assessDeepSeekStrictSchemaCompatibility();
     expect(result.compatible).toBe(false);
     expect(result.endpoint).toContain('/v1/chat/completions');
-    expect(result.unsupportedFeatures.join(' ')).toContain('minItems/maxItems');
+    expect(result.unsupportedFeatures.join(' ')).toContain('strict-schema/tool-call transport');
     expect(result.estimatedMultiOutputCallsPerTopic).toBe(20);
     expect(result.estimatedWorstCaseCallsPerTopic).toBe(40);
+  });
+
+  it('defines five required named block properties without a provider-facing sequence', () => {
+    expect(STAGING_LEVEL_OUTPUT_SCHEMA.required).toEqual(expect.arrayContaining([
+      'concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check',
+    ]));
+    expect(STAGING_LEVEL_OUTPUT_SCHEMA.properties).not.toHaveProperty('sequence');
   });
 
   it('builds and validates the five blocks in application code before assembly', () => {
@@ -42,6 +53,26 @@ describe('staging structured output boundary', () => {
     const assembled = assembleStagingLesson('Figures planes', levels);
     expect(assembled.levels).toHaveLength(4);
     expect((assembled.levels as Array<{ lesson: { sequence: unknown[] } }>).every(({ lesson }) => lesson.sequence.length === 5)).toBe(true);
+  });
+
+  it('requires all five named properties and builds sequence deterministically', () => {
+    const metadata = stagingLevelMetadata('topic', 'Figures planes', ['objective'])[0];
+    const compact = stagingFullLevelCompactExample(metadata);
+    expect(Object.keys(compact)).toEqual(expect.arrayContaining([
+      'concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check',
+    ]));
+    const parsed = parseStagingLevelResponse(JSON.stringify(compact), metadata).value;
+    expect((parsed.sequence as Array<Record<string, unknown>>).map((block) => block.type)).toEqual([
+      'concept', 'concept', 'guided_example', 'student_try', 'mastery_check',
+    ]);
+  });
+
+  it('rejects a compact response with a missing named block before persistence', () => {
+    const metadata = stagingLevelMetadata('topic', 'Figures planes', ['objective'])[0];
+    const compact = stagingFullLevelCompactExample(metadata);
+    delete compact.guided_example;
+    expect(() => assembleStagingSequenceFromCompact(compact)).toThrow(/guided_example/);
+    expect(() => parseStagingLevelResponse(JSON.stringify(compact), metadata)).toThrow(/guided_example/);
   });
 
   it('does not make a malformed level eligible for assembly or persistence', () => {

@@ -18,16 +18,18 @@ export const STAGING_LEVEL_OUTPUT_SCHEMA = {
     lesson_goal: { type: 'string' },
     success_criteria: { type: 'array', items: { type: 'string' } },
     prerequisites: { type: 'array', items: { type: 'object' } },
-    sequence: {
-      type: 'array',
-      minItems: 5,
-      maxItems: 5,
-      items: { type: 'object' },
-    },
+    concept_1: { type: 'object' },
+    concept_2: { type: 'object' },
+    guided_example: { type: 'object' },
+    student_try: { type: 'object' },
+    mastery_check: { type: 'object' },
     misconceptions: { type: 'array', items: { type: 'object' } },
     mastery: { type: 'object' },
   },
-  required: ['lesson_goal', 'success_criteria', 'prerequisites', 'sequence', 'misconceptions', 'mastery'],
+  required: [
+    'lesson_goal', 'success_criteria', 'prerequisites', 'misconceptions', 'mastery',
+    'concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check',
+  ],
 } as const;
 
 export type StagingProviderOutputContract = {
@@ -75,7 +77,7 @@ export function assessDeepSeekStrictSchemaCompatibility(): StrictSchemaCompatibi
     mode: 'chat_json_object',
     unsupportedFeatures: [
       'Responses API text.format=json_schema is not part of the current Chat Completions request.',
-      'DeepSeek strict tool mode does not support minItems/maxItems, required to constrain sequence to exactly five blocks.',
+      'The current ai-chat adapter has no strict-schema/tool-call transport for these five named block properties.',
       'Switching to Responses API or beta strict tools would be a provider-path change and is not activated here.',
     ],
     diagnostic: 'Strict provider schema is not compatible with the current deployed endpoint and exact five-block contract; application-side validation remains mandatory.',
