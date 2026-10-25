@@ -8,7 +8,8 @@ import { callOpenAI } from './providers/openai.ts';
 import { callAnthropic } from './providers/anthropic.ts';
 import { callMistral } from './providers/mistral.ts';
 import { callGoogle } from './providers/google.ts';
-import { callDeepSeek } from './providers/deepseek.ts';
+import { callDeepSeek, callDeepSeekResponses } from './providers/deepseek.ts';
+import { shouldUseDeepSeekResponsesJsonSchema } from './deepseek-responses.ts';
 import { callXAI } from './providers/xai.ts';
 
 // Import utility functions
@@ -143,6 +144,9 @@ serve(async (req) => {
       customPrompt,
       userContext,
       requestMode,
+      useResponsesJsonSchema = false,
+      responsesModel,
+      structuredOutputSchema,
       problemContext,
       maxTokens = 800  // Default to 800 for backward compatibility
     } = parsedBody;
@@ -385,17 +389,15 @@ JSON shape:
           );
           break;
         case 'DeepSeek':
-          responseContent = await callDeepSeek(
-            formattedSystemMessage, 
-            formattedHistory, 
-            effectiveMessage, 
-            modelConfig.model, 
-            isExercise,
-            requestExplanation,
-            maxTokens,
-            requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined,
-            requestMode === 'lessonGeneration' ? 0 : undefined
-          );
+          if (shouldUseDeepSeekResponsesJsonSchema({ requestMode, useResponsesJsonSchema, responsesJsonSchemaEnabled: Deno.env.get('DEEPSEEK_RESPONSES_JSON_SCHEMA_ENABLED'), responsesModel, structuredOutputSchema })) {
+            responseContent = await callDeepSeekResponses(formattedSystemMessage, effectiveMessage, responsesModel, maxTokens, structuredOutputSchema, 0);
+          } else {
+            responseContent = await callDeepSeek(
+              formattedSystemMessage, formattedHistory, effectiveMessage, modelConfig.model, isExercise,
+              requestExplanation, maxTokens, requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined,
+              requestMode === 'lessonGeneration' ? 0 : undefined,
+            );
+          }
           break;
         case 'xAI':
           responseContent = await callXAI(

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   assessDeepSeekStrictSchemaCompatibility,
   STAGING_LEVEL_OUTPUT_SCHEMA,
+  STAGING_LEVEL_STRICT_SCHEMA,
+  stagingResponsesJsonSchemaPrototype,
   stagingProviderOutputContract,
 } from './staging-structured-output';
 import {
@@ -29,9 +31,76 @@ describe('staging structured output boundary', () => {
     const result = assessDeepSeekStrictSchemaCompatibility();
     expect(result.compatible).toBe(false);
     expect(result.endpoint).toContain('/v1/chat/completions');
-    expect(result.unsupportedFeatures.join(' ')).toContain('strict-schema/tool-call transport');
-    expect(result.estimatedMultiOutputCallsPerTopic).toBe(20);
-    expect(result.estimatedWorstCaseCallsPerTopic).toBe(40);
+    expect(result.currentConfiguredModel).toBe('deepseek-chat');
+    expect(result.responsesSupportedModels).toEqual(['deepseek-flash', 'deepseek-v4-pro']);
+    expect(result.unsupportedFeatures.join(' ')).toContain('Chat Completions');
+    expect(result.unsupportedFeatures.join(' ')).toContain('minItems/maxItems');
+    expect(result.estimatedMultiOutputCallsPerTopic).toBe(4);
+    expect(result.estimatedWorstCaseCallsPerTopic).toBe(8);
+  });
+
+  it('prototypes one Responses API json_schema request without activating it', () => {
+    const request = stagingResponsesJsonSchemaPrototype();
+    expect(request.model).toBe('deepseek-flash');
+    expect(request.temperature).toBe(0);
+    expect(request.text.format).toMatchObject({ type: 'json_schema', name: 'staging_level_compact_v1' });
+    expect(request.text.format.schema.required).toEqual(expect.arrayContaining([
+      'concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check',
+    ]));
+    const strictSchema = request.text.format.schema as any;
+    expect(strictSchema.properties.student_try.required).toContain('correct_answer');
+    expect(strictSchema.properties.mastery_check.properties.questions.items.required).toContain('correct_answer');
+    expect(stagingProviderOutputContract().strictSchemaActive).toBe(false);
+  });
+
+  it('represents optional choices, hints, visuals, and renderer data without weakening application validation', () => {
+    const schema = STAGING_LEVEL_STRICT_SCHEMA as any;
+    const visual = schema.properties.concept_1.properties.visual;
+    const visualSchema = visual.anyOf[0];
+    const dataSchema = visualSchema.properties.data;
+    const dataFields = new Set(Object.keys(dataSchema.properties));
+    const rendererVariants = [
+      ['clock', ['hour', 'minute', 'annotations']],
+      ['timeline', ['items', 'relations', 'units']],
+      ['unit_conversion', ['from', 'to', 'factor', 'relations']],
+      ['number_line', ['min', 'max', 'step', 'ticks', 'value']],
+      ['fraction_bar', ['parts', 'filled', 'numerator', 'denominator']],
+      ['polygon', ['shape', 'vertices', 'side_labels', 'dimensions']],
+      ['angle', ['vertex', 'rays', 'degrees', 'rightAngle']],
+      ['circle', ['center', 'radius', 'diameter', 'radiusEnd', 'diameterEnd']],
+      ['symmetry', ['axis', 'grid', 'figure', 'symmetric_figure', 'original', 'reflected']],
+      ['diagram', ['points', 'segments', 'lines', 'arrows', 'annotations', 'relations']],
+      ['generic', ['groups', 'labels', 'nodes', 'text']],
+    ] as const;
+    for (const [, fields] of rendererVariants) {
+      for (const field of fields) expect(dataFields).toContain(field);
+    }
+    expect(visualSchema.properties.data).toBeDefined();
+    expect(schema.properties.student_try.properties.choices.anyOf).toEqual(expect.arrayContaining([{ type: 'null' }]));
+    expect(schema.properties.student_try.properties.hints.anyOf).toEqual(expect.arrayContaining([{ type: 'null' }]));
+    expect(schema.properties.prerequisites.items.properties.visual.anyOf).toEqual(expect.arrayContaining([{ type: 'null' }]));
+  });
+
+  it('keeps every strict object closed while making all optional runtime fields explicit', () => {
+    const schema = STAGING_LEVEL_STRICT_SCHEMA as any;
+    const nestedObjects = [
+      schema,
+      schema.properties.concept_1,
+      schema.properties.concept_1.properties.visual.anyOf[0],
+      schema.properties.concept_1.properties.visual.anyOf[0].properties.data,
+      schema.properties.student_try,
+      schema.properties.mastery_check,
+      schema.properties.prerequisites.items,
+    ];
+    nestedObjects.forEach((objectSchema) => {
+      expect(objectSchema.additionalProperties).toBe(false);
+      expect(objectSchema.required).toEqual(Object.keys(objectSchema.properties));
+    });
+  });
+
+  it('keeps the strict prototype separate from the legacy JSON-mode schema', () => {
+    expect([...STAGING_LEVEL_STRICT_SCHEMA.required].sort()).toEqual([...STAGING_LEVEL_OUTPUT_SCHEMA.required].sort());
+    expect(STAGING_LEVEL_STRICT_SCHEMA.additionalProperties).toBe(false);
   });
 
   it('defines five required named block properties without a provider-facing sequence', () => {
