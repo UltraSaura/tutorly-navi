@@ -31,6 +31,13 @@ export type LessonValidation = {
   geometryIssues: ValidationIssue[];
 };
 
+export type StagingTransportFailure = {
+  providerCallsKnown: false;
+  databaseWrite: false;
+  responseBodyAvailable: false;
+  lastKnownProgress?: unknown;
+};
+
 const object = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 
@@ -301,7 +308,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
     throw Object.assign(new Error(timeout ? 'The staging generation request timed out before a response was received.' : 'The staging generation request could not start.'), {
       code: timeout ? 'staging_browser_timeout' : 'staging_browser_request_failed',
       stage: timeout ? 'provider_failure' : 'pre_generation',
-      providerCalls: 0,
+      providerCallsKnown: false,
       databaseWrite: false,
       responseBodyAvailable: false,
     });
@@ -316,7 +323,8 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       message: errorMessage,
       httpStatus: response.status,
       requestId,
-      providerCalls: details.providerCalls ?? 0,
+      providerCalls: details.providerCalls,
+      providerCallsKnown: details.providerCalls !== undefined,
       failedLevel: details.level,
       failureStage: details.stage,
     });
@@ -326,9 +334,12 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
     throw Object.assign(new Error(details.message), {
       ...details,
       stage: details.stage ?? 'pre_generation',
-      providerCalls: details.providerCalls ?? 0,
+      providerCalls: details.providerCalls,
+      providerCallsKnown: details.providerCalls !== undefined,
       failedLevel: details.level,
       failureStage: details.stage ?? 'pre_generation',
+      databaseWrite: false,
+      responseBodyAvailable: false,
     });
   }
   // Validation rejections arrive as a 200 body (rejectionInBody) so the

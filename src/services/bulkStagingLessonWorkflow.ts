@@ -25,6 +25,8 @@ export type BulkStagingProgress = {
   level: number;
   totalLevels: number;
   providerCalls: number;
+  /** True only when this progress came from the Edge response. */
+  confirmed?: boolean;
   status: BulkStagingStatus;
   validation?: {
     canonicalValid?: boolean;
@@ -51,7 +53,11 @@ export type BulkStagingFailure = {
   failedLevel?: number;
   failureStage: string;
   technicalDiagnostic: string;
-  providerCalls: number;
+  providerCalls?: number;
+  providerCallsKnown?: boolean;
+  lastKnownProgress?: BulkStagingProgress;
+  responseBodyAvailable?: boolean;
+  databaseWrite?: boolean;
   httpStatus?: number;
   code?: string;
   message?: string;
@@ -152,11 +158,16 @@ export async function runBulkStagingGeneration(
     const topicId = topic.id!.trim();
     const base = { topicIndex: index + 1, totalTopics: topics.length, topicId, topicTitle: topic.name, totalLevels: STAGING_LEVEL_COUNT };
     let providerCalls = 0;
+    let lastKnownProgress: BulkStagingProgress | undefined;
+    const emitProgress = (event: BulkStagingProgress) => {
+      lastKnownProgress = event;
+      onProgress?.(event);
+    };
     try {
       assertExplicitStagingTopicId(topicId);
-      onProgress?.({ ...base, level: 1, providerCalls, status: 'generating' });
+      emitProgress({ ...base, level: 1, providerCalls, confirmed: false, status: 'generating' });
       for (let level = 2; level <= STAGING_LEVEL_COUNT; level += 1) {
-        onProgress?.({ ...base, level, providerCalls: level - 1, status: 'generating' });
+        emitProgress({ ...base, level, providerCalls: level - 1, confirmed: false, status: 'generating' });
       }
       const generated = await generate(topicId);
       providerCalls = Number(generated.providerCalls) || 0;
@@ -164,7 +175,7 @@ export async function runBulkStagingGeneration(
       assertReturnedTopicMatches(topicId, generated.topic_id);
       for (let level = 1; level <= STAGING_LEVEL_COUNT; level += 1) {
         const levelMetadata = generated.progress?.find((entry) => entry.level === level);
-        onProgress?.({ ...base, level, providerCalls, retryCount: levelMetadata?.retryCount, parseStage: levelMetadata?.parseStage, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
+        emitProgress({ ...base, level, providerCalls, confirmed: true, retryCount: levelMetadata?.retryCount, parseStage: levelMetadata?.parseStage, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
       }
       const topicKind = classifyStagingTopic(topic.name);
       const validation = validate(generated.lesson_content, topicKind);
@@ -172,11 +183,14 @@ export async function runBulkStagingGeneration(
         throw new Error(JSON.stringify({ code: 'staging_validation_failed', validation }));
       }
       const version = await save(topicId, generated.lesson_content, generated.topic_id, topicKind);
-      onProgress?.({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, status: 'saved', validation: { canonicalValid: validation.canonicalValid, pedagogicalValid: validation.pedagogicalValid, prerequisiteValid: validation.prerequisiteValid, geometryValid: validation.geometryValid, interactionValid: validation.interactionValid }, requestId: generated.requestId, promptVersion: generated.promptVersion, build: generated.build });
+      emitProgress({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, confirmed: true, status: 'saved', validation: { canonicalValid: validation.canonicalValid, pedagogicalValid: validation.pedagogicalValid, prerequisiteValid: validation.prerequisiteValid, geometryValid: validation.geometryValid, interactionValid: validation.interactionValid }, requestId: generated.requestId, promptVersion: generated.promptVersion, build: generated.build });
       results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation, levelResults: generated.levelResults ?? generated.progress, build: generated.build, promptVersion: generated.promptVersion });
     } catch (error) {
       const details = getGenerationErrorDetails(error);
-      providerCalls = Number(details.providerCalls ?? providerCalls) || providerCalls;
+      const callsUnknown = details.providerCallsKnown === false
+        || (details.responseBodyAvailable === false && /edge_unavailable|request_failed|timeout/i.test(details.code ?? ''));
+      const confirmedProviderCalls = details.providerCalls ?? (callsUnknown ? undefined : providerCalls > 0 ? providerCalls : 0);
+      providerCalls = confirmedProviderCalls ?? 0;
       const rawDiagnostic = diagnostic(error);
       const legacyPrerequisite = isLegacyPrerequisiteDiagnostic(rawDiagnostic);
       const stage = legacyPrerequisite ? 'validation_failure' : failureStage({ ...details, providerCalls });
@@ -188,7 +202,11 @@ export async function runBulkStagingGeneration(
         technicalDiagnostic: legacyPrerequisite
           ? `Validation failed: prerequisites have the legacy format · ${rawDiagnostic}`
           : rawDiagnostic,
-        providerCalls,
+        providerCalls: confirmedProviderCalls,
+        providerCallsKnown: callsUnknown ? false : confirmedProviderCalls !== undefined,
+        lastKnownProgress,
+        responseBodyAvailable: details.responseBodyAvailable,
+        databaseWrite: false,
         httpStatus: details.httpStatus,
         code: details.code,
         message: details.message,
@@ -203,7 +221,7 @@ export async function runBulkStagingGeneration(
         providerDiagnostics: details.providerDiagnostics,
       };
       const failedLevelResults = Array.isArray(details.progress) ? details.progress as BulkStagingLevelResult[] : undefined;
-      onProgress?.({ ...base, level: failure.failedLevel ?? 1, providerCalls, status: 'failed' });
+      emitProgress({ ...base, level: failure.failedLevel ?? 1, providerCalls: confirmedProviderCalls ?? lastKnownProgress?.providerCalls ?? 0, confirmed: false, status: 'failed' });
       results.push({ topicId, topicTitle: topic.name, status: 'failed', failure, levelResults: failedLevelResults });
     }
   }
