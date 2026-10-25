@@ -1,5 +1,6 @@
 
 import { resolveProviderKey } from "../../_shared/resolveProviderKey.ts";
+import { buildDeepSeekResponsesRequest, DEEPSEEK_RESPONSES_ENDPOINT, extractDeepSeekResponsesContent, type DeepSeekResponsesSchema } from '../deepseek-responses.ts';
 
 // DeepSeek AI provider implementation
 export async function callDeepSeek(
@@ -141,4 +142,31 @@ export async function callDeepSeek(
   }
 
   return { content: data.choices[0].message.content, metadata };
+}
+
+export async function callDeepSeekResponses(
+  systemMessage: any,
+  input: string,
+  model: 'deepseek-flash' | 'deepseek-v4-pro',
+  maxOutputTokens: number,
+  schema: DeepSeekResponsesSchema,
+  temperature = 0,
+): Promise<any> {
+  const { value: deepseekApiKey, source } = await resolveProviderKey('DeepSeek');
+  console.log(`[DeepSeek Responses] Calling model: ${model}, maxOutputTokens: ${maxOutputTokens}, key source: ${source}`);
+  const requestBody = buildDeepSeekResponsesRequest({
+    model,
+    instructions: systemMessage,
+    input,
+    schema,
+    maxOutputTokens,
+    temperature,
+  });
+  const response = await fetch(DEEPSEEK_RESPONSES_ENDPOINT, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${deepseekApiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody),
+  });
+  if (!response.ok) throw new Error(`DeepSeek Responses API HTTP ${response.status}.`);
+  return extractDeepSeekResponsesContent(await response.json());
 }
