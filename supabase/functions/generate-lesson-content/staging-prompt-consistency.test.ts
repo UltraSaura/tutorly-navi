@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import { normalizeGeneratedLesson } from './lesson-normalization.ts';
 import { meaningfulTokens, semanticDuplicationDiagnostics } from './pedagogical-quality.ts';
-import { TAKEAWAY_RULE, CONCEPT_LENGTH_RULE, STAGING_VISUAL_EXAMPLES as SVE } from './staging-level-workflow.ts';
+import { TAKEAWAY_RULE, CONCEPT_LENGTH_RULE, MASTERY_QUESTION_RULE, STAGING_VISUAL_EXAMPLES as SVE } from './staging-level-workflow.ts';
 import {
   KEY_POINT_RULE,
   PREREQUISITE_ANSWER_RULE,
@@ -21,6 +21,23 @@ const topicName = 'La géométrie plane';
 const metadata = stagingLevelMetadata('topic-1', topicName, ['objective-1']);
 
 describe('staging prompt ↔ validator consistency (providerCalls=0)', () => {
+  it('explicitly requires a complete answer for every mastery question at every level', () => {
+    for (const level of stagingLevelMetadata('decimal-topic', 'Les nombres décimaux', [])) {
+      const prompt = stagingLevelPrompt('Les nombres décimaux', 'CM2', 'fr', level, '');
+      expect(prompt).toContain(MASTERY_QUESTION_RULE);
+      expect(MASTERY_QUESTION_RULE).toContain('CHAQUE question');
+      expect(MASTERY_QUESTION_RULE).toContain('y compris la dernière');
+    }
+  });
+
+  it('rejects an extra mastery question with no correct_answer instead of inventing it', () => {
+    const level = stagingLevelMetadata('decimal-topic', 'Les nombres décimaux', [])[2];
+    const lesson = structuredClone(stagingFullLevelExample(level)) as any;
+    lesson.sequence[4].questions.push({ id: 'q3', question: 'Quel nombre est le plus grand ?', answer_type: 'numeric', skill: 'decimals', difficulty: 1 });
+    const normalized = normalizeGeneratedLesson(lesson, 'Les nombres décimaux', { preserveProviderSequence: true }).lesson;
+    const validation = validateStagingLevel(normalized, level, 'Les nombres décimaux', 'CM2');
+    expect(validation.canonicalIssues.some((issue) => issue.path.includes('sequence[4].questions[1].correct_answer'))).toBe(true);
+  });
   it.each(Object.entries(STAGING_VISUAL_EXAMPLES))('the %s example passes the real drawing validator', (_kind, example) => {
     expect(geometryVisualDataErrors(example.visual.kind, example.visual.data)).toEqual([]);
   });
