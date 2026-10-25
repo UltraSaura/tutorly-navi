@@ -12,6 +12,8 @@ const generated = (topicId: string, providerCalls = 4) => ({
   canonicalValid: true as const,
   pedagogicalValid: true as const,
   geometryValid: true as const,
+  levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: providerCalls === 4 ? 1 : Math.max(1, providerCalls - 3) })),
+  progress: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: 1 })),
 });
 
 const valid = () => ({ canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, interactionValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
@@ -56,6 +58,18 @@ describe('bulk staging lesson workflow', () => {
     expect(results[0].status).toBe('saved');
     expect(generate).toHaveBeenCalledTimes(1);
     expect(generate).toHaveBeenCalledWith('topic-1');
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [5, [2, 1, 1, 1]],
+    [6, [2, 2, 1, 1]],
+  ])('saves a complete result when bounded JSON retries raise calls to %i', async (providerCalls, callsByLevel) => {
+    const levelResults = callsByLevel.map((calls, index) => ({ level: index + 1, status: 'complete' as const, providerCalls: calls }));
+    const generate = vi.fn(async (id: string) => ({ ...generated(id), providerCalls, levelResults, progress: levelResults }));
+    const save = vi.fn(async (id: string) => ({ id: `version-${id}` } as any));
+    const results = await runBulkStagingGeneration([{ id: `topic-${providerCalls}`, name: 'Figures' }], undefined, { generate, save, validate: valid });
+    expect(results[0]).toMatchObject({ status: 'saved', providerCalls });
     expect(save).toHaveBeenCalledTimes(1);
   });
 

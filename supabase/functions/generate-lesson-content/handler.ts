@@ -35,6 +35,7 @@ import {
   type StagingLevelProgress,
   type StagingDraftResponse,
 } from './staging-level-workflow.ts';
+import { stagingProviderOutputContract } from './staging-structured-output.ts';
 
 const configuredOrigins = (Deno.env.get('STAGING_FRONTEND_ORIGINS') ?? Deno.env.get('STAGING_FRONTEND_ORIGIN') ?? '')
   .split(',')
@@ -44,6 +45,7 @@ const configuredOrigins = (Deno.env.get('STAGING_FRONTEND_ORIGINS') ?? Deno.env.
 const allowedOrigins = new Set([...DEFAULT_ALLOWED_ORIGINS, ...configuredOrigins]);
 
 const GENERATOR_BUILD = 'practice-v21-compiler-1';
+const STAGING_PROVIDER_OUTPUT_CONTRACT = stagingProviderOutputContract();
 // Fixture topics must never receive generated staging drafts.
 const FIXTURE_STAGING_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'];
 const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
@@ -407,7 +409,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           p_track: null,
         });
         if (resolveEditionError) {
-          console.warn('[generate-lesson-content] resolve_edition failed; using curriculum fallback:', resolveEditionError);
+          console.warn('[generate-lesson-content] resolve_edition failed; using curriculum fallback.', { category: 'topic_metadata' });
         }
         editionId = resolvedId as string | null;
 
@@ -612,7 +614,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message, modelId, history: [], language, maxTokens: STAGING_LEVEL_MAX_TOKENS,
-          customPrompt: `${STAGING_JSON_OUTPUT_RULE} response_format={"type":"json_object"} is enabled.`,
+          customPrompt: `Use response_format=${JSON.stringify(STAGING_PROVIDER_OUTPUT_CONTRACT.responseFormat)}. Return one complete JSON object for this level only; no prose, Markdown, second object, array root, or wrapper. The application will validate the complete level contract before assembly or persistence.`,
           isUnified: true, requestMode: 'lessonGeneration',
           userContext: { grade_level: rawLevel, age_group: ageGroup, curriculum, country: countryLabel, response_language: responseLang, learning_style: 'visual', format: 'json' },
         }),
@@ -906,7 +908,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             ? stagingValidationFailure(levelIndex, error.issues, aiProviderCalls)
             : undefined;
           const jsonParseFailure = error instanceof StagingLevelJsonParseError
-            ? { level: levelIndex, stage: 'provider_parse', message: error.message + (error.providerDiagnostics?.syntaxError ? ` · ${error.providerDiagnostics.syntaxError.message}${error.providerDiagnostics.syntaxError.context ? ` · près de: ${error.providerDiagnostics.syntaxError.context}` : ''}` : ''), validationCategory: 'provider_json', retryCount: Number((error as StagingLevelJsonParseError & { retryCount?: number }).retryCount ?? 0), parseStage: String((error as StagingLevelJsonParseError & { parseStage?: string }).parseStage ?? error.category), providerDiagnostics: error.providerDiagnostics as unknown as Record<string, unknown> | undefined }
+          ? { level: levelIndex, stage: 'provider_parse', message: error.message, validationCategory: 'provider_json', retryCount: Number((error as StagingLevelJsonParseError & { retryCount?: number }).retryCount ?? 0), parseStage: String((error as StagingLevelJsonParseError & { parseStage?: string }).parseStage ?? error.category), providerDiagnostics: error.providerDiagnostics as unknown as Record<string, unknown> | undefined }
             : undefined;
           stagingFailure = structuredFailure
             ? { level: structuredFailure.level, stage: structuredFailure.stage, message: structuredFailure.technicalDetail, validationCategory: structuredFailure.validationCategory, providerDiagnostics: structuredFailure.providerDiagnostics }
@@ -1072,12 +1074,12 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         // JSON-only generation can occasionally fail on a long pedagogical
         // contract. Retry once with an explicit repair instruction before
         // surfacing the failure to the batch generator.
-        console.warn('[generate-lesson-content] First generation attempt failed; retrying:', firstError);
+        console.warn('[generate-lesson-content] First generation attempt failed; retrying.', { category: 'provider_json' });
         try {
           generated = await callAI(`${prompt}\n\nRETRY: return only a complete valid JSON object matching the requested schema. Do not add commentary or Markdown.`, 3600);
         } catch (retryError) {
           if (isV2Prompt) {
-            console.warn('[generate-lesson-content] V2 retry JSON failed; using fallback:', retryError);
+            console.warn('[generate-lesson-content] V2 retry JSON failed; using fallback.', { category: 'provider_json' });
             generated = null;
           } else throw retryError;
         }
@@ -1086,11 +1088,11 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         return buildLessonContent(generated, stepName, difficultyLevel);
       } catch (contentError) {
         if (!isV2Prompt) throw contentError;
-        console.warn('[generate-lesson-content] V2 schema validation failed; retrying:', contentError);
+        console.warn('[generate-lesson-content] V2 schema validation failed; retrying.', { category: 'schema_validation' });
         const repaired = await callAI(`${prompt}\n\nRETRY: the previous response was not a complete V2 lesson. Return a complete valid JSON object with version \"2.0\", lesson_goal, success_criteria, prerequisites, non-empty sequence, misconceptions, and mastery. JSON only.`, 3600);
         try { return buildLessonContent(repaired, stepName, difficultyLevel); }
         catch (finalError) {
-          console.error('[generate-lesson-content] V2 validation failed:', finalError);
+          console.error('[generate-lesson-content] V2 validation failed.', { category: 'schema_validation' });
           throw finalError;
         }
       }
@@ -1105,12 +1107,12 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
       try {
       plan = await callAI(planningPrompt, 1200);
       } catch (planningError) {
-        console.warn('[generate-lesson-content] V2.1 planning JSON failed; using deterministic plan unless repair is enabled:', planningError);
+        console.warn('[generate-lesson-content] V2.1 planning JSON failed; using deterministic plan unless repair is enabled.', { category: 'provider_json' });
         try {
           if (!allowPaidRepair) throw planningError;
           plan = await callAI(`${planningPrompt}\nREPAIR: return one complete valid JSON object only. Do not use single quotes.`, 1200);
         } catch (repairError) {
-          console.warn('[generate-lesson-content] V2.1 planning repair failed; using deterministic plan:', repairError);
+          console.warn('[generate-lesson-content] V2.1 planning repair failed; using deterministic plan.', { category: 'provider_json' });
           const fallbackCount = Math.max(1, Math.min(4, objectives.length || 2));
           const fallbackTitles = ['Comprendre les notions essentielles', 'Appliquer les méthodes', 'Résoudre des problèmes', 'Transférer et maîtriser'];
           plan = { topic_goal: `Maîtriser ${topic.name}.`, levels: Array.from({ length: fallbackCount }, (_, index) => ({ id: `level_${index + 1}`, level_number: index + 1, title: fallbackTitles[index], purpose: `Progresser dans ${topic.name}.`, difficulty: index === 0 ? 'foundation' : index === fallbackCount - 1 ? 'transfer' : 'application', objective_ids: objectives.slice(index === 0 ? 0 : Math.max(0, index - 1), Math.max(1, Math.ceil(objectives.length / fallbackCount) * (index + 1))).map((o) => o.id), prerequisites: [], success_criteria: [`Je peux progresser dans ${topic.name}.`] })) };
@@ -1136,7 +1138,7 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
           // paid retry), with enough headroom for the canonical contract.
           generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 6500);
         } catch (generationError) {
-          console.warn('[generate-lesson-content] V2.1 level JSON failed; paid repair skipped:', generationError);
+          console.warn('[generate-lesson-content] V2.1 level JSON failed; paid repair skipped.', { category: 'provider_json' });
           if (!allowPaidRepair) throw generationError;
           generated = null;
         }
@@ -1151,7 +1153,7 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         }
         try { lesson = buildLessonContent(compiledDraft.lesson, '', i + 1, p.success_criteria) as Record<string, unknown>; }
         catch (levelError) {
-          console.warn('[generate-lesson-content] V2.1 level contract failed; paid repair skipped:', levelError);
+          console.warn('[generate-lesson-content] V2.1 level contract failed; paid repair skipped.', { category: 'schema_validation' });
           if (!allowPaidRepair) throw levelError;
           const repaired = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nPrevious candidate (data to correct): ${JSON.stringify(generated)}\nThe previous response failed the canonical V2.1 lesson contract. Return ONLY the direct lesson object, with no outer lesson/version/envelope wrapper. Include lesson_goal, success_criteria, structured prerequisites and misconceptions, canonical sequence blocks, and a mastery_check with non-empty questions. Do not use teacher_actions or student_actions. JSON only.`, 3400);
           lesson = buildLessonContent(repaired, '', i + 1) as Record<string, unknown>;
@@ -1393,7 +1395,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
     );
 
   } catch (error) {
-    console.error('[generate-lesson-content] Error:', error);
+    console.error('[generate-lesson-content] Error.', { category: stagingFailure?.validationCategory ?? 'unknown', stage: stagingFailure?.stage ?? 'unknown' });
     const classified = classifyGenerationFailure(error, stagingFailure?.stage);
     const technicalDetail = stagingFailure?.message ?? (error instanceof Error ? error.message : String(error ?? ''));
     const responseError = {

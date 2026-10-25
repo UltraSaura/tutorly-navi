@@ -5,7 +5,6 @@ export type SafeJsonResult =
 export type JsonSyntaxErrorDescription = {
   message: string;
   position: number | null;
-  context: string | null;
 };
 
 export type ProviderResponseDiagnostics = {
@@ -22,12 +21,8 @@ export type ProviderResponseDiagnostics = {
   syntaxError?: JsonSyntaxErrorDescription;
 };
 
-/**
- * Describes where provider JSON stops being valid, without repairing it.
- * The context is a short excerpt of generated lesson text (never credentials)
- * so administrators can see the exact syntax problem.
- */
-export function describeJsonSyntaxError(raw: unknown, radius = 40): JsonSyntaxErrorDescription | null {
+/** Describes where provider JSON stops being valid without exposing its text. */
+export function describeJsonSyntaxError(raw: unknown): JsonSyntaxErrorDescription | null {
   if (typeof raw !== 'string' || !raw.trim()) return null;
   try {
     JSON.parse(raw);
@@ -45,10 +40,7 @@ export function describeJsonSyntaxError(raw: unknown, radius = 40): JsonSyntaxEr
       }
     }
     if (position === null && /unexpected end/i.test(message)) position = raw.length;
-    const context = position === null
-      ? null
-      : `${raw.slice(Math.max(0, position - radius), position)}⟦ICI⟧${raw.slice(position, position + radius)}`.replace(/\s+/g, ' ');
-    return { message: message.slice(0, 200), position, context };
+    return { message: message.slice(0, 200), position };
   }
 }
 

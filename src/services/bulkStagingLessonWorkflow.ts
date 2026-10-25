@@ -6,6 +6,7 @@ import {
   saveDraftVersion,
   STAGING_LEVEL_COUNT,
   validateLessonVersion,
+  validateStagingGenerationEnvelope,
   type LessonVersion,
   type StagingTopicKind,
 } from './lessonVersionWorkflow';
@@ -39,6 +40,7 @@ export type BulkStagingProgress = {
   tokenUsage?: unknown;
   retryCount?: number;
   parseStage?: string;
+  providerDiagnostics?: GenerationErrorDetails['providerDiagnostics'];
 };
 
 export type BulkStagingLevelResult = NonNullable<StagingGeneration['levelResults']>[number];
@@ -158,7 +160,7 @@ export async function runBulkStagingGeneration(
       }
       const generated = await generate(topicId);
       providerCalls = Number(generated.providerCalls) || 0;
-      if (!dependencies.dryRun && providerCalls !== STAGING_LEVEL_COUNT) throw new Error(`staging_provider_call_count_invalid: expected ${STAGING_LEVEL_COUNT}, received ${providerCalls}`);
+      if (!dependencies.dryRun) validateStagingGenerationEnvelope(generated);
       assertReturnedTopicMatches(topicId, generated.topic_id);
       for (let level = 1; level <= STAGING_LEVEL_COUNT; level += 1) {
         const levelMetadata = generated.progress?.find((entry) => entry.level === level);
@@ -198,6 +200,7 @@ export async function runBulkStagingGeneration(
         promptVersion: details.promptVersion,
         retryCount: details.retryCount,
         parseStage: details.parseStage,
+        providerDiagnostics: details.providerDiagnostics,
       };
       const failedLevelResults = Array.isArray(details.progress) ? details.progress as BulkStagingLevelResult[] : undefined;
       onProgress?.({ ...base, level: failure.failedLevel ?? 1, providerCalls, status: 'failed' });

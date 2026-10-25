@@ -108,4 +108,28 @@ describe('generation error mapping', () => {
     expect(retried).toContain('retryCount=1');
     expect(retried).toContain('parseStage=ambiguous_json');
   });
+
+  it('preserves only safe provider diagnostics and never provider content', () => {
+    const details = getGenerationErrorDetails({
+      error: {
+        code: 'provider_malformed_json',
+        providerDiagnostics: {
+          httpStatus: 200,
+          contentType: 'application/json',
+          bodyLength: 91,
+          choiceCount: 1,
+          finishReason: 'stop',
+          contentPresent: true,
+          contentLength: 80,
+          contentSha256: 'abc123',
+          parseState: 'malformed_json',
+          content: '{"secret":"lesson"}',
+          syntaxError: { message: 'Unexpected end of JSON input', position: 80, context: '{"secret":"lesson"}' },
+        },
+      },
+    });
+    expect(details.providerDiagnostics).toMatchObject({ finishReason: 'stop', contentLength: 80, parseState: 'malformed_json', syntaxError: { message: 'Unexpected end of JSON input', position: 80 } });
+    expect(JSON.stringify(details)).not.toContain('secret');
+    expect(formatAdminGenerationError({ error: { code: 'provider_malformed_json', providerDiagnostics: details.providerDiagnostics } })).toContain('finishReason=stop');
+  });
 });

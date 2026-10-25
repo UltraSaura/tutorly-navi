@@ -203,8 +203,45 @@ export function validateLessonVersion(lesson: unknown, options?: { topicKind?: S
   };
 }
 
-/** Staging generation makes exactly one provider call per level. */
+/** Staging generation has four initial level calls; JSON parsing may add a
+ * bounded retry, so the aggregate must be derived from per-level results. */
 export const STAGING_LEVEL_COUNT = 4;
+
+export function validateStagingGenerationEnvelope(data: any): void {
+  const results = Array.isArray(data?.levelResults)
+    ? data.levelResults
+    : Array.isArray(data?.progress) ? data.progress : null;
+  if (!results || results.length !== STAGING_LEVEL_COUNT) {
+    throw Object.assign(new Error('The generation response did not contain four complete level results. The draft was not saved.'), {
+      code: 'staging_level_results_invalid',
+      stage: 'response_parsing',
+      providerCalls: Number(data?.providerCalls) || 0,
+      technicalDetail: 'expected exactly four level results',
+      requestId: data?.requestId,
+    });
+  }
+  const ordered = [...results].sort((a, b) => Number(a?.level ?? 0) - Number(b?.level ?? 0));
+  if (ordered.some((entry, index) => Number(entry?.level) !== index + 1 || entry?.status !== 'complete' || !Number.isInteger(Number(entry?.providerCalls)) || Number(entry.providerCalls) < 1)) {
+    throw Object.assign(new Error('The generation response contained an incomplete level result. The draft was not saved.'), {
+      code: 'staging_level_results_invalid',
+      stage: 'response_parsing',
+      providerCalls: Number(data?.providerCalls) || 0,
+      technicalDetail: 'each level 1–4 must be complete with a positive provider call count',
+      requestId: data?.requestId,
+    });
+  }
+  const expectedCalls = ordered.reduce((sum, entry) => sum + Number(entry.providerCalls), 0);
+  const providerCalls = Number(data?.providerCalls);
+  if (!Number.isInteger(providerCalls) || providerCalls < STAGING_LEVEL_COUNT || providerCalls !== expectedCalls) {
+    throw Object.assign(new Error(`The generation reported providerCalls=${String(data?.providerCalls)} but level results sum to ${expectedCalls}. The draft was not saved.`), {
+      code: 'staging_provider_call_count_invalid',
+      stage: 'response_parsing',
+      technicalDetail: `expected at least ${STAGING_LEVEL_COUNT} calls and the sum of per-level calls (${expectedCalls}), received ${String(data?.providerCalls)}`,
+      providerCalls: Number.isFinite(providerCalls) ? providerCalls : 0,
+      requestId: data?.requestId,
+    });
+  }
+}
 
 /** The only topic the CM2 geometry staging generation may target. */
 export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
@@ -334,16 +371,8 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       failureStage: details.stage,
     });
   }
-  if (providerCalls !== STAGING_LEVEL_COUNT) {
-    throw Object.assign(new Error(`The generation reported ${providerCalls} provider calls instead of exactly ${STAGING_LEVEL_COUNT} (one per level). The draft was not saved.`), {
-      code: 'staging_provider_call_count_invalid',
-      stage: 'response_parsing',
-      technicalDetail: `expected ${STAGING_LEVEL_COUNT} provider calls (one per level), received ${providerCalls}`,
-      providerCalls,
-      requestId: data?.requestId,
-    });
-  }
   assertReturnedTopicMatches(requested, data.topic_id);
+  validateStagingGenerationEnvelope(data);
   return data as { lesson_content: unknown; topic_id: string; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 

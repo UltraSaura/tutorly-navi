@@ -71,6 +71,7 @@ export type StagingValidationSummary = {
 };
 
 export const STAGING_SEQUENCE_BLOCK_TYPES = ['concept', 'concept', 'guided_example', 'student_try', 'mastery_check'] as const;
+export const STAGING_COMPACT_BLOCK_KEYS = ['concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check'] as const;
 export const STAGING_INTERACTIVE_TYPES = ['prediction', 'student_try', 'feedback_checkpoint'] as const;
 
 export class StagingLevelContractError extends Error {
@@ -388,6 +389,38 @@ export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<
   };
 }
 
+/** Provider-facing compact shape. The provider returns five named blocks;
+ * the application is the only place that constructs the ordered sequence. */
+export function stagingFullLevelCompactExample(metadata: StagingLevelMetadata): Record<string, unknown> {
+  const full = stagingFullLevelExample(metadata);
+  const { sequence, ...rest } = full as { sequence: Array<Record<string, unknown>> };
+  const blocks = sequence as Array<Record<string, unknown>>;
+  return {
+    ...rest,
+    concept_1: blocks[0],
+    concept_2: blocks[1],
+    guided_example: blocks[2],
+    student_try: blocks[3],
+    mastery_check: blocks[4],
+  };
+}
+
+export function assembleStagingSequenceFromCompact(value: Record<string, unknown>): Record<string, unknown> {
+  const present = STAGING_COMPACT_BLOCK_KEYS.filter((key) => Object.prototype.hasOwnProperty.call(value, key));
+  if (present.length === 0) return value;
+  const missing = STAGING_COMPACT_BLOCK_KEYS.filter((key) => !Object.prototype.hasOwnProperty.call(value, key));
+  if (missing.length > 0) {
+    throw new StagingLevelContractError(missing.map((key) => ({ path: key, message: 'Required compact staging block is missing.' })));
+  }
+  const blocks = STAGING_COMPACT_BLOCK_KEYS.map((key) => object(value[key]));
+  const invalid = blocks.flatMap((block, index) => block ? [] : [{ path: STAGING_COMPACT_BLOCK_KEYS[index], message: 'Expected an object for the compact staging block.' }]);
+  if (invalid.length > 0) throw new StagingLevelContractError(invalid);
+  const next = { ...value };
+  for (const key of STAGING_COMPACT_BLOCK_KEYS) delete next[key];
+  next.sequence = blocks;
+  return next;
+}
+
 const VISUAL_FIELD_RULES = [
   'Champs exacts exigés par le validateur pour visual.data:',
   '- rectangle: kind "rectangle", data.shape "rectangle", data.vertices = exactement 4 objets {x:number,y:number,label:string}, data.side_labels = 4 objets {from,to,label}.',
@@ -419,8 +452,8 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     required,
     levelOneGeometryCoverage,
     STAGING_JSON_OUTPUT_RULE + ' Le mode response_format={"type":"json_object"} est actif.',
-    'Le JSON doit contenir lesson_goal, success_criteria, prerequisites, sequence, misconceptions et mastery.',
-    'sequence doit contenir exactement cinq blocs, dans cet ordre et avec ces types: concept, concept, guided_example, student_try, mastery_check.',
+    'Le JSON doit contenir lesson_goal, success_criteria, prerequisites, misconceptions, mastery et exactement ces cinq propriétés obligatoires: concept_1, concept_2, guided_example, student_try, mastery_check.',
+    'Chaque propriété nommée contient son bloc complet. Le code construit ensuite sequence dans cet ordre exact: concept_1, concept_2, guided_example, student_try, mastery_check. Ne retourne pas de propriété sequence provider-facing et ne laisse aucun bloc manquant.',
     'Chaque bloc doit contenir son propre id non vide, type canonique et content: une chaîne destinée à l’élève, non vide après trim. Aucun bloc ne peut contenir uniquement des métadonnées, une question ou des réponses sans content. Ne laisse jamais le compilateur inventer un id, un type ou du contenu.',
     CONCEPT_LENGTH_RULE,
     KEY_POINT_RULE,
@@ -440,8 +473,8 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     `answer_type autorisés: ${ANSWER_TYPE_VALUES.join(', ')}.`,
     VISUAL_FIELD_RULES,
     ...examples,
-    'Exemple complet des cinq blocs et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelExample(metadata)),
-    'La sequence doit contenir deux explications concises illustrées, un exemple guidé, une question interactive avant mastery_check, un contrôle de compréhension, un takeaway et les métadonnées de maîtrise.',
+    'Exemple complet des cinq blocs (format compact) et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelCompactExample(metadata)),
+    'Le code assemble sequence avec deux explications concises illustrées, un exemple guidé, une question interactive avant mastery_check et un contrôle de compréhension.',
     levelOneGeometryCoverage,
     'Ne dis jamais «voir la figure».'
   ].join('\n');
@@ -452,7 +485,7 @@ export function parseStagingLevelResponse(raw: unknown, metadata?: StagingLevelM
   if (parsed.ok === false) throw new StagingLevelJsonParseError(parsed.category);
   const value = object(parsed.value);
   if (!value) throw new Error('staging_level_json_parse_failed: response must be an object');
-  const level = object(value.lesson) ?? value;
+  const level = assembleStagingSequenceFromCompact(object(value.lesson) ?? value);
   if (metadata) {
     const contractIssues = stagingSequenceContractIssues(level, metadata);
     if (contractIssues.length > 0) throw new StagingLevelContractError(contractIssues);
