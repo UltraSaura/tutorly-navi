@@ -33,6 +33,7 @@ export type GenerationErrorDetails = {
   technicalDetail?: string;
   requestId?: string;
   providerCalls?: number;
+  providerCallsKnown?: boolean;
   level?: number;
   stage?: string;
   validationCategory?: string;
@@ -43,6 +44,8 @@ export type GenerationErrorDetails = {
   progress?: unknown[];
   validation?: unknown;
   providerDiagnostics?: ProviderDiagnostics;
+  lastKnownProgress?: unknown;
+  responseBodyAvailable?: boolean;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -99,6 +102,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       technicalDetail: error.technicalDetail,
       requestId: error.requestId,
       providerCalls: error.providerCalls,
+      providerCallsKnown: error.providerCallsKnown,
       level: error.level ?? error.failedLevel,
       stage: error.stage ?? error.failureStage,
       validationCategory: error.validationCategory,
@@ -109,6 +113,8 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       progress: error.progress,
       validation: error.validation,
       providerDiagnostics: error.providerDiagnostics,
+      lastKnownProgress: error.lastKnownProgress,
+      responseBodyAvailable: error.responseBodyAvailable,
     }, fallback);
     return details;
   }
@@ -138,6 +144,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     technicalDetail: technicalDetail && !technicalDetail.includes('[object Object]') ? technicalDetail : undefined,
     requestId: stringValue(nested.requestId) ?? stringValue(root.requestId),
     providerCalls: finiteNumber(nested.providerCalls) ?? finiteNumber(root.providerCalls),
+    providerCallsKnown: typeof nested.providerCallsKnown === 'boolean' ? nested.providerCallsKnown : typeof root.providerCallsKnown === 'boolean' ? root.providerCallsKnown : undefined,
     level: finiteNumber(nested.level) ?? finiteNumber(root.level),
     stage: stringValue(nested.stage) ?? stringValue(root.stage) ?? stringValue(nested.failureStage) ?? stringValue(root.failureStage),
     validationCategory: stringValue(nested.validationCategory) ?? stringValue(root.validationCategory),
@@ -148,6 +155,8 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     progress: Array.isArray(nested.progress) ? nested.progress : Array.isArray(root.progress) ? root.progress : undefined,
     validation: nested.validation ?? root.validation,
     providerDiagnostics: safeProviderDiagnostics(nested.providerDiagnostics ?? root.providerDiagnostics),
+    lastKnownProgress: nested.lastKnownProgress ?? root.lastKnownProgress,
+    responseBodyAvailable: typeof nested.responseBodyAvailable === 'boolean' ? nested.responseBodyAvailable : typeof root.responseBodyAvailable === 'boolean' ? root.responseBodyAvailable : undefined,
   };
   return details;
 }
@@ -177,7 +186,8 @@ export function formatAdminGenerationError(payload: unknown, fallback = generati
     details.level !== undefined ? `level=${details.level}` : undefined,
     details.validationCategory ? `validation=${details.validationCategory}` : undefined,
     details.stage ? `stage=${details.stage}` : undefined,
-    details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
+    details.providerCallsKnown === false ? 'providerCalls=inconnu' : details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
+    details.lastKnownProgress ? 'progression UI non confirmée' : undefined,
     details.retryCount !== undefined ? `retryCount=${details.retryCount}` : undefined,
     details.parseStage ? `parseStage=${details.parseStage}` : undefined,
     details.technicalDetail,
@@ -193,7 +203,8 @@ export function formatGenerationDiagnostic(payload: unknown, fallback = generati
     details.httpStatus !== undefined ? `HTTP ${details.httpStatus}` : undefined,
     details.code ? `code=${details.code}` : undefined,
     details.requestId ? `requestId=${details.requestId}` : undefined,
-    details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
+    details.providerCallsKnown === false ? 'providerCalls=inconnu' : details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
+    details.lastKnownProgress ? 'progression UI non confirmée' : undefined,
     details.retryCount !== undefined ? `retryCount=${details.retryCount}` : undefined,
     details.parseStage ? `parseStage=${details.parseStage}` : undefined,
     details.level !== undefined ? `level=${details.level}` : undefined,

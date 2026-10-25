@@ -44,7 +44,9 @@ export function topicIds(topics: Topic[], selected: Set<string>): string[] {
 function diagnostics(result: BulkStagingResult): string {
   if (result.status === 'saved') return `Saved draft ${result.version?.id ?? 'unknown'} · providerCalls=${result.providerCalls ?? 0} · requestId=${result.requestId ?? 'not returned'}${result.build ? ` · build=${result.build}` : ''}${result.promptVersion ? ` · promptVersion=${result.promptVersion}` : ''}`;
   const failure = result.failure;
-  return `${failure?.failureStage ?? 'unknown'} · ${failure?.technicalDiagnostic ?? 'No diagnostic'} · providerCalls=${failure?.providerCalls ?? 0}${failure?.requestId ? ` · requestId=${failure.requestId}` : ''}${failure?.build ? ` · build=${failure.build}` : ''}${failure?.promptVersion ? ` · promptVersion=${failure.promptVersion}` : ''}`;
+  const calls = failure?.providerCallsKnown === false || failure?.providerCalls === undefined ? 'inconnu' : String(failure.providerCalls);
+  const progress = failure?.lastKnownProgress ? ` · progression UI non confirmée (niveau ${failure.lastKnownProgress.level}, appels affichés=${failure.lastKnownProgress.providerCalls})` : '';
+  return `${failure?.failureStage ?? 'unknown'} · ${failure?.technicalDiagnostic ?? 'No diagnostic'} · providerCalls=${calls}${progress}${failure?.requestId ? ` · requestId=${failure.requestId}` : ''}${failure?.build ? ` · build=${failure.build}` : ''}${failure?.promptVersion ? ` · promptVersion=${failure.promptVersion}` : ''}`;
 }
 
 function validationSummary(result: BulkStagingResult): string {

@@ -130,6 +130,15 @@ describe('bulk staging lesson workflow', () => {
     expect(JSON.stringify(results[0])).not.toContain('[object Object]');
   });
 
+  it('keeps lastKnownProgress separate when the connection fails after optimistic progress', async () => {
+    const results = await runBulkStagingGeneration([{ id: 'topic-cutoff', name: 'Figures' }], undefined, {
+      generate: async () => { throw Object.assign(new Error('Failed to send a request to the Edge Function'), { code: 'edge_unavailable', stage: 'provider_failure', databaseWrite: false, responseBodyAvailable: false }); },
+    });
+    expect(results[0].status).toBe('failed');
+    expect(results[0].failure).toMatchObject({ providerCallsKnown: false, databaseWrite: false, responseBodyAvailable: false, lastKnownProgress: { level: 4, providerCalls: 3, confirmed: false } });
+    expect(results[0].failure).not.toHaveProperty('providerCalls', 0);
+  });
+
   it.each([
     ['topic lookup failure', { code: 'topic_lookup_failed', message: 'Topic could not be loaded.', stage: 'pre_generation' }, 'pre_generation'],
     ['duplicate-version refusal', { code: 'duplicate_staging_version_refused', message: 'A draft already exists.', stage: 'pre_generation' }, 'pre_generation'],

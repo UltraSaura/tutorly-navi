@@ -99,6 +99,13 @@ describe('generation error mapping', () => {
     expect(formatGenerationErrorDetails({ message: 'Insert failed.', stage: 'database_save' })).toContain('Database save failure');
   });
 
+  it('shows unknown provider calls and marks optimistic progress as unconfirmed', () => {
+    const message = formatAdminGenerationError({ code: 'edge_unavailable', message: 'The Edge Function could not be reached.', providerCallsKnown: false, lastKnownProgress: { level: 4, providerCalls: 3, confirmed: false } });
+    expect(message).toContain('providerCalls=inconnu');
+    expect(message).toContain('progression UI non confirmée');
+    expect(message).not.toContain('providerCalls=0');
+  });
+
   it('identifies whether malformed JSON failed initially or after the bounded retry', () => {
     const initial = formatAdminGenerationError({ error: { code: 'provider_malformed_json', retryCount: 0, parseStage: 'malformed_json', providerCalls: 1 } });
     const retried = formatAdminGenerationError({ error: { code: 'provider_malformed_json', retryCount: 1, parseStage: 'ambiguous_json', providerCalls: 2 } });

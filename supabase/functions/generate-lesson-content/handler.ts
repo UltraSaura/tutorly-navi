@@ -873,6 +873,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
     if (body.mode === 'staging_draft') {
       const objectiveText = objectives.map((o) => o.text).join('; ');
       const metadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id), objectiveText);
+      console.info('[generate-lesson-content] staging request started', { requestId, topicId: String(topicId), levels: STAGING_LEVEL_COUNT, providerCallsAttempted: aiProviderCalls });
       const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
       let totalRetryCount = 0;
       for (const levelMetadata of metadata) {
@@ -880,6 +881,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         let levelTokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
         let levelValidation;
         try {
+          console.info('[generate-lesson-content] staging level started', { requestId, level: levelIndex, providerCallsAttempted: aiProviderCalls });
           const result = await callStagingLevelWithBoundedJsonRetry(stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, objectives.map((o) => o.text).join('; ')), levelMetadata);
           levelTokenUsage = result.tokenUsage;
           totalRetryCount += result.retryCount;
@@ -899,7 +901,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           }
           validatedLevels.push({ metadata: levelMetadata, lesson });
           stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1 + result.retryCount, retryCount: result.retryCount, retryCategory: result.retryCategory, parseStage: result.retryCount > 0 ? 'valid_json_after_bounded_retry' : 'valid_json', tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, requestId, validation: levelValidation, diagnostics: result.retryCount > 0 ? [`initial_${result.retryCategory ?? 'json'}_retry_succeeded`] : [] });
-          console.info('[generate-lesson-content] staging level complete', { build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCalls: aiProviderCalls, tokenUsage: result.tokenUsage });
+          console.info('[generate-lesson-content] staging level complete', { requestId, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCallsAttempted: aiProviderCalls, levelProviderCalls: 1 + result.retryCount, retryCount: result.retryCount, tokenUsage: result.tokenUsage });
         } catch (error) {
           const structuredFailure = error && typeof error === 'object' && 'stagingFailure' in error
             ? (error as { stagingFailure?: { level?: number; stage?: string; technicalDetail?: string; validationCategory?: string; providerDiagnostics?: Record<string, unknown> } }).stagingFailure
@@ -930,6 +932,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             validation: levelValidation,
             diagnostics: [stagingFailure.message ?? (error instanceof Error ? error.message : String(error))],
           });
+          console.warn('[generate-lesson-content] staging level failed', { requestId, level: levelIndex, providerCallsAttempted: aiProviderCalls, retryCount: Number(stagingFailure.retryCount ?? 0), parseStage: stagingFailure.parseStage, validationCategory: stagingFailure.validationCategory, errorCategory: error instanceof StagingLevelJsonParseError ? error.category : error instanceof StagingLevelContractError ? 'contract_validation' : 'unknown' });
           throw error;
         }
       }
@@ -972,6 +975,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         progress: stagingProgress,
         levelResults: stagingProgress,
       };
+      console.info('[generate-lesson-content] staging request complete', { requestId, topicId: String(topicId), providerCallsAttempted: aiProviderCalls, retryCount: totalRetryCount, databaseWrite: false });
       return new Response(JSON.stringify(responseBody), { status: 200, headers: responseHeaders() });
     }
 

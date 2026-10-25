@@ -109,10 +109,11 @@ describe('lesson version workflow', () => {
     expect(from).not.toHaveBeenCalled();
   });
 
-  it('preserves transport failures as pre-generation diagnostics with zero provider calls', async () => {
+  it('preserves transport failures with unknown provider calls when no response exists', async () => {
     invoke.mockResolvedValue({ data: null, error: Object.assign(new Error('Failed to send a request to the Edge Function'), { code: 'FunctionsFetchError' }), response: null });
     const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
-    expect(error).toMatchObject({ stage: 'pre_generation', failureStage: 'pre_generation', providerCalls: 0 });
+    expect(error).toMatchObject({ stage: 'pre_generation', failureStage: 'pre_generation', providerCallsKnown: false, databaseWrite: false, responseBodyAvailable: false });
+    expect(error).not.toHaveProperty('providerCalls', 0);
     expect(error.message).toContain('Failed to send');
   });
 
@@ -123,7 +124,8 @@ describe('lesson version workflow', () => {
       const pending = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
       await vi.advanceTimersByTimeAsync(120_000);
       const error = await pending;
-      expect(error).toMatchObject({ code: 'staging_browser_timeout', stage: 'provider_failure', providerCalls: 0, databaseWrite: false, responseBodyAvailable: false });
+      expect(error).toMatchObject({ code: 'staging_browser_timeout', stage: 'provider_failure', providerCallsKnown: false, databaseWrite: false, responseBodyAvailable: false });
+      expect(error).not.toHaveProperty('providerCalls', 0);
       expect(invoke).toHaveBeenCalledTimes(1);
       expect(from).not.toHaveBeenCalled();
     } finally {
