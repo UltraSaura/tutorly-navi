@@ -1,6 +1,8 @@
 export const DEFAULT_ALLOWED_ORIGINS = [
   'http://127.0.0.1:8080',
   'http://localhost:8080',
+  'http://127.0.0.1:8081',
+  'http://localhost:8081',
   'https://stuwy-practice-staging.grittydace256.chatgpt.site',
   'https://9092df94-4f5e-4523-82c3-11c1874777fa.lovableproject.com',
   'https://id-preview--9092df94-4f5e-4523-82c3-11c1874777fa.lovable.app',
