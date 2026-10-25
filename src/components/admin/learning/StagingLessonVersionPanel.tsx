@@ -62,7 +62,7 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
     if ((existing.data ?? []).length > 0) throw new Error(`A staging lesson version already exists for ${topic.name}. Generation blocked to preserve draft history.`);
     if (!window.confirm(`Generate a staging draft for:\n${topic.name}\n${topic.id}\n\nThis calls the AI (up to 4 calls).`)) return;
     const generated = await generateStagingDraft(topicId, undefined, null);
-    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id, null, classifyStagingTopic(topic.name));
+    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id, null, generated.topicKind ?? classifyStagingTopic(topic.name));
     await refresh();
     navigate(`/admin/generated-lessons?version=${encodeURIComponent(saved.id)}`);
   });

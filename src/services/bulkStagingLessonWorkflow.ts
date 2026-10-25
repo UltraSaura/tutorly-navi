@@ -166,7 +166,9 @@ export async function runBulkStagingGeneration(
         const levelMetadata = generated.progress?.find((entry) => entry.level === level);
         onProgress?.({ ...base, level, providerCalls, retryCount: levelMetadata?.retryCount, parseStage: levelMetadata?.parseStage, status: 'validating', validation: levelMetadata?.validation, requestId: levelMetadata?.requestId ?? generated.requestId, promptVersion: levelMetadata?.promptVersion ?? generated.promptVersion, build: levelMetadata?.build ?? generated.build, tokenUsage: levelMetadata?.tokenUsage });
       }
-      const topicKind = classifyStagingTopic(topic.name);
+      // The Edge Function is authoritative; the title fallback is for older
+      // deployments that predate the topicKind response field.
+      const topicKind = generated.topicKind ?? classifyStagingTopic(topic.name);
       const validation = validate(generated.lesson_content, topicKind);
       if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) {
         throw new Error(JSON.stringify({ code: 'staging_validation_failed', validation }));

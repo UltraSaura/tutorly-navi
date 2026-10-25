@@ -35,6 +35,7 @@ export type StagingDraftResponse = {
   requestId: string;
   mode: 'staging_draft';
   topic_id: string;
+  topicKind: StagingTopicKind;
   lesson_content: Record<string, unknown>;
   canonicalValid: boolean;
   pedagogicalValid: boolean;
@@ -69,6 +70,8 @@ export type StagingValidationSummary = {
   interactionIssues: Array<{ path: string; message: string }>;
   diagnostics: string[];
 };
+
+export type StagingTopicKind = 'decimal' | 'time' | 'geometry';
 
 export const STAGING_SEQUENCE_BLOCK_TYPES = ['concept', 'concept', 'guided_example', 'student_try', 'mastery_check'] as const;
 export const STAGING_COMPACT_BLOCK_KEYS = ['concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check'] as const;
@@ -274,6 +277,13 @@ export function stagingTokenUsage(providerMetadata: { finishReason?: string; pro
 
 function isDecimalTopic(topicName: string, objectiveText = ''): boolean {
   return /nombre(?:s)?[\s-]+d[ée]cimal(?:e|es)?|d[ée]cimaux|decimal/i.test(`${topicName} ${objectiveText}`);
+}
+
+/** Server-selected visual contract returned with every successful staging run. */
+export function stagingTopicKind(topicName: string, objectiveText = ''): StagingTopicKind {
+  if (isDecimalTopic(topicName, objectiveText)) return 'decimal';
+  if (isTimeTopic(topicName, objectiveText)) return 'time';
+  return 'geometry';
 }
 
 function isTimeTopic(topicName: string, objectiveText = ''): boolean {
