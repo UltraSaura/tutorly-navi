@@ -40,6 +40,7 @@ export type BulkStagingProgress = {
   tokenUsage?: unknown;
   retryCount?: number;
   parseStage?: string;
+  providerDiagnostics?: GenerationErrorDetails['providerDiagnostics'];
 };
 
 export type BulkStagingLevelResult = NonNullable<StagingGeneration['levelResults']>[number];
@@ -199,6 +200,7 @@ export async function runBulkStagingGeneration(
         promptVersion: details.promptVersion,
         retryCount: details.retryCount,
         parseStage: details.parseStage,
+        providerDiagnostics: details.providerDiagnostics,
       };
       const failedLevelResults = Array.isArray(details.progress) ? details.progress as BulkStagingLevelResult[] : undefined;
       onProgress?.({ ...base, level: failure.failedLevel ?? 1, providerCalls, status: 'failed' });

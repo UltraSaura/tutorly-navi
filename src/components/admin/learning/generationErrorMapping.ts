@@ -1,5 +1,19 @@
 export type GenerationErrorCode = 'edge_unavailable' | 'unauthorized' | 'provider_error' | 'provider_malformed_json' | 'provider_invalid_lesson' | 'canonical_validation_failed' | 'pedagogical_validation_failed' | 'timeout' | 'unknown';
 
+export type ProviderDiagnostics = {
+  httpStatus?: number;
+  contentType?: string;
+  bodyLength?: number;
+  choiceCount?: number;
+  finishReason?: string;
+  contentPresent?: boolean;
+  contentNonEmpty?: boolean;
+  contentLength?: number;
+  contentSha256?: string;
+  parseState?: string;
+  syntaxError?: { message?: string; position?: number | null };
+};
+
 export const generationErrorMessages: Record<GenerationErrorCode, string> = {
   edge_unavailable: 'La fonction de génération est indisponible.',
   unauthorized: 'Vous n’êtes pas autorisé à générer cette leçon.',
@@ -28,6 +42,7 @@ export type GenerationErrorDetails = {
   parseStage?: string;
   progress?: unknown[];
   validation?: unknown;
+  providerDiagnostics?: ProviderDiagnostics;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -48,6 +63,28 @@ function finiteNumber(value: unknown): number | undefined {
 
 function stringValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function safeProviderDiagnostics(value: unknown): ProviderDiagnostics | undefined {
+  if (!isRecord(value)) return undefined;
+  const syntax = isRecord(value.syntaxError) ? {
+    ...(typeof value.syntaxError.message === 'string' ? { message: value.syntaxError.message.slice(0, 200) } : {}),
+    ...(value.syntaxError.position === null || typeof value.syntaxError.position === 'number' ? { position: value.syntaxError.position } : {}),
+  } : undefined;
+  const details: ProviderDiagnostics = {
+    ...(finiteNumber(value.httpStatus) !== undefined ? { httpStatus: finiteNumber(value.httpStatus) } : {}),
+    ...(typeof value.contentType === 'string' ? { contentType: value.contentType } : {}),
+    ...(finiteNumber(value.bodyLength) !== undefined ? { bodyLength: finiteNumber(value.bodyLength) } : {}),
+    ...(finiteNumber(value.choiceCount) !== undefined ? { choiceCount: finiteNumber(value.choiceCount) } : {}),
+    ...(typeof value.finishReason === 'string' ? { finishReason: value.finishReason } : {}),
+    ...(typeof value.contentPresent === 'boolean' ? { contentPresent: value.contentPresent } : {}),
+    ...(typeof value.contentNonEmpty === 'boolean' ? { contentNonEmpty: value.contentNonEmpty } : {}),
+    ...(finiteNumber(value.contentLength) !== undefined ? { contentLength: finiteNumber(value.contentLength) } : {}),
+    ...(typeof value.contentSha256 === 'string' ? { contentSha256: value.contentSha256 } : {}),
+    ...(typeof value.parseState === 'string' ? { parseState: value.parseState } : {}),
+    ...(syntax && Object.keys(syntax).length > 0 ? { syntaxError: syntax } : {}),
+  };
+  return Object.keys(details).length > 0 ? details : undefined;
 }
 
 export function getGenerationErrorDetails(payload: unknown, fallback = generationErrorMessages.unknown): GenerationErrorDetails {
@@ -71,6 +108,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       parseStage: error.parseStage,
       progress: error.progress,
       validation: error.validation,
+      providerDiagnostics: error.providerDiagnostics,
     }, fallback);
     return details;
   }
@@ -109,6 +147,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     parseStage: stringValue(nested.parseStage) ?? stringValue(root.parseStage),
     progress: Array.isArray(nested.progress) ? nested.progress : Array.isArray(root.progress) ? root.progress : undefined,
     validation: nested.validation ?? root.validation,
+    providerDiagnostics: safeProviderDiagnostics(nested.providerDiagnostics ?? root.providerDiagnostics),
   };
   return details;
 }
@@ -142,6 +181,7 @@ export function formatAdminGenerationError(payload: unknown, fallback = generati
     details.retryCount !== undefined ? `retryCount=${details.retryCount}` : undefined,
     details.parseStage ? `parseStage=${details.parseStage}` : undefined,
     details.technicalDetail,
+    formatProviderDiagnostics(details.providerDiagnostics),
   ].filter(Boolean).join(' · ');
   return diagnostic ? `${summary} — ${diagnostic}` : summary;
 }
@@ -159,8 +199,23 @@ export function formatGenerationDiagnostic(payload: unknown, fallback = generati
     details.level !== undefined ? `level=${details.level}` : undefined,
     details.stage ? `stage=${details.stage}` : undefined,
     details.technicalDetail,
+    formatProviderDiagnostics(details.providerDiagnostics),
   ].filter(Boolean);
   return fields.join(' · ') || details.message;
+}
+
+export function formatProviderDiagnostics(diagnostics?: ProviderDiagnostics): string | undefined {
+  if (!diagnostics) return undefined;
+  return [
+    diagnostics.finishReason ? `finishReason=${diagnostics.finishReason}` : undefined,
+    diagnostics.parseState ? `parseState=${diagnostics.parseState}` : undefined,
+    diagnostics.bodyLength !== undefined ? `bodyLength=${diagnostics.bodyLength}` : undefined,
+    diagnostics.choiceCount !== undefined ? `choiceCount=${diagnostics.choiceCount}` : undefined,
+    diagnostics.contentLength !== undefined ? `contentLength=${diagnostics.contentLength}` : undefined,
+    diagnostics.contentSha256 ? `contentSha256=${diagnostics.contentSha256}` : undefined,
+    diagnostics.syntaxError?.message ? `syntaxError=${diagnostics.syntaxError.message}` : undefined,
+    diagnostics.syntaxError?.position !== undefined ? `syntaxPosition=${diagnostics.syntaxError.position}` : undefined,
+  ].filter(Boolean).join(' · ') || undefined;
 }
 
 export function formatGenerationError(payload: unknown, fallback = generationErrorMessages.unknown): string {

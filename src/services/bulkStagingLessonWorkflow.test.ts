@@ -61,6 +61,18 @@ describe('bulk staging lesson workflow', () => {
     expect(save).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    [5, [2, 1, 1, 1]],
+    [6, [2, 2, 1, 1]],
+  ])('saves a complete result when bounded JSON retries raise calls to %i', async (providerCalls, callsByLevel) => {
+    const levelResults = callsByLevel.map((calls, index) => ({ level: index + 1, status: 'complete' as const, providerCalls: calls }));
+    const generate = vi.fn(async (id: string) => ({ ...generated(id), providerCalls, levelResults, progress: levelResults }));
+    const save = vi.fn(async (id: string) => ({ id: `version-${id}` } as any));
+    const results = await runBulkStagingGeneration([{ id: `topic-${providerCalls}`, name: 'Figures' }], undefined, { generate, save, validate: valid });
+    expect(results[0]).toMatchObject({ status: 'saved', providerCalls });
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it('continues a multi-topic bundle after one topic fails, without retrying', async () => {
     const generate = vi.fn(async (id: string) => {
       if (id === 'bad') throw Object.assign(new Error('levels[2].lesson.sequence: invalid'), { providerCalls: 3, failedLevel: 3, failureStage: 'level_validation' });
