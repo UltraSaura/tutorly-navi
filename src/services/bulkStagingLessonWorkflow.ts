@@ -166,9 +166,8 @@ export async function runBulkStagingGeneration(
     try {
       assertExplicitStagingTopicId(topicId);
       emitProgress({ ...base, level: 1, providerCalls, confirmed: false, status: 'generating' });
-      for (let level = 2; level <= STAGING_LEVEL_COUNT; level += 1) {
-        emitProgress({ ...base, level, providerCalls: level - 1, confirmed: false, status: 'generating' });
-      }
+      // One Edge invocation generates all four levels. Until it responds, the
+      // browser cannot know which level (if any) has started or completed.
       const generated = await generate(topicId);
       providerCalls = Number(generated.providerCalls) || 0;
       if (!dependencies.dryRun) validateStagingGenerationEnvelope(generated);

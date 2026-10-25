@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { corsHeadersFor, isAllowedOrigin } from './cors-policy.ts';
+import { DEFAULT_ALLOWED_ORIGINS, corsHeadersFor, isAllowedOrigin } from './cors-policy.ts';
 
 const allowedOrigin = 'https://stuwy-practice-staging.grittydace256.chatgpt.site';
 const allowedOrigins = new Set([allowedOrigin]);
 
 describe('generate-lesson-content CORS policy', () => {
+  it.each(['http://127.0.0.1:8080', 'http://localhost:8080', 'http://127.0.0.1:8081', 'http://localhost:8081'])(
+    'accepts the local staging app origin %s without widening the allowlist', (origin) => {
+      const configured = new Set(DEFAULT_ALLOWED_ORIGINS);
+      expect(isAllowedOrigin(origin, configured)).toBe(true);
+      expect(corsHeadersFor(origin, configured)['Access-Control-Allow-Origin']).toBe(origin);
+      expect(isAllowedOrigin('http://127.0.0.1:8082', configured)).toBe(false);
+    },
+  );
   it('allows missing Origin to proceed to normal authentication and admin validation', () => {
     expect(isAllowedOrigin(null, allowedOrigins)).toBe(true);
     expect(corsHeadersFor(null, allowedOrigins)['Access-Control-Allow-Origin']).toBeUndefined();
