@@ -4,11 +4,14 @@ import { PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from '.
 import { ANSWER_TYPE_VALUES } from './lesson-v21-contract.ts';
 import {
   assembleStagingLesson,
+  isGeometryTopic,
   parseStagingLevelResponse,
   requiredGeometryIssues,
   requiredGeometryKindsIssues,
   stagingLevelMetadata,
+  stagingTopicKind,
   stagingLevelPrompt,
+  stagingPromptVisualKinds,
   stagingFullLevelExample,
   STAGING_PROMPT_VERSION,
   STAGING_VISUAL_EXAMPLES,
@@ -535,5 +538,65 @@ describe('time-topic visual contract (providerCalls=0)', () => {
       expect.objectContaining({ message: expect.stringContaining('timeline') }),
     ]));
     expect([...validation.geometryIssues, ...required]).not.toEqual([]);
+  });
+
+  describe('general-topic staging metadata and visual validation', () => {
+    const decimalTopic = 'Les nombres décimaux';
+    const decimalMetadata = stagingLevelMetadata('decimal-topic', decimalTopic, [], 'Comprendre, comparer et calculer avec les nombres décimaux.');
+
+    it('correctly discriminates geometry and general topics with isGeometryTopic', () => {
+      expect(isGeometryTopic('La géométrie plane')).toBe(true);
+      expect(isGeometryTopic('Les figures planes')).toBe(true);
+      expect(isGeometryTopic('Angles et triangles')).toBe(true);
+      expect(isGeometryTopic('Les aires et surfaces')).toBe(true);
+      expect(isGeometryTopic('Symétrie axiale')).toBe(true);
+      expect(isGeometryTopic('Droites perpendiculaires')).toBe(true);
+      expect(isGeometryTopic('Les nombres décimaux')).toBe(false);
+      expect(isGeometryTopic('Les fractions')).toBe(false);
+      expect(isGeometryTopic('Algèbre')).toBe(false);
+      expect(isGeometryTopic('Calcul posé')).toBe(false);
+      expect(isGeometryTopic('Durées et horaires')).toBe(false);
+    });
+
+    it('exposes one authoritative server visual contract for decimal and geometry topics', () => {
+      expect(stagingTopicKind(decimalTopic, 'Comparer des dixièmes')).toBe('general');
+      expect(stagingTopicKind('Le repérage dans le temps et les durées')).toBe('time');
+      expect(stagingTopicKind('La géométrie plane')).toBe('geometry');
+    });
+
+    it('builds progressive levels for general topics with empty required_geometry_kinds', () => {
+      expect(decimalMetadata).toHaveLength(4);
+      expect(decimalMetadata.flatMap((level) => level.required_geometry_kinds)).toEqual([]);
+      expect(decimalMetadata[0].title).toBe('Comprendre le sens et les bases');
+      expect(decimalMetadata[1].title).toBe('Représenter et comparer');
+      expect(decimalMetadata[2].title).toBe('Appliquer les méthodes et techniques');
+      expect(decimalMetadata[3].title).toBe('Résoudre des problèmes');
+    });
+
+    it('suggests general visuals (number_line, table, diagram) in prompt visual kinds', () => {
+      const kinds = stagingPromptVisualKinds(decimalMetadata[0], decimalTopic);
+      expect(kinds).toEqual(['number_line', 'table', 'diagram']);
+    });
+
+    it('builds a general prompt containing general visual choices and no mandatory geometry figures', () => {
+      const prompt = stagingLevelPrompt(decimalTopic, 'CM2', 'fr', decimalMetadata[0], 'Comprendre les dixièmes et centièmes');
+      expect(prompt).toContain('Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: number_line, table, diagram');
+      expect(prompt).toContain(JSON.stringify(STAGING_VISUAL_EXAMPLES.number_line));
+      expect(prompt).toContain(JSON.stringify(STAGING_VISUAL_EXAMPLES.table));
+      expect(prompt).not.toContain('Visuels obligatoires dans ce niveau: rectangle, triangle');
+    });
+
+    it('accepts complete general visuals through the real staging validators', () => {
+      for (const level of decimalMetadata) {
+        const candidate = structuredClone(stagingFullLevelExample(level, decimalTopic));
+        const validation = validateStagingLevel(candidate, level, decimalTopic, 'CM2');
+        expect(validation.canonicalIssues).toEqual([]);
+        expect(validation.pedagogicalIssues).toEqual([]);
+        expect(validation.geometryIssues).toEqual([]);
+        expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds)).toEqual([]);
+      }
+      const assembled = assembleStagingLesson(decimalTopic, decimalMetadata.map((metadata) => ({ metadata, lesson: stagingFullLevelExample(metadata, decimalTopic) })));
+      expect(requiredGeometryIssues(assembled, [])).toEqual([]);
+    });
   });
 });

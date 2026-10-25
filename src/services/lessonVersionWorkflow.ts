@@ -52,6 +52,14 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
   const d = object(data);
   if (!d) return [{ path: `${path}.data`, message: 'Drawable geometry data must be an object.' }];
   const issue = (suffix: string, message: string) => ({ path: `${path}.data${suffix}`, message });
+  if (kind === 'number_line') {
+    return typeof d.min === 'number' && Number.isFinite(d.min) && typeof d.max === 'number' && Number.isFinite(d.max)
+      ? [] : [issue('', 'Number line requires numeric min and max.')];
+  }
+  if (kind === 'table') {
+    return Array.isArray(d.columns) && d.columns.length > 0
+      ? [] : [issue('', 'Table requires non-empty columns.')];
+  }
   if (kind === 'rectangle' || (kind === 'polygon' && d.shape === 'rectangle')) {
     return Array.isArray(d.vertices) && d.vertices.length >= 4 && d.vertices.every(point)
       ? [] : [issue('.vertices', 'Rectangle requires at least four numeric vertices.')];
@@ -81,17 +89,22 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
 
 /** Time-topic drawable visual kinds (clock, timeline, unit conversion). */
 export const TIME_VISUAL_KINDS = ['clock', 'timeline', 'unit_conversion'] as const;
-export type StagingTopicKind = 'time' | 'geometry';
+export type StagingTopicKind = 'time' | 'geometry' | 'general';
 
 /**
- * Mirrors the server's isTimeTopic classification in
+ * Mirrors the server's isTimeTopic / isGeometryTopic classification in
  * supabase/functions/generate-lesson-content/staging-level-workflow.ts so the
  * client applies the same visual contract the generator was prompted with.
  */
 const TIME_TOPIC_PATTERN = /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i;
+const GEOMETRY_TOPIC_PATTERN = /\b(g[ée]om[ée]tr\w*|figures?|angles?|triangles?|rectangles?|cercles?|polygones?|carr[ée]s?|losanges?|quadrilat[èe]res?|sym[ée]tr\w*|solides?|patrons?|perpendiculaires?|parall[èe]les?|aires?|surfaces?|p[ée]rim[èe]tres?|droites?|segments?)\b/i;
 
 export function classifyStagingTopic(topicName: string | null | undefined): StagingTopicKind {
-  return TIME_TOPIC_PATTERN.test(topicName ?? '') ? 'time' : 'geometry';
+  const name = topicName ?? '';
+  if (TIME_TOPIC_PATTERN.test(name)) return 'time';
+  if (GEOMETRY_TOPIC_PATTERN.test(name)) return 'geometry';
+  if (!name.trim()) return 'geometry';
+  return 'general';
 }
 
 function timeVisualDataIssues(kind: string, data: unknown, path: string): ValidationIssue[] {
@@ -119,6 +132,25 @@ function timeVisualDataIssues(kind: string, data: unknown, path: string): Valida
       ? [] : [{ path: `${path}.data`, message: 'Unit conversion requires from/to/factor or declared units and relations.' }];
   }
   return [];
+}
+
+/**
+ * General-topic visual contract:
+ * Geometry figures are NOT mandatory, but if any visual is present (such as
+ * number_line, table, diagram, clock, etc.), its renderable data must be valid.
+ */
+export function validateDrawableGeneralVisuals(lesson: unknown): ValidationIssue[] {
+  const visuals = allVisuals(lesson);
+  const issues: ValidationIssue[] = [];
+  visuals.forEach(({ visual, path }) => {
+    const kind = String(visual.kind ?? '');
+    if ((TIME_VISUAL_KINDS as readonly string[]).includes(kind)) {
+      issues.push(...timeVisualDataIssues(kind, visual.data, path));
+    } else {
+      issues.push(...geometryIssuesForVisual(kind, visual.data, path));
+    }
+  });
+  return issues;
 }
 
 /**
@@ -188,7 +220,11 @@ export function validateLessonVersion(lesson: unknown, options?: { topicKind?: S
   const canonical = validateLessonV21(lesson, { prerequisiteFormat: 'staging' });
   const canonicalIssues = !('issues' in canonical) ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
   const pedagogicalIssues = validatePedagogicalLesson(lesson);
-  const geometryIssues = options?.topicKind === 'time' ? validateDrawableTimeVisuals(lesson) : validateDrawableGeometry(lesson);
+  const geometryIssues = options?.topicKind === 'time'
+    ? validateDrawableTimeVisuals(lesson)
+    : options?.topicKind === 'general'
+      ? validateDrawableGeneralVisuals(lesson)
+      : validateDrawableGeometry(lesson);
   const prerequisiteIssues = canonicalIssues.filter((issue) => /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message));
   const interactionIssues = canonicalIssues.filter((issue) => /sequence|interaction|answer_type|correct_answer|questions/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message));
   return {
@@ -344,7 +380,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
     });
   }
   assertReturnedTopicMatches(requested, data.topic_id);
-  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
+  return data as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 
 export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind): Promise<LessonVersion> {

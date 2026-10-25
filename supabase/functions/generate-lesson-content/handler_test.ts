@@ -74,6 +74,7 @@ test('four valid levels return 200 with providerCalls=4 and no database write', 
   assertEquals(status, 200);
   assertEquals(body.requestId, 'req-1');
   assertEquals(body.providerCalls, 4);
+  assertEquals(body.topicKind, 'geometry');
   assertEquals(calls.provider, 4);
   assertEquals(body.progress.length, 4);
   assertEquals(body.validation.prerequisiteValid, true);

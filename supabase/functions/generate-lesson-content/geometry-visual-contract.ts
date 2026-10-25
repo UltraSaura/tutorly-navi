@@ -20,10 +20,21 @@ const points = (data: Obj, field: string, min: number, path: string, aliases: st
 };
 
 export function geometryVisualDataErrors(kind: string, data: unknown, basePath = 'visual.data'): GeometryContractIssue[] {
-  if (!['clock', 'timeline', 'unit_conversion', 'diagram', 'angle', 'circle', 'polygon', 'symmetry', 'triangle', 'rectangle'].includes(kind)) return [];
+  if (!['clock', 'timeline', 'unit_conversion', 'diagram', 'angle', 'circle', 'polygon', 'symmetry', 'triangle', 'rectangle', 'number_line', 'table'].includes(kind)) return [];
   if (!obj(data)) return [issue(basePath, 'missing_geometry_data', `Visual kind ${kind} requires complete renderable data.`)];
   const d = data;
   switch (kind) {
+    case 'number_line': {
+      const errors: GeometryContractIssue[] = [];
+      if (!finite(d.min)) errors.push(issue(`${basePath}.min`, 'missing_geometry_data', 'Number line requires numeric min.'));
+      if (!finite(d.max)) errors.push(issue(`${basePath}.max`, 'missing_geometry_data', 'Number line requires numeric max.'));
+      return errors;
+    }
+    case 'table': {
+      const errors: GeometryContractIssue[] = [];
+      if (!Array.isArray(d.columns) || d.columns.length === 0) errors.push(issue(`${basePath}.columns`, 'missing_geometry_data', 'Table requires non-empty columns.'));
+      return errors;
+    }
     case 'clock':
       return [
         ...(Number.isInteger(d.hour) && Number(d.hour) >= 1 && Number(d.hour) <= 12

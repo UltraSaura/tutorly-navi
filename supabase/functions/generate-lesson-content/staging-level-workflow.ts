@@ -13,6 +13,8 @@ export type StagingLevelMetadata = {
   required_geometry_kinds: string[];
 };
 
+export type StagingTopicKind = 'time' | 'geometry' | 'general';
+
 export type StagingLevelProgress = {
   level: number;
   status: 'complete' | 'failed';
@@ -31,6 +33,7 @@ export type StagingDraftResponse = {
   requestId: string;
   mode: 'staging_draft';
   topic_id: string;
+  topicKind: StagingTopicKind;
   lesson_content: Record<string, unknown>;
   canonicalValid: boolean;
   pedagogicalValid: boolean;
@@ -217,7 +220,7 @@ export function stagingSequenceContractIssues(lesson: Record<string, unknown>, m
   if (masteryIndex >= 0 && (interactionIndex < 0 || interactionIndex > masteryIndex)) issues.push({ path: 'sequence', message: 'Required interaction before mastery.' });
   if (metadata.level_number === 1) {
     const conceptsWithVisual = sequence.filter((block) => block && typeof block === 'object' && !Array.isArray(block) && (block as Record<string, unknown>).type === 'concept' && (block as Record<string, unknown>).visual);
-    if (conceptsWithVisual.length < 2) issues.push({ path: 'sequence', message: 'Level 1 requires visual concept blocks for rectangle and triangle.' });
+    if (conceptsWithVisual.length < 2) issues.push({ path: 'sequence', message: 'Level 1 requires two visual concept blocks.' });
   }
   requiredStagingMastery(lesson, issues);
   requiredStagingPrerequisites(lesson, issues);
@@ -239,8 +242,22 @@ function isTimeTopic(topicName: string, objectiveText = ''): boolean {
   return /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i.test(`${topicName} ${objectiveText}`);
 }
 
+const GEOMETRY_TOPIC_PATTERN = /\b(g[ée]om[ée]tr\w*|figures?|angles?|triangles?|rectangles?|cercles?|polygones?|carr[ée]s?|losanges?|quadrilat[èe]res?|sym[ée]tr\w*|solides?|patrons?|perpendiculaires?|parall[èe]les?|aires?|surfaces?|p[ée]rim[èe]tres?|droites?|segments?)\b/i;
+
+export function isGeometryTopic(topicName: string, objectiveText = ''): boolean {
+  return GEOMETRY_TOPIC_PATTERN.test(`${topicName} ${objectiveText}`);
+}
+
+/** Server-selected visual contract returned to the browser with the draft. */
+export function stagingTopicKind(topicName: string, objectiveText = ''): StagingTopicKind {
+  if (isTimeTopic(topicName, objectiveText)) return 'time';
+  if (isGeometryTopic(topicName, objectiveText) || !topicName.trim()) return 'geometry';
+  return 'general';
+}
+
 export function stagingLevelMetadata(topicId: string, topicName: string, objectiveIds: string[], objectiveText = ''): StagingLevelMetadata[] {
-  if (isTimeTopic(topicName, objectiveText)) {
+  const topicKind = stagingTopicKind(topicName, objectiveText);
+  if (topicKind === 'time') {
     return [
       { id: topicId + '-level-1', level_number: 1, title: 'Comprendre les unités de durée', purpose: 'Comparer les unités de temps et leur ordre.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['unit_conversion', 'timeline'] },
       { id: topicId + '-level-2', level_number: 2, title: 'Lire l’heure et calculer des durées', purpose: 'Lire une horloge et relier une heure à une durée.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['clock', 'timeline'] },
@@ -248,11 +265,19 @@ export function stagingLevelMetadata(topicId: string, topicName: string, objecti
       { id: topicId + '-level-4', level_number: 4, title: 'Résoudre des problèmes de durée', purpose: 'Résoudre une situation de durée en justifiant ses choix.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: ['clock', 'unit_conversion'] },
     ];
   }
+  if (topicKind === 'geometry') {
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Découvrir les figures', purpose: 'Reconnaître les éléments des figures planes.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['rectangle', 'triangle'] },
+      { id: topicId + '-level-2', level_number: 2, title: 'Décrire cercle et angle', purpose: 'Décrire un cercle et un angle avec leurs mesures.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['circle', 'angle'] },
+      { id: topicId + '-level-3', level_number: 3, title: 'Construire une symétrie', purpose: 'Utiliser un axe et un quadrillage pour vérifier une symétrie.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: ['symmetry'] },
+      { id: topicId + '-level-4', level_number: 4, title: 'Mobiliser les propriétés', purpose: 'Résoudre une situation de ' + topicName.toLocaleLowerCase() + ' en justifiant ses choix.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: [] },
+    ];
+  }
   return [
-    { id: topicId + '-level-1', level_number: 1, title: 'Découvrir les figures', purpose: 'Reconnaître les éléments des figures planes.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['rectangle', 'triangle'] },
-    { id: topicId + '-level-2', level_number: 2, title: 'Décrire cercle et angle', purpose: 'Décrire un cercle et un angle avec leurs mesures.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['circle', 'angle'] },
-    { id: topicId + '-level-3', level_number: 3, title: 'Construire une symétrie', purpose: 'Utiliser un axe et un quadrillage pour vérifier une symétrie.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: ['symmetry'] },
-    { id: topicId + '-level-4', level_number: 4, title: 'Mobiliser les propriétés', purpose: 'Résoudre une situation de ' + topicName.toLocaleLowerCase() + ' en justifiant ses choix.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: [] },
+    { id: topicId + '-level-1', level_number: 1, title: 'Comprendre le sens et les bases', purpose: 'Découvrir et comprendre les notions fondamentales de ' + topicName.toLocaleLowerCase() + '.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [] },
+    { id: topicId + '-level-2', level_number: 2, title: 'Représenter et comparer', purpose: 'Représenter, comparer et ordonner dans ' + topicName.toLocaleLowerCase() + '.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [] },
+    { id: topicId + '-level-3', level_number: 3, title: 'Appliquer les méthodes et techniques', purpose: 'Maîtriser les méthodes et calculs essentiels de ' + topicName.toLocaleLowerCase() + '.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: [] },
+    { id: topicId + '-level-4', level_number: 4, title: 'Résoudre des problèmes', purpose: 'Résoudre une situation de ' + topicName.toLocaleLowerCase() + ' en mobilisant ses acquis.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: [] },
   ];
 }
 
@@ -261,7 +286,7 @@ type ConceptExample = Record<string, unknown> & { visual: { kind: string; purpos
 /** Canonical drawable-visual concept examples. Each one must pass the real
  * staging validators (see staging-prompt-consistency.test.ts); the prompt
  * embeds them verbatim so the provider sees exactly the accepted shapes. */
-export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion', ConceptExample> = {
+export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion' | 'number_line' | 'table' | 'diagram', ConceptExample> = {
   rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatère qui possède quatre angles droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Forme', text: 'La figure possède quatre côtés.' }, { label: 'Angles', text: 'Chaque coin forme un angle droit.' }], takeaway: 'Astuce : pense à une porte.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les côtés.', alt_text: 'Rectangle ABCD dessiné avec quatre sommets étiquetés.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
   triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle est un polygone formé de trois côtés et de trois sommets.', key_points: [{ label: 'Côtés', text: 'Trois segments ferment cette figure.' }, { label: 'Sommets', text: 'Chaque jonction constitue un sommet.' }], takeaway: 'Astuce : un doigt par coin.', visual: { kind: 'polygon', purpose: 'Nommer les côtés du triangle.', alt_text: 'Triangle ABC dessiné avec trois sommets étiquetés.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
   circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points d’un cercle sont à la même distance du centre O. Le diamètre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Un rayon rejoint le bord.' }, { label: 'Diamètre', text: 'Un diamètre traverse le milieu.' }], takeaway: 'Astuce : pense à une roue de vélo.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamètre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamètre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
@@ -270,6 +295,9 @@ export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle'
   clock: { id: 'clock-concept', type: 'concept', title: 'Lire une horloge', content: 'Une horloge indique une heure grâce à ses aiguilles. La petite aiguille montre les heures et la grande les minutes.', key_points: [{ label: 'Heures', text: 'La petite aiguille indique les heures.' }, { label: 'Minutes', text: 'La grande aiguille indique les minutes.' }], takeaway: 'Astuce : observe le cadran avant d’agir.', visual: { kind: 'clock', purpose: 'Lire une heure précise sur un cadran.', alt_text: 'Horloge indiquant 3 heures et 15 minutes.', data: { hour: 3, minute: 15 } } },
   timeline: { id: 'timeline-concept', type: 'concept', title: 'Ordre des unités', content: 'Les unités de durée se suivent de la seconde au jour. Une frise aide à comparer leur ordre.', key_points: [{ label: 'Ordre', text: 'Une minute contient soixante secondes.' }, { label: 'Repère', text: 'Une heure contient soixante minutes.' }], takeaway: 'Astuce : ordonne les cartes avant d’agir.', visual: { kind: 'timeline', purpose: 'Comparer l’ordre des unités de durée.', alt_text: 'Frise des unités seconde, minute et heure.', data: { units: ['seconde', 'minute', 'heure'] } } },
   unit_conversion: { id: 'unit-conversion-concept', type: 'concept', title: 'Convertir une durée', content: 'Pour convertir une durée, on relie les unités par leur facteur. Une minute correspond à 60 secondes.', key_points: [{ label: 'Facteur', text: 'Une minute vaut soixante secondes.' }, { label: 'Sens', text: 'Multiplier donne davantage de secondes.' }], takeaway: 'Astuce : choisis avant d’agir.', visual: { kind: 'unit_conversion', purpose: 'Montrer le facteur entre minute et seconde.', alt_text: 'Conversion d’une minute en secondes.', data: { from: 'minute', to: 'seconde', factor: 60 } } },
+  number_line: { id: 'number-line-concept', type: 'concept', title: 'Repérer sur la droite', content: 'Une ligne graduée ordonne les grandeurs. Des repères réguliers guident le regard.', key_points: [{ label: 'Intervalles', text: 'Des écarts constants séparent les marques.' }, { label: 'Direction', text: 'La progression va vers la droite.' }], takeaway: 'Astuce : pense aux barreaux d’une échelle.', visual: { kind: 'number_line', purpose: 'Repérer un nombre sur une droite graduée.', alt_text: 'Droite graduée de 0 à 10.', data: { min: 0, max: 10, step: 1, points: [{ value: 5, label: 'A' }] } } },
+  table: { id: 'table-concept', type: 'concept', title: 'Organiser dans un tableau', content: 'Une grille classe les grandeurs. Des cases ordonnées facilitent la lecture.', key_points: [{ label: 'Colonnes', text: 'Des compartiments verticaux séparent les données.' }, { label: 'Lignes', text: 'Des bandes horizontales groupent les valeurs.' }], takeaway: 'Astuce : pense aux casiers d’une étagère.', visual: { kind: 'table', purpose: 'Organiser des valeurs numériques dans un tableau.', alt_text: 'Tableau de comparaison des valeurs.', data: { columns: ['Nombre', 'Dixièmes', 'Centièmes'], rows: [['1,25', '2', '5']] } } },
+  diagram: { id: 'diagram-concept', type: 'concept', title: 'Schéma de situation', content: 'Un dessin résume les informations. Les liens visibles éclairent le problème.', key_points: [{ label: 'Éléments', text: 'Des figures simples incarnent les quantités.' }, { label: 'Relations', text: 'Des flèches relient les morceaux.' }], takeaway: 'Astuce : pense aux pièces d’un puzzle.', visual: { kind: 'diagram', purpose: 'Visualiser la répartition des grandeurs.', alt_text: 'Schéma montrant les segments reliés.', data: { points: [{ x: 50, y: 50, label: 'A' }, { x: 200, y: 50, label: 'B' }], segments: [{ from: 'A', to: 'B', label: 'Total' }] } } },
 };
 
 export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'angle', 'symmetry'] as const;
@@ -277,8 +305,11 @@ export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'a
 /** Visual kinds the prompt demands for each level. Level 4 has no fixed kind
  * but still must draw every concept, because pedagogical validation requires
  * a figure for any geometric concept. */
-export function stagingPromptVisualKinds(metadata: StagingLevelMetadata): string[] {
-  return metadata.required_geometry_kinds.length > 0 ? metadata.required_geometry_kinds : [...STAGING_ALL_GEOMETRY_KINDS];
+export function stagingPromptVisualKinds(metadata: StagingLevelMetadata, topicName = ''): string[] {
+  if (metadata.required_geometry_kinds.length > 0) return metadata.required_geometry_kinds;
+  if (isTimeTopic(topicName)) return ['clock', 'timeline', 'unit_conversion'];
+  if (isGeometryTopic(topicName) || !topicName.trim()) return [...STAGING_ALL_GEOMETRY_KINDS];
+  return ['number_line', 'table', 'diagram'];
 }
 
 /** Numeric prerequisite shown to the provider (validated in tests). */
@@ -295,10 +326,30 @@ export const KEY_POINT_RULE = 'Chaque concept contient exactement 2 ou 3 objets 
 export const CLOCK_VISUAL_RULE = 'Pour chaque visual de kind "clock", visual.data.hour doit être un entier JavaScript compris entre 1 et 12 inclus, et visual.data.minute doit être un entier JavaScript compris entre 0 et 59 inclus. Les décimaux, chaînes, valeurs nulles, valeurs manquantes et valeurs hors limites sont interdits et rejetés: ne les arrondis, ne les bloques et ne les inventes jamais. Exemple valide: {"kind":"clock","data":{"hour":3,"minute":15}}.';
 
 /** Complete, valid example level used in the prompt (validated in tests). */
-export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<string, unknown> {
-  const kinds = stagingPromptVisualKinds(metadata);
+export function stagingFullLevelExample(metadata: StagingLevelMetadata, topicName = ''): Record<string, unknown> {
+  const kinds = stagingPromptVisualKinds(metadata, topicName);
   const first = STAGING_VISUAL_EXAMPLES[(kinds[0] ?? 'rectangle') as keyof typeof STAGING_VISUAL_EXAMPLES];
   const second = STAGING_VISUAL_EXAMPLES[(kinds[1] ?? kinds[0] ?? 'triangle') as keyof typeof STAGING_VISUAL_EXAMPLES];
+  const isGeneral = !isTimeTopic(topicName) && !isGeometryTopic(topicName) && topicName.trim().length > 0;
+  if (isGeneral) {
+    return {
+      lesson_goal: 'Comprendre et utiliser ' + topicName.toLocaleLowerCase() + '.',
+      success_criteria: ['Je sais repérer et comparer les valeurs.'],
+      prerequisites: metadata.level_number === 1 ? [] : [
+        { id: 'p-entier', description: 'Comparer des nombres entiers', type: 'numeric', prompt: 'Quel est le plus grand nombre entre 12 et 18 ?', expected_answer: 18, remediation_hint: '18 a plus d’unités que 12.' },
+        { id: 'p-position', description: 'Reconnaître le chiffre des dizaines', type: 'multiple_choice', prompt: 'Quel chiffre représente les dizaines dans 47 ?', choices: ['4', '7'], expected_answer: '4', remediation_hint: 'Le chiffre de gauche représente les dizaines.' },
+      ],
+      sequence: [
+        { ...first, id: 'c1' },
+        { ...second, id: 'c2' },
+        { id: 'g1', type: 'guided_example', content: 'J’observe les valeurs données puis je compare leur position sur la droite.', context: 'Repérer une valeur.', steps: [{ instruction: 'Je repère les repères principaux.', reason: 'Les repères donnent l’échelle.' }] },
+        { id: 's1', type: 'student_try', content: 'À toi : compare les deux valeurs.', question: 'Combien d’unités séparent 2 et 5 ?', answer_type: 'numeric', correct_answer: 3, success_feedback: 'Oui, trois unités.', error_feedback: 'Calcule la différence entre 5 et 2.' },
+        { id: 'm1', type: 'mastery_check', content: 'Vérifie ta compréhension.', questions: [{ id: 'q1', question: 'Quel est le double de 4 ?', answer_type: 'numeric', correct_answer: 8, skill: 'comparaison', difficulty: 1, success_feedback: 'Exact.', error_feedback: 'Multiplie 4 par 2.' }] },
+      ],
+      misconceptions: [],
+      mastery: { skills: ['sens des nombres', 'comparaison'], threshold: 0.8 },
+    };
+  }
   return {
     lesson_goal: 'Reconnaître et décrire une figure plane.',
     success_criteria: ['Je sais nommer les éléments de la figure.'],
@@ -322,14 +373,17 @@ const VISUAL_FIELD_RULES = [
   '- circle: kind "circle", data.center = {x:number,y:number,label}, data.radius = nombre > 0 ET data.diameter = nombre > 0 (diamètre = 2 × rayon).',
   '- angle: kind "angle", data.vertex = {x:number,y:number,label}, data.rays = tableau de EXACTEMENT 2 points {x:number,y:number,label} (jamais ray1/ray2, jamais des objets sans x/y), data.degrees = nombre entre 1 et 360 (ou data.rightAngle = true).',
   '- symmetry: kind "symmetry", data.axis = {x:number} pour un axe vertical ou {y:number} pour un axe horizontal (jamais {x1,y1,x2,y2}), data.grid = {width:number,height:number}, data.figure = tableau d\'AU MOINS 2 points {x,y} (jamais un seul point), data.symmetric_figure = tableau d\'AU MOINS 2 points {x,y} (images exactes par la symétrie). MÊME si la leçon parle du symétrique d\'UN point, dessine un segment ou un triangle (2 à 3 points) : un tableau d\'un seul point est INTERDIT et rejeté. Interdit : "figure":[{"x":2,"y":3}]. Correct : "figure":[{"x":2,"y":3},{"x":3,"y":5}], "symmetric_figure":[{"x":8,"y":3},{"x":7,"y":5}] avec axis {x:5}. Compte les points de figure et symmetric_figure avant de répondre (≥ 2 chacun, même nombre).',
+  '- number_line: kind "number_line", data.min = nombre, data.max = nombre (min < max), optionnellement points = tableau d\'objets {value:number,label:string}.',
+  '- table: kind "table", data.columns = tableau de chaînes non vide (ex: ["Nombre", "Dixièmes", "Centièmes"]), optionnellement rows = tableau de tableaux de chaînes/nombres.',
   'N’ajoute width/height à une figure que si leurs proportions sont cohérentes avec les coordonnées.',
 ].join('\n');
 
 export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string): string {
-  const kinds = stagingPromptVisualKinds(metadata);
+  const kinds = stagingPromptVisualKinds(metadata, topicName);
+  const isGeom = isGeometryTopic(topicName) || (!isTimeTopic(topicName) && metadata.required_geometry_kinds.length > 0);
   const required = metadata.required_geometry_kinds.length > 0
     ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '. Chaque bloc concept DOIT contenir un visual dessinable complet.'
-    : 'Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: ' + kinds.join(', ') + '. Un concept sans figure est refusé.';
+    : 'Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: ' + kinds.join(', ') + '. Un concept sans visuel est refusé.';
   const examples = kinds.map((kind) => 'Exemple de bloc conceptuel ' + kind + ' valide: ' + JSON.stringify(STAGING_VISUAL_EXAMPLES[kind as keyof typeof STAGING_VISUAL_EXAMPLES]));
   return [
     'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4 — PROMPT ' + STAGING_PROMPT_VERSION,
@@ -353,13 +407,13 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'Chaque prerequisite numérique doit utiliser exactement type:"numeric", prompt et expected_answer numérique; n’omets jamais expected_answer et ne le remplace jamais par une chaîne. Exemple niveau 2: {"id":"p-angle-droit","description":"Connaître la mesure d’un angle droit","type":"numeric","prompt":"Combien de degrés mesure un angle droit ?","expected_answer":90,"remediation_hint":"Un angle droit correspond à un quart de tour."}',
     'Exemple prerequisite à réponse courte canonique: {"id":"p1","description":"Lire les longueurs","type":"short_text","prompt":"Quel segment mesure 6 cm ?","expected_answer":"AB","remediation_hint":"Repère les lettres des extrémités."}',
     'Exemple misconception valide: {"id":"m1","description":"Confondre rayon et diamètre","detect_if":"L’élève appelle rayon un segment qui traverse le centre","feedback":"Le rayon va du centre au cercle; le diamètre traverse le centre.","remediation_strategy":"Comparer les deux segments sur le dessin."}',
-    metadata.level_number === 3
+    metadata.level_number === 3 && isGeom
       ? 'Exemples interactifs valides pour la symétrie: student_try {"question":"Quel point est à la même distance de l’axe ?","answer_type":"multiple_choice","choices":["A","B"],"correct_answer":"B","success_feedback":"Oui.","error_feedback":"Compare les carreaux."}; mastery_check question {"id":"q-sym","question":"Explique comment reporter un point.","answer_type":"short_text","correct_answer":"Même nombre de carreaux de l’autre côté","skill":"symétrie","difficulty":1,"success_feedback":"Exact.","error_feedback":"Compte les carreaux."}. '
       : '',
     `answer_type autorisés: ${ANSWER_TYPE_VALUES.join(', ')}.`,
     VISUAL_FIELD_RULES,
     ...examples,
-    'Exemple complet des cinq blocs et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelExample(metadata)),
+    'Exemple complet des cinq blocs et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelExample(metadata, topicName)),
     'La sequence doit contenir deux explications concises illustrées, un exemple guidé, une question interactive avant mastery_check, un contrôle de compréhension, un takeaway et les métadonnées de maîtrise.',
     'Ne dis jamais «voir la figure». JSON strict, sans Markdown.'
   ].join('\n');

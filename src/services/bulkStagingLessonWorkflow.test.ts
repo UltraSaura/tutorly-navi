@@ -174,4 +174,28 @@ describe('bulk staging lesson workflow', () => {
     expect(generate).toHaveBeenCalledTimes(1);
     expect(save).toHaveBeenCalledTimes(1);
   });
+
+  it('classifies and successfully saves Les nombres décimaux as a general topic without geometry errors', async () => {
+    const decimalTopic = { id: '07fe506e-71f4-44c9-bf7f-98c51a2ca68a', name: 'Les nombres décimaux' };
+    const generate = vi.fn(async (id: string) => ({ ...generated(id), providerCalls: 4 }));
+    const save = vi.fn(async (id: string) => ({ id: `version-${id}` } as any));
+    const validate = vi.fn((_content: unknown, topicKind?: string) => {
+      expect(topicKind).toBe('general');
+      return {
+        canonicalValid: true,
+        pedagogicalValid: true,
+        prerequisiteValid: true,
+        geometryValid: true,
+        interactionValid: true,
+        canonicalIssues: [],
+        pedagogicalIssues: [],
+        geometryIssues: [],
+      };
+    });
+    const results = await runBulkStagingGeneration([decimalTopic], undefined, { generate, save, validate });
+    expect(results[0].status).toBe('saved');
+    expect(results[0].providerCalls).toBe(4);
+    expect(validate).toHaveBeenCalledWith(expect.anything(), 'general');
+    expect(save).toHaveBeenCalledWith(decimalTopic.id, expect.anything(), decimalTopic.id, 'general');
+  });
 });
