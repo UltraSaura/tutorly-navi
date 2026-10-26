@@ -107,16 +107,11 @@ export function numberLineExactTickIndex(ticks: number[], value: number): number
 export function numberLineLabelIndices(ticks: number[], value: number, maxLabels: number, minGap = 32): Set<number> {
   if (ticks.length === 0) return new Set();
   const exactValueIndex = numberLineExactTickIndex(ticks, value);
-  const candidates = [0, ...(exactValueIndex !== null ? [exactValueIndex] : []), ticks.length - 1];
-  const indices = new Set<number>();
+  const indices = new Set<number>([0, ticks.length - 1]);
   const pixelPosition = (index: number) => (index / Math.max(1, ticks.length - 1)) * 280;
   const canPlace = (index: number) => Array.from(indices).every((placed) => Math.abs(pixelPosition(index) - pixelPosition(placed)) >= minGap);
 
-  for (const index of candidates) {
-    if ((indices.size < maxLabels || index === 0 || index === ticks.length - 1 || index === exactValueIndex) && canPlace(index)) indices.add(index);
-  }
-  if (!indices.has(0)) indices.add(0);
-  if (!indices.has(ticks.length - 1)) indices.add(ticks.length - 1);
+  if (exactValueIndex !== null && indices.size < maxLabels && canPlace(exactValueIndex)) indices.add(exactValueIndex);
 
   const stride = Math.max(1, Math.ceil((ticks.length - 1) / Math.max(1, maxLabels - indices.size + 1)));
   for (let index = stride; index < ticks.length - 1 && indices.size < maxLabels; index += stride) {

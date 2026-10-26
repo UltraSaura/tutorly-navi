@@ -146,6 +146,25 @@ describe('PedagogicalVisual geometry data', () => {
     expect(html).toContain('>0,35<');
   });
 
+  it.each([0.95, 0.05])('reserves both bounds before a nearby exact value (%s) on desktop and mobile', (value) => {
+    const ticks = numberLineTickValues(0, 1, 0.05);
+    const exactIndex = numberLineExactTickIndex(ticks, value);
+    const desktopLabels = numberLineLabelIndices(ticks, value, 21, 32);
+    const mobileLabels = numberLineLabelIndices(ticks, value, 9, 42);
+    const html = render('number_line', { min: 0, max: 1, step: 0.05, value });
+    expect(ticks).toHaveLength(21);
+    expect(exactIndex).not.toBeNull();
+    expect(desktopLabels.has(0)).toBe(true);
+    expect(desktopLabels.has(ticks.length - 1)).toBe(true);
+    expect(mobileLabels.has(0)).toBe(true);
+    expect(mobileLabels.has(ticks.length - 1)).toBe(true);
+    expect(desktopLabels.has(exactIndex as number)).toBe(false);
+    expect(mobileLabels.has(exactIndex as number)).toBe(false);
+    expect(html).toContain('number-line-point-label--desktop');
+    expect(html).toContain('number-line-point-label--mobile');
+    expect(html.match(new RegExp(`>${formatNumberLineLabel(value)}<`, 'g'))).toHaveLength(2);
+  });
+
   it('reports an explicit bounded-graduation message when more than 41 ticks are needed', () => {
     expect(numberLineTickValues(0, 5, 0.1)).toEqual([]);
     expect(render('number_line', { min: 0, max: 5, step: 0.1, value: 2.5 })).toContain('41');
