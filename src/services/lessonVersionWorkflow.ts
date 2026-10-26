@@ -19,6 +19,16 @@ export type LessonVersion = {
   published_by?: string | null;
 };
 
+export function getStoredStagingTopicKind(lesson: unknown): StagingTopicKind | undefined {
+  const value = object(lesson)?.staging_topic_kind;
+  return value === 'decimal' || value === 'time' || value === 'geometry' ? value : undefined;
+}
+
+export function withStagingTopicKind(lesson: unknown, topicKind?: StagingTopicKind): unknown {
+  if (!topicKind || !object(lesson)) return lesson;
+  return { ...(lesson as Record<string, unknown>), staging_topic_kind: topicKind };
+}
+
 export type ValidationIssue = { path: string; message: string };
 export type LessonValidation = {
   canonicalValid: boolean;
@@ -407,7 +417,8 @@ export async function saveDraftVersion(topicId: string, lessonContent: unknown, 
   }
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw Object.assign(new Error('You must be signed in as an admin to save a lesson draft.'), { code: 'database_save_unauthorized', stage: 'database_save' });
-  const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, lessonContent, user.id) as any).select('*').single();
+  const persistedLessonContent = withStagingTopicKind(lessonContent, topicKind);
+  const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, persistedLessonContent, user.id) as any).select('*').single();
   if (error) throw Object.assign(new Error(`Draft save failed: ${error.message}`), { code: 'database_save_failed', stage: 'database_save', technicalDetail: error.message });
   return data as unknown as LessonVersion;
 }
