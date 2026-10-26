@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { formatNumberLineLabel, numberLinePosition, numberLineTickValues, PedagogicalVisual } from './PedagogicalVisual';
+import { formatNumberLineLabel, numberLineLabelIndices, numberLinePosition, numberLineTickValues, PedagogicalVisual } from './PedagogicalVisual';
 
 const render = (kind: string, data: unknown, content = 'Géométrie') => renderToStaticMarkup(<PedagogicalVisual block={{ title: 'Visuel', content, visual: { kind, data, alt_text: 'Visuel de géométrie' } }} />);
 
@@ -109,6 +109,23 @@ describe('PedagogicalVisual geometry data', () => {
     expect(html).toContain('>0<');
     expect(html).toContain('>10<');
     expect(html).toContain('cx="193"');
+  });
+
+  it('keeps exact ticks but reduces mobile labels to readable endpoints and value', () => {
+    const ticks = numberLineTickValues(0, 3, 0.1);
+    const html = render('number_line', { min: 0, max: 3, step: 0.1, value: 2.5 });
+    expect(ticks).toHaveLength(31);
+    expect(numberLineLabelIndices(ticks, 2.5, 9).size).toBeLessThanOrEqual(9);
+    expect(html).toContain('number-line-label--mobile');
+    expect(html).toContain('number-line-label--desktop');
+    expect(html).toContain('>0<');
+    expect(html).toContain('>3<');
+    expect(html).toContain('>2,5<');
+  });
+
+  it('reports an explicit bounded-graduation message when more than 41 ticks are needed', () => {
+    expect(numberLineTickValues(0, 5, 0.1)).toEqual([]);
+    expect(render('number_line', { min: 0, max: 5, step: 0.1, value: 2.5 })).toContain('41');
   });
 });
 

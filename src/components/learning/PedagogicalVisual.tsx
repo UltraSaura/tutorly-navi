@@ -99,6 +99,19 @@ export function numberLinePosition(value: number, min: number, max: number): num
   return max === min ? 0 : (value - min) / (max - min);
 }
 
+export function numberLineLabelIndices(ticks: number[], value: number, maxLabels: number): Set<number> {
+  if (ticks.length === 0) return new Set();
+  const indices = new Set([0, ticks.length - 1]);
+  let nearest = 0;
+  ticks.forEach((tick, index) => {
+    if (Math.abs(tick - value) < Math.abs(ticks[nearest] - value)) nearest = index;
+  });
+  indices.add(nearest);
+  const stride = Math.max(1, Math.ceil((ticks.length - 1) / Math.max(1, maxLabels - indices.size)));
+  for (let index = stride; index < ticks.length - 1; index += stride) indices.add(index);
+  return indices;
+}
+
 function NumberLine({ d }: { d: Data }) {
   const min = n(d.min, 0), max = n(d.max, 10), step = n(d.step, 1), value = n(d.value, min);
   const ticks = numberLineTickValues(min, max, step);
@@ -113,10 +126,13 @@ function NumberLine({ d }: { d: Data }) {
     }
     return formatNumberLineLabel(tick);
   };
-  if (ticks.length === 0) return <div role="status">Données de graduation trop nombreuses ou invalides.</div>;
+  if (ticks.length === 0) return <div role="status">Données de graduation invalides ou nécessitant plus de 41 graduations.</div>;
+  const desktopLabels = numberLineLabelIndices(ticks, value, 21);
+  const mobileLabels = numberLineLabelIndices(ticks, value, 9);
   return <svg viewBox="0 0 330 110" className="w-full" role="img" aria-label="Droite graduée">
+    <style>{`.number-line-label--mobile{display:none}@media(max-width:480px){.number-line-label--desktop{display:none}.number-line-label--mobile{display:block}}`}</style>
     <line x1="25" y1="50" x2="305" y2="50" stroke="#0f766e" strokeWidth="4"/>
-    {ticks.map((tick, index) => <g key={`${tick}-${index}`}><line x1={x(tick)} y1="42" x2={x(tick)} y2="58" stroke="#0f766e"/><text x={x(tick)} y="78" textAnchor="middle" fontSize="11">{labelFor(tick, index)}</text></g>)}
+    {ticks.map((tick, index) => <g key={`${tick}-${index}`}><line x1={x(tick)} y1="42" x2={x(tick)} y2="58" stroke="#0f766e"/>{desktopLabels.has(index) && <text className="number-line-label--desktop" x={x(tick)} y="78" textAnchor="middle" fontSize="11">{labelFor(tick, index)}</text>}{mobileLabels.has(index) && <text className="number-line-label--mobile" x={x(tick)} y="78" textAnchor="middle" fontSize="11">{labelFor(tick, index)}</text>}</g>)}
     <circle cx={x(value)} cy="50" r="8" fill="#f59e0b"/>
   </svg>;
 }
