@@ -156,4 +156,18 @@ describe('generation error mapping', () => {
     expect(JSON.stringify(details)).not.toContain('secret');
     expect(formatAdminGenerationError({ error: { code: 'provider_malformed_json', providerDiagnostics: details.providerDiagnostics } })).toContain('finishReason=stop');
   });
+
+  it('preserves client duration without exposing provider content', () => {
+    const formatted = formatAdminGenerationError({
+      error: {
+        code: 'staging_browser_timeout',
+        clientDurationMs: 38_000,
+        technicalDetail: 'The staging generation request timed out before a response was received.',
+        providerCallsKnown: false,
+        providerDiagnostics: { content: '{"lesson":"secret"}' },
+      },
+    });
+    expect(formatted).toContain('clientDurationMs=38000');
+    expect(formatted).not.toContain('secret');
+  });
 });

@@ -41,6 +41,7 @@ export type GenerationErrorDetails = {
   promptVersion?: string;
   retryCount?: number;
   parseStage?: string;
+  clientDurationMs?: number;
   progress?: unknown[];
   validation?: unknown;
   providerDiagnostics?: ProviderDiagnostics;
@@ -110,6 +111,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       promptVersion: error.promptVersion,
       retryCount: error.retryCount,
       parseStage: error.parseStage,
+      clientDurationMs: error.clientDurationMs,
       progress: error.progress,
       validation: error.validation,
       providerDiagnostics: error.providerDiagnostics,
@@ -152,6 +154,7 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     promptVersion: stringValue(nested.promptVersion) ?? stringValue(root.promptVersion),
     retryCount: finiteNumber(nested.retryCount) ?? finiteNumber(root.retryCount),
     parseStage: stringValue(nested.parseStage) ?? stringValue(root.parseStage),
+    clientDurationMs: finiteNumber(nested.clientDurationMs) ?? finiteNumber(root.clientDurationMs),
     progress: Array.isArray(nested.progress) ? nested.progress : Array.isArray(root.progress) ? root.progress : undefined,
     validation: nested.validation ?? root.validation,
     providerDiagnostics: safeProviderDiagnostics(nested.providerDiagnostics ?? root.providerDiagnostics),
@@ -186,6 +189,7 @@ export function formatAdminGenerationError(payload: unknown, fallback = generati
     details.level !== undefined ? `level=${details.level}` : undefined,
     details.validationCategory ? `validation=${details.validationCategory}` : undefined,
     details.stage ? `stage=${details.stage}` : undefined,
+    details.clientDurationMs !== undefined ? `clientDurationMs=${details.clientDurationMs}` : undefined,
     details.providerCallsKnown === false ? 'providerCalls=inconnu' : details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
     details.lastKnownProgress ? 'progression UI non confirmée' : undefined,
     details.retryCount !== undefined ? `retryCount=${details.retryCount}` : undefined,
@@ -209,6 +213,7 @@ export function formatGenerationDiagnostic(payload: unknown, fallback = generati
     details.parseStage ? `parseStage=${details.parseStage}` : undefined,
     details.level !== undefined ? `level=${details.level}` : undefined,
     details.stage ? `stage=${details.stage}` : undefined,
+    details.clientDurationMs !== undefined ? `clientDurationMs=${details.clientDurationMs}` : undefined,
     details.technicalDetail,
     formatProviderDiagnostics(details.providerDiagnostics),
   ].filter(Boolean);
