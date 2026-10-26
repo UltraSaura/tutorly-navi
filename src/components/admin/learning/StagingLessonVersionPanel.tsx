@@ -13,6 +13,7 @@ import {
   publishValidatedDraft,
   assertExplicitStagingTopicId,
   classifyStagingTopic,
+  getStoredStagingTopicKind,
   type LessonVersion,
 } from '@/services/lessonVersionWorkflow';
 import { formatAdminGenerationError } from './generationErrorMapping';
@@ -32,7 +33,7 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
   const [error, setError] = useState<string | null>(null);
 
   const topicNames = useMemo(() => new Map(topics.map((topic) => [topic.id, topic])), [topics]);
-  const topicKindOf = (id: string | null | undefined) => classifyStagingTopic(id ? topicNames.get(id)?.name : undefined);
+  const topicKindOf = (id: string | null | undefined, lesson?: unknown) => getStoredStagingTopicKind(lesson) ?? classifyStagingTopic(id ? topicNames.get(id)?.name : undefined);
   const selectedKind = topicId ? topicKindOf(topicId) : null;
 
   const refresh = async () => {
@@ -62,20 +63,20 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
     if ((existing.data ?? []).length > 0) throw new Error(`A staging lesson version already exists for ${topic.name}. Generation blocked to preserve draft history.`);
     if (!window.confirm(`Generate a staging draft for:\n${topic.name}\n${topic.id}\n\nThis calls the AI (up to 4 calls).`)) return;
     const generated = await generateStagingDraft(topicId, undefined, null);
-    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id, null, classifyStagingTopic(topic.name));
+    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id, null, generated.topicKind ?? classifyStagingTopic(topic.name));
     await refresh();
     navigate(`/admin/generated-lessons?version=${encodeURIComponent(saved.id)}`);
   });
 
   const validate = (version: LessonVersion) => run(`validate:${version.id}`, async () => {
-    await validateSavedDraft(version, topicKindOf(version.topic_id));
+    await validateSavedDraft(version, topicKindOf(version.topic_id, version.lesson_content));
     await refresh();
   });
 
   const publish = (version: LessonVersion) => run(`publish:${version.id}`, async () => {
     if (version.status !== 'validated') throw new Error('Only a validated draft can be published.');
     if (!window.confirm('Publish this validated lesson version to the selected topic? This updates the topic for learners.')) return;
-    await publishValidatedDraft(version.id, version.topic_id, version.lesson_content, true, topicKindOf(version.topic_id));
+    await publishValidatedDraft(version.id, version.topic_id, version.lesson_content, true, topicKindOf(version.topic_id, version.lesson_content));
     await refresh();
   });
 

@@ -8,6 +8,7 @@ import {
   requiredGeometryIssues,
   requiredGeometryKindsIssues,
   stagingLevelMetadata,
+  stagingTopicKind,
   stagingLevelPrompt,
   stagingFullLevelExample,
   STAGING_PROMPT_VERSION,
@@ -606,6 +607,7 @@ describe('decimal-number visual contract (providerCalls=0)', () => {
   const decimalMetadata = stagingLevelMetadata('decimal-topic', decimalTopic, [], 'Comparer et placer des nombres décimaux.');
 
   it('uses the decimal model contract instead of the fraction contract', () => {
+    expect(stagingTopicKind(decimalTopic, 'Comparer et placer des nombres décimaux')).toBe('decimal');
     expect(decimalMetadata).toHaveLength(4);
     expect(decimalMetadata.every((level) => level.required_geometry_alternatives?.some((kinds) => kinds.includes('number_line') && kinds.includes('rectangle')))).toBe(true);
     expect(decimalMetadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('fraction_bar');

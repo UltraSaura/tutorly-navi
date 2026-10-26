@@ -23,6 +23,7 @@ import {
   requiredGeometryKindsIssues,
   stagingLevelMetadata,
   stagingLevelPrompt,
+  stagingTopicKind,
   StagingLevelContractError,
   StagingLevelJsonParseError,
   classifyGenerationFailure,
@@ -872,6 +873,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
 
     if (body.mode === 'staging_draft') {
       const objectiveText = objectives.map((o) => o.text).join('; ');
+      const topicKind = stagingTopicKind(topic.name, objectiveText);
       const metadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id), objectiveText);
       console.info('[generate-lesson-content] staging request started', { requestId, topicId: String(topicId), levels: STAGING_LEVEL_COUNT, providerCallsAttempted: aiProviderCalls });
       const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
@@ -961,6 +963,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         requestId,
         mode: 'staging_draft',
         topic_id: String(topicId),
+        topicKind,
         lesson_content: candidate,
         canonicalValid: true,
         pedagogicalValid: true,

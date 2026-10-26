@@ -14,12 +14,14 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import {
   buildDraftInsertPayload,
+  getStoredStagingTopicKind,
   generateStagingDraft,
   publishValidatedDraft,
   saveDraftVersion,
   validateDrawableGeometry,
   validateLessonVersion,
   validateStagingGenerationEnvelope,
+  withStagingTopicKind,
 } from './lessonVersionWorkflow';
 
 describe('lesson version workflow', () => {
@@ -42,6 +44,14 @@ describe('lesson version workflow', () => {
     await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', geometryDraftLesson);
     expect(from).toHaveBeenCalledWith('topic_lesson_versions');
     expect(insert).toHaveBeenCalledWith(expect.objectContaining({ topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', status: 'draft', created_by: 'admin-1' }));
+  });
+
+  it('persists and recovers the server-selected staging topic kind', async () => {
+    const insert = vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: { id: 'version-decimal', ...buildDraftInsertPayload('07fe506e-71f4-44c9-bf7f-98c51a2ca68a', withStagingTopicKind(geometryDraftLesson, 'decimal'), 'admin-1') }, error: null }) })) }));
+    from.mockReturnValue({ insert });
+    await saveDraftVersion('07fe506e-71f4-44c9-bf7f-98c51a2ca68a', geometryDraftLesson, '07fe506e-71f4-44c9-bf7f-98c51a2ca68a', null, 'decimal');
+    const payload = insert.mock.calls[0][0] as { lesson_content: unknown };
+    expect(getStoredStagingTopicKind(payload.lesson_content)).toBe('decimal');
   });
 
   it('surfaces the RLS rejection returned for a non-admin authenticated user', async () => {

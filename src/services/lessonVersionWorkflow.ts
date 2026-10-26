@@ -19,6 +19,16 @@ export type LessonVersion = {
   published_by?: string | null;
 };
 
+export function getStoredStagingTopicKind(lesson: unknown): StagingTopicKind | undefined {
+  const value = object(lesson)?.staging_topic_kind;
+  return value === 'decimal' || value === 'time' || value === 'geometry' ? value : undefined;
+}
+
+export function withStagingTopicKind(lesson: unknown, topicKind?: StagingTopicKind): unknown {
+  if (!topicKind || !object(lesson)) return lesson;
+  return { ...(lesson as Record<string, unknown>), staging_topic_kind: topicKind };
+}
+
 export type ValidationIssue = { path: string; message: string };
 export type LessonValidation = {
   canonicalValid: boolean;
@@ -59,6 +69,10 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
   const d = object(data);
   if (!d) return [{ path: `${path}.data`, message: 'Drawable geometry data must be an object.' }];
   const issue = (suffix: string, message: string) => ({ path: `${path}.data${suffix}`, message });
+  if (kind === 'number_line') {
+    return typeof d.min === 'number' && Number.isFinite(d.min) && typeof d.max === 'number' && Number.isFinite(d.max) && d.min < d.max
+      ? [] : [issue('', 'Number line requires numeric min < max.')];
+  }
   if (kind === 'rectangle' || (kind === 'polygon' && d.shape === 'rectangle')) {
     return Array.isArray(d.vertices) && d.vertices.length >= 4 && d.vertices.every(point)
       ? [] : [issue('.vertices', 'Rectangle requires at least four numeric vertices.')];
@@ -88,7 +102,7 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
 
 /** Time-topic drawable visual kinds (clock, timeline, unit conversion). */
 export const TIME_VISUAL_KINDS = ['clock', 'timeline', 'unit_conversion'] as const;
-export type StagingTopicKind = 'time' | 'geometry';
+export type StagingTopicKind = 'decimal' | 'time' | 'geometry';
 
 /**
  * Mirrors the server's isTimeTopic classification in
@@ -96,9 +110,12 @@ export type StagingTopicKind = 'time' | 'geometry';
  * client applies the same visual contract the generator was prompted with.
  */
 const TIME_TOPIC_PATTERN = /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i;
+const DECIMAL_TOPIC_PATTERN = /nombre(?:s)?[\s-]+d[ée]cimal(?:e|es)?|d[ée]cimaux|decimal/i;
 
 export function classifyStagingTopic(topicName: string | null | undefined): StagingTopicKind {
-  return TIME_TOPIC_PATTERN.test(topicName ?? '') ? 'time' : 'geometry';
+  const name = topicName ?? '';
+  if (DECIMAL_TOPIC_PATTERN.test(name)) return 'decimal';
+  return TIME_TOPIC_PATTERN.test(name) ? 'time' : 'geometry';
 }
 
 function timeVisualDataIssues(kind: string, data: unknown, path: string): ValidationIssue[] {
@@ -145,6 +162,16 @@ export function validateDrawableTimeVisuals(lesson: unknown): ValidationIssue[] 
   visuals
     .filter(({ visual }) => !(TIME_VISUAL_KINDS as readonly string[]).includes(String(visual.kind)))
     .forEach(({ visual, path }) => issues.push(...geometryIssuesForVisual(String(visual.kind), visual.data, path)));
+  return issues;
+}
+
+/** Decimal topics require at least one number_line or rectangle visual. */
+export function validateDrawableDecimalVisuals(lesson: unknown): ValidationIssue[] {
+  const visuals = allVisuals(lesson);
+  const decimalVisuals = visuals.filter(({ visual }) => visual.kind === 'number_line' || visual.kind === 'rectangle' || (visual.kind === 'polygon' && object(visual.data)?.shape === 'rectangle'));
+  const issues: ValidationIssue[] = [];
+  if (decimalVisuals.length === 0) issues.push({ path: 'levels', message: 'Missing required drawable visual: number_line or rectangle.' });
+  visuals.forEach(({ visual, path }) => issues.push(...geometryIssuesForVisual(String(visual.kind), visual.data, path)));
   return issues;
 }
 
@@ -195,7 +222,11 @@ export function validateLessonVersion(lesson: unknown, options?: { topicKind?: S
   const canonical = validateLessonV21(lesson, { prerequisiteFormat: 'staging' });
   const canonicalIssues = !('issues' in canonical) ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
   const pedagogicalIssues = validatePedagogicalLesson(lesson);
-  const geometryIssues = options?.topicKind === 'time' ? validateDrawableTimeVisuals(lesson) : validateDrawableGeometry(lesson);
+  const geometryIssues = options?.topicKind === 'decimal'
+    ? validateDrawableDecimalVisuals(lesson)
+    : options?.topicKind === 'time'
+      ? validateDrawableTimeVisuals(lesson)
+      : validateDrawableGeometry(lesson);
   const prerequisiteIssues = canonicalIssues.filter((issue) => /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message));
   const interactionIssues = canonicalIssues.filter((issue) => /sequence|interaction|answer_type|correct_answer|questions/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message));
   return {
@@ -384,7 +415,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   }
   assertReturnedTopicMatches(requested, data.topic_id);
   validateStagingGenerationEnvelope(data);
-  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
+  return data as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 
 export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind): Promise<LessonVersion> {
@@ -397,7 +428,8 @@ export async function saveDraftVersion(topicId: string, lessonContent: unknown, 
   }
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw Object.assign(new Error('You must be signed in as an admin to save a lesson draft.'), { code: 'database_save_unauthorized', stage: 'database_save' });
-  const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, lessonContent, user.id) as any).select('*').single();
+  const persistedLessonContent = withStagingTopicKind(lessonContent, topicKind);
+  const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, persistedLessonContent, user.id) as any).select('*').single();
   if (error) throw Object.assign(new Error(`Draft save failed: ${error.message}`), { code: 'database_save_failed', stage: 'database_save', technicalDetail: error.message });
   return data as unknown as LessonVersion;
 }
