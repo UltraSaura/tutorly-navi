@@ -667,6 +667,10 @@ export function summarizeStagingValidation(validation: StagingValidation, extraG
   };
 }
 
+export function qualifyStagingWarningPath(level: number, localPath: string): string {
+  return `levels[${Math.max(0, level - 1)}].lesson.${localPath}`;
+}
+
 export function requiredGeometryIssues(lesson: Record<string, unknown>, requiredKinds: readonly string[] = [...STAGING_ALL_GEOMETRY_KINDS]): Array<{ path: string; message: string }> {
   const sequence = (Array.isArray(lesson.levels) ? lesson.levels : []).flatMap((level: any) => Array.isArray(level?.lesson?.sequence) ? level.lesson.sequence : []);
   const visuals = sequence.map((block: any) => block?.visual).filter(Boolean);

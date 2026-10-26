@@ -11,13 +11,13 @@ const base = (content: string, takeaway?: string, keyPoints?: unknown) => ({
 });
 
 describe('provider-free composition cleanup', () => {
-  it('replaces a nearly identical fraction takeaway', () => {
+  it('does not rewrite a nearly identical fraction takeaway when it is only a warning', () => {
     const input = base('Quand on partage une quantité en parts égales, la fraction montre combien de parts on prend.', 'Une fraction montre combien de parts égales on prend.');
     const result = normalizeLessonComposition(input, 'Fractions');
     const concept = (result.lesson.sequence as unknown[] | undefined)?.[0] as Record<string, unknown>;
-    expect(['Le numérateur compte les parts prises.', 'Le dénominateur indique en combien de parts égales l’unité est partagée.', 'Utilise le visuel pour repérer les parts égales.']).toContain(concept.takeaway);
+    expect(concept.takeaway).toBe('Une fraction montre combien de parts égales on prend.');
     expect(semanticDuplicationDiagnostics(concept).filter((issue) => issue.fieldB === 'takeaway' && issue.blocking)).toEqual([]);
-    expect(result.events.some((event) => event.action === 'takeaway_replaced')).toBe(true);
+    expect(result.events.some((event) => event.action === 'takeaway_replaced')).toBe(false);
   });
 
   it('keeps missing takeaway and malformed key points usable without a provider', () => {
@@ -26,5 +26,13 @@ describe('provider-free composition cleanup', () => {
     expect(typeof concept.takeaway).toBe('string');
     expect((concept.key_points as unknown[]).length).toBe(1);
     expect(pedagogicalIssues(result.lesson, 'CM2', 'Fractions').filter((issue) => issue.path.endsWith('.takeaway') || issue.path.endsWith('.key_points'))).toEqual([]);
+  });
+
+  it('does not rewrite a warning-only lexical overlap', () => {
+    const input = base('Je compte les carreaux après figure.', 'Je compte vérifie encore après.');
+    const result = normalizeLessonComposition(input, 'Symétrie');
+    const concept = (result.lesson.sequence as unknown[])[0] as Record<string, unknown>;
+    expect(concept.takeaway).toBe('Je compte vérifie encore après.');
+    expect(result.events.some((event) => event.action === 'takeaway_replaced')).toBe(false);
   });
 });

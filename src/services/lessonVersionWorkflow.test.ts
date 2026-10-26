@@ -69,13 +69,17 @@ describe('lesson version workflow', () => {
       levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })),
     }, error: null, response: null });
     const generated = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
-    const persistedContent = withStagingMetadata(geometryDraftLesson, metadata);
-    const row = { id: 'version-warning', ...buildDraftInsertPayload('e5003f68-f3aa-404b-85a9-847cdb103a81', persistedContent, 'admin-1') };
-    const single = vi.fn().mockResolvedValue({ data: row, error: null });
-    from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });
+    let insertedPayload: Record<string, unknown> | undefined;
+    const single = vi.fn().mockImplementation(() => ({ data: { id: 'version-warning', ...insertedPayload }, error: null }));
+    const insert = vi.fn((payload: Record<string, unknown>) => {
+      insertedPayload = payload;
+      return { select: vi.fn(() => ({ single })) };
+    });
+    from.mockReturnValue({ insert });
 
     const saved = await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', generated.lesson_content, generated.topic_id, null, 'geometry', generated.validation as any);
     const reread = saved.lesson_content;
+    expect(insertedPayload?.lesson_content).toEqual(withStagingMetadata(withStagingTopicKind(generated.lesson_content, 'geometry'), metadata));
     expect(getStoredStagingMetadata(reread)).toEqual(metadata);
     expect(previewReviewWarnings(reread)).toEqual([warning]);
     expect((reread as Record<string, unknown>).levels).toEqual((geometryDraftLesson as Record<string, unknown>).levels);

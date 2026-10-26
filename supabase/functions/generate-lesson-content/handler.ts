@@ -21,6 +21,7 @@ import {
   parseStagingLevelResponse,
   requiredGeometryIssues,
   requiredGeometryKindsIssues,
+  qualifyStagingWarningPath,
   stagingLevelMetadata,
   stagingLevelPrompt,
   STAGING_CUSTOM_PROMPT,
@@ -767,7 +768,8 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       const candidates = sequence.flatMap((block, index) => {
         if (block.type !== 'concept' || !block.visual) return [];
         const diagnostics = semanticDuplicationDiagnostics(block);
-        return diagnostics.length ? [{ index, block, diagnostics }] : [];
+        const blockingDiagnostics = diagnostics.filter((item) => item.blocking);
+        return blockingDiagnostics.length ? [{ index, block, diagnostics: blockingDiagnostics }] : [];
       });
       for (const candidate of candidates) {
         const { index, block, diagnostics } = candidate;
@@ -977,11 +979,11 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         prerequisiteIssues: [],
         geometryIssues: finalGeometryIssues,
         interactionIssues: [],
-        pedagogicalWarnings: stagingProgress.flatMap((progress) => progress.validation?.pedagogicalWarnings ?? []),
+        pedagogicalWarnings: stagingProgress.flatMap((progress) => (progress.validation?.pedagogicalWarnings ?? []).map((issue) => ({ ...issue, path: qualifyStagingWarningPath(progress.level, issue.path) }))),
         pedagogicalReviewRequired: stagingProgress.some((progress) => progress.validation?.pedagogicalReviewRequired === true),
         diagnostics: [
           ...finalGeometryIssues.map((issue) => `${issue.path}: ${issue.message}`),
-          ...stagingProgress.flatMap((progress) => progress.validation?.pedagogicalWarnings ?? []).map((issue) => `Avertissement de revue : ${issue.path}: ${issue.message}`),
+          ...stagingProgress.flatMap((progress) => (progress.validation?.pedagogicalWarnings ?? []).map((issue) => ({ ...issue, path: qualifyStagingWarningPath(progress.level, issue.path) }))).map((issue) => `Avertissement de revue : ${issue.path}: ${issue.message}`),
         ],
       };
       const responseBody: StagingDraftResponse = {

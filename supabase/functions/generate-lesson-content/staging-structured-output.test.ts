@@ -16,6 +16,7 @@ import {
   requiredGeometryKindsIssues,
   validateStagingLevel,
   summarizeStagingValidation,
+  qualifyStagingWarningPath,
   STAGING_VISUAL_EXAMPLES,
 } from './staging-level-workflow';
 import { validateStagingGenerationEnvelope } from '../../../src/services/lessonVersionWorkflow';
@@ -140,6 +141,7 @@ describe('staging structured output boundary', () => {
     expect(summary.pedagogicalReviewRequired).toBe(true);
     expect(summary.pedagogicalWarnings).toEqual([{ path: 'sequence[1].takeaway', message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.' }]);
     expect(summary.diagnostics).toContain('sequence[1].takeaway: Avertissement de revue : Similarité lexicale à revoir. overlap=2, ratio=0.50.');
+    expect(qualifyStagingWarningPath(3, 'sequence[1].takeaway')).toBe('levels[2].lesson.sequence[1].takeaway');
   });
 
   it('rejects null, object and non-numeric mastery fields at the AJV boundary', () => {

@@ -31,7 +31,7 @@ export function normalizeLessonComposition(lesson: Record<string, unknown>, topi
     if (!raw || typeof raw !== 'object' || Array.isArray(raw) || (raw as LessonBlock).type !== 'concept') return raw;
     const block = { ...(raw as LessonBlock) };
     const duplicates = semanticDuplicationDiagnostics(block, topicName);
-    const takeawayDuplicate = duplicates.some((item) => item.fieldB === 'takeaway');
+    const takeawayDuplicate = duplicates.some((item) => item.blocking && item.fieldB === 'takeaway');
     if (takeawayDuplicate || typeof block.takeaway !== 'string' || !block.takeaway.trim()) {
       block.takeaway = replacementTakeaway(block, topicName);
       events.push({ path: `sequence[${index}].takeaway`, action: 'takeaway_replaced', message: 'Takeaway simplifié pour éviter une répétition.' });
