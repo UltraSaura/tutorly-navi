@@ -23,6 +23,7 @@ import {
   requiredGeometryKindsIssues,
   stagingLevelMetadata,
   stagingLevelPrompt,
+  STAGING_CUSTOM_PROMPT,
   stagingTopicKind,
   StagingLevelContractError,
   StagingLevelJsonParseError,
@@ -615,7 +616,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message, modelId, history: [], language, maxTokens: STAGING_LEVEL_MAX_TOKENS,
-          customPrompt: `Use response_format=${JSON.stringify(STAGING_PROVIDER_OUTPUT_CONTRACT.responseFormat)}. Return one complete JSON object for this level only; no prose, Markdown, second object, array root, or wrapper. The application will validate the complete level contract before assembly or persistence.`,
+          customPrompt: `${STAGING_CUSTOM_PROMPT} Use response_format=${JSON.stringify(STAGING_PROVIDER_OUTPUT_CONTRACT.responseFormat)}.`,
           isUnified: true, requestMode: 'lessonGeneration',
           userContext: { grade_level: rawLevel, age_group: ageGroup, curriculum, country: countryLabel, response_language: responseLang, learning_style: 'visual', format: 'json' },
         }),
