@@ -41,6 +41,16 @@ describe('staging structured output boundary', () => {
     expect(STAGING_LEVEL_OUTPUT_SCHEMA.properties).not.toHaveProperty('sequence');
   });
 
+  it('declares choices as an allowed optional property with a choice-type requirement', () => {
+    const questions = STAGING_LEVEL_OUTPUT_SCHEMA.properties.mastery_check.properties.questions;
+    const questionSchema = questions.items;
+    expect(questionSchema.properties).toHaveProperty('choices');
+    expect(questionSchema.required).not.toContain('choices');
+    expect(questionSchema.oneOf).toEqual(expect.arrayContaining([
+      expect.objectContaining({ required: ['choices'] }),
+    ]));
+  });
+
   it('builds and validates the five blocks in application code before assembly', () => {
     const metadata = stagingLevelMetadata('topic', 'Figures planes', ['objective']);
     const levels = metadata.map((level) => {

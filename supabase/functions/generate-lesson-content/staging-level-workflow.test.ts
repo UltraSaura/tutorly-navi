@@ -201,6 +201,38 @@ describe('staging level workflow', () => {
     expect(result.geometryIssues).toEqual([]);
   });
 
+  it('requires choices for multiple_choice and selection questions', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    const masteryQuestion = candidate.sequence[4].questions[0];
+    masteryQuestion.answer_type = 'multiple_choice';
+    masteryQuestion.correct_answer = '3';
+    delete masteryQuestion.choices;
+    candidate.sequence[3].answer_type = 'selection';
+    candidate.sequence[3].correct_answer = '4';
+    delete candidate.sequence[3].choices;
+    const issues = stagingSequenceContractIssues(candidate, metadata[0]);
+    expect(issues).toEqual(expect.arrayContaining([
+      { path: 'sequence[3].choices', message: 'Choice question requires at least two non-empty choices' },
+      { path: 'sequence[4].questions[0].choices', message: 'Choice question requires at least two non-empty choices' },
+    ]));
+  });
+
+  it('accepts choice questions with choices and numeric/text questions without choices', () => {
+    const choiceCandidate = structuredClone(validLevel1) as any;
+    const masteryQuestion = choiceCandidate.sequence[4].questions[0];
+    masteryQuestion.answer_type = 'multiple_choice';
+    masteryQuestion.choices = ['3', '4'];
+    masteryQuestion.correct_answer = '3';
+    choiceCandidate.sequence[3].answer_type = 'short_text';
+    delete choiceCandidate.sequence[3].choices;
+    expect(stagingSequenceContractIssues(choiceCandidate, metadata[0])).toEqual([]);
+
+    const numericCandidate = structuredClone(validLevel1) as any;
+    delete numericCandidate.sequence[3].choices;
+    delete numericCandidate.sequence[4].questions[0].choices;
+    expect(stagingSequenceContractIssues(numericCandidate, metadata[0])).toEqual([]);
+  });
+
   it('keeps modern prerequisite fields intact before canonical validation', () => {
     const parsed = parseStagingLevelResponse(JSON.stringify({ ...validLevel1, prerequisites: [validNumericPrerequisite] }));
     expect(parsed.value.prerequisites).toEqual([expect.objectContaining({ id: validNumericPrerequisite.id, type: 'numeric', prompt: validNumericPrerequisite.prompt, expected_answer: 90 })]);

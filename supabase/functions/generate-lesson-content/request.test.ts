@@ -61,6 +61,10 @@ describe('lesson generation AI request', () => {
     expect(STAGING_CUSTOM_PROMPT).toContain('student_try block MUST contain a non-null correct_answer');
     expect(STAGING_CUSTOM_PROMPT).toContain('mastery_check.questions MUST contain 1–4 complete question objects');
     expect(STAGING_CUSTOM_PROMPT).toContain('id, question, answer_type, correct_answer, skill, difficulty, success_feedback, error_feedback');
+    expect(STAGING_CUSTOM_PROMPT).not.toContain('exactly these eight required properties');
+    expect(STAGING_CUSTOM_PROMPT).toContain('optional choices property is allowed in addition');
+    expect(STAGING_CUSTOM_PROMPT).toContain('REQUIRED with at least two strings when answer_type is multiple_choice or selection');
+    expect(STAGING_CUSTOM_PROMPT).toContain('may be omitted for numeric or text questions');
     expect(STAGING_CUSTOM_PROMPT).toContain('correct_answer MUST be non-null');
     expect(STAGING_CUSTOM_PROMPT).toContain('before pedagogical validation');
     expect(STAGING_CUSTOM_PROMPT).toContain('Return only the one JSON object for the requested level');

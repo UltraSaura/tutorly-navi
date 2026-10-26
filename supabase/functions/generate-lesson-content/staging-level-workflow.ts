@@ -140,12 +140,24 @@ export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v4-visu
 export const STAGING_JSON_NESTING_RULE = 'ORDRE DES CLÉS D’UN CONCEPT: écris toujours id, type, title, content, PUIS visual (complet, avec purpose, alt_text et data), et SEULEMENT ENSUITE key_points puis takeaway en dernier. Ne place jamais visual à la fin d’un bloc. Après le dernier élément de visual.data.side_labels ou visual.data.vertices, ferme exactement: } ] } } puis écris ,"key_points". Chaque bloc de sequence se termine par "takeaway":"…"} (concept) ou par sa dernière clé simple, puis , avant le bloc suivant.';
 export const STAGING_JSON_SYNTAX_RULE = 'SYNTAXE JSON STRICTE: un nombre JSON (expected_answer, correct_answer, radius, degrees, x, y, factor…) s’écrit TOUJOURS avec un point décimal et sans espace: 0.5, 2.75, 12 — JAMAIS 0,5, 2,75, 1 000, .5 ni 05. La virgule décimale française (« 2,75 ») n’est autorisée qu’À L’INTÉRIEUR d’une chaîne entre guillemets, par exemple "2,75". Si une réponse décimale doit s’afficher avec une virgule, mets-la en chaîne: "expected_answer":"2,75" (et la même chaîne dans choices). Dans le texte, n’écris jamais de guillemet droit " non échappé: utilise « » ou \\". N’utilise aucune barre oblique inverse (pas de LaTeX comme \\frac ou \\times): écris « × », « ÷ », « 3/4 ». Aucune virgule finale avant } ou ], aucun commentaire, aucun NaN/Infinity. ' + STAGING_JSON_NESTING_RULE;
 export const STAGING_JSON_OUTPUT_RULE = 'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau complet pour ce niveau; aucune fence Markdown (pas de ```json), aucun texte avant/après, aucun second objet JSON, aucun tableau racine ni wrapper. Respecte exactement le schéma demandé et arrête-toi après la dernière accolade. ' + STAGING_JSON_SYNTAX_RULE;
-export const STAGING_CUSTOM_PROMPT = 'STAGING_DRAFT single-topic contract: this request is one of exactly four level calls (levels 1, 2, 3, and 4); every one of the four levels must return one complete level object before the draft can be saved. The student_try block MUST contain a non-null correct_answer. mastery_check.questions MUST contain 1–4 complete question objects, and EVERY question MUST contain exactly these eight required properties: id, question, answer_type, correct_answer, skill, difficulty, success_feedback, error_feedback; correct_answer MUST be non-null. A valid JSON object missing any required field is rejected before pedagogical validation; do not repair, complete, infer, or fabricate values. Return only the one JSON object for the requested level.';
+export const STAGING_CUSTOM_PROMPT = 'STAGING_DRAFT single-topic contract: this request is one of exactly four level calls (levels 1, 2, 3, and 4); every one of the four levels must return one complete level object before the draft can be saved. The student_try block MUST contain a non-null correct_answer. mastery_check.questions MUST contain 1–4 complete question objects, and EVERY question MUST contain these eight required properties: id, question, answer_type, correct_answer, skill, difficulty, success_feedback, error_feedback. The optional choices property is allowed in addition; it is REQUIRED with at least two strings when answer_type is multiple_choice or selection, and it may be omitted for numeric or text questions. correct_answer MUST be non-null. A valid JSON object missing any required field is rejected before pedagogical validation; do not repair, complete, infer, or fabricate values. Return only the one JSON object for the requested level.';
 
 const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 
 function requiredStagingField(value: Record<string, unknown>, path: string, field: string, issues: Array<{ path: string; message: string }>) {
   if (!nonEmpty(value[field])) issues.push({ path: `${path}.${field}`, message: 'Required non-empty string' });
+}
+
+function requiredStagingChoices(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
+  const answerType = String(value.answer_type ?? '');
+  if (!['multiple_choice', 'selection'].includes(answerType)) return;
+  if (!Array.isArray(value.choices) || value.choices.length < 2 || value.choices.some((choice) => !nonEmpty(choice))) {
+    issues.push({ path: `${path}.choices`, message: 'Choice question requires at least two non-empty choices' });
+    return;
+  }
+  if (!value.choices.some((choice) => String(choice).trim() === String(value.correct_answer ?? '').trim())) {
+    issues.push({ path: `${path}.correct_answer`, message: 'Correct answer must exactly match one choice' });
+  }
 }
 
 function requiredStagingKeyPoints(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
@@ -200,6 +212,7 @@ function requiredStagingMasteryQuestions(value: Record<string, unknown>, path: s
     if (!ANSWER_TYPE_VALUES.includes(String(question.answer_type) as typeof ANSWER_TYPE_VALUES[number])) {
       issues.push({ path: `${questionPath}.answer_type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });
     }
+    requiredStagingChoices(question, questionPath, issues);
   });
 }
 
@@ -272,6 +285,7 @@ export function stagingSequenceContractIssues(lesson: Record<string, unknown>, m
     if (block.type === 'student_try') {
       ['question', 'answer_type', 'success_feedback', 'error_feedback'].forEach((field) => requiredStagingField(block, path, field, issues));
       if (block.correct_answer === undefined || block.correct_answer === null) issues.push({ path: `${path}.correct_answer`, message: 'Required non-null value' });
+      requiredStagingChoices(block, path, issues);
     }
     if (block.type === 'mastery_check') {
       if (!Array.isArray(block.questions) || block.questions.length < 1 || block.questions.length > 4) issues.push({ path: `${path}.questions`, message: 'Expected 1–4 questions' });
