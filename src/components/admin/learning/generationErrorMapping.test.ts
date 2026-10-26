@@ -80,6 +80,23 @@ describe('generation error mapping', () => {
     expect(message).not.toContain('[object Object]');
   });
 
+  it('renders the exact level and mastery question path for missing correct_answer', () => {
+    const message = formatAdminGenerationError({
+      httpStatus: 422,
+      error: {
+        code: 'staging_level_validation_failed',
+        message: 'A staging level failed validation.',
+        level: 3,
+        stage: 'level_validation',
+        validationCategory: 'interaction',
+        technicalDetail: 'sequence[4].questions[0].correct_answer: Required non-null value for every mastery question',
+      },
+    });
+    expect(message).toContain('level=3');
+    expect(message).toContain('sequence[4].questions[0].correct_answer');
+    expect(message).not.toContain('[object Object]');
+  });
+
   it.each([
     new Error('topic lookup failed'),
     { message: 'Edge Function returned a non-2xx status code', context: { status: 503 } },

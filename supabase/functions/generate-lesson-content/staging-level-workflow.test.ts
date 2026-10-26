@@ -85,12 +85,40 @@ describe('staging level workflow', () => {
     expect(attempts).toEqual([0, 1]);
   });
 
+  it('retries a level-3 truncated response that ends before correct_answer, then accepts the complete retry', async () => {
+    const level = metadata[2];
+    const complete = stagingFullLevelExample(level);
+    const malformed = JSON.stringify(complete).replace(/"correct_answer":3/, '"correct_answer"');
+    const attempts: number[] = [];
+    const result = await runWithBoundedJsonRetry(async (attempt) => {
+      attempts.push(attempt);
+      const parsed = parseStagingLevelResponse(attempt === 0 ? malformed : JSON.stringify(complete), level);
+      return parsed.value;
+    });
+    expect(result.retryCount).toBe(1);
+    expect(result.retryCategory).toBe('malformed_json');
+    expect(attempts).toEqual([0, 1]);
+    expect(result.value).toEqual(complete);
+  });
+
   it('stops after two malformed JSON responses and does not retry validation errors', async () => {
     const malformed = async () => runWithBoundedJsonRetry(async () => { throw new StagingLevelJsonParseError('ambiguous_json'); });
     await expect(malformed()).rejects.toMatchObject({ category: 'ambiguous_json', retryCount: 1, parseStage: 'ambiguous_json' });
     let calls = 0;
     await expect(runWithBoundedJsonRetry(async () => { calls += 1; throw new Error('schema rejected'); })).rejects.toThrow('schema rejected');
     expect(calls).toBe(1);
+  });
+
+  it('rejects a valid level-3 JSON response missing mastery correct_answer without retry or completion', async () => {
+    const level = metadata[2];
+    const incomplete = structuredClone(stagingFullLevelExample(level)) as any;
+    delete incomplete.sequence[4].questions[0].correct_answer;
+    const calls: number[] = [];
+    await expect(runWithBoundedJsonRetry(async (attempt) => {
+      calls.push(attempt);
+      return parseStagingLevelResponse(JSON.stringify(incomplete), level).value;
+    })).rejects.toMatchObject({ name: 'StagingLevelContractError' });
+    expect(calls).toEqual([0]);
   });
   it('assembles four independently valid level responses into one canonical lesson', () => {
     const levels = metadata.map((item) => ({ metadata: item, lesson: structuredClone(validLevel1) }));
@@ -121,6 +149,18 @@ describe('staging level workflow', () => {
     incomplete.sequence[0].visual.data.vertices = [{ x: 1, y: 1 }];
     const result = validateStagingLevel(incomplete, metadata[0], topicName, 'CM2');
     expect(result.geometryIssues.some((issue) => issue.path.includes('vertices'))).toBe(true);
+  });
+
+  it('reports the exact student_try and mastery question paths when correct_answer is missing', () => {
+    const level = metadata[2];
+    const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+    delete candidate.sequence[3].correct_answer;
+    delete candidate.sequence[4].questions[0].correct_answer;
+    const issues = stagingSequenceContractIssues(candidate, level);
+    expect(issues).toEqual(expect.arrayContaining([
+      { path: 'sequence[3].correct_answer', message: 'Required non-null value' },
+      { path: 'sequence[4].questions[0].correct_answer', message: 'Required non-null value for every mastery question' },
+    ]));
   });
 
   it('accepts the complete level-one rectangle and polygon-triangle prompt example', () => {

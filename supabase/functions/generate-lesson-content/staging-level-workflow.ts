@@ -178,6 +178,30 @@ function requiredStagingMastery(value: Record<string, unknown>, issues: Array<{ 
   }
 }
 
+function requiredStagingMasteryQuestions(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
+  const mastery = object(value);
+  const questions = mastery?.questions;
+  if (!Array.isArray(questions)) return;
+  questions.forEach((raw, index) => {
+    const questionPath = `${path}.questions[${index}]`;
+    const question = object(raw);
+    if (!question) {
+      issues.push({ path: questionPath, message: 'Expected complete mastery question object' });
+      return;
+    }
+    for (const field of ['id', 'question', 'answer_type', 'skill', 'success_feedback', 'error_feedback']) {
+      if (!nonEmpty(question[field])) issues.push({ path: `${questionPath}.${field}`, message: 'Required non-empty value' });
+    }
+    if (!Number.isFinite(question.difficulty)) issues.push({ path: `${questionPath}.difficulty`, message: 'Required numeric difficulty' });
+    if (question.correct_answer === undefined || question.correct_answer === null) {
+      issues.push({ path: `${questionPath}.correct_answer`, message: 'Required non-null value for every mastery question' });
+    }
+    if (!ANSWER_TYPE_VALUES.includes(String(question.answer_type) as typeof ANSWER_TYPE_VALUES[number])) {
+      issues.push({ path: `${questionPath}.answer_type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });
+    }
+  });
+}
+
 function requiredStagingPrerequisites(value: Record<string, unknown>, issues: Array<{ path: string; message: string }>) {
   if (!Array.isArray(value.prerequisites)) return;
   value.prerequisites.forEach((raw, index) => {
@@ -246,10 +270,11 @@ export function stagingSequenceContractIssues(lesson: Record<string, unknown>, m
     }
     if (block.type === 'student_try') {
       ['question', 'answer_type', 'success_feedback', 'error_feedback'].forEach((field) => requiredStagingField(block, path, field, issues));
-      if (block.correct_answer === undefined) issues.push({ path: `${path}.correct_answer`, message: 'Required value' });
+      if (block.correct_answer === undefined || block.correct_answer === null) issues.push({ path: `${path}.correct_answer`, message: 'Required non-null value' });
     }
     if (block.type === 'mastery_check') {
       if (!Array.isArray(block.questions) || block.questions.length < 1 || block.questions.length > 4) issues.push({ path: `${path}.questions`, message: 'Expected 1–4 questions' });
+      requiredStagingMasteryQuestions(block, path, issues);
     }
   });
   const masteryIndex = sequence.findIndex((block) => block && typeof block === 'object' && !Array.isArray(block) && (block as Record<string, unknown>).type === 'mastery_check');
@@ -473,7 +498,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     MASTERY_QUESTION_RULE,
     CLOCK_VISUAL_RULE,
     `Le content du concept explique progressivement le concept mathématique en 1 à 3 phrases courtes et en ${PEDAGOGICAL_CONCEPT_MAX_WORDS} mots maximum (limite exacte du validateur pour un concept structuré); key_points contient 2 ou 3 rappels factuels courts, sous forme de phrases complètes, pertinentes et distinctes (jamais des mots isolés); takeaway donne une méthode pratique, une vérification ou une action à faire par l’élève en ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum. Le takeaway ne doit jamais reformuler le content ou les key_points: emploie une formulation différente et centre-toi sur ce que l’élève doit faire. Le content de guided_example explique un exemple résolu de façon concise mais complète; celui de student_try demande une action à l’élève avec une consigne et un feedback concis; celui de mastery_check vérifie sa compréhension avec des questions complètes et concises. Tous les cinq blocs doivent avoir un content réaliste en français.`,
-    `Les concepts exigent title, key_points (exactement 2 ou 3 objets {label, text}, rappels factuels courts et distincts, pas une phrase copiée du content), takeaway actionnable de ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum et visual. Tous les blocs interactifs (student_try et les questions de mastery_check) doivent utiliser exactement l’un de ces answer_type: ${ANSWER_TYPE_VALUES.join(', ')}; ne convertis jamais une valeur inconnue. guided_example exige context et steps concis mais complets; student_try exige question, answer_type autorisé, correct_answer, success_feedback et error_feedback concis; chaque question mastery_check exige correct_answer.`,
+    `Les concepts exigent title, key_points (exactement 2 ou 3 objets {label, text}, rappels factuels courts et distincts, pas une phrase copiée du content), takeaway actionnable de ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum et visual. Tous les blocs interactifs (student_try et les questions de mastery_check) doivent utiliser exactement l’un de ces answer_type: ${ANSWER_TYPE_VALUES.join(', ')}; ne convertis jamais une valeur inconnue. guided_example exige context et steps concis mais complets. student_try exige question, answer_type autorisé, correct_answer non nul, success_feedback et error_feedback concis. mastery_check.questions exige 1 à 4 objets complets; CHAQUE objet exige id, question, answer_type autorisé, correct_answer non nul, skill, difficulty numérique, success_feedback et error_feedback. Un JSON valide auquel il manque un de ces champs est structurellement rejeté avant toute validation pédagogique: ne complète, ne réécris et n’invente jamais la valeur manquante.`,
     'mastery doit être exactement {"skills":["étiquette courte 1","étiquette courte 2"],"threshold":0.8}: skills est un tableau de chaînes non vides, jamais un tableau d’objets, un objet ou un paragraphe.',
     'prerequisites et misconceptions doivent être des tableaux d’objets complets, jamais des tableaux de chaînes.',
     'Chaque prerequisite numérique doit utiliser exactement type:"numeric", prompt et expected_answer numérique; n’omets jamais expected_answer et ne le remplace jamais par une chaîne. Exemple niveau 2: {"id":"p-angle-droit","description":"Connaître la mesure d’un angle droit","type":"numeric","prompt":"Combien de degrés mesure un angle droit ?","expected_answer":90,"remediation_hint":"Un angle droit correspond à un quart de tour."}',
