@@ -12,6 +12,7 @@ import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 import { discoverLessonVisuals } from '@/components/admin/learning/GeneratedLessonsPage';
 import { assertExplicitStagingTopicId, classifyStagingTopic, getStoredStagingTopicKind, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
 import { runBulkStagingGeneration, type BulkStagingProgress, type BulkStagingResult } from '@/services/bulkStagingLessonWorkflow';
+import { runStagingHealthcheck, type StagingHealthcheckResult } from '@/services/stagingHealthcheck';
 import type { LessonV2, LessonV21 } from '@/types/lesson-generator';
 
 type Topic = { id: string; name: string; curriculum_level_code: string | null };
@@ -69,6 +70,8 @@ export function StagingLessonWorkflowPage() {
   const [results, setResults] = useState<BulkStagingResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [healthcheckLoading, setHealthcheckLoading] = useState(false);
+  const [healthcheck, setHealthcheck] = useState<StagingHealthcheckResult | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dryRun = searchParams.get('dryRun') === '1';
@@ -105,6 +108,13 @@ export function StagingLessonWorkflowPage() {
     }
   };
 
+  const checkFunction = async () => {
+    setHealthcheckLoading(true);
+    try { setHealthcheck(await runStagingHealthcheck()); }
+    catch { setHealthcheck({ httpStatus: null, requestId: null, headerRequestId: null, requestIdMatches: null, build: null, promptVersion: null, providerCalls: null, databaseWrite: null, errorCode: 'healthcheck_failed', errorMessage: 'Healthcheck request failed.' }); }
+    finally { setHealthcheckLoading(false); }
+  };
+
   return <div className="space-y-6">
     <PageMeta title="Staging lesson versions" description="Generate isolated validated lesson-version drafts" />
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -117,6 +127,8 @@ export function StagingLessonWorkflowPage() {
       <p className="text-xs text-muted-foreground">Explicit topic UUIDs are required. Fixture topics are rejected before any provider call.</p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button onClick={run} disabled={loading || progress?.status === 'generating' || progress?.status === 'validating'}>{dryRun ? 'Run provider-free dry-run' : mode === 'single' ? 'Generate one draft' : 'Generate selected drafts'}</Button>
+      <Button variant="outline" onClick={checkFunction} disabled={healthcheckLoading} data-testid="staging-healthcheck">{healthcheckLoading ? 'Vérification…' : 'Vérifier la fonction'}</Button>
+      {healthcheck && <div className="rounded border p-3 text-sm" data-testid="staging-healthcheck-result"><p>HTTP status: {healthcheck.httpStatus ?? 'inconnu'}</p><p>requestId: {healthcheck.requestId ?? 'non retourné'}</p><p>x-request-id concordant: {healthcheck.requestIdMatches === null ? 'non vérifiable' : healthcheck.requestIdMatches ? 'oui' : 'non'}</p><p>build: {healthcheck.build ?? 'non retourné'}</p><p>promptVersion: {healthcheck.promptVersion ?? 'non retourné'}</p><p>providerCalls: {healthcheck.providerCalls ?? 'non retourné'}</p><p>databaseWrite: {healthcheck.databaseWrite === null ? 'non retourné' : String(healthcheck.databaseWrite)}</p>{healthcheck.errorCode && <p role="alert">{healthcheck.errorCode}: {healthcheck.errorMessage}</p>}</div>}
     </CardContent></Card>
     <Card><CardHeader><CardTitle>2. Progress and diagnostics</CardTitle></CardHeader><CardContent className="space-y-3">
       {progress && <div data-testid="staging-progress" className="rounded border p-3 text-sm"><p>Topic {progress.topicIndex} of {progress.totalTopics}</p><p>{progress.confirmed || progress.status === 'saved' ? `Level ${progress.level} of ${progress.totalLevels}` : 'Level: awaiting Edge response'}</p><p>Provider calls: {progress.confirmed || progress.status === 'saved' ? progress.providerCalls : 'unknown until Edge responds'}</p><p>Status: {progress.status}</p><p className="text-xs text-muted-foreground">{progress.topicId} · {progress.topicTitle}</p></div>}
