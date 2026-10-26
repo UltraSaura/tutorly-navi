@@ -184,7 +184,7 @@ describe('takeaway distinctness (staging level 3 regression, providerCalls=0)', 
     expect(semanticDuplicationDiagnostics(example as unknown as Record<string, unknown>)).toEqual([]);
   });
 
-  it('reproduces request 01a177fc-9357-73ed-8aa6-35a8a538143d as a review warning, not a blocking failure', () => {
+  it('reproduces the reported overlap shape with a synthetic geometry fixture as a review warning', () => {
     const block = {
       type: 'concept',
       content: 'Je compte les carreaux après figure.',

@@ -10,7 +10,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
 import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 import { discoverLessonVisuals } from '@/components/admin/learning/GeneratedLessonsPage';
-import { assertExplicitStagingTopicId, classifyStagingTopic, getStoredStagingTopicKind, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
+import { assertExplicitStagingTopicId, classifyStagingTopic, getStoredStagingMetadata, getStoredStagingTopicKind, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
 import { runBulkStagingGeneration, type BulkStagingProgress, type BulkStagingResult } from '@/services/bulkStagingLessonWorkflow';
 import type { LessonV2, LessonV21 } from '@/types/lesson-generator';
 
@@ -30,6 +30,10 @@ export function playerLesson(level: LessonV21['levels'][number]): LessonV2 {
 
 export function previewVisualKinds(lesson: unknown): string[] {
   return discoverLessonVisuals(lesson).map(({ visual }) => String(visual.kind));
+}
+
+export function previewReviewWarnings(lesson: unknown) {
+  return getStoredStagingMetadata(lesson)?.pedagogicalWarnings ?? [];
 }
 
 export const providerFreeFourLevelLesson = {
@@ -161,12 +165,14 @@ export function StagingLessonDraftPreviewPage() {
   const levels = Array.isArray(lesson.levels) ? lesson.levels : [];
   const current = levels[levelIndex];
   const validation = validateLessonVersion(row.lesson_content, { topicKind: getStoredStagingTopicKind(row.lesson_content) ?? classifyStagingTopic(topic.name) });
+  const reviewWarnings = previewReviewWarnings(row.lesson_content);
   const kinds = levels.flatMap((level) => previewVisualKinds(level.lesson));
   if (!current) return <p role="alert">Draft has no lesson levels.</p>;
   return <div className="space-y-6">
     <PageMeta title={`Draft preview · ${topic.name}`} description="Protected admin preview using the student lesson player" />
     <div className="flex flex-wrap items-center justify-between gap-3"><div><Badge variant="outline">PROTECTED ADMIN DRAFT</Badge><h1 className="mt-2 text-3xl font-bold">{topic.name}</h1><p className="text-xs text-muted-foreground">{row.id} · topic {row.topic_id} · status={row.status}</p></div><Button asChild variant="outline"><Link to="/admin/staging-lessons">Back to staging workflow</Link></Button></div>
     <Card><CardHeader><CardTitle>Validation and visual inventory</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><p>Canonical: {String(validation.canonicalValid)} · pedagogical: {String(validation.pedagogicalValid)} · prerequisite: {String(validation.prerequisiteValid ?? validation.canonicalValid)} · geometry: {String(validation.geometryValid)} · interaction: {String(validation.interactionValid ?? validation.canonicalValid)}</p><p>All levels: {levels.length} · visuals: {kinds.length}</p><p data-testid="draft-visual-kinds">{kinds.join(', ')}</p></CardContent></Card>
+    {reviewWarnings.length > 0 && <Card data-testid="staging-review-warnings"><CardHeader><CardTitle>Pedagogical review warnings</CardTitle></CardHeader><CardContent className="space-y-1 text-sm"><p>Review required: lexical similarity was detected; blocking validation still passed.</p>{reviewWarnings.map((warning) => <p key={`${warning.path}:${warning.message}`}>{warning.path}: {warning.message}</p>)}</CardContent></Card>}
     <div className="flex flex-wrap gap-2">{levels.map((level, index) => <Button key={level.id ?? index} size="sm" variant={index === levelIndex ? 'default' : 'outline'} onClick={() => setLevelIndex(index)}>Niveau {level.level_number ?? index + 1}: {level.title}</Button>)}</div>
     <Card><CardHeader><CardTitle>{current.title}</CardTitle></CardHeader><CardContent><div className="min-h-[600px]"><LessonV2Player topicId={row.topic_id} subjectId={topic.curriculum_subject_id} topicName={topic.name} lesson={playerLesson(current)} readOnly /></div></CardContent></Card>
   </div>;
