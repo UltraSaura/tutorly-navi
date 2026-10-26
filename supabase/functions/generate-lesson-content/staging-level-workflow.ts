@@ -626,13 +626,15 @@ export function validateStagingLevel(lesson: Record<string, unknown>, metadata: 
   const candidate = { version: '2.1', topic_goal: topicName, levels: [{ ...metadata, lesson }] };
   const canonical = validateLessonV21(candidate, { prerequisiteFormat: 'staging' });
   const localPath = (path: string) => path.replace(/^levels\[0\]\.lesson\.?/, '');
+  const hasExplicitVisualContract = metadata.required_geometry_kinds.length > 0
+    || (metadata.required_geometry_alternatives ?? []).some((alternative) => alternative.length > 0);
   return {
     canonicalIssues: [...(canonical.success === false ? canonical.issues.map((issue) => ({ path: localPath(issue.path), message: issue.message })) : []), ...stagingSequenceContractIssues(lesson, metadata)],
     // The staging metadata owns the visual contract. The generic pedagogical
     // policy is still used for drawable-data and clock consistency checks, but
     // its lexical required/incompatible-kind messages must not override the
     // explicit topic/objective contract validated below by requiredGeometryKindsIssues.
-    pedagogicalIssues: pedagogicalIssues(lesson, grade, topicName, { suppressVisualPolicyIssues: true }),
+    pedagogicalIssues: pedagogicalIssues(lesson, grade, topicName, { suppressVisualPolicyIssues: hasExplicitVisualContract }),
     geometryIssues: visualGeometryIssues(lesson),
   };
 }

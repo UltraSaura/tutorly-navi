@@ -747,6 +747,22 @@ describe('decimal-number visual contract (providerCalls=0)', () => {
     }
   });
 
+  it('keeps generic visual requirements when geometry level 4 has no replacement contract', () => {
+    const geometryMetadata = stagingLevelMetadata('geometry-topic', topicName, ['geometry']);
+    const level = geometryMetadata[3];
+    expect(level.required_geometry_kinds).toEqual([]);
+    expect(level.required_geometry_alternatives).toBeUndefined();
+
+    const candidate = structuredClone(validLevel1) as any;
+    delete candidate.sequence[0].visual;
+    const validation = validateStagingLevel(candidate, level, topicName, 'CM2');
+
+    expect(validation.pedagogicalIssues).toContainEqual(expect.objectContaining({
+      path: 'sequence[0].visual',
+      message: expect.stringContaining('Visuel requis'),
+    }));
+  });
+
   it('keeps the fraction visual policy for a genuine fractions subject', () => {
     const policy = determineVisualRequirement({ title: 'Fractions', content: 'Une fraction représente une partie du tout.' });
     expect(policy.requirement).toBe('required');
