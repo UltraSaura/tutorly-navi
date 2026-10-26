@@ -13,9 +13,15 @@ const STAGING_MASTERY_QUESTION_PROPERTIES = {
   id: { type: 'string' },
   question: { type: 'string' },
   answer_type: { type: 'string' },
-  correct_answer: {},
+  correct_answer: {
+    oneOf: [
+      { type: 'string', minLength: 1 },
+      { type: 'number' },
+      { type: 'array', minItems: 1, items: { type: 'string', minLength: 1 } },
+    ],
+  },
   skill: { type: 'string' },
-  difficulty: { type: ['string', 'number'] },
+  difficulty: { type: 'number' },
   success_feedback: { type: 'string' },
   error_feedback: { type: 'string' },
   choices: { type: 'array', items: { type: 'string' }, minItems: 2 },

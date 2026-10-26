@@ -205,9 +205,15 @@ function requiredStagingMasteryQuestions(value: Record<string, unknown>, path: s
     for (const field of ['id', 'question', 'answer_type', 'skill', 'success_feedback', 'error_feedback']) {
       if (!nonEmpty(question[field])) issues.push({ path: `${questionPath}.${field}`, message: 'Required non-empty value' });
     }
-    if (!Number.isFinite(question.difficulty)) issues.push({ path: `${questionPath}.difficulty`, message: 'Required numeric difficulty' });
+    if (typeof question.difficulty !== 'number' || !Number.isFinite(question.difficulty)) issues.push({ path: `${questionPath}.difficulty`, message: 'Required numeric difficulty' });
     if (question.correct_answer === undefined || question.correct_answer === null) {
       issues.push({ path: `${questionPath}.correct_answer`, message: 'Required non-null value for every mastery question' });
+    } else if (
+      (typeof question.correct_answer !== 'string' || question.correct_answer.trim().length === 0) &&
+      (typeof question.correct_answer !== 'number' || !Number.isFinite(question.correct_answer)) &&
+      (!Array.isArray(question.correct_answer) || question.correct_answer.length < 1 || question.correct_answer.some((item) => typeof item !== 'string' || item.trim().length === 0))
+    ) {
+      issues.push({ path: `${questionPath}.correct_answer`, message: 'Expected non-empty string, finite number, or non-empty string array' });
     }
     if (!ANSWER_TYPE_VALUES.includes(String(question.answer_type) as typeof ANSWER_TYPE_VALUES[number])) {
       issues.push({ path: `${questionPath}.answer_type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });

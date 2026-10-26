@@ -205,6 +205,8 @@ export async function handleRequest(req: Request): Promise<Response> {
       success: false,
       ok: false,
       requestId,
+      providerCalls: 0,
+      databaseWrite: false,
       error: {
         code: 'unauthorized',
         message: GENERATION_ERROR_MESSAGES.unauthorized,
@@ -216,6 +218,24 @@ export async function handleRequest(req: Request): Promise<Response> {
 
   let requestBody: Record<string, unknown> = {};
   try { requestBody = await req.json(); } catch { requestBody = {}; }
+  const supportedExplicitModes = new Set(['healthcheck', 'fixture', 'staging_draft']);
+  const hasExplicitMode = Object.prototype.hasOwnProperty.call(requestBody, 'mode');
+  if (hasExplicitMode && !supportedExplicitModes.has(String(requestBody.mode))) {
+    return new Response(JSON.stringify({
+      success: false,
+      ok: false,
+      requestId,
+      error: {
+        code: 'unsupported_mode',
+        message: 'The requested generation mode is not supported.',
+        technicalDetail: `Unsupported explicit mode: ${String(requestBody.mode)}`,
+        providerCalls: 0,
+        databaseWrite: false,
+        stage: 'pre_generation',
+        requestId,
+      },
+    }), { status: 400, headers: responseHeaders() });
+  }
   const noPaidMode = requestBody.mode === 'healthcheck' || requestBody.mode === 'fixture';
   if (noPaidMode) {
     const mode = String(requestBody.mode);

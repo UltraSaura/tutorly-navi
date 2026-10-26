@@ -125,6 +125,34 @@ describe('staging structured output boundary', () => {
     expect(() => parseStagingLevelResponse('{"mastery_check":{"id":"m1"}')).toThrow('staging_level_json_parse_failed');
   });
 
+  it('rejects null, object and non-numeric mastery fields at the AJV boundary', () => {
+    const metadata = stagingLevelMetadata('fixture-topic', 'La proportionnalité', [], 'Comparer deux grandeurs proportionnelles.')[0];
+    const nullAnswer = stagingFullLevelCompactExample(metadata) as any;
+    nullAnswer.mastery_check.questions[0].correct_answer = null;
+    expect(schemaValidator(nullAnswer)).toBe(false);
+
+    const objectAnswer = stagingFullLevelCompactExample(metadata) as any;
+    objectAnswer.mastery_check.questions[0].correct_answer = { value: 3 };
+    expect(schemaValidator(objectAnswer)).toBe(false);
+
+    const textDifficulty = stagingFullLevelCompactExample(metadata) as any;
+    textDifficulty.mastery_check.questions[0].difficulty = 'easy';
+    expect(schemaValidator(textDifficulty)).toBe(false);
+  });
+
+  it('rejects the same invalid mastery values in the staging runtime validator', () => {
+    const metadata = stagingLevelMetadata('fixture-topic', 'La proportionnalité', [], 'Comparer deux grandeurs proportionnelles.')[0];
+    const candidate = stagingFullLevelExample(metadata) as any;
+    const question = candidate.sequence.find((block: any) => block.type === 'mastery_check').questions[0];
+    question.correct_answer = { value: 3 };
+    question.difficulty = 'easy';
+    const result = validateStagingLevel(candidate, metadata, 'La proportionnalité', 'CM2');
+    expect(result.canonicalIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'sequence[4].questions[0].correct_answer' }),
+      expect.objectContaining({ path: 'sequence[4].questions[0].difficulty' }),
+    ]));
+  });
+
   it('rejects incompatible visuals for the time-topic contract', () => {
     const level = stagingLevelMetadata('fixture-topic', 'Le repérage dans le temps et les durées', [], 'Lire une heure.')[0];
     const candidate = stagingFullLevelExample(level) as any;
