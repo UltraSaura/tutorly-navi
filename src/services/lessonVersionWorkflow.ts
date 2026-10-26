@@ -19,6 +19,11 @@ export type LessonVersion = {
   published_by?: string | null;
 };
 
+export type StagingReviewMetadata = {
+  pedagogicalWarnings: ValidationIssue[];
+  pedagogicalReviewRequired: boolean;
+};
+
 export function getStoredStagingTopicKind(lesson: unknown): StagingTopicKind | undefined {
   const value = object(lesson)?.staging_topic_kind;
   return value === 'decimal' || value === 'time' || value === 'geometry' ? value : undefined;
@@ -27,6 +32,27 @@ export function getStoredStagingTopicKind(lesson: unknown): StagingTopicKind | u
 export function withStagingTopicKind(lesson: unknown, topicKind?: StagingTopicKind): unknown {
   if (!topicKind || !object(lesson)) return lesson;
   return { ...(lesson as Record<string, unknown>), staging_topic_kind: topicKind };
+}
+
+const STAGING_METADATA_KEY = '_staging_metadata';
+
+export function withStagingMetadata(lesson: unknown, metadata?: unknown): unknown {
+  if (!metadata || !object(lesson)) return lesson;
+  const value = object(metadata);
+  if (!value || !Array.isArray(value.pedagogicalWarnings) || typeof value.pedagogicalReviewRequired !== 'boolean') return lesson;
+  return { ...(lesson as Record<string, unknown>), [STAGING_METADATA_KEY]: {
+    pedagogicalWarnings: value.pedagogicalWarnings,
+    pedagogicalReviewRequired: value.pedagogicalReviewRequired,
+  } };
+}
+
+export function getStoredStagingMetadata(lesson: unknown): StagingReviewMetadata | undefined {
+  const metadata = object(object(lesson)?.[STAGING_METADATA_KEY]);
+  if (!metadata || !Array.isArray(metadata.pedagogicalWarnings) || typeof metadata.pedagogicalReviewRequired !== 'boolean') return undefined;
+  return {
+    pedagogicalWarnings: metadata.pedagogicalWarnings.filter((issue): issue is ValidationIssue => Boolean(object(issue)) && typeof issue.path === 'string' && typeof issue.message === 'string'),
+    pedagogicalReviewRequired: metadata.pedagogicalReviewRequired,
+  };
 }
 
 export type ValidationIssue = { path: string; message: string };
@@ -423,7 +449,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   return data as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 
-export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind): Promise<LessonVersion> {
+export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind, stagingMetadata?: StagingReviewMetadata): Promise<LessonVersion> {
   if (expectedTopicId === null) assertExplicitStagingTopicId(topicId);
   else assertGenerationTopic(topicId, expectedTopicId);
   assertReturnedTopicMatches(topicId, returnedTopicId);
@@ -433,7 +459,7 @@ export async function saveDraftVersion(topicId: string, lessonContent: unknown, 
   }
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw Object.assign(new Error('You must be signed in as an admin to save a lesson draft.'), { code: 'database_save_unauthorized', stage: 'database_save' });
-  const persistedLessonContent = withStagingTopicKind(lessonContent, topicKind);
+  const persistedLessonContent = withStagingMetadata(withStagingTopicKind(lessonContent, topicKind), stagingMetadata);
   const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, persistedLessonContent, user.id) as any).select('*').single();
   if (error) throw Object.assign(new Error(`Draft save failed: ${error.message}`), { code: 'database_save_failed', stage: 'database_save', technicalDetail: error.message });
   return data as unknown as LessonVersion;

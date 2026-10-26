@@ -17,6 +17,14 @@ export type SemanticOverlapDiagnostic = {
   rightTokens: string[];
 };
 
+export type SemanticDuplicationDiagnostic = {
+  fieldA: string;
+  fieldB: string;
+  diagnostic: SemanticOverlapDiagnostic;
+  reason: string;
+  blocking: boolean;
+};
+
 const CONTEXTUAL_MATH_VOCABULARY = new Set((
   'nombre nombres calcul calculer mesure mesurer valeur valeurs quantite quantites resultat resultats '
   + 'unite unites partie parties tout parts fraction fractions decimale decimales '
@@ -166,7 +174,7 @@ export function keyPointContentOverlap(content: unknown, pointText: unknown, top
   return { overlap, ratio: overlap / right.size, leftTokens: [...left], rightTokens: [...right] };
 }
 
-export function semanticDuplicationDiagnostics(block: Record<string, unknown>, topicName = ''): Array<{ fieldA: string; fieldB: string; diagnostic: SemanticOverlapDiagnostic; reason: string }> {
+export function semanticDuplicationDiagnostics(block: Record<string, unknown>, topicName = ''): SemanticDuplicationDiagnostic[] {
   const keyPoints = Array.isArray(block.key_points) ? block.key_points as Array<Record<string, unknown>> : [];
   const duplicateReason = 'partagent trop de tokens pédagogiquement significatifs.';
   const keyPointDuplicates = keyPoints.flatMap((point, index) => {
@@ -174,14 +182,14 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>, t
     const diagnostic = keyPointContentOverlap(block.content, String(point.text ?? ''), topicName);
     const statement = normalizedStatement(point.text);
     if (statement.split(' ').filter(Boolean).length < 2 || statementWords(point.text).length === 0) {
-      return [{ fieldA: `key_points[${index}]`, fieldB: `key_points[${index}]`, diagnostic, reason: `key_points[${index}].text est vide ou sans valeur pédagogique : fournir une phrase ou une relation significative, pas un mot isolé.` }];
+      return [{ fieldA: `key_points[${index}]`, fieldB: `key_points[${index}]`, diagnostic, blocking: true, reason: `key_points[${index}].text est vide ou sans valeur pédagogique : fournir une phrase ou une relation significative, pas un mot isolé.` }];
     }
     // Only a complete textual statement copy is forbidden here. Inferring the same fact from
     // filtered tokens/subsequences mistakes ordinary subject vocabulary for plagiarism.
     const source = normalizedStatement(block.content);
     const sentences = String(block.content ?? '').split(/[.!?;]+/).map(normalizedStatement);
     if (source === statement || sentences.includes(statement)) {
-      return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: 'Le key_point est copié textuellement depuis l’explication.' }];
+      return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, blocking: true, reason: 'Le key_point est copié textuellement depuis l’explication.' }];
     }
     // Shared subject vocabulary is expected in concise factual key points.
     // Content overlap is rejected only when the complete key-point statement
@@ -197,7 +205,7 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>, t
       const identical = normalizedStatement(previousPoint.text) === statement;
       if (!identical && !copiedKeyPoint(previousPoint.text, point.text)) return;
       const diagnostic = semanticOverlap(previousPoint.text, point.text);
-      keyPointDuplicates.push({ fieldA: `key_points[${previous}]`, fieldB: `key_points[${index}]`, diagnostic, reason: `Les key_points répètent la même idée : key_points[${previous}].text et key_points[${index}].text ${identical ? 'sont identiques après normalisation' : 'contiennent une copie ou un sous-ensemble du même énoncé'} (${JSON.stringify(statement)}). Fournir deux phrases complètes exprimant des idées distinctes.` });
+      keyPointDuplicates.push({ fieldA: `key_points[${previous}]`, fieldB: `key_points[${index}]`, diagnostic, blocking: true, reason: `Les key_points répètent la même idée : key_points[${previous}].text et key_points[${index}].text ${identical ? 'sont identiques après normalisation' : 'contiennent une copie ou un sous-ensemble du même énoncé'} (${JSON.stringify(statement)}). Fournir deux phrases complètes exprimant des idées distinctes.` });
     });
   });
   const keyPointText = keyPoints.map((point) => `${String(point.label ?? '')} ${String(point.text ?? '')}`).join(' ');
@@ -212,7 +220,7 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>, t
       && (leftStatement.includes(rightStatement) || rightStatement.includes(leftStatement));
     if (copiedStatement) {
       const diagnostic = semanticOverlap(valueA, valueB);
-      return [{ fieldA, fieldB, diagnostic, reason: `${fieldA} et ${fieldB} copient la même phrase pédagogique.` }];
+      return [{ fieldA, fieldB, diagnostic, blocking: true, reason: `${fieldA} et ${fieldB} copient la même phrase pédagogique.` }];
     }
     const diagnostic = fieldA === 'key_points' && fieldB === 'takeaway'
       ? keyPointsTakeawayOverlap(valueA, valueB, topicName)
@@ -225,9 +233,27 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>, t
       && [...takeawayWords].some((word) => ACTION_WORDS.has(word))
       && rawDiagnostic.overlap >= 3
       && (diagnostic.overlap >= 1 || geometryTakeawayFallback);
-    if ((diagnostic.overlap < 2 || diagnostic.ratio < 0.65) && !actionableRedundancy) return [];
-    return [{ fieldA, fieldB, diagnostic, reason: `${fieldA} et ${fieldB} ${duplicateReason}` }];
+    // Lexical similarity is review metadata, not a blocking validation rule.
+    // Keep the minimum overlap so isolated shared words do not create noise,
+    // but retain low-ratio cases such as overlap=2/ratio=0.50 for review.
+    if (diagnostic.overlap < 2 && !actionableRedundancy) return [];
+    return [{ fieldA, fieldB, diagnostic, blocking: false, reason: `${fieldA} et ${fieldB} ${duplicateReason}` }];
   })];
+}
+
+export function pedagogicalWarnings(lesson: Record<string, unknown>, grade: string, topicName: string): PedagogyIssue[] {
+  if (!['CP', 'CE1', 'CE2', 'CM1', 'CM2'].includes(grade)) return [];
+  const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
+  return sequence.flatMap((block) => {
+    if (block.type !== 'concept') return [];
+    const conceptIndex = sequence.indexOf(block);
+    return semanticDuplicationDiagnostics(block, topicName)
+      .filter((duplicate) => !duplicate.blocking)
+      .map((duplicate) => ({
+        path: `sequence[${conceptIndex}].${duplicate.fieldB === 'key_points' || duplicate.fieldB.startsWith('key_points[') ? 'key_points' : 'takeaway'}`,
+        message: `${duplicate.reason} overlap=${duplicate.diagnostic.overlap}, ratio=${duplicate.diagnostic.ratio.toFixed(2)}, tokensA=[${duplicate.diagnostic.leftTokens.join(', ')}], tokensB=[${duplicate.diagnostic.rightTokens.join(', ')}].`,
+      }));
+  });
 }
 
 export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string, topicName: string): PedagogyIssue[] {
@@ -275,7 +301,7 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
       if (typeof block.takeaway !== 'string' || !block.takeaway.trim()) issues.push({ path: `sequence[${conceptIndex}].takeaway`, message: 'Un concept visuel doit fournir un takeaway.' });
       else if (block.takeaway.trim().split(/\s+/).length > PEDAGOGICAL_TAKEAWAY_MAX_WORDS) issues.push({ path: `sequence[${conceptIndex}].takeaway`, message: 'Le takeaway doit rester concis.' });
     }
-    for (const duplicate of semanticDuplicationDiagnostics(block, topicName)) {
+    for (const duplicate of semanticDuplicationDiagnostics(block, topicName).filter((item) => item.blocking)) {
       const pathField = duplicate.fieldB === 'key_points' || duplicate.fieldB.startsWith('key_points[') ? 'key_points' : 'takeaway';
       const d = duplicate.diagnostic;
       issues.push({ path: `sequence[${conceptIndex}].${pathField}`, message: `${duplicate.reason} overlap=${d.overlap}, ratio=${d.ratio.toFixed(2)}, tokensA=[${d.leftTokens.join(', ')}], tokensB=[${d.rightTokens.join(', ')}].` });

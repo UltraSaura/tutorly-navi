@@ -144,7 +144,7 @@ export function adaptConceptContent(slot: ConceptSlot, raw: unknown): ConceptAda
   } else if (slot.visualRequirement === 'required') {
     errors.push(error('visual', 'required_visual', `A visual is required; allowed kinds: ${(slot.allowedVisualKinds ?? []).join(', ')}.`));
   }
-  for (const duplicate of semanticDuplicationDiagnostics(content as unknown as Record<string, unknown>)) {
+  for (const duplicate of semanticDuplicationDiagnostics(content as unknown as Record<string, unknown>).filter((item) => item.blocking)) {
     errors.push(error(duplicate.fieldB, 'semantic_duplication', duplicate.reason));
   }
   if (errors.length) return { ok: false, errors };

@@ -15,6 +15,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 import {
   buildDraftInsertPayload,
   getStoredStagingTopicKind,
+  getStoredStagingMetadata,
   generateStagingDraft,
   publishValidatedDraft,
   saveDraftVersion,
@@ -22,7 +23,9 @@ import {
   validateLessonVersion,
   validateStagingGenerationEnvelope,
   withStagingTopicKind,
+  withStagingMetadata,
 } from './lessonVersionWorkflow';
+import { previewReviewWarnings } from '@/pages/admin/StagingLessonWorkflowPage';
 
 describe('lesson version workflow', () => {
   beforeEach(() => {
@@ -52,6 +55,34 @@ describe('lesson version workflow', () => {
     await saveDraftVersion('07fe506e-71f4-44c9-bf7f-98c51a2ca68a', geometryDraftLesson, '07fe506e-71f4-44c9-bf7f-98c51a2ca68a', null, 'decimal');
     const payload = insert.mock.calls[0][0] as { lesson_content: unknown };
     expect(getStoredStagingTopicKind(payload.lesson_content)).toBe('decimal');
+  });
+
+  it('round-trips Edge review warnings through draft save, reread, and preview metadata', async () => {
+    const warning = { path: 'sequence[1].takeaway', message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.' };
+    const metadata = { pedagogicalWarnings: [warning], pedagogicalReviewRequired: true };
+    invoke.mockResolvedValue({ data: {
+      success: true,
+      providerCalls: 4,
+      lesson_content: geometryDraftLesson,
+      topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81',
+      validation: metadata,
+      levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })),
+    }, error: null, response: null });
+    const generated = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+    let insertedPayload: Record<string, unknown> | undefined;
+    const single = vi.fn().mockImplementation(() => ({ data: { id: 'version-warning', ...insertedPayload }, error: null }));
+    const insert = vi.fn((payload: Record<string, unknown>) => {
+      insertedPayload = payload;
+      return { select: vi.fn(() => ({ single })) };
+    });
+    from.mockReturnValue({ insert });
+
+    const saved = await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', generated.lesson_content, generated.topic_id, null, 'geometry', generated.validation as any);
+    const reread = saved.lesson_content;
+    expect(insertedPayload?.lesson_content).toEqual(withStagingMetadata(withStagingTopicKind(generated.lesson_content, 'geometry'), metadata));
+    expect(getStoredStagingMetadata(reread)).toEqual(metadata);
+    expect(previewReviewWarnings(reread)).toEqual([warning]);
+    expect((reread as Record<string, unknown>).levels).toEqual((geometryDraftLesson as Record<string, unknown>).levels);
   });
 
   it('surfaces the RLS rejection returned for a non-admin authenticated user', async () => {

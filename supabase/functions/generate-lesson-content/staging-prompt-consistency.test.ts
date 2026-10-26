@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import { normalizeGeneratedLesson } from './lesson-normalization.ts';
-import { meaningfulTokens, semanticDuplicationDiagnostics } from './pedagogical-quality.ts';
+import { meaningfulTokens, pedagogicalWarnings, semanticDuplicationDiagnostics } from './pedagogical-quality.ts';
 import { TAKEAWAY_RULE, CONCEPT_LENGTH_RULE, MASTERY_QUESTION_RULE, STAGING_VISUAL_EXAMPLES as SVE } from './staging-level-workflow.ts';
 import {
   KEY_POINT_RULE,
@@ -184,14 +184,18 @@ describe('takeaway distinctness (staging level 3 regression, providerCalls=0)', 
     expect(semanticDuplicationDiagnostics(example as unknown as Record<string, unknown>)).toEqual([]);
   });
 
-  it('still rejects the short procedural takeaway that failed on staging level 3 (overlap=2)', () => {
-    const diags = semanticDuplicationDiagnostics({
+  it('reproduces the reported overlap shape with a synthetic geometry fixture as a review warning', () => {
+    const block = {
       type: 'concept',
-      content: 'Pour vérifier une figure symétrique, je compte les carreaux entre un point et l’axe, puis je reporte la même distance de l’autre côté.',
+      content: 'Je compte les carreaux après figure.',
       key_points: [{ label: 'Axe', text: 'Droite verticale' }],
-      takeaway: 'Astuce : je compte et je reporte.',
-    });
-    expect(diags.some((d) => d.fieldB === 'takeaway' && d.diagnostic.overlap === 2)).toBe(true);
+      takeaway: 'Je compte vérifie encore après.',
+    };
+    const diags = semanticDuplicationDiagnostics(block);
+    expect(diags.some((d) => d.fieldB === 'takeaway' && d.diagnostic.overlap === 2 && d.diagnostic.ratio === 0.5 && !d.blocking)).toBe(true);
+    expect(pedagogicalWarnings({ sequence: [{ type: 'student_try' }, block] }, 'CM2', 'Symétrie')).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'sequence[1].takeaway', message: expect.stringContaining('overlap=2') }),
+    ]));
   });
 
   it('the takeaway rule preserves the practical-action contract', () => {

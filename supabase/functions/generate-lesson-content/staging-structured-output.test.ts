@@ -16,6 +16,7 @@ import {
   requiredGeometryKindsIssues,
   validateStagingLevel,
   summarizeStagingValidation,
+  qualifyStagingWarningPath,
   STAGING_VISUAL_EXAMPLES,
 } from './staging-level-workflow';
 import { validateStagingGenerationEnvelope } from '../../../src/services/lessonVersionWorkflow';
@@ -123,6 +124,24 @@ describe('staging structured output boundary', () => {
     expect(schemaValidator(missingChoices)).toBe(false);
 
     expect(() => parseStagingLevelResponse('{"mastery_check":{"id":"m1"}')).toThrow('staging_level_json_parse_failed');
+  });
+
+  it('keeps lexical overlap as an explicit review warning in the validation envelope', () => {
+    const metadata = stagingLevelMetadata('fixture-topic', 'Symétrie', [], 'Reconnaître une symétrie.')[0];
+    const lesson = stagingFullLevelExample(metadata) as any;
+    lesson.sequence[1].content = 'Je compte les carreaux, mesure ensuite puis je reporte le résultat après.';
+    lesson.sequence[1].key_points = [{ label: 'Axe', text: 'Droite verticale' }];
+    lesson.sequence[1].takeaway = 'Astuce : je compte et vérifie après.';
+    const validation = validateStagingLevel(lesson, metadata, 'Symétrie', 'CM2');
+    const summary = summarizeStagingValidation(validation, [], [{
+      path: 'sequence[1].takeaway',
+      message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.',
+    }]);
+    expect(summary.pedagogicalValid).toBe(true);
+    expect(summary.pedagogicalReviewRequired).toBe(true);
+    expect(summary.pedagogicalWarnings).toEqual([{ path: 'sequence[1].takeaway', message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.' }]);
+    expect(summary.diagnostics).toContain('sequence[1].takeaway: Avertissement de revue : Similarité lexicale à revoir. overlap=2, ratio=0.50.');
+    expect(qualifyStagingWarningPath(3, 'sequence[1].takeaway')).toBe('levels[2].lesson.sequence[1].takeaway');
   });
 
   it('rejects null, object and non-numeric mastery fields at the AJV boundary', () => {
