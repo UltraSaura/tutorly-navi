@@ -23,6 +23,7 @@ import {
   requiredGeometryKindsIssues,
   stagingLevelMetadata,
   stagingLevelPrompt,
+  STAGING_CUSTOM_PROMPT,
   stagingTopicKind,
   StagingLevelContractError,
   StagingLevelJsonParseError,
@@ -204,6 +205,8 @@ export async function handleRequest(req: Request): Promise<Response> {
       success: false,
       ok: false,
       requestId,
+      providerCalls: 0,
+      databaseWrite: false,
       error: {
         code: 'unauthorized',
         message: GENERATION_ERROR_MESSAGES.unauthorized,
@@ -215,6 +218,24 @@ export async function handleRequest(req: Request): Promise<Response> {
 
   let requestBody: Record<string, unknown> = {};
   try { requestBody = await req.json(); } catch { requestBody = {}; }
+  const supportedExplicitModes = new Set(['healthcheck', 'fixture', 'staging_draft']);
+  const hasExplicitMode = Object.prototype.hasOwnProperty.call(requestBody, 'mode');
+  if (hasExplicitMode && !supportedExplicitModes.has(String(requestBody.mode))) {
+    return new Response(JSON.stringify({
+      success: false,
+      ok: false,
+      requestId,
+      error: {
+        code: 'unsupported_mode',
+        message: 'The requested generation mode is not supported.',
+        technicalDetail: `Unsupported explicit mode: ${String(requestBody.mode)}`,
+        providerCalls: 0,
+        databaseWrite: false,
+        stage: 'pre_generation',
+        requestId,
+      },
+    }), { status: 400, headers: responseHeaders() });
+  }
   const noPaidMode = requestBody.mode === 'healthcheck' || requestBody.mode === 'fixture';
   if (noPaidMode) {
     const mode = String(requestBody.mode);
@@ -615,7 +636,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message, modelId, history: [], language, maxTokens: STAGING_LEVEL_MAX_TOKENS,
-          customPrompt: `Use response_format=${JSON.stringify(STAGING_PROVIDER_OUTPUT_CONTRACT.responseFormat)}. Return one complete JSON object for this level only; no prose, Markdown, second object, array root, or wrapper. The application will validate the complete level contract before assembly or persistence.`,
+          customPrompt: `${STAGING_CUSTOM_PROMPT} Use response_format=${JSON.stringify(STAGING_PROVIDER_OUTPUT_CONTRACT.responseFormat)}.`,
           isUnified: true, requestMode: 'lessonGeneration',
           userContext: { grade_level: rawLevel, age_group: ageGroup, curriculum, country: countryLabel, response_language: responseLang, learning_style: 'visual', format: 'json' },
         }),
@@ -980,67 +1001,6 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       };
       console.info('[generate-lesson-content] staging request complete', { requestId, topicId: String(topicId), providerCallsAttempted: aiProviderCalls, retryCount: totalRetryCount, databaseWrite: false });
       return new Response(JSON.stringify(responseBody), { status: 200, headers: responseHeaders() });
-    }
-
-    // Staging draft mode is deliberately a single provider request. It
-    // returns a normalized, validated candidate to the authenticated browser;
-    // the browser saves it through topic_lesson_versions under the user's JWT.
-    // This branch must never write public.topics or perform repair requests.
-    if (body.mode === 'legacy_staging_draft') {
-      const stagingPrompt = `LESSON GENERATOR V2.1 — STAGING DRAFT, ONE REQUEST ONLY
-Sujet: ${topic.name}
-Niveau: ${rawLevel}
-Matière: ${subjectName}
-Objectifs: ${objectives.map((o) => o.text).join('; ') || 'Non précisés'}
-Retourne exactement un objet JSON complet avec version "2.1", topic_goal et un seul niveau dans levels. Le niveau doit contenir lesson_goal, success_criteria, prerequisites, sequence, misconceptions et mastery. Chaque sequence block doit être canonique (concept, visual, prediction, guided_example, student_try, feedback_checkpoint, rule, worked_example, reflection ou mastery_check), avec les champs requis. Pour toute notion de géométrie, utilise uniquement des visuels réellement dessinables et fournis toutes les coordonnées, sommets, axes, rayons, degrés, grilles et relations nécessaires dans visual.data. Ne réponds pas avec un nom de figure ou « voir la figure ». Réponse JSON stricte uniquement, sans Markdown ni commentaire.`;
-      const generated = await callAI(stagingPrompt, 6500);
-      const raw = generated && typeof generated === 'object' ? generated as Record<string, unknown> : {};
-      const generatedLevel = raw.version === '2.1' && Array.isArray(raw.levels) ? raw.levels[0] as Record<string, unknown> | undefined : undefined;
-      const generatedLesson = generatedLevel?.lesson && typeof generatedLevel.lesson === 'object'
-        ? generatedLevel.lesson as Record<string, unknown>
-        : raw;
-      const level = generatedLevel ?? {
-        id: `staging-${topicId}`,
-        level_number: 1,
-        title: topic.name,
-        purpose: `Comprendre ${topic.name}.`,
-        difficulty: 'application',
-        objective_ids: objectives.map((o) => o.id),
-      };
-      const normalized = normalizeGeneratedLesson(generatedLesson, topic.name);
-      const ensured = ensureRequiredVisuals(normalized.lesson, topic.name);
-      const composition = normalizeLessonComposition(ensured.lesson, topic.name);
-      const lesson = composition.lesson;
-      const candidate = {
-        version: '2.1',
-        topic_goal: String(raw.topic_goal || topic.name),
-        levels: [{
-          id: String(level.id || `staging-${topicId}`),
-          level_number: Number(level.level_number || 1),
-          title: String(level.title || topic.name),
-          purpose: String(level.purpose || `Comprendre ${topic.name}.`),
-          difficulty: String(level.difficulty || 'application'),
-          objective_ids: Array.isArray(level.objective_ids) ? level.objective_ids.map(String) : objectives.map((o) => o.id),
-          lesson,
-        }],
-      };
-      const canonical = validateLessonV21(candidate);
-      const qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
-      if (!canonical.success) throw new Error(`Staging draft canonical validation failed: ${canonical.issues.slice(0, 5).map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
-      if (qualityIssues.length > 0) throw new Error(`Staging draft pedagogical validation failed: ${qualityIssues.slice(0, 5).map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
-      return new Response(JSON.stringify({
-        success: true,
-        ok: true,
-        requestId,
-        mode: 'staging_draft',
-        topic_id: topicId,
-        lesson_content: candidate,
-        canonicalValid: true,
-        pedagogicalValid: true,
-        providerCalls: aiProviderCalls,
-        normalizationEvents: [...normalized.events, ...ensured.events],
-        compositionEvents: composition.events,
-      }), { status: 200, headers: responseHeaders() });
     }
 
     // ── Helper: generate content for one step ────────────────────────────

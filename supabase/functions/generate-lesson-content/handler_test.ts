@@ -59,6 +59,16 @@ async function run(reply: ProviderReply, requestId: string | undefined = 'req-1'
   return { status: res.status, body, calls };
 }
 
+async function runExplicitMode(mode: unknown) {
+  const calls = installFakes(valid);
+  const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+    body: JSON.stringify({ topicId: TOPIC.id, mode }),
+  }));
+  return { status: res.status, body: await res.json(), calls };
+}
+
 // Supabase clients start auth-refresh timers the handler does not own.
 const test = (name: string, fn: () => Promise<void>) => Deno.test({ name, fn, sanitizeOps: false, sanitizeResources: false });
 
@@ -68,6 +78,27 @@ const withLevel = (target: number, mutate: (lesson: any) => void): ProviderReply
   if (level === target) mutate(lesson);
   return { content: lesson };
 };
+
+test('rejects the removed legacy_staging_draft mode before provider or database work', async () => {
+  const { status, body, calls } = await runExplicitMode('legacy_staging_draft');
+  assertEquals(status, 400);
+  assertEquals(body.error.code, 'unsupported_mode');
+  assertEquals(body.error.stage, 'pre_generation');
+  assertEquals(body.error.providerCalls, 0);
+  assertEquals(body.error.databaseWrite, false);
+  assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('rejects any unknown explicit mode before provider or database work', async () => {
+  const { status, body, calls } = await runExplicitMode('unknown_mode');
+  assertEquals(status, 400);
+  assertEquals(body.error.code, 'unsupported_mode');
+  assertEquals(body.error.providerCalls, 0);
+  assertEquals(body.error.databaseWrite, false);
+  assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
 
 test('four valid levels return 200 with providerCalls=4 and no database write', async () => {
   const { status, body, calls } = await run(valid);

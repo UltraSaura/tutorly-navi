@@ -9,6 +9,57 @@
  * stronger guarantees than the request actually has.
  */
 
+const STAGING_MASTERY_QUESTION_PROPERTIES = {
+  id: { type: 'string' },
+  question: { type: 'string' },
+  answer_type: { type: 'string' },
+  correct_answer: {
+    oneOf: [
+      { type: 'string', minLength: 1 },
+      { type: 'number' },
+      { type: 'array', minItems: 1, items: { type: 'string', minLength: 1 } },
+    ],
+  },
+  skill: { type: 'string' },
+  difficulty: { type: 'number' },
+  success_feedback: { type: 'string' },
+  error_feedback: { type: 'string' },
+  choices: { type: 'array', items: { type: 'string' }, minItems: 2 },
+} as const;
+
+const STAGING_MASTERY_QUESTION_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: STAGING_MASTERY_QUESTION_PROPERTIES,
+  required: ['id', 'question', 'answer_type', 'correct_answer', 'skill', 'difficulty', 'success_feedback', 'error_feedback'],
+  oneOf: [
+    {
+      properties: {
+        answer_type: { enum: ['multiple_choice', 'selection'] },
+        choices: { type: 'array', items: { type: 'string' }, minItems: 2 },
+      },
+      required: ['choices'],
+    },
+    {
+      properties: {
+        answer_type: { enum: ['numeric', 'time', 'short_text', 'text', 'ordering'] },
+      },
+    },
+  ],
+} as const;
+
+const STAGING_MASTERY_CHECK_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    id: { type: 'string' },
+    type: { enum: ['mastery_check'] },
+    content: { type: 'string' },
+    questions: { type: 'array', minItems: 1, maxItems: 4, items: STAGING_MASTERY_QUESTION_SCHEMA },
+  },
+  required: ['id', 'type', 'content', 'questions'],
+} as const;
+
 export const DEEPSEEK_CHAT_COMPLETIONS_ENDPOINT = 'https://api.deepseek.com/v1/chat/completions';
 
 export const STAGING_LEVEL_OUTPUT_SCHEMA = {
@@ -22,7 +73,7 @@ export const STAGING_LEVEL_OUTPUT_SCHEMA = {
     concept_2: { type: 'object' },
     guided_example: { type: 'object' },
     student_try: { type: 'object' },
-    mastery_check: { type: 'object' },
+    mastery_check: STAGING_MASTERY_CHECK_SCHEMA,
     misconceptions: { type: 'array', items: { type: 'object' } },
     mastery: { type: 'object' },
   },

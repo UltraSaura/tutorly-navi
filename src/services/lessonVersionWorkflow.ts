@@ -102,7 +102,7 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
 
 /** Time-topic drawable visual kinds (clock, timeline, unit conversion). */
 export const TIME_VISUAL_KINDS = ['clock', 'timeline', 'unit_conversion'] as const;
-export type StagingTopicKind = 'decimal' | 'time' | 'geometry';
+export type StagingTopicKind = 'decimal' | 'time' | 'geometry' | 'general';
 
 /**
  * Mirrors the server's isTimeTopic classification in
@@ -111,11 +111,14 @@ export type StagingTopicKind = 'decimal' | 'time' | 'geometry';
  */
 const TIME_TOPIC_PATTERN = /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i;
 const DECIMAL_TOPIC_PATTERN = /nombre(?:s)?[\s-]+d[ée]cimal(?:e|es)?|d[ée]cimaux|decimal/i;
+const GEOMETRY_TOPIC_PATTERN = /figure|géométr|geometr|triangle|rectangle|cercle|angle|sym[ée]tr|espace/i;
 
 export function classifyStagingTopic(topicName: string | null | undefined): StagingTopicKind {
   const name = topicName ?? '';
   if (DECIMAL_TOPIC_PATTERN.test(name)) return 'decimal';
-  return TIME_TOPIC_PATTERN.test(name) ? 'time' : 'geometry';
+  if (TIME_TOPIC_PATTERN.test(name)) return 'time';
+  if (!name.trim() || GEOMETRY_TOPIC_PATTERN.test(name)) return 'geometry';
+  return 'general';
 }
 
 function timeVisualDataIssues(kind: string, data: unknown, path: string): ValidationIssue[] {
@@ -226,7 +229,9 @@ export function validateLessonVersion(lesson: unknown, options?: { topicKind?: S
     ? validateDrawableDecimalVisuals(lesson)
     : options?.topicKind === 'time'
       ? validateDrawableTimeVisuals(lesson)
-      : validateDrawableGeometry(lesson);
+      : options?.topicKind === 'general'
+        ? allVisuals(lesson).flatMap(({ visual, path }) => geometryIssuesForVisual(String(visual.kind), visual.data, path))
+        : validateDrawableGeometry(lesson);
   const prerequisiteIssues = canonicalIssues.filter((issue) => /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message));
   const interactionIssues = canonicalIssues.filter((issue) => /sequence|interaction|answer_type|correct_answer|questions/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message));
   return {

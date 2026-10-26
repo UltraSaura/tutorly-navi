@@ -71,7 +71,7 @@ export type StagingValidationSummary = {
   diagnostics: string[];
 };
 
-export type StagingTopicKind = 'decimal' | 'time' | 'geometry';
+export type StagingTopicKind = 'decimal' | 'time' | 'geometry' | 'general';
 
 export const STAGING_SEQUENCE_BLOCK_TYPES = ['concept', 'concept', 'guided_example', 'student_try', 'mastery_check'] as const;
 export const STAGING_COMPACT_BLOCK_KEYS = ['concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check'] as const;
@@ -137,14 +137,27 @@ const object = (value: unknown): Record<string, unknown> | null =>
 export const STAGING_LEVEL_COUNT = 4;
 export const STAGING_LEVEL_MAX_TOKENS = 4096;
 export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v4-visual-first';
-export const STAGING_JSON_NESTING_RULE = 'ORDRE DES CLÉS D’UN CONCEPT: écris toujours id, type, title, content, PUIS visual (complet, avec purpose, alt_text et data), et SEULEMENT ENSUITE key_points puis takeaway en dernier. Ne place jamais visual à la fin d’un bloc. Après le dernier élément de visual.data.side_labels ou visual.data.vertices, ferme exactement: } ] } } puis écris ,"key_points". Chaque bloc de sequence se termine par "takeaway":"…"} (concept) ou par sa dernière clé simple, puis , avant le bloc suivant.';
+export const STAGING_JSON_NESTING_RULE = 'STRUCTURE JSON: construis chaque objet avec ses propriétés nommées et ses tableaux complets. Utilise les exemples JSON fournis comme modèles de structure; ne compte pas les accolades, ne force pas un ordre de fermeture et ne recopie jamais une suite de fermetures JSON. Chaque bloc doit être autonome et correctement fermé avant de passer au suivant.';
 export const STAGING_JSON_SYNTAX_RULE = 'SYNTAXE JSON STRICTE: un nombre JSON (expected_answer, correct_answer, radius, degrees, x, y, factor…) s’écrit TOUJOURS avec un point décimal et sans espace: 0.5, 2.75, 12 — JAMAIS 0,5, 2,75, 1 000, .5 ni 05. La virgule décimale française (« 2,75 ») n’est autorisée qu’À L’INTÉRIEUR d’une chaîne entre guillemets, par exemple "2,75". Si une réponse décimale doit s’afficher avec une virgule, mets-la en chaîne: "expected_answer":"2,75" (et la même chaîne dans choices). Dans le texte, n’écris jamais de guillemet droit " non échappé: utilise « » ou \\". N’utilise aucune barre oblique inverse (pas de LaTeX comme \\frac ou \\times): écris « × », « ÷ », « 3/4 ». Aucune virgule finale avant } ou ], aucun commentaire, aucun NaN/Infinity. ' + STAGING_JSON_NESTING_RULE;
 export const STAGING_JSON_OUTPUT_RULE = 'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau complet pour ce niveau; aucune fence Markdown (pas de ```json), aucun texte avant/après, aucun second objet JSON, aucun tableau racine ni wrapper. Respecte exactement le schéma demandé et arrête-toi après la dernière accolade. ' + STAGING_JSON_SYNTAX_RULE;
+export const STAGING_CUSTOM_PROMPT = 'STAGING_DRAFT single-topic contract: this request is one of exactly four level calls (levels 1, 2, 3, and 4); every one of the four levels must return one complete level object before the draft can be saved. The student_try block MUST contain a non-null correct_answer. mastery_check.questions MUST contain 1–4 complete question objects, and EVERY question MUST contain these eight required properties: id, question, answer_type, correct_answer, skill, difficulty, success_feedback, error_feedback. The optional choices property is allowed in addition; it is REQUIRED with at least two strings when answer_type is multiple_choice or selection, and it may be omitted for numeric or text questions. correct_answer MUST be non-null. A valid JSON object missing any required field is rejected before pedagogical validation; do not repair, complete, infer, or fabricate values. Return only the one JSON object for the requested level.';
 
 const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 
 function requiredStagingField(value: Record<string, unknown>, path: string, field: string, issues: Array<{ path: string; message: string }>) {
   if (!nonEmpty(value[field])) issues.push({ path: `${path}.${field}`, message: 'Required non-empty string' });
+}
+
+function requiredStagingChoices(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
+  const answerType = String(value.answer_type ?? '');
+  if (!['multiple_choice', 'selection'].includes(answerType)) return;
+  if (!Array.isArray(value.choices) || value.choices.length < 2 || value.choices.some((choice) => !nonEmpty(choice))) {
+    issues.push({ path: `${path}.choices`, message: 'Choice question requires at least two non-empty choices' });
+    return;
+  }
+  if (!value.choices.some((choice) => String(choice).trim() === String(value.correct_answer ?? '').trim())) {
+    issues.push({ path: `${path}.correct_answer`, message: 'Correct answer must exactly match one choice' });
+  }
 }
 
 function requiredStagingKeyPoints(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
@@ -176,6 +189,37 @@ function requiredStagingMastery(value: Record<string, unknown>, issues: Array<{ 
   if (typeof mastery.threshold !== 'number' || !Number.isFinite(mastery.threshold) || mastery.threshold < 0 || mastery.threshold > 1) {
     issues.push({ path: 'mastery.threshold', message: 'Expected number between 0 and 1' });
   }
+}
+
+function requiredStagingMasteryQuestions(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
+  const mastery = object(value);
+  const questions = mastery?.questions;
+  if (!Array.isArray(questions)) return;
+  questions.forEach((raw, index) => {
+    const questionPath = `${path}.questions[${index}]`;
+    const question = object(raw);
+    if (!question) {
+      issues.push({ path: questionPath, message: 'Expected complete mastery question object' });
+      return;
+    }
+    for (const field of ['id', 'question', 'answer_type', 'skill', 'success_feedback', 'error_feedback']) {
+      if (!nonEmpty(question[field])) issues.push({ path: `${questionPath}.${field}`, message: 'Required non-empty value' });
+    }
+    if (typeof question.difficulty !== 'number' || !Number.isFinite(question.difficulty)) issues.push({ path: `${questionPath}.difficulty`, message: 'Required numeric difficulty' });
+    if (question.correct_answer === undefined || question.correct_answer === null) {
+      issues.push({ path: `${questionPath}.correct_answer`, message: 'Required non-null value for every mastery question' });
+    } else if (
+      (typeof question.correct_answer !== 'string' || question.correct_answer.trim().length === 0) &&
+      (typeof question.correct_answer !== 'number' || !Number.isFinite(question.correct_answer)) &&
+      (!Array.isArray(question.correct_answer) || question.correct_answer.length < 1 || question.correct_answer.some((item) => typeof item !== 'string' || item.trim().length === 0))
+    ) {
+      issues.push({ path: `${questionPath}.correct_answer`, message: 'Expected non-empty string, finite number, or non-empty string array' });
+    }
+    if (!ANSWER_TYPE_VALUES.includes(String(question.answer_type) as typeof ANSWER_TYPE_VALUES[number])) {
+      issues.push({ path: `${questionPath}.answer_type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });
+    }
+    requiredStagingChoices(question, questionPath, issues);
+  });
 }
 
 function requiredStagingPrerequisites(value: Record<string, unknown>, issues: Array<{ path: string; message: string }>) {
@@ -246,16 +290,18 @@ export function stagingSequenceContractIssues(lesson: Record<string, unknown>, m
     }
     if (block.type === 'student_try') {
       ['question', 'answer_type', 'success_feedback', 'error_feedback'].forEach((field) => requiredStagingField(block, path, field, issues));
-      if (block.correct_answer === undefined) issues.push({ path: `${path}.correct_answer`, message: 'Required value' });
+      if (block.correct_answer === undefined || block.correct_answer === null) issues.push({ path: `${path}.correct_answer`, message: 'Required non-null value' });
+      requiredStagingChoices(block, path, issues);
     }
     if (block.type === 'mastery_check') {
       if (!Array.isArray(block.questions) || block.questions.length < 1 || block.questions.length > 4) issues.push({ path: `${path}.questions`, message: 'Expected 1–4 questions' });
+      requiredStagingMasteryQuestions(block, path, issues);
     }
   });
   const masteryIndex = sequence.findIndex((block) => block && typeof block === 'object' && !Array.isArray(block) && (block as Record<string, unknown>).type === 'mastery_check');
   const interactionIndex = sequence.findIndex((block) => block && typeof block === 'object' && !Array.isArray(block) && STAGING_INTERACTIVE_TYPES.includes(String((block as Record<string, unknown>).type) as typeof STAGING_INTERACTIVE_TYPES[number]));
   if (masteryIndex >= 0 && (interactionIndex < 0 || interactionIndex > masteryIndex)) issues.push({ path: 'sequence', message: 'Required interaction before mastery.' });
-  if (metadata.level_number === 1) {
+  if (metadata.level_number === 1 && stagingPromptVisualKinds(metadata).length > 0) {
     const conceptsWithVisual = sequence.filter((block) => block && typeof block === 'object' && !Array.isArray(block) && (block as Record<string, unknown>).type === 'concept' && (block as Record<string, unknown>).visual);
     if (conceptsWithVisual.length < 2) issues.push({ path: 'sequence', message: 'Level 1 requires visual concept blocks for rectangle and triangle.' });
   }
@@ -283,7 +329,8 @@ function isDecimalTopic(topicName: string, objectiveText = ''): boolean {
 export function stagingTopicKind(topicName: string, objectiveText = ''): StagingTopicKind {
   if (isDecimalTopic(topicName, objectiveText)) return 'decimal';
   if (isTimeTopic(topicName, objectiveText)) return 'time';
-  return 'geometry';
+  if (/figure|géométr|geometr|triangle|rectangle|cercle|angle|sym[ée]tr|espace/i.test(`${topicName} ${objectiveText}`)) return 'geometry';
+  return 'general';
 }
 
 function isTimeTopic(topicName: string, objectiveText = ''): boolean {
@@ -306,6 +353,14 @@ export function stagingLevelMetadata(topicId: string, topicName: string, objecti
       { id: topicId + '-level-2', level_number: 2, title: 'Lire l’heure et calculer des durées', purpose: 'Lire une horloge et relier une heure à une durée.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['clock', 'timeline'] },
       { id: topicId + '-level-3', level_number: 3, title: 'Convertir des durées', purpose: 'Choisir une unité et effectuer une conversion.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: ['unit_conversion', 'timeline'] },
       { id: topicId + '-level-4', level_number: 4, title: 'Résoudre des problèmes de durée', purpose: 'Résoudre une situation de durée en justifiant ses choix.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: ['clock', 'unit_conversion'] },
+    ];
+  }
+  if (stagingTopicKind(topicName, objectiveText) === 'general') {
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Comprendre la notion', purpose: 'Construire les premiers repères de la notion.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: [] },
+      { id: topicId + '-level-2', level_number: 2, title: 'Appliquer la notion', purpose: 'Utiliser la notion dans des exemples guidés.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: [] },
+      { id: topicId + '-level-3', level_number: 3, title: 'Raisonner avec la notion', purpose: 'Choisir une méthode et justifier son raisonnement.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: [] },
+      { id: topicId + '-level-4', level_number: 4, title: 'Résoudre une situation', purpose: 'Mobiliser la notion dans une situation nouvelle.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: [] },
     ];
   }
   return [
@@ -361,12 +416,16 @@ export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'a
  * a figure for any geometric concept. */
 export function stagingPromptVisualKinds(metadata: StagingLevelMetadata): string[] {
   if (metadata.required_geometry_kinds.length > 0) return metadata.required_geometry_kinds;
-  if (metadata.required_geometry_alternatives?.length) return [...new Set(metadata.required_geometry_alternatives.flat())];
+  if (metadata.required_geometry_alternatives !== undefined) return [...new Set(metadata.required_geometry_alternatives.flat())];
   return [...STAGING_ALL_GEOMETRY_KINDS];
 }
 
 /** Numeric prerequisite shown to the provider (validated in tests). */
 export const STAGING_NUMERIC_PREREQUISITE_EXAMPLE = { id: 'p-angle-droit', description: 'Connaître la mesure d’un angle droit', type: 'numeric', prompt: 'Combien de degrés mesure un angle droit ?', expected_answer: 90, remediation_hint: 'Un angle droit correspond à un quart de tour.' };
+
+export const STAGING_SHORT_TEXT_PREREQUISITE_EXAMPLE = { id: 'p1', description: 'Lire les longueurs', type: 'short_text', prompt: 'Quel segment mesure 6 cm ?', expected_answer: 'AB', remediation_hint: 'Repère les lettres des extrémités.' };
+
+export const STAGING_MISCONCEPTION_EXAMPLE = { id: 'm1', description: 'Confondre rayon et diamètre', detect_if: 'L’élève appelle rayon un segment qui traverse le centre', feedback: 'Le rayon va du centre au cercle; le diamètre traverse le centre.', remediation_strategy: 'Comparer les deux segments sur le dessin.' };
 
 /** Multiple-choice prerequisite shown to the provider (validated in tests). */
 export const STAGING_CHOICE_PREREQUISITE_EXAMPLE = { id: 'p-axe', description: 'Reconnaître un axe de symétrie', type: 'multiple_choice', prompt: 'Quelle ligne partage une figure en deux moitiés superposables ?', choices: ['Un axe de symétrie', 'Une diagonale quelconque', 'Un rayon'], expected_answer: 'Un axe de symétrie', remediation_hint: 'Pense au pliage : les deux moitiés se recouvrent.' };
@@ -382,15 +441,21 @@ export const MASTERY_QUESTION_RULE = 'mastery_check.questions contient 1 à 4 qu
 /** Complete, valid example level used in the prompt (validated in tests). */
 export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<string, unknown> {
   const kinds = stagingPromptVisualKinds(metadata);
-  const first = STAGING_VISUAL_EXAMPLES[(kinds[0] ?? 'rectangle') as keyof typeof STAGING_VISUAL_EXAMPLES];
-  const second = STAGING_VISUAL_EXAMPLES[(kinds[1] ?? kinds[0] ?? 'triangle') as keyof typeof STAGING_VISUAL_EXAMPLES];
+  const first = kinds[0] ? STAGING_VISUAL_EXAMPLES[kinds[0] as keyof typeof STAGING_VISUAL_EXAMPLES] : undefined;
+  const second = kinds[1] ? STAGING_VISUAL_EXAMPLES[kinds[1] as keyof typeof STAGING_VISUAL_EXAMPLES] : undefined;
+  const firstBlock = first
+    ? orderConceptKeysVisualFirst({ ...first, id: 'c1' })
+    : { id: 'c1', type: 'concept', title: 'Repère essentiel', content: 'Cette notion se comprend en observant les informations utiles et leur relation.', key_points: [{ label: 'Repère', text: 'Une information précise guide le raisonnement.' }, { label: 'Lien', text: 'Les éléments se relient pour former une méthode.' }], takeaway: 'Astuce : pense à une carte.' };
+  const secondBlock = second
+    ? orderConceptKeysVisualFirst({ ...second, id: 'c2' })
+    : { id: 'c2', type: 'concept', title: 'Méthode', content: 'Une méthode ordonnée aide à choisir une réponse et à vérifier le résultat.', key_points: [{ label: 'Ordre', text: 'Chaque étape prépare la suivante.' }, { label: 'Contrôle', text: 'Une vérification confirme le résultat.' }], takeaway: 'Astuce : pense à une recette.' };
   return {
     lesson_goal: 'Reconnaître et décrire une figure plane.',
     success_criteria: ['Je sais nommer les éléments de la figure.'],
     prerequisites: metadata.level_number === 1 ? [] : [STAGING_NUMERIC_PREREQUISITE_EXAMPLE, STAGING_CHOICE_PREREQUISITE_EXAMPLE],
     sequence: [
-      { ...first, id: 'c1' },
-      { ...second, id: 'c2' },
+      firstBlock,
+      secondBlock,
       { id: 'g1', type: 'guided_example', content: 'Je lis les lettres de la figure puis je vérifie la propriété avec un instrument.', context: 'Vérifier une propriété sur une figure.', steps: [{ instruction: 'Je repère les éléments nommés.', reason: 'Les lettres désignent les sommets.' }] },
       { id: 's1', type: 'student_try', content: 'À toi: compte les sommets.', question: 'Combien de sommets possède un triangle ?', answer_type: 'numeric', correct_answer: 3, success_feedback: 'Oui, trois sommets.', error_feedback: 'Compte les points nommés par une lettre.' },
       { id: 'm1', type: 'mastery_check', content: 'Vérifie ta compréhension.', questions: [{ id: 'q1', question: 'Combien d’angles droits possède un rectangle ?', answer_type: 'numeric', correct_answer: 4, skill: 'figures_planes', difficulty: 1, success_feedback: 'Exact.', error_feedback: 'Compte les coins droits.' }] },
@@ -448,6 +513,8 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     ? 'Visuel obligatoire pour ce niveau: chaque concept doit utiliser une représentation décimale complète, avec kind "number_line" ou kind "rectangle". Un rectangle est accepté uniquement avec shape="rectangle", quatre sommets numériques et quatre side_labels; une droite graduée doit fournir ses bornes, son pas et sa valeur. Les visuels fraction_bar/fraction_circle sont réservés aux sujets de fractions explicites et ne remplacent pas ce contrat.'
     : metadata.required_geometry_kinds.length > 0
     ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '. Chaque bloc concept DOIT contenir un visual dessinable complet.'
+    : metadata.required_geometry_alternatives !== undefined
+    ? 'Aucun visual géométrique n’est obligatoire pour ce sujet; ne fabrique pas de figure si elle n’aide pas la notion.'
     : 'Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: ' + kinds.join(', ') + '. Un concept sans figure est refusé.';
   const examples = kinds.map((kind) => 'Exemple de bloc conceptuel ' + kind + ' valide: ' + JSON.stringify(STAGING_VISUAL_EXAMPLES[kind as keyof typeof STAGING_VISUAL_EXAMPLES]));
   const levelOneGeometryCoverage = metadata.level_number === 1
@@ -473,14 +540,14 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     MASTERY_QUESTION_RULE,
     CLOCK_VISUAL_RULE,
     `Le content du concept explique progressivement le concept mathématique en 1 à 3 phrases courtes et en ${PEDAGOGICAL_CONCEPT_MAX_WORDS} mots maximum (limite exacte du validateur pour un concept structuré); key_points contient 2 ou 3 rappels factuels courts, sous forme de phrases complètes, pertinentes et distinctes (jamais des mots isolés); takeaway donne une méthode pratique, une vérification ou une action à faire par l’élève en ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum. Le takeaway ne doit jamais reformuler le content ou les key_points: emploie une formulation différente et centre-toi sur ce que l’élève doit faire. Le content de guided_example explique un exemple résolu de façon concise mais complète; celui de student_try demande une action à l’élève avec une consigne et un feedback concis; celui de mastery_check vérifie sa compréhension avec des questions complètes et concises. Tous les cinq blocs doivent avoir un content réaliste en français.`,
-    `Les concepts exigent title, key_points (exactement 2 ou 3 objets {label, text}, rappels factuels courts et distincts, pas une phrase copiée du content), takeaway actionnable de ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum et visual. Tous les blocs interactifs (student_try et les questions de mastery_check) doivent utiliser exactement l’un de ces answer_type: ${ANSWER_TYPE_VALUES.join(', ')}; ne convertis jamais une valeur inconnue. guided_example exige context et steps concis mais complets; student_try exige question, answer_type autorisé, correct_answer, success_feedback et error_feedback concis; chaque question mastery_check exige correct_answer.`,
+    `Les concepts exigent title, key_points (exactement 2 ou 3 objets {label, text}, rappels factuels courts et distincts, pas une phrase copiée du content), takeaway actionnable de ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum et visual. Tous les blocs interactifs (student_try et les questions de mastery_check) doivent utiliser exactement l’un de ces answer_type: ${ANSWER_TYPE_VALUES.join(', ')}; ne convertis jamais une valeur inconnue. guided_example exige context et steps concis mais complets. student_try exige question, answer_type autorisé, correct_answer non nul, success_feedback et error_feedback concis. mastery_check.questions exige 1 à 4 objets complets; CHAQUE objet exige id, question, answer_type autorisé, correct_answer non nul, skill, difficulty numérique, success_feedback et error_feedback. Un JSON valide auquel il manque un de ces champs est structurellement rejeté avant toute validation pédagogique: ne complète, ne réécris et n’invente jamais la valeur manquante.`,
     'mastery doit être exactement {"skills":["étiquette courte 1","étiquette courte 2"],"threshold":0.8}: skills est un tableau de chaînes non vides, jamais un tableau d’objets, un objet ou un paragraphe.',
     'prerequisites et misconceptions doivent être des tableaux d’objets complets, jamais des tableaux de chaînes.',
-    'Chaque prerequisite numérique doit utiliser exactement type:"numeric", prompt et expected_answer numérique; n’omets jamais expected_answer et ne le remplace jamais par une chaîne. Exemple niveau 2: {"id":"p-angle-droit","description":"Connaître la mesure d’un angle droit","type":"numeric","prompt":"Combien de degrés mesure un angle droit ?","expected_answer":90,"remediation_hint":"Un angle droit correspond à un quart de tour."}',
-    'Exemple prerequisite à réponse courte canonique: {"id":"p1","description":"Lire les longueurs","type":"short_text","prompt":"Quel segment mesure 6 cm ?","expected_answer":"AB","remediation_hint":"Repère les lettres des extrémités."}',
-    'Exemple misconception valide: {"id":"m1","description":"Confondre rayon et diamètre","detect_if":"L’élève appelle rayon un segment qui traverse le centre","feedback":"Le rayon va du centre au cercle; le diamètre traverse le centre.","remediation_strategy":"Comparer les deux segments sur le dessin."}',
+    'Chaque prerequisite numérique doit utiliser exactement type:"numeric", prompt et expected_answer numérique; n’omets jamais expected_answer et ne le remplace jamais par une chaîne. Exemple niveau 2 construit par JSON.stringify: ' + JSON.stringify(STAGING_NUMERIC_PREREQUISITE_EXAMPLE),
+    'Exemple prerequisite à réponse courte canonique construit par JSON.stringify: ' + JSON.stringify(STAGING_SHORT_TEXT_PREREQUISITE_EXAMPLE),
+    'Exemple misconception valide construit par JSON.stringify: ' + JSON.stringify(STAGING_MISCONCEPTION_EXAMPLE),
     metadata.level_number === 3
-      ? 'Exemples interactifs valides pour la symétrie: student_try {"question":"Quel point est à la même distance de l’axe ?","answer_type":"multiple_choice","choices":["A","B"],"correct_answer":"B","success_feedback":"Oui.","error_feedback":"Compare les carreaux."}; mastery_check question {"id":"q-sym","question":"Explique comment reporter un point.","answer_type":"short_text","correct_answer":"Même nombre de carreaux de l’autre côté","skill":"symétrie","difficulty":1,"success_feedback":"Exact.","error_feedback":"Compte les carreaux."}. '
+      ? 'Exemples interactifs valides construits par JSON.stringify pour la symétrie: student_try ' + JSON.stringify({ question: 'Quel point est à la même distance de l’axe ?', answer_type: 'multiple_choice', choices: ['A', 'B'], correct_answer: 'B', success_feedback: 'Oui.', error_feedback: 'Compare les carreaux.' }) + '; mastery_check question ' + JSON.stringify({ id: 'q-sym', question: 'Explique comment reporter un point.', answer_type: 'short_text', correct_answer: 'Même nombre de carreaux de l’autre côté', skill: 'symétrie', difficulty: 1, success_feedback: 'Exact.', error_feedback: 'Compte les carreaux.' }) + '.'
       : '',
     `answer_type autorisés: ${ANSWER_TYPE_VALUES.join(', ')}.`,
     VISUAL_FIELD_RULES,

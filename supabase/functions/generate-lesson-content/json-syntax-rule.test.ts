@@ -96,6 +96,8 @@ describe('concept key order prevents dropped closing braces (provider-free)', ()
       const sequence = (stagingFullLevelExample(level).sequence as Record<string, unknown>[]).slice(0, 2);
       for (const concept of sequence) expect(Object.keys(concept).slice(-2)).toEqual(['key_points', 'takeaway']);
       expect(prompt).not.toMatch(/"takeaway":"[^"]*","visual":/);
+      expect(prompt).not.toContain('ferme exactement:');
+      expect(prompt).toContain('Exemple niveau 2 construit par JSON.stringify:');
     }
   });
 
