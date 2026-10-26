@@ -256,7 +256,11 @@ export function pedagogicalWarnings(lesson: Record<string, unknown>, grade: stri
   });
 }
 
-export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string, topicName: string): PedagogyIssue[] {
+export type PedagogicalIssueOptions = {
+  suppressVisualPolicyIssues?: boolean;
+};
+
+export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string, topicName: string, options: PedagogicalIssueOptions = {}): PedagogyIssue[] {
   const issues: PedagogyIssue[] = [];
   const primary = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'].includes(grade);
   if (!primary) return issues;
@@ -272,8 +276,8 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
     const structured = Boolean(block.visual || Array.isArray(block.key_points) || typeof block.takeaway === 'string');
     const visualPolicy = determineVisualRequirement(block);
     if (structured && words > PEDAGOGICAL_CONCEPT_MAX_WORDS) issues.push({ path: `sequence[${conceptIndex}].content`, message: `Concept structuré trop long (${words} mots); garder une introduction de 1 à 3 phrases.` });
-    if (visualPolicy.requirement === 'required' && !block.visual) issues.push({ path: `sequence[${conceptIndex}].visual`, message: `Visuel requis (${visualPolicy.suggestedKinds.join('|')}): ${visualPolicy.reason}` });
-    if (visualPolicy.requirement === 'required' && block.visual && !visualPolicy.suggestedKinds.includes(visualKind)) issues.push({ path: `sequence[${conceptIndex}].visual.kind`, message: `Visuel incompatible: attendu ${visualPolicy.suggestedKinds.join('|')}, reçu ${visualKind || 'absent'}.` });
+    if (!options.suppressVisualPolicyIssues && visualPolicy.requirement === 'required' && !block.visual) issues.push({ path: `sequence[${conceptIndex}].visual`, message: `Visuel requis (${visualPolicy.suggestedKinds.join('|')}): ${visualPolicy.reason}` });
+    if (!options.suppressVisualPolicyIssues && visualPolicy.requirement === 'required' && block.visual && !visualPolicy.suggestedKinds.includes(visualKind)) issues.push({ path: `sequence[${conceptIndex}].visual.kind`, message: `Visuel incompatible: attendu ${visualPolicy.suggestedKinds.join('|')}, reçu ${visualKind || 'absent'}.` });
     if (block.visual && !isSupportedVisualKind(visualKind)) issues.push({ path: `sequence[${conceptIndex}].visual.kind`, message: `Type de visuel non pris en charge: ${visualKind || 'absent'}.` });
     if (block.visual) geometryVisualDataErrors(visualKind, (block.visual as Record<string, unknown>).data, `sequence[${conceptIndex}].visual.data`).forEach((item) => issues.push({ path: item.path, message: item.message }));
     const visibleClockIdea = visualPolicy.suggestedKinds.includes('clock');
