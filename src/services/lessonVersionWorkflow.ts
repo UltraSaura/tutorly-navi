@@ -318,10 +318,24 @@ export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
 export const FIXTURE_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'] as const;
 export const STAGING_BROWSER_TIMEOUT_MS = 120_000;
 
-export function withStagingBrowserTimeout<T>(promise: Promise<T>, timeoutMs = STAGING_BROWSER_TIMEOUT_MS): Promise<T> {
+export function withStagingBrowserTimeout<T>(operation: () => Promise<T>, timeoutMs = STAGING_BROWSER_TIMEOUT_MS): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = globalThis.setTimeout(() => reject(new Error('staging_browser_timeout')), timeoutMs);
-    promise.then((value) => { globalThis.clearTimeout(timer); resolve(value); }, (error) => { globalThis.clearTimeout(timer); reject(error); });
+    const startedAt = Date.now();
+    const timer = globalThis.setTimeout(() => {
+      reject(Object.assign(new Error('staging_browser_timeout'), {
+        clientDurationMs: Date.now() - startedAt,
+        timeoutMs,
+      }));
+    }, timeoutMs);
+    let operationPromise: Promise<T>;
+    try {
+      operationPromise = operation();
+    } catch (error) {
+      globalThis.clearTimeout(timer);
+      reject(error);
+      return;
+    }
+    operationPromise.then((value) => { globalThis.clearTimeout(timer); resolve(value); }, (error) => { globalThis.clearTimeout(timer); reject(error); });
   });
 }
 
@@ -361,8 +375,9 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   let data: any;
   let error: any;
   let response: Response | null | undefined;
+  const requestStartedAt = Date.now();
   try {
-    ({ data, error, response } = await withStagingBrowserTimeout(supabase.functions.invoke('generate-lesson-content', {
+    ({ data, error, response } = await withStagingBrowserTimeout(() => supabase.functions.invoke('generate-lesson-content', {
       body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false, rejectionInBody: true },
     })));
   } catch (requestError) {
@@ -373,8 +388,12 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       providerCallsKnown: false,
       databaseWrite: false,
       responseBodyAvailable: false,
+      clientDurationMs: typeof (requestError as { clientDurationMs?: unknown })?.clientDurationMs === 'number'
+        ? (requestError as { clientDurationMs: number }).clientDurationMs
+        : Date.now() - requestStartedAt,
     });
   }
+  const clientDurationMs = Date.now() - requestStartedAt;
   if (error && response) {
     const payload = await response.clone().json().catch(() => null);
     const details = getGenerationErrorDetails(payload ?? error, 'The Edge Function returned an error.');
@@ -389,6 +408,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       providerCallsKnown: details.providerCalls !== undefined,
       failedLevel: details.level,
       failureStage: details.stage,
+      clientDurationMs,
     });
   }
   if (error) {
@@ -402,6 +422,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       failureStage: details.stage ?? 'pre_generation',
       databaseWrite: false,
       responseBodyAvailable: false,
+      clientDurationMs,
     });
   }
   // Validation rejections arrive as a 200 body (rejectionInBody) so the
@@ -417,6 +438,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
       providerCalls: details.providerCalls ?? 0,
       failedLevel: details.level,
       failureStage: details.stage,
+      clientDurationMs,
     });
   }
   // Staging generation makes one provider request per level (the server
@@ -446,7 +468,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   }
   assertReturnedTopicMatches(requested, data.topic_id);
   validateStagingGenerationEnvelope(data);
-  return data as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
+  return { ...data, clientDurationMs } as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; clientDurationMs?: number; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 
 export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind, stagingMetadata?: StagingReviewMetadata): Promise<LessonVersion> {

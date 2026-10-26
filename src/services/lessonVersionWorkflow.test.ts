@@ -123,6 +123,26 @@ describe('lesson version workflow', () => {
     expect(invoke).toHaveBeenCalledTimes(1);
   });
 
+  it('accepts a provider-free response delayed by 38 seconds and performs one simulated save', async () => {
+    vi.useFakeTimers();
+    try {
+      invoke.mockImplementation(() => new Promise((resolve) => {
+        globalThis.setTimeout(() => resolve({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })) }, error: null, response: null }), 38_000);
+      }));
+      const pending = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+      await vi.advanceTimersByTimeAsync(38_000);
+      const generated = await pending;
+      expect(generated.clientDurationMs).toBe(38_000);
+
+      const single = vi.fn().mockResolvedValue({ data: { id: 'delayed-version' }, error: null });
+      from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });
+      await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', generated.lesson_content);
+      expect(single).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('rejects a success response that reports no provider calls', async () => {
     invoke.mockResolvedValue({ data: { success: true, providerCalls: 0, lesson_content: geometryDraftLesson }, error: null, response: null });
     await expect(generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81')).rejects.toThrow(/Unexpected providerCalls value: 0/);
@@ -174,9 +194,52 @@ describe('lesson version workflow', () => {
       const pending = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
       await vi.advanceTimersByTimeAsync(120_000);
       const error = await pending;
-      expect(error).toMatchObject({ code: 'staging_browser_timeout', stage: 'provider_failure', providerCallsKnown: false, databaseWrite: false, responseBodyAvailable: false });
+      expect(error).toMatchObject({ code: 'staging_browser_timeout', stage: 'provider_failure', providerCallsKnown: false, databaseWrite: false, responseBodyAvailable: false, clientDurationMs: 120_000 });
       expect(error).not.toHaveProperty('providerCalls', 0);
       expect(invoke).toHaveBeenCalledTimes(1);
+      expect(from).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not leak a timed-out run into a successive run or save late', async () => {
+    vi.useFakeTimers();
+    try {
+      let resolveLate!: (value: unknown) => void;
+      const lateResponse = new Promise((resolve) => { resolveLate = resolve; });
+      invoke
+        .mockReturnValueOnce(lateResponse)
+        .mockResolvedValueOnce({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })) }, error: null, response: null });
+
+      const first = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+      await vi.advanceTimersByTimeAsync(120_000);
+      await expect(first).resolves.toMatchObject({ code: 'staging_browser_timeout', clientDurationMs: 120_000 });
+      expect(vi.getTimerCount()).toBe(0);
+
+      const second = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+      const single = vi.fn().mockResolvedValue({ data: { id: 'successive-version' }, error: null });
+      from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });
+      await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', second.lesson_content);
+      resolveLate({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81' }, error: null, response: null });
+      await Promise.resolve();
+      expect(single).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears the timer when the invocation rejects before the deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      invoke.mockRejectedValue(new Error('network failure'));
+      const pending = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+      const error = await pending;
+      expect(error).toMatchObject({ code: 'staging_browser_request_failed', databaseWrite: false });
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(vi.getTimerCount()).toBe(0);
       expect(from).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
