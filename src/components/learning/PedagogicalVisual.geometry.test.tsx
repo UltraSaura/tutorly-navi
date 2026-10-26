@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { PedagogicalVisual } from './PedagogicalVisual';
+import { formatNumberLineLabel, numberLinePosition, numberLineTickValues, PedagogicalVisual } from './PedagogicalVisual';
 
 const render = (kind: string, data: unknown, content = 'Géométrie') => renderToStaticMarkup(<PedagogicalVisual block={{ title: 'Visuel', content, visual: { kind, data, alt_text: 'Visuel de géométrie' } }} />);
 
@@ -65,6 +65,50 @@ describe('PedagogicalVisual geometry data', () => {
   it('keeps existing non-geometry visuals working', () => {
     expect(render('fraction_bar', { numerator: 1, denominator: 4 })).toContain('1 / 4');
     expect(render('clock', { hour: 3, minute: 0 })).toContain('Horloge pédagogique');
+  });
+
+  it('renders 0–1 graduations by 0,1 and positions 0,3 correctly', () => {
+    const ticks = numberLineTickValues(0, 1, 0.1);
+    const html = render('number_line', { min: 0, max: 1, step: 0.1, value: 0.3 });
+    expect(ticks).toHaveLength(11);
+    expect(html).toContain('>0,3<');
+    expect(numberLinePosition(0.3, 0, 1)).toBeCloseTo(0.3);
+  });
+
+  it('supports negative bounds and intervals that do not start at zero', () => {
+    expect(numberLineTickValues(-1, 1, 0.5)).toEqual([-1, -0.5, 0, 0.5, 1]);
+    expect(numberLineTickValues(2.4, 2.5, 0.01)).toHaveLength(11);
+    expect(formatNumberLineLabel(-0.5)).toBe('-0,5');
+  });
+
+  it('uses labels supplied by the visual data', () => {
+    const html = render('number_line', { min: 0, max: 1, step: 0.5, value: 0.5, labels: ['départ', 'milieu', 'arrivée'] });
+    expect(html).toContain('>départ<');
+    expect(html).toContain('>milieu<');
+    expect(html).toContain('>arrivée<');
+  });
+
+  it.each([
+    ['level 1', { min: 2.4, max: 2.5, step: 0.01, value: 2.47 }, 11, '2,47'],
+    ['level 2 first', { min: 0, max: 2, step: 0.1, value: 1.4 }, 21, '1,4'],
+    ['level 2 second', { min: 2, max: 3, step: 0.05, value: 2.45 }, 21, '2,45'],
+    ['level 3', { min: 0, max: 3, step: 0.1, value: 2.5 }, 31, '2,5'],
+    ['level 4', { min: 0, max: 1, step: 0.1, value: 0.3 }, 11, '0,3'],
+  ])('renders the five stored decimal number lines responsively for %s', (_name, data, tickCount, valueLabel) => {
+    const html = render('number_line', data);
+    expect(html).toContain('viewBox="0 0 330 110"');
+    expect(html).toContain('class="w-full"');
+    expect((html.match(/<g>/g) ?? [])).toHaveLength(tickCount);
+    expect(html).toContain(`>${valueLabel}<`);
+    expect(html).not.toContain('undefined');
+  });
+
+  it('keeps whole-number lines unchanged', () => {
+    const html = render('number_line', { min: 0, max: 10, step: 1, value: 6 });
+    expect(numberLineTickValues(0, 10, 1)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(html).toContain('>0<');
+    expect(html).toContain('>10<');
+    expect(html).toContain('cx="193"');
   });
 });
 
