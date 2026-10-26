@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft.ts';
-import { PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
+import { pedagogicalWarnings, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { ANSWER_TYPE_VALUES } from './lesson-v21-contract.ts';
 import {
   assembleStagingLesson,
@@ -506,12 +506,13 @@ describe('staging level workflow', () => {
     expect(failure.technicalDetail).not.toContain('levels[0].lesson');
   });
 
-  it('rejects the exact version-158 level-1 response with field-specific takeaway paths', () => {
+  it('keeps the version-158 lexical overlap as review warnings without rejecting the level', () => {
     const rejected = structuredClone(validLevel1) as any;
     rejected.sequence[0].takeaway = 'Pour reconnaitre un rectangle, vérifie ses quatre angles droits et ses côtés opposés égaux.';
     rejected.sequence[1].takeaway = 'Pour reconnaitre un triangle, compte ses trois sommets et ses côtés.';
     const result = validateStagingLevel(rejected, metadata[0], topicName, 'CM2');
-    expect(result.pedagogicalIssues.filter((issue) => issue.path.endsWith('.takeaway')).map((issue) => issue.path)).toEqual(expect.arrayContaining([
+    expect(result.pedagogicalIssues.filter((issue) => issue.path.endsWith('.takeaway'))).toEqual([]);
+    expect(pedagogicalWarnings(rejected, 'CM2', topicName).filter((issue) => issue.path.endsWith('.takeaway')).map((issue) => issue.path)).toEqual(expect.arrayContaining([
       'sequence[0].takeaway',
       'sequence[1].takeaway',
     ]));

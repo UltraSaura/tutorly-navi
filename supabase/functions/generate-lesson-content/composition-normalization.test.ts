@@ -16,7 +16,7 @@ describe('provider-free composition cleanup', () => {
     const result = normalizeLessonComposition(input, 'Fractions');
     const concept = (result.lesson.sequence as unknown[] | undefined)?.[0] as Record<string, unknown>;
     expect(['Le numérateur compte les parts prises.', 'Le dénominateur indique en combien de parts égales l’unité est partagée.', 'Utilise le visuel pour repérer les parts égales.']).toContain(concept.takeaway);
-    expect(semanticDuplicationDiagnostics(concept).some((issue) => issue.fieldB === 'takeaway')).toBe(false);
+    expect(semanticDuplicationDiagnostics(concept).filter((issue) => issue.fieldB === 'takeaway' && issue.blocking)).toEqual([]);
     expect(result.events.some((event) => event.action === 'takeaway_replaced')).toBe(true);
   });
 

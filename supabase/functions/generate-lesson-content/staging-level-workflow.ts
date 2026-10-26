@@ -65,6 +65,8 @@ export type StagingValidationSummary = {
   interactionValid: boolean;
   canonicalIssues: Array<{ path: string; message: string }>;
   pedagogicalIssues: Array<{ path: string; message: string }>;
+  pedagogicalWarnings: Array<{ path: string; message: string }>;
+  pedagogicalReviewRequired: boolean;
   prerequisiteIssues: Array<{ path: string; message: string }>;
   geometryIssues: Array<{ path: string; message: string }>;
   interactionIssues: Array<{ path: string; message: string }>;
@@ -638,7 +640,7 @@ function isInteractionIssue(issue: { path: string; message: string }): boolean {
   return /answer_type|correct_answer|questions|interaction|mastery/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message);
 }
 
-export function summarizeStagingValidation(validation: StagingValidation, extraGeometryIssues: Array<{ path: string; message: string }> = []): StagingValidationSummary {
+export function summarizeStagingValidation(validation: StagingValidation, extraGeometryIssues: Array<{ path: string; message: string }> = [], warnings: Array<{ path: string; message: string }> = []): StagingValidationSummary {
   const geometryIssues = [...validation.geometryIssues, ...extraGeometryIssues];
   const prerequisiteIssues = validation.canonicalIssues.filter(isPrerequisiteIssue);
   const interactionIssues = validation.canonicalIssues.filter(isInteractionIssue);
@@ -646,6 +648,7 @@ export function summarizeStagingValidation(validation: StagingValidation, extraG
     ...validation.canonicalIssues,
     ...validation.pedagogicalIssues,
     ...geometryIssues,
+    ...warnings.map((issue) => ({ path: issue.path, message: `Avertissement de revue : ${issue.message}` })),
   ].map((issue) => `${issue.path}: ${issue.message}`);
   return {
     canonicalValid: validation.canonicalIssues.length === 0,
@@ -655,6 +658,8 @@ export function summarizeStagingValidation(validation: StagingValidation, extraG
     interactionValid: interactionIssues.length === 0,
     canonicalIssues: validation.canonicalIssues,
     pedagogicalIssues: validation.pedagogicalIssues,
+    pedagogicalWarnings: warnings,
+    pedagogicalReviewRequired: warnings.length > 0,
     prerequisiteIssues,
     geometryIssues,
     interactionIssues,

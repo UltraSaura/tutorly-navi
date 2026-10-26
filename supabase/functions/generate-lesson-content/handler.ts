@@ -2,7 +2,7 @@ import { requirePrivilegedFamily } from '../_shared/family-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { validateLessonV21 } from './lesson-v21-contract.ts';
-import { pedagogicalIssues, semanticDuplicationDiagnostics, validateCompositionRepairOutput } from './pedagogical-quality.ts';
+import { pedagogicalIssues, pedagogicalWarnings, semanticDuplicationDiagnostics, validateCompositionRepairOutput } from './pedagogical-quality.ts';
 import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
 import { resolveEdition } from './curriculum-resolution.ts';
 import { normalizeGeneratedLesson, ensureRequiredVisuals } from './lesson-normalization.ts';
@@ -915,7 +915,8 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           const lesson = normalized.lesson;
           const validation = validateStagingLevel(lesson, levelMetadata, topic.name, rawLevel);
           const requiredIssues = requiredGeometryKindsIssues(lesson, levelMetadata.required_geometry_kinds, levelMetadata.required_geometry_alternatives);
-          levelValidation = summarizeStagingValidation(validation, requiredIssues);
+          const reviewWarnings = pedagogicalWarnings(lesson, rawLevel, topic.name);
+          levelValidation = summarizeStagingValidation(validation, requiredIssues, reviewWarnings);
           const issues = [...validation.canonicalIssues, ...validation.pedagogicalIssues, ...validation.geometryIssues, ...requiredIssues];
           if (issues.length > 0) {
             const validationError = new Error(stagingValidationFailure(levelIndex, issues, aiProviderCalls).technicalDetail);
@@ -923,7 +924,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             throw validationError;
           }
           validatedLevels.push({ metadata: levelMetadata, lesson });
-          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1 + result.retryCount, retryCount: result.retryCount, retryCategory: result.retryCategory, parseStage: result.retryCount > 0 ? 'valid_json_after_bounded_retry' : 'valid_json', tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, requestId, validation: levelValidation, diagnostics: result.retryCount > 0 ? [`initial_${result.retryCategory ?? 'json'}_retry_succeeded`] : [] });
+          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1 + result.retryCount, retryCount: result.retryCount, retryCategory: result.retryCategory, parseStage: result.retryCount > 0 ? 'valid_json_after_bounded_retry' : 'valid_json', tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, requestId, validation: levelValidation, diagnostics: [...reviewWarnings.map((warning) => `review_warning:${warning.path}: ${warning.message}`), ...(result.retryCount > 0 ? [`initial_${result.retryCategory ?? 'json'}_retry_succeeded`] : [])] });
           console.info('[generate-lesson-content] staging level complete', { requestId, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCallsAttempted: aiProviderCalls, levelProviderCalls: 1 + result.retryCount, retryCount: result.retryCount, tokenUsage: result.tokenUsage });
         } catch (error) {
           const structuredFailure = error && typeof error === 'object' && 'stagingFailure' in error
@@ -976,7 +977,12 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         prerequisiteIssues: [],
         geometryIssues: finalGeometryIssues,
         interactionIssues: [],
-        diagnostics: finalGeometryIssues.map((issue) => `${issue.path}: ${issue.message}`),
+        pedagogicalWarnings: stagingProgress.flatMap((progress) => progress.validation?.pedagogicalWarnings ?? []),
+        pedagogicalReviewRequired: stagingProgress.some((progress) => progress.validation?.pedagogicalReviewRequired === true),
+        diagnostics: [
+          ...finalGeometryIssues.map((issue) => `${issue.path}: ${issue.message}`),
+          ...stagingProgress.flatMap((progress) => progress.validation?.pedagogicalWarnings ?? []).map((issue) => `Avertissement de revue : ${issue.path}: ${issue.message}`),
+        ],
       };
       const responseBody: StagingDraftResponse = {
         success: true,

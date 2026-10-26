@@ -125,6 +125,23 @@ describe('staging structured output boundary', () => {
     expect(() => parseStagingLevelResponse('{"mastery_check":{"id":"m1"}')).toThrow('staging_level_json_parse_failed');
   });
 
+  it('keeps lexical overlap as an explicit review warning in the validation envelope', () => {
+    const metadata = stagingLevelMetadata('fixture-topic', 'Symétrie', [], 'Reconnaître une symétrie.')[0];
+    const lesson = stagingFullLevelExample(metadata) as any;
+    lesson.sequence[1].content = 'Je compte les carreaux, mesure ensuite puis je reporte le résultat après.';
+    lesson.sequence[1].key_points = [{ label: 'Axe', text: 'Droite verticale' }];
+    lesson.sequence[1].takeaway = 'Astuce : je compte et vérifie après.';
+    const validation = validateStagingLevel(lesson, metadata, 'Symétrie', 'CM2');
+    const summary = summarizeStagingValidation(validation, [], [{
+      path: 'sequence[1].takeaway',
+      message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.',
+    }]);
+    expect(summary.pedagogicalValid).toBe(true);
+    expect(summary.pedagogicalReviewRequired).toBe(true);
+    expect(summary.pedagogicalWarnings).toEqual([{ path: 'sequence[1].takeaway', message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.' }]);
+    expect(summary.diagnostics).toContain('sequence[1].takeaway: Avertissement de revue : Similarité lexicale à revoir. overlap=2, ratio=0.50.');
+  });
+
   it('rejects null, object and non-numeric mastery fields at the AJV boundary', () => {
     const metadata = stagingLevelMetadata('fixture-topic', 'La proportionnalité', [], 'Comparer deux grandeurs proportionnelles.')[0];
     const nullAnswer = stagingFullLevelCompactExample(metadata) as any;
