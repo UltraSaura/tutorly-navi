@@ -84,7 +84,78 @@ function Timeline({ d }: { d: Data }) {
     </div>)}
   </div>;
 }
-function NumberLine({ d }: { d: Data }) { const min=n(d.min,0),max=n(d.max,10),v=n(d.value,min),x=(q:number)=>25+((q-min)/Math.max(1,max-min))*280; return <svg viewBox="0 0 330 110" className="w-full" role="img" aria-label="Droite graduée"><line x1="25" y1="50" x2="305" y2="50" stroke="#0f766e" strokeWidth="4"/>{Array.from({length:Math.min(21,Math.round(max-min)+1)},(_,i)=>{const q=min+i;return <g key={i}><line x1={x(q)} y1="42" x2={x(q)} y2="58" stroke="#0f766e"/><text x={x(q)} y="78" textAnchor="middle" fontSize="11">{q}</text></g>})}<circle cx={x(v)} cy="50" r="8" fill="#f59e0b"/></svg>; }
+export function numberLineTickValues(min: number, max: number, step: number, maxTicks = 41): number[] {
+  if (![min, max, step].every(Number.isFinite) || step <= 0 || max < min) return [];
+  const count = Math.floor((max - min) / step + 1e-9);
+  if (count + 1 > maxTicks) return [];
+  return Array.from({ length: count + 1 }, (_, index) => Number((min + index * step).toFixed(10)));
+}
+
+export function formatNumberLineLabel(value: number): string {
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 10, useGrouping: false }).format(value);
+}
+
+export function numberLinePosition(value: number, min: number, max: number): number {
+  return max === min ? 0 : (value - min) / (max - min);
+}
+
+export function numberLineExactTickIndex(ticks: number[], value: number): number | null {
+  const index = ticks.findIndex((tick) => Math.abs(tick - value) < 1e-9);
+  return index === -1 ? null : index;
+}
+
+export function numberLineLabelIndices(ticks: number[], value: number, maxLabels: number, minGap = 32): Set<number> {
+  if (ticks.length === 0) return new Set();
+  const indices = new Set<number>([0, ticks.length - 1]);
+  const exactValueIndex = numberLineExactTickIndex(ticks, value);
+  const pixelPosition = (index: number) => (index / Math.max(1, ticks.length - 1)) * 280;
+  const canPlace = (index: number) => Array.from(indices).every((placed) => Math.abs(pixelPosition(index) - pixelPosition(placed)) >= minGap);
+  const priorityIndices = ticks
+    .map((tick, index) => ({ tick, index }))
+    .filter(({ tick, index }) => index > 0 && index < ticks.length - 1 && Number.isInteger(tick))
+    .map(({ index }) => index);
+
+  for (const index of priorityIndices) {
+    if (indices.size >= maxLabels || !canPlace(index)) continue;
+    indices.add(index);
+  }
+  if (exactValueIndex !== null && indices.size < maxLabels && canPlace(exactValueIndex)) indices.add(exactValueIndex);
+
+  const stride = Math.max(1, Math.ceil((ticks.length - 1) / Math.max(1, maxLabels - indices.size + 1)));
+  for (let index = stride; index < ticks.length - 1 && indices.size < maxLabels; index += stride) {
+    if (canPlace(index)) indices.add(index);
+  }
+  return indices;
+}
+
+function NumberLine({ d }: { d: Data }) {
+  const min = n(d.min, 0), max = n(d.max, 10), step = n(d.step, 1), value = n(d.value, min);
+  const ticks = numberLineTickValues(min, max, step);
+  const x = (q: number) => 25 + numberLinePosition(q, min, max) * 280;
+  const labels = Array.isArray(d.labels) ? d.labels : [];
+  const labelFor = (tick: number, index: number) => {
+    const item = labels[index];
+    if (typeof item === 'string' || typeof item === 'number') return String(item);
+    if (item && typeof item === 'object') {
+      const record = item as Record<string, unknown>;
+      if (record.label !== undefined) return String(record.label);
+    }
+    return formatNumberLineLabel(tick);
+  };
+  if (ticks.length === 0) return <div role="status">Données de graduation invalides ou nécessitant plus de 41 graduations.</div>;
+  const exactValueIndex = numberLineExactTickIndex(ticks, value);
+  const desktopLabels = numberLineLabelIndices(ticks, value, 21, 32);
+  const mobileLabels = numberLineLabelIndices(ticks, value, 9, 42);
+  const desktopPointLabel = exactValueIndex === null || !desktopLabels.has(exactValueIndex);
+  const mobilePointLabel = exactValueIndex === null || !mobileLabels.has(exactValueIndex);
+  return <svg viewBox="0 0 330 110" className="w-full" role="img" aria-label="Droite graduée">
+    <style>{`.number-line-label--mobile,.number-line-point-label--mobile{display:none}@media(max-width:480px){.number-line-label--desktop,.number-line-point-label--desktop{display:none}.number-line-label--mobile,.number-line-point-label--mobile{display:block}}`}</style>
+    <line x1="25" y1="50" x2="305" y2="50" stroke="#0f766e" strokeWidth="4"/>
+    {ticks.map((tick, index) => <g key={`${tick}-${index}`}><line x1={x(tick)} y1="42" x2={x(tick)} y2="58" stroke="#0f766e"/>{desktopLabels.has(index) && <text className="number-line-label--desktop" x={x(tick)} y="78" textAnchor="middle" fontSize="11">{labelFor(tick, index)}</text>}{mobileLabels.has(index) && <text className="number-line-label--mobile" x={x(tick)} y="78" textAnchor="middle" fontSize="11">{labelFor(tick, index)}</text>}</g>)}
+    {desktopPointLabel && <text className="number-line-point-label--desktop" x={x(value)} y="98" textAnchor="middle" fontSize="11">{formatNumberLineLabel(value)}</text>}{mobilePointLabel && <text className="number-line-point-label--mobile" x={x(value)} y="98" textAnchor="middle" fontSize="11">{formatNumberLineLabel(value)}</text>}
+    <circle cx={x(value)} cy="50" r="8" fill="#f59e0b"/>
+  </svg>;
+}
 function Fraction({ d, circle=false }: { d: Data; circle?: boolean }) { const den=Math.max(1,Math.min(16,Math.round(n(d.denominator,4)))),num=Math.max(0,Math.min(den,Math.round(n(d.numerator,1)))); if(circle)return <svg viewBox="0 0 220 180" className="mx-auto w-full max-w-sm" role="img" aria-label="Disque fractionné"><circle cx="110" cy="80" r="60" fill="#d1fae5" stroke="#0f766e" strokeWidth="3"/>{Array.from({length:num},(_,i)=>{const a=i*2*Math.PI/den-Math.PI/2,b=(i+1)*2*Math.PI/den-Math.PI/2;const p=(q:number)=>`${110+60*Math.cos(q)},${80+60*Math.sin(q)}`;return <path key={i} d={`M110 80 L${p(a)} A60 60 0 0 1 ${p(b)} Z`} fill="#14b8a6"/>})}<text x="110" y="165" textAnchor="middle">{num} / {den}</text></svg>; return <svg viewBox="0 0 360 100" className="w-full" role="img" aria-label="Barre de fraction"><g transform="translate(15 25)">{Array.from({length:den},(_,i)=><rect key={i} x={i*330/den} width={330/den-2} height="38" fill={i<num?'#14b8a6':'#d1fae5'} stroke="#0f766e"/>)}</g><text x="180" y="88" textAnchor="middle">{num} / {den}</text></svg>; }
 type Point = { x: number; y: number; label?: string };
 const point = (value: unknown): Point | null => { if (Array.isArray(value) && typeof value[0] === 'number' && typeof value[1] === 'number') return { x: value[0], y: value[1] }; const p = data(value); return typeof p.x === 'number' && Number.isFinite(p.x) && typeof p.y === 'number' && Number.isFinite(p.y) ? { x: p.x, y: p.y, label: s(p.label ?? p.name ?? p.id) || undefined } : null; };

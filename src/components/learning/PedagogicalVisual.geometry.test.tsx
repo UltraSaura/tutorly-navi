@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { PedagogicalVisual } from './PedagogicalVisual';
+import { formatNumberLineLabel, numberLineExactTickIndex, numberLineLabelIndices, numberLinePosition, numberLineTickValues, PedagogicalVisual } from './PedagogicalVisual';
 
 const render = (kind: string, data: unknown, content = 'Géométrie') => renderToStaticMarkup(<PedagogicalVisual block={{ title: 'Visuel', content, visual: { kind, data, alt_text: 'Visuel de géométrie' } }} />);
 
@@ -65,6 +65,78 @@ describe('PedagogicalVisual geometry data', () => {
   it('keeps existing non-geometry visuals working', () => {
     expect(render('fraction_bar', { numerator: 1, denominator: 4 })).toContain('1 / 4');
     expect(render('clock', { hour: 3, minute: 0 })).toContain('Horloge pédagogique');
+  });
+
+  it('prioritizes the integer marker 1 for the stored 0–2 / 0.1 / 1.4 line', () => {
+    const ticks = numberLineTickValues(0, 2, 0.1);
+    const html = render('number_line', { min: 0, max: 2, step: 0.1, value: 1.4 });
+    const desktop = numberLineLabelIndices(ticks, 1.4, 21, 32);
+    const mobile = numberLineLabelIndices(ticks, 1.4, 9, 42);
+    expect(desktop.has(0)).toBe(true);
+    expect(desktop.has(10)).toBe(true);
+    expect(desktop.has(20)).toBe(true);
+    expect(mobile.has(0)).toBe(true);
+    expect(mobile.has(10)).toBe(true);
+    expect(mobile.has(20)).toBe(true);
+    expect(html).toContain('>1<');
+    expect(html).toContain('>1,4<');
+  });
+
+  it('preserves exact decimal ticks, French labels, and point position for the five stored lines', () => {
+    for (const [data, count, label] of [
+      [{ min: 2.4, max: 2.5, step: 0.01, value: 2.47 }, 11, '2,47'],
+      [{ min: 0, max: 2, step: 0.1, value: 1.4 }, 21, '1,4'],
+      [{ min: 2, max: 3, step: 0.05, value: 2.45 }, 21, '2,45'],
+      [{ min: 0, max: 3, step: 0.1, value: 2.5 }, 31, '2,5'],
+      [{ min: 0, max: 1, step: 0.1, value: 0.3 }, 11, '0,3'],
+    ] as const) {
+      const html = render('number_line', data);
+      expect(numberLineTickValues(data.min, data.max, data.step)).toHaveLength(count);
+      expect(html).toContain(`>${label}<`);
+      expect(html).toContain('class="w-full"');
+      expect(html).not.toContain('undefined');
+    }
+  });
+
+  it('keeps negative bounds and labels only stored graduations', () => {
+    const ticks = numberLineTickValues(-1, 1, 0.5);
+    const html = render('number_line', { min: -1, max: 1, step: 0.5, value: 0 });
+    expect(ticks).toEqual([-1, -0.5, 0, 0.5, 1]);
+    expect(html).toContain('>-1<');
+    expect(html).toContain('>1<');
+    expect(html).toContain('>0<');
+    expect(numberLinePosition(0, -1, 1)).toBeCloseTo(0.5);
+  });
+
+  it.each([0.95, 0.05])('uses a separate point label when an exact value is too close to a bound (%s)', (value) => {
+    const ticks = numberLineTickValues(0, 1, 0.05);
+    const exactIndex = numberLineExactTickIndex(ticks, value);
+    const desktop = numberLineLabelIndices(ticks, value, 21, 32);
+    const mobile = numberLineLabelIndices(ticks, value, 9, 42);
+    const html = render('number_line', { min: 0, max: 1, step: 0.05, value });
+    expect(exactIndex).not.toBeNull();
+    expect(desktop.has(0)).toBe(true);
+    expect(desktop.has(ticks.length - 1)).toBe(true);
+    expect(mobile.has(0)).toBe(true);
+    expect(mobile.has(ticks.length - 1)).toBe(true);
+    expect(desktop.has(exactIndex as number)).toBe(false);
+    expect(mobile.has(exactIndex as number)).toBe(false);
+    expect(html).toContain('number-line-point-label--desktop');
+    expect(html).toContain('number-line-point-label--mobile');
+    expect(html.match(new RegExp(`>${formatNumberLineLabel(value)}<`, 'g'))).toHaveLength(2);
+  });
+
+  it('does not turn a nearby graduation into a non-graduated point value', () => {
+    const ticks = numberLineTickValues(0, 1, 0.1);
+    const html = render('number_line', { min: 0, max: 1, step: 0.1, value: 0.35 });
+    expect(numberLineExactTickIndex(ticks, 0.35)).toBeNull();
+    expect(html).toContain('class="number-line-point-label--desktop"');
+    expect(html).toContain('>0,35<');
+  });
+
+  it('rejects a number line needing more than 41 graduations without changing its scale', () => {
+    expect(numberLineTickValues(0, 5, 0.1)).toEqual([]);
+    expect(render('number_line', { min: 0, max: 5, step: 0.1, value: 2.5 })).toContain('41');
   });
 });
 
