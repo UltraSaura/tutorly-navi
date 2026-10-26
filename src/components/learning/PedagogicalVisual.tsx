@@ -99,16 +99,29 @@ export function numberLinePosition(value: number, min: number, max: number): num
   return max === min ? 0 : (value - min) / (max - min);
 }
 
-export function numberLineLabelIndices(ticks: number[], value: number, maxLabels: number): Set<number> {
+export function numberLineExactTickIndex(ticks: number[], value: number): number | null {
+  const index = ticks.findIndex((tick) => Math.abs(tick - value) < 1e-9);
+  return index === -1 ? null : index;
+}
+
+export function numberLineLabelIndices(ticks: number[], value: number, maxLabels: number, minGap = 32): Set<number> {
   if (ticks.length === 0) return new Set();
-  const indices = new Set([0, ticks.length - 1]);
-  let nearest = 0;
-  ticks.forEach((tick, index) => {
-    if (Math.abs(tick - value) < Math.abs(ticks[nearest] - value)) nearest = index;
-  });
-  indices.add(nearest);
-  const stride = Math.max(1, Math.ceil((ticks.length - 1) / Math.max(1, maxLabels - indices.size)));
-  for (let index = stride; index < ticks.length - 1; index += stride) indices.add(index);
+  const exactValueIndex = numberLineExactTickIndex(ticks, value);
+  const candidates = [0, ...(exactValueIndex !== null ? [exactValueIndex] : []), ticks.length - 1];
+  const indices = new Set<number>();
+  const pixelPosition = (index: number) => (index / Math.max(1, ticks.length - 1)) * 280;
+  const canPlace = (index: number) => Array.from(indices).every((placed) => Math.abs(pixelPosition(index) - pixelPosition(placed)) >= minGap);
+
+  for (const index of candidates) {
+    if ((indices.size < maxLabels || index === 0 || index === ticks.length - 1 || index === exactValueIndex) && canPlace(index)) indices.add(index);
+  }
+  if (!indices.has(0)) indices.add(0);
+  if (!indices.has(ticks.length - 1)) indices.add(ticks.length - 1);
+
+  const stride = Math.max(1, Math.ceil((ticks.length - 1) / Math.max(1, maxLabels - indices.size + 1)));
+  for (let index = stride; index < ticks.length - 1 && indices.size < maxLabels; index += stride) {
+    if (canPlace(index)) indices.add(index);
+  }
   return indices;
 }
 
@@ -127,12 +140,16 @@ function NumberLine({ d }: { d: Data }) {
     return formatNumberLineLabel(tick);
   };
   if (ticks.length === 0) return <div role="status">Données de graduation invalides ou nécessitant plus de 41 graduations.</div>;
-  const desktopLabels = numberLineLabelIndices(ticks, value, 21);
-  const mobileLabels = numberLineLabelIndices(ticks, value, 9);
+  const exactValueIndex = numberLineExactTickIndex(ticks, value);
+  const desktopLabels = numberLineLabelIndices(ticks, value, 21, 32);
+  const mobileLabels = numberLineLabelIndices(ticks, value, 9, 42);
+  const desktopPointLabel = exactValueIndex === null || !desktopLabels.has(exactValueIndex);
+  const mobilePointLabel = exactValueIndex === null || !mobileLabels.has(exactValueIndex);
   return <svg viewBox="0 0 330 110" className="w-full" role="img" aria-label="Droite graduée">
-    <style>{`.number-line-label--mobile{display:none}@media(max-width:480px){.number-line-label--desktop{display:none}.number-line-label--mobile{display:block}}`}</style>
+    <style>{`.number-line-label--mobile,.number-line-point-label--mobile{display:none}@media(max-width:480px){.number-line-label--desktop,.number-line-point-label--desktop{display:none}.number-line-label--mobile,.number-line-point-label--mobile{display:block}}`}</style>
     <line x1="25" y1="50" x2="305" y2="50" stroke="#0f766e" strokeWidth="4"/>
     {ticks.map((tick, index) => <g key={`${tick}-${index}`}><line x1={x(tick)} y1="42" x2={x(tick)} y2="58" stroke="#0f766e"/>{desktopLabels.has(index) && <text className="number-line-label--desktop" x={x(tick)} y="78" textAnchor="middle" fontSize="11">{labelFor(tick, index)}</text>}{mobileLabels.has(index) && <text className="number-line-label--mobile" x={x(tick)} y="78" textAnchor="middle" fontSize="11">{labelFor(tick, index)}</text>}</g>)}
+    {desktopPointLabel && <text className="number-line-point-label--desktop" x={x(value)} y="98" textAnchor="middle" fontSize="11">{formatNumberLineLabel(value)}</text>}{mobilePointLabel && <text className="number-line-point-label--mobile" x={x(value)} y="98" textAnchor="middle" fontSize="11">{formatNumberLineLabel(value)}</text>}
     <circle cx={x(value)} cy="50" r="8" fill="#f59e0b"/>
   </svg>;
 }

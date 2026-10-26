@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { formatNumberLineLabel, numberLineLabelIndices, numberLinePosition, numberLineTickValues, PedagogicalVisual } from './PedagogicalVisual';
+import { formatNumberLineLabel, numberLineExactTickIndex, numberLineLabelIndices, numberLinePosition, numberLineTickValues, PedagogicalVisual } from './PedagogicalVisual';
 
 const render = (kind: string, data: unknown, content = 'Géométrie') => renderToStaticMarkup(<PedagogicalVisual block={{ title: 'Visuel', content, visual: { kind, data, alt_text: 'Visuel de géométrie' } }} />);
 
@@ -115,12 +115,35 @@ describe('PedagogicalVisual geometry data', () => {
     const ticks = numberLineTickValues(0, 3, 0.1);
     const html = render('number_line', { min: 0, max: 3, step: 0.1, value: 2.5 });
     expect(ticks).toHaveLength(31);
-    expect(numberLineLabelIndices(ticks, 2.5, 9).size).toBeLessThanOrEqual(9);
+    const mobileLabels = numberLineLabelIndices(ticks, 2.5, 9, 42);
+    const sortedMobileLabels = [...mobileLabels].sort((a, b) => a - b);
+    expect(mobileLabels.size).toBeLessThanOrEqual(9);
+    expect(sortedMobileLabels.every((index, position, selected) => position === 0 || (index - selected[position - 1]) * (280 / (ticks.length - 1)) >= 42)).toBe(true);
     expect(html).toContain('number-line-label--mobile');
     expect(html).toContain('number-line-label--desktop');
     expect(html).toContain('>0<');
     expect(html).toContain('>3<');
     expect(html).toContain('>2,5<');
+  });
+
+  it('keeps the exact point label for the narrow 2.4–2.5 line without collisions', () => {
+    const ticks = numberLineTickValues(2.4, 2.5, 0.01);
+    const labels = numberLineLabelIndices(ticks, 2.47, 21, 32);
+    const spacing = 280 / (ticks.length - 1);
+    const sortedLabels = [...labels].sort((a, b) => a - b);
+    expect(numberLineExactTickIndex(ticks, 2.47)).toBe(7);
+    expect(labels.has(7)).toBe(true);
+    expect(sortedLabels.every((index, position, selected) => position === 0 || (index - selected[position - 1]) * spacing >= 32)).toBe(true);
+    const html = render('number_line', { min: 2.4, max: 2.5, step: 0.01, value: 2.47 });
+    expect(html).toContain('>2,47<');
+  });
+
+  it('labels a value between graduations separately instead of treating the nearest tick as exact', () => {
+    const ticks = numberLineTickValues(0, 1, 0.1);
+    expect(numberLineExactTickIndex(ticks, 0.35)).toBeNull();
+    const html = render('number_line', { min: 0, max: 1, step: 0.1, value: 0.35 });
+    expect(html).toContain('class="number-line-point-label--desktop"');
+    expect(html).toContain('>0,35<');
   });
 
   it('reports an explicit bounded-graduation message when more than 41 ticks are needed', () => {
