@@ -103,6 +103,21 @@ describe('PedagogicalVisual geometry data', () => {
     expect(html).not.toContain('undefined');
   });
 
+  it('prioritizes the integer marker 1 for 0–2 by 0,1 with point 1,4 on desktop and mobile', () => {
+    const ticks = numberLineTickValues(0, 2, 0.1);
+    const html = render('number_line', { min: 0, max: 2, step: 0.1, value: 1.4 });
+    const desktop = numberLineLabelIndices(ticks, 1.4, 21, 32);
+    const mobile = numberLineLabelIndices(ticks, 1.4, 9, 42);
+    expect(desktop.has(0)).toBe(true);
+    expect(desktop.has(10)).toBe(true);
+    expect(desktop.has(20)).toBe(true);
+    expect(mobile.has(0)).toBe(true);
+    expect(mobile.has(10)).toBe(true);
+    expect(mobile.has(20)).toBe(true);
+    expect(html).toContain('>1<');
+    expect(html).toContain('>1,4<');
+  });
+
   it('keeps whole-number lines unchanged', () => {
     const html = render('number_line', { min: 0, max: 10, step: 1, value: 6 });
     expect(numberLineTickValues(0, 10, 1)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
