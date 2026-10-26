@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import Ajv from 'ajv';
 import {
   assessDeepSeekStrictSchemaCompatibility,
   STAGING_LEVEL_OUTPUT_SCHEMA,
@@ -12,10 +13,16 @@ import {
   stagingFullLevelExample,
   stagingLevelMetadata,
   stagingSequenceContractIssues,
+  requiredGeometryKindsIssues,
+  validateStagingLevel,
+  summarizeStagingValidation,
+  STAGING_VISUAL_EXAMPLES,
 } from './staging-level-workflow';
 import { validateStagingGenerationEnvelope } from '../../../src/services/lessonVersionWorkflow';
 
 describe('staging structured output boundary', () => {
+  const schemaValidator = new Ajv({ allErrors: true }).compile(STAGING_LEVEL_OUTPUT_SCHEMA as any);
+
   it('keeps the current paid-call policy at one level per initial call', () => {
     expect(stagingProviderOutputContract()).toEqual({
       responseFormat: { type: 'json_object' },
@@ -53,8 +60,11 @@ describe('staging structured output boundary', () => {
 
   it('requires mastery_check.questions in the declarative schema', () => {
     const masteryCheck = STAGING_LEVEL_OUTPUT_SCHEMA.properties.mastery_check;
-    expect(masteryCheck.required).toEqual(['questions']);
+    expect(masteryCheck.required).toEqual(expect.arrayContaining(['id', 'type', 'content', 'questions']));
     expect(masteryCheck.properties).toHaveProperty('questions');
+    expect(masteryCheck.properties.id).toEqual({ type: 'string' });
+    expect(masteryCheck.properties.type).toEqual({ enum: ['mastery_check'] });
+    expect(masteryCheck.properties.content).toEqual({ type: 'string' });
   });
 
   it('rejects additional mastery_check properties at the schema boundary', () => {
@@ -62,6 +72,73 @@ describe('staging structured output boundary', () => {
     const questionSchema = masteryCheck.properties.questions.items;
     expect(masteryCheck.additionalProperties).toBe(false);
     expect(questionSchema.additionalProperties).toBe(false);
+  });
+
+  it.each([
+    ['nombres décimaux', 'Les nombres décimaux', 'Comparer des nombres décimaux.'],
+    ['temps et durées', 'Le repérage dans le temps et les durées', 'Lire une heure et convertir des durées.'],
+    ['géométrie', 'La géométrie plane', 'Reconnaître et décrire des figures.'],
+    ['sujet non géométrique', 'La proportionnalité', 'Comparer deux grandeurs proportionnelles.'],
+  ])('validates the complete %s fixtures with JSON Schema, parser, assembly and application validators', (_label, topic, objective) => {
+    const metadata = stagingLevelMetadata('fixture-topic', topic, ['fixture-objective'], objective);
+    const levels = metadata.map((level) => {
+      const compact = stagingFullLevelCompactExample(level);
+      expect(schemaValidator(compact), JSON.stringify(schemaValidator.errors)).toBe(true);
+      const parsed = parseStagingLevelResponse(JSON.stringify(compact), level).value;
+      const validation = validateStagingLevel(parsed, level, topic, 'CM2');
+      expect(validation.canonicalIssues).toEqual([]);
+      expect(validation.pedagogicalIssues).toEqual([]);
+      expect(validation.geometryIssues).toEqual([]);
+      expect(summarizeStagingValidation(validation).interactionIssues).toEqual([]);
+      expect(requiredGeometryKindsIssues(parsed, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([]);
+      return { metadata: level, lesson: parsed };
+    });
+    const assembled = assembleStagingLesson(topic, levels);
+    expect(assembled.levels).toHaveLength(4);
+  });
+
+  it('rejects missing mastery questions and extra mastery properties with the real JSON Schema validator', () => {
+    const metadata = stagingLevelMetadata('fixture-topic', 'La proportionnalité', [], 'Comparer deux grandeurs proportionnelles.')[0];
+    const missingQuestions = stagingFullLevelCompactExample(metadata) as any;
+    delete missingQuestions.mastery_check.questions;
+    expect(schemaValidator(missingQuestions)).toBe(false);
+    expect(schemaValidator.errors?.some((error) => error.keyword === 'required')).toBe(true);
+
+    const extraProperty = stagingFullLevelCompactExample(metadata) as any;
+    extraProperty.mastery_check.unexpected = true;
+    expect(schemaValidator(extraProperty)).toBe(false);
+    expect(schemaValidator.errors?.some((error) => error.keyword === 'additionalProperties')).toBe(true);
+  });
+
+  it('rejects incomplete interactive questions, missing choices and truncated JSON before assembly', () => {
+    const metadata = stagingLevelMetadata('fixture-topic', 'La proportionnalité', [], 'Comparer deux grandeurs proportionnelles.')[0];
+    const missingAnswer = stagingFullLevelCompactExample(metadata) as any;
+    delete missingAnswer.mastery_check.questions[0].correct_answer;
+    expect(schemaValidator(missingAnswer)).toBe(false);
+
+    const missingChoices = stagingFullLevelCompactExample(metadata) as any;
+    const question = missingChoices.mastery_check.questions[0];
+    question.answer_type = 'multiple_choice';
+    delete question.choices;
+    expect(schemaValidator(missingChoices)).toBe(false);
+
+    expect(() => parseStagingLevelResponse('{"mastery_check":{"id":"m1"}')).toThrow('staging_level_json_parse_failed');
+  });
+
+  it('rejects incompatible visuals for the time-topic contract', () => {
+    const level = stagingLevelMetadata('fixture-topic', 'Le repérage dans le temps et les durées', [], 'Lire une heure.')[0];
+    const candidate = stagingFullLevelExample(level) as any;
+    candidate.sequence[0].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+    candidate.sequence[1].visual = structuredClone(STAGING_VISUAL_EXAMPLES.triangle.visual);
+    const required = requiredGeometryKindsIssues(candidate, level.required_geometry_kinds, level.required_geometry_alternatives);
+    expect(required.length).toBeGreaterThan(0);
+    expect(required.map((issue) => issue.message).join(' ')).toContain('unit_conversion');
+  });
+
+  it('keeps simulated persistence all-or-nothing when a level is missing', () => {
+    const metadata = stagingLevelMetadata('fixture-topic', 'La proportionnalité', [], 'Comparer deux grandeurs proportionnelles.');
+    const levels = metadata.slice(0, 3).map((level) => ({ metadata: level, lesson: stagingFullLevelExample(level) }));
+    expect(() => assembleStagingLesson('La proportionnalité', levels)).toThrow('expected 4 levels');
   });
 
   it('builds and validates the five blocks in application code before assembly', () => {

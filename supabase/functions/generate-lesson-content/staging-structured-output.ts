@@ -42,6 +42,18 @@ const STAGING_MASTERY_QUESTION_SCHEMA = {
   ],
 } as const;
 
+const STAGING_MASTERY_CHECK_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    id: { type: 'string' },
+    type: { enum: ['mastery_check'] },
+    content: { type: 'string' },
+    questions: { type: 'array', minItems: 1, maxItems: 4, items: STAGING_MASTERY_QUESTION_SCHEMA },
+  },
+  required: ['id', 'type', 'content', 'questions'],
+} as const;
+
 export const DEEPSEEK_CHAT_COMPLETIONS_ENDPOINT = 'https://api.deepseek.com/v1/chat/completions';
 
 export const STAGING_LEVEL_OUTPUT_SCHEMA = {
@@ -55,14 +67,7 @@ export const STAGING_LEVEL_OUTPUT_SCHEMA = {
     concept_2: { type: 'object' },
     guided_example: { type: 'object' },
     student_try: { type: 'object' },
-    mastery_check: {
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        questions: { type: 'array', minItems: 1, maxItems: 4, items: STAGING_MASTERY_QUESTION_SCHEMA },
-      },
-      required: ['questions'],
-    },
+    mastery_check: STAGING_MASTERY_CHECK_SCHEMA,
     misconceptions: { type: 'array', items: { type: 'object' } },
     mastery: { type: 'object' },
   },
