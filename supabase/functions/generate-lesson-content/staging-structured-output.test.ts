@@ -51,6 +51,19 @@ describe('staging structured output boundary', () => {
     ]));
   });
 
+  it('requires mastery_check.questions in the declarative schema', () => {
+    const masteryCheck = STAGING_LEVEL_OUTPUT_SCHEMA.properties.mastery_check;
+    expect(masteryCheck.required).toEqual(['questions']);
+    expect(masteryCheck.properties).toHaveProperty('questions');
+  });
+
+  it('rejects additional mastery_check properties at the schema boundary', () => {
+    const masteryCheck = STAGING_LEVEL_OUTPUT_SCHEMA.properties.mastery_check;
+    const questionSchema = masteryCheck.properties.questions.items;
+    expect(masteryCheck.additionalProperties).toBe(false);
+    expect(questionSchema.additionalProperties).toBe(false);
+  });
+
   it('builds and validates the five blocks in application code before assembly', () => {
     const metadata = stagingLevelMetadata('topic', 'Figures planes', ['objective']);
     const levels = metadata.map((level) => {

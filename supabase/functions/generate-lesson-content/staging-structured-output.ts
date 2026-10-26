@@ -57,9 +57,11 @@ export const STAGING_LEVEL_OUTPUT_SCHEMA = {
     student_try: { type: 'object' },
     mastery_check: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         questions: { type: 'array', minItems: 1, maxItems: 4, items: STAGING_MASTERY_QUESTION_SCHEMA },
       },
+      required: ['questions'],
     },
     misconceptions: { type: 'array', items: { type: 'object' } },
     mastery: { type: 'object' },
