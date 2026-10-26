@@ -303,9 +303,9 @@ export function stagingSequenceContractIssues(lesson: Record<string, unknown>, m
   const masteryIndex = sequence.findIndex((block) => block && typeof block === 'object' && !Array.isArray(block) && (block as Record<string, unknown>).type === 'mastery_check');
   const interactionIndex = sequence.findIndex((block) => block && typeof block === 'object' && !Array.isArray(block) && STAGING_INTERACTIVE_TYPES.includes(String((block as Record<string, unknown>).type) as typeof STAGING_INTERACTIVE_TYPES[number]));
   if (masteryIndex >= 0 && (interactionIndex < 0 || interactionIndex > masteryIndex)) issues.push({ path: 'sequence', message: 'Required interaction before mastery.' });
-  if (metadata.level_number === 1 && stagingPromptVisualKinds(metadata).length > 0) {
+  if (metadata.level_number === 1 && stagingPromptVisualKinds(metadata).length > 0 && (metadata.required_geometry_kinds.length > 0 || Boolean(metadata.required_geometry_alternatives?.length))) {
     const conceptsWithVisual = sequence.filter((block) => block && typeof block === 'object' && !Array.isArray(block) && (block as Record<string, unknown>).type === 'concept' && (block as Record<string, unknown>).visual);
-    if (conceptsWithVisual.length < 2) issues.push({ path: 'sequence', message: 'Level 1 requires visual concept blocks for rectangle and triangle.' });
+    if (conceptsWithVisual.length < 2) issues.push({ path: 'sequence', message: 'Level 1 requires at least two visual concept blocks matching the explicit topic contract.' });
   }
   requiredStagingMastery(lesson, issues);
   requiredStagingPrerequisites(lesson, issues);
@@ -511,8 +511,9 @@ const VISUAL_FIELD_RULES = [
 
 export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string): string {
   const kinds = stagingPromptVisualKinds(metadata);
+  const allowedKinds = kinds.map((kind) => `kind "${kind}"`).join(' ou ');
   const required = metadata.required_geometry_alternatives?.length
-    ? 'Visuel obligatoire pour ce niveau: chaque concept doit utiliser une représentation décimale complète, avec kind "number_line" ou kind "rectangle". Un rectangle est accepté uniquement avec shape="rectangle", quatre sommets numériques et quatre side_labels; une droite graduée doit fournir ses bornes, son pas et sa valeur. Les visuels fraction_bar/fraction_circle sont réservés aux sujets de fractions explicites et ne remplacent pas ce contrat.'
+    ? 'Visuel obligatoire pour ce niveau: chaque concept doit utiliser une représentation conforme au contrat explicite, avec ' + allowedKinds + '. Les données doivent être complètes et réellement dessinables; un visuel d’un autre domaine ne remplace pas ce contrat.'
     : metadata.required_geometry_kinds.length > 0
     ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '. Chaque bloc concept DOIT contenir un visual dessinable complet.'
     : metadata.required_geometry_alternatives !== undefined
@@ -625,9 +626,15 @@ export function validateStagingLevel(lesson: Record<string, unknown>, metadata: 
   const candidate = { version: '2.1', topic_goal: topicName, levels: [{ ...metadata, lesson }] };
   const canonical = validateLessonV21(candidate, { prerequisiteFormat: 'staging' });
   const localPath = (path: string) => path.replace(/^levels\[0\]\.lesson\.?/, '');
+  const hasExplicitVisualContract = metadata.required_geometry_kinds.length > 0
+    || (metadata.required_geometry_alternatives ?? []).some((alternative) => alternative.length > 0);
   return {
     canonicalIssues: [...(canonical.success === false ? canonical.issues.map((issue) => ({ path: localPath(issue.path), message: issue.message })) : []), ...stagingSequenceContractIssues(lesson, metadata)],
-    pedagogicalIssues: pedagogicalIssues(lesson, grade, topicName),
+    // The staging metadata owns the visual contract. The generic pedagogical
+    // policy is still used for drawable-data and clock consistency checks, but
+    // its lexical required/incompatible-kind messages must not override the
+    // explicit topic/objective contract validated below by requiredGeometryKindsIssues.
+    pedagogicalIssues: pedagogicalIssues(lesson, grade, topicName, { suppressVisualPolicyIssues: hasExplicitVisualContract }),
     geometryIssues: visualGeometryIssues(lesson),
   };
 }

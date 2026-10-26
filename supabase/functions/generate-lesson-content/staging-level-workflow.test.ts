@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft.ts';
 import { pedagogicalWarnings, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { ANSWER_TYPE_VALUES } from './lesson-v21-contract.ts';
+import { determineVisualRequirement } from './visual-policy.ts';
 import {
   assembleStagingLesson,
   parseStagingLevelResponse,
@@ -676,8 +677,24 @@ describe('time-topic visual contract (providerCalls=0)', () => {
 });
 
 describe('decimal-number visual contract (providerCalls=0)', () => {
+  const decimalTopicId = '07fe506e-71f4-44c9-bf7f-98c51a2ca68a';
   const decimalTopic = 'Les nombres décimaux';
-  const decimalMetadata = stagingLevelMetadata('decimal-topic', decimalTopic, [], 'Comparer et placer des nombres décimaux.');
+  const decimalObjectives = [
+    'Interpréter, représenter, écrire et lire des fractions décimales',
+    'Connaître et utiliser les relations entre unités simples, dixièmes, centièmes et millièmes',
+    'Placer une fraction décimale sur une demi-droite graduée et repérer un point d’une demi-droite graduée par une fraction décimale',
+    'Écrire une fraction décimale supérieure à 1 comme la somme d’un nombre entier et d’une fraction décimale inférieure à 1',
+    'Écrire une fraction décimale supérieure à 1 comme la somme d’un nombre entier et de fractions décimales ayant un numérateur inférieur à 10',
+    'Comparer, encadrer, intercaler des fractions décimales en utilisant les symboles =, < et >',
+    'Ordonner des fractions décimales dans l’ordre croissant ou décroissant',
+    'Passer d’une écriture sous forme d’une fraction décimale ou de la somme de fractions décimales à une écriture à virgule et réciproquement',
+    'Interpréter, représenter, écrire et lire des nombres décimaux (écriture à virgule)',
+    'Placer un nombre décimal en écriture à virgule sur une demi-droite graduée et repérer un point d’une demi-droite graduée par un nombre en écriture à virgule',
+    'Savoir donner la partie entière et l’arrondi à l’entier d’un nombre décimal',
+    'Comparer, encadrer, intercaler, ordonner par ordre croissant ou décroissant des nombres décimaux donnés par leur écriture à virgule en utilisant les symboles =, < et >',
+  ];
+  const decimalObjectiveText = decimalObjectives.join('; ');
+  const decimalMetadata = stagingLevelMetadata(decimalTopicId, decimalTopic, decimalObjectives.map((_, index) => `objective-${index}`), decimalObjectiveText);
 
   it('uses the decimal model contract instead of the fraction contract', () => {
     expect(stagingTopicKind(decimalTopic, 'Comparer et placer des nombres décimaux')).toBe('decimal');
@@ -710,5 +727,46 @@ describe('decimal-number visual contract (providerCalls=0)', () => {
     expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([
       expect.objectContaining({ message: expect.stringContaining('number_line|rectangle') }),
     ]);
+  });
+
+  it('keeps the real decimal topic contract authoritative when an objective mentions fractions', () => {
+    expect(stagingTopicKind(decimalTopic, decimalObjectiveText)).toBe('decimal');
+    expect(decimalMetadata).toHaveLength(4);
+    const lexicalPolicy = determineVisualRequirement({ title: 'Fraction décimale', content: 'Une fraction représente une partie du tout.' });
+    expect(lexicalPolicy.suggestedKinds).toEqual(['fraction_bar', 'fraction_circle']);
+
+    for (const level of decimalMetadata) {
+      const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+      candidate.sequence[0].title = 'Fraction décimale';
+      candidate.sequence[0].content = 'Une fraction décimale représente une partie du tout et se lit avec une écriture à virgule.';
+      const validation = validateStagingLevel(candidate, level, decimalTopic, 'CM2');
+      expect(validation.pedagogicalIssues.some((issue) => issue.message.includes('fraction_bar|fraction_circle'))).toBe(false);
+      expect(validation.pedagogicalIssues.some((issue) => issue.message.includes('number_line|rectangle'))).toBe(false);
+      expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([]);
+      expect(stagingLevelPrompt(decimalTopic, 'CM2', 'fr', level, decimalObjectiveText)).toContain('kind "number_line" ou kind "rectangle"');
+    }
+  });
+
+  it('keeps generic visual requirements when geometry level 4 has no replacement contract', () => {
+    const geometryMetadata = stagingLevelMetadata('geometry-topic', topicName, ['geometry']);
+    const level = geometryMetadata[3];
+    expect(level.required_geometry_kinds).toEqual([]);
+    expect(level.required_geometry_alternatives).toBeUndefined();
+
+    const candidate = structuredClone(validLevel1) as any;
+    delete candidate.sequence[0].visual;
+    const validation = validateStagingLevel(candidate, level, topicName, 'CM2');
+
+    expect(validation.pedagogicalIssues).toContainEqual(expect.objectContaining({
+      path: 'sequence[0].visual',
+      message: expect.stringContaining('Visuel requis'),
+    }));
+  });
+
+  it('keeps the fraction visual policy for a genuine fractions subject', () => {
+    const policy = determineVisualRequirement({ title: 'Fractions', content: 'Une fraction représente une partie du tout.' });
+    expect(policy.requirement).toBe('required');
+    expect(policy.suggestedKinds).toEqual(['fraction_bar', 'fraction_circle']);
+    expect(policy.suggestedKinds).not.toContain('number_line');
   });
 });
