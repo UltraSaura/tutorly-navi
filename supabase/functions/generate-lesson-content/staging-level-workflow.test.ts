@@ -3,6 +3,7 @@ import { geometryDraftLesson } from '../../../src/components/admin/learning/geom
 import { pedagogicalWarnings, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { ANSWER_TYPE_VALUES } from './lesson-v21-contract.ts';
 import { determineVisualRequirement } from './visual-policy.ts';
+import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import {
   assembleStagingLesson,
   parseStagingLevelResponse,
@@ -17,6 +18,9 @@ import {
   stagingSequenceContractIssues,
   stagingTokenUsage,
   STAGING_LEVEL_MAX_TOKENS,
+  SPATIAL_MOVEMENT_RENDERER_LIMITATION,
+  SPATIAL_MOVEMENT_TOPIC_ID,
+  SPATIAL_MOVEMENT_TOPIC_NAME,
   stagingValidationFailure,
   runWithBoundedJsonRetry,
   StagingLevelJsonParseError,
@@ -768,5 +772,106 @@ describe('decimal-number visual contract (providerCalls=0)', () => {
     expect(policy.requirement).toBe('required');
     expect(policy.suggestedKinds).toEqual(['fraction_bar', 'fraction_circle']);
     expect(policy.suggestedKinds).not.toContain('number_line');
+  });
+});
+
+describe('spatial-movement topic contract (providerCalls=0)', () => {
+  const topic = SPATIAL_MOVEMENT_TOPIC_NAME;
+  const objectiveText = [
+    'Se repérer sur un quadrillage.',
+    'Décrire et suivre un déplacement.',
+    'Interpréter un parcours en distinguant distance parcourue et déplacement net.',
+    'Programmer un parcours avec changements de direction.',
+  ].join('; ');
+  const metadata = stagingLevelMetadata(SPATIAL_MOVEMENT_TOPIC_ID, topic, ['o1', 'o2', 'o3', 'o4'], objectiveText);
+
+  it('uses the explicit topic contract instead of the generic circle/radius program', () => {
+    expect(stagingTopicKind(topic, 'Cercle, rayon et diamètre')).toBe('geometry');
+    expect(metadata.map((level) => level.title)).toEqual([
+      'Se repérer par coordonnées',
+      'Décrire et suivre un déplacement',
+      'Interpréter un parcours',
+      'Programmer un parcours',
+    ]);
+    expect(metadata.every((level) => level.required_geometry_kinds.length === 1 && level.required_geometry_kinds[0] === 'diagram')).toBe(true);
+    expect(metadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('circle');
+    expect(metadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('rectangle');
+  });
+
+  it('sends the authoritative progression and renderer limitation to every level prompt', () => {
+    for (const level of metadata) {
+      const prompt = stagingLevelPrompt(topic, 'CM2', 'fr', level, objectiveText);
+      expect(prompt).toContain('kind "diagram"');
+      expect(prompt).toContain(SPATIAL_MOVEMENT_RENDERER_LIMITATION);
+      expect(prompt).toContain('distance parcourue');
+      expect(prompt).toContain('déplacement net');
+      const spatialContract = prompt.split('CONTRAT SPATIAL AUTORITAIRE — ')[1]?.split('\nVisuels obligatoires')[0] ?? '';
+      expect(spatialContract).not.toContain('rayon');
+      expect(spatialContract).not.toContain('diamètre');
+      expect(prompt).toContain(JSON.stringify(STAGING_VISUAL_EXAMPLES.diagram));
+      expect(prompt).toContain('d’abord la position horizontale, puis la position verticale');
+      expect(prompt).toContain('N’introduis ni axes formels, ni vecteurs, ni repère de collège');
+    }
+  });
+
+  it('does not replace the decimal, fraction, time, or general geometry contracts', () => {
+    const unaffected = [
+      { name: 'Les nombres décimaux', objective: 'Comparer et placer des nombres décimaux.', kind: 'decimal' },
+      { name: 'Les fractions', objective: 'Comparer des fractions.', kind: 'general' },
+      { name: 'Le repérage dans le temps et les durées', objective: 'Lire et convertir des durées.', kind: 'time' },
+      { name: 'Figures planes', objective: 'Décrire un rectangle et un triangle.', kind: 'geometry' },
+    ];
+
+    for (const [index, subject] of unaffected.entries()) {
+      const otherTopicId = `unaffected-topic-${index}`;
+      const levels = stagingLevelMetadata(otherTopicId, subject.name, [], subject.objective);
+      expect(stagingTopicKind(subject.name, subject.objective)).toBe(subject.kind);
+      for (const level of levels) {
+        const prompt = stagingLevelPrompt(subject.name, 'CM2', 'fr', level, subject.objective);
+        expect(prompt).not.toContain('CONTRAT SPATIAL AUTORITAIRE');
+      }
+    }
+  });
+
+  it('validates a complete diagram example for all four levels without provider calls', () => {
+    for (const level of metadata) {
+      const candidate = structuredClone(stagingFullLevelExample(level));
+      const validation = validateStagingLevel(candidate, level, topic, 'CM2');
+      expect(validation.canonicalIssues).toEqual([]);
+      expect(validation.pedagogicalIssues).toEqual([]);
+      expect(validation.geometryIssues).toEqual([]);
+      expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds)).toEqual([]);
+    }
+  });
+
+  it('requires segments and treats arrows as optional renderer-compatible additions', () => {
+    for (const level of metadata) {
+      const prompt = stagingLevelPrompt(topic, 'CM2', 'fr', level, objectiveText);
+      expect(prompt).toContain('data.segments obligatoires');
+      expect(prompt).toContain('data.arrows facultatifs en complément des segments');
+      expect(prompt).not.toContain('segments et/ou arrows');
+      expect(prompt).not.toContain('data.lines');
+    }
+
+    const exampleData = STAGING_VISUAL_EXAMPLES.diagram.visual.data as Record<string, unknown>;
+    expect(geometryVisualDataErrors('diagram', exampleData)).toEqual([]);
+    expect(geometryVisualDataErrors('diagram', {
+      points: exampleData.points,
+      arrows: exampleData.arrows,
+      annotations: exampleData.annotations,
+    })).toEqual([
+      expect.objectContaining({ path: 'visual.data.segments' }),
+    ]);
+  });
+
+  it('rejects a generic circle-only response for every spatial level', () => {
+    for (const level of metadata) {
+      const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+      candidate.sequence[0].visual = structuredClone(STAGING_VISUAL_EXAMPLES.circle.visual);
+      candidate.sequence[1].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+      expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds)).toEqual([
+        expect.objectContaining({ message: expect.stringContaining('diagram') }),
+      ]);
+    }
   });
 });

@@ -75,6 +75,15 @@ export type StagingValidationSummary = {
 
 export type StagingTopicKind = 'decimal' | 'time' | 'geometry' | 'general';
 
+export const SPATIAL_MOVEMENT_TOPIC_ID = '0dae3396-adbf-4464-8fa5-48726069977b';
+export const SPATIAL_MOVEMENT_TOPIC_NAME = "Le repérage et déplacements dans l'espace";
+export const SPATIAL_MOVEMENT_RENDERER_LIMITATION = 'Le renderer actuel sait dessiner un diagramme de points reliés par des segments, avec des flèches et annotations complémentaires; il ne sait pas dessiner une grille autonome de cases ni des obstacles. N’annonce donc jamais une grille ou un obstacle qui n’est pas présent dans les données dessinables.';
+
+function isSpatialMovementTopic(topicId: string, topicName: string): boolean {
+  return topicId === SPATIAL_MOVEMENT_TOPIC_ID
+    || topicName.trim().toLocaleLowerCase('fr') === SPATIAL_MOVEMENT_TOPIC_NAME.toLocaleLowerCase('fr');
+}
+
 export const STAGING_SEQUENCE_BLOCK_TYPES = ['concept', 'concept', 'guided_example', 'student_try', 'mastery_check'] as const;
 export const STAGING_COMPACT_BLOCK_KEYS = ['concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check'] as const;
 export const STAGING_INTERACTIVE_TYPES = ['prediction', 'student_try', 'feedback_checkpoint'] as const;
@@ -340,6 +349,14 @@ function isTimeTopic(topicName: string, objectiveText = ''): boolean {
 }
 
 export function stagingLevelMetadata(topicId: string, topicName: string, objectiveIds: string[], objectiveText = ''): StagingLevelMetadata[] {
+  if (isSpatialMovementTopic(topicId, topicName)) {
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Se repérer par coordonnées', purpose: 'Repérer un point à partir de deux coordonnées et lire une position dans l’ordre indiqué.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['diagram'] },
+      { id: topicId + '-level-2', level_number: 2, title: 'Décrire et suivre un déplacement', purpose: 'Décrire un trajet avec une direction, un sens et un nombre de pas.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['diagram'] },
+      { id: topicId + '-level-3', level_number: 3, title: 'Interpréter un parcours', purpose: 'Lire un parcours et distinguer la distance parcourue du déplacement net.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: ['diagram'] },
+      { id: topicId + '-level-4', level_number: 4, title: 'Programmer un parcours', purpose: 'Écrire un parcours avec des changements de direction et calculer son déplacement net.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: ['diagram'] },
+    ];
+  }
   if (isDecimalTopic(topicName, objectiveText)) {
     const decimalModel = [['number_line', 'rectangle']];
     return [
@@ -378,7 +395,7 @@ type ConceptExample = Record<string, unknown> & { visual: { kind: string; purpos
 /** Canonical drawable-visual concept examples. Each one must pass the real
  * staging validators (see staging-prompt-consistency.test.ts); the prompt
  * embeds them verbatim so the provider sees exactly the accepted shapes. */
-const RAW_STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion' | 'number_line', ConceptExample> = {
+const RAW_STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion' | 'number_line' | 'diagram', ConceptExample> = {
   rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatère qui possède quatre angles droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Forme', text: 'La figure possède quatre côtés.' }, { label: 'Angles', text: 'Chaque coin forme un angle droit.' }], takeaway: 'Astuce : pense à une porte.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les côtés.', alt_text: 'Rectangle ABCD dessiné avec quatre sommets étiquetés.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
   triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle est un polygone formé de trois côtés et de trois sommets.', key_points: [{ label: 'Côtés', text: 'Trois segments ferment cette figure.' }, { label: 'Sommets', text: 'Chaque jonction constitue un sommet.' }], takeaway: 'Astuce : un doigt par coin.', visual: { kind: 'polygon', purpose: 'Nommer les côtés du triangle.', alt_text: 'Triangle ABC dessiné avec trois sommets étiquetés.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
   circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points d’un cercle sont à la même distance du centre O. Le diamètre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Un rayon rejoint le bord.' }, { label: 'Diamètre', text: 'Un diamètre traverse le milieu.' }], takeaway: 'Astuce : pense à une roue de vélo.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamètre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamètre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
@@ -388,6 +405,7 @@ const RAW_STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 
   timeline: { id: 'timeline-concept', type: 'concept', title: 'Ordre des unités', content: 'Les unités de durée se suivent de la seconde au jour. Une frise aide à comparer leur ordre.', key_points: [{ label: 'Ordre', text: 'Une minute contient soixante secondes.' }, { label: 'Repère', text: 'Une heure contient soixante minutes.' }], takeaway: 'Astuce : ordonne les cartes avant d’agir.', visual: { kind: 'timeline', purpose: 'Comparer l’ordre des unités de durée.', alt_text: 'Frise des unités seconde, minute et heure.', data: { units: ['seconde', 'minute', 'heure'] } } },
   unit_conversion: { id: 'unit-conversion-concept', type: 'concept', title: 'Convertir une durée', content: 'Pour convertir une durée, on relie les unités par leur facteur. Une minute correspond à 60 secondes.', key_points: [{ label: 'Facteur', text: 'Une minute vaut soixante secondes.' }, { label: 'Sens', text: 'Multiplier donne davantage de secondes.' }], takeaway: 'Astuce : choisis avant d’agir.', visual: { kind: 'unit_conversion', purpose: 'Montrer le facteur entre minute et seconde.', alt_text: 'Conversion d’une minute en secondes.', data: { from: 'minute', to: 'seconde', factor: 60 } } },
   number_line: { id: 'number-line-concept', type: 'concept', title: 'Placer un nombre décimal', content: 'Sur une droite graduée, chaque intervalle représente une même valeur. Un nombre décimal se place entre deux repères selon sa partie entière et sa partie décimale.', key_points: [{ label: 'Repères', text: 'Les graduations gardent un même écart.' }, { label: 'Position', text: 'La virgule indique la place du nombre.' }], takeaway: 'Astuce : avance graduation par graduation.', visual: { kind: 'number_line', purpose: 'Placer un nombre décimal entre deux repères.', alt_text: 'Droite graduée de zéro à deux avec un repère décimal.', data: { min: 0, max: 2, step: 0.1, value: 1.4 } } },
+  diagram: { id: 'spatial-path-concept', type: 'concept', title: 'Lire un parcours', content: 'Un parcours se lit en suivant les points dans l’ordre. Une flèche indique le sens du déplacement entre deux positions.', key_points: [{ label: 'Ordre', text: 'Lis départ puis arrivée.' }, { label: 'Sens', text: 'Suis la flèche vers l’arrivée.' }], takeaway: 'Astuce : imagine une carte.', visual: { kind: 'diagram', purpose: 'Montrer des positions et un trajet orienté.', alt_text: 'Diagramme de points reliés par un trajet orienté.', data: { points: [{ x: 45, y: 150, label: 'A' }, { x: 145, y: 150, label: 'B' }, { x: 245, y: 70, label: 'C' }], segments: [{ from: 'A', to: 'B' }, { from: 'B', to: 'C' }], arrows: [{ from: 'A', to: 'B' }, { from: 'B', to: 'C' }], annotations: [{ x: 35, y: 185, text: 'départ' }, { x: 220, y: 45, text: 'arrivée' }] } } },
 };
 
 /** Concept key order shown to the provider: the deeply nested visual comes
@@ -444,7 +462,11 @@ export const MASTERY_QUESTION_RULE = 'mastery_check.questions contient 1 à 4 qu
 export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<string, unknown> {
   const kinds = stagingPromptVisualKinds(metadata);
   const first = kinds[0] ? STAGING_VISUAL_EXAMPLES[kinds[0] as keyof typeof STAGING_VISUAL_EXAMPLES] : undefined;
-  const second = kinds[1] ? STAGING_VISUAL_EXAMPLES[kinds[1] as keyof typeof STAGING_VISUAL_EXAMPLES] : undefined;
+  const second = kinds[1]
+    ? STAGING_VISUAL_EXAMPLES[kinds[1] as keyof typeof STAGING_VISUAL_EXAMPLES]
+    : metadata.level_number === 1 && kinds[0]
+      ? STAGING_VISUAL_EXAMPLES[kinds[0] as keyof typeof STAGING_VISUAL_EXAMPLES]
+      : undefined;
   const firstBlock = first
     ? orderConceptKeysVisualFirst({ ...first, id: 'c1' })
     : { id: 'c1', type: 'concept', title: 'Repère essentiel', content: 'Cette notion se comprend en observant les informations utiles et leur relation.', key_points: [{ label: 'Repère', text: 'Une information précise guide le raisonnement.' }, { label: 'Lien', text: 'Les éléments se relient pour former une méthode.' }], takeaway: 'Astuce : pense à une carte.' };
@@ -501,6 +523,7 @@ export function assembleStagingSequenceFromCompact(value: Record<string, unknown
 
 const VISUAL_FIELD_RULES = [
   'Champs exacts exigés par le validateur pour visual.data:',
+  '- diagram: kind "diagram", data.points = au moins 2 objets {x:number,y:number,label:string}; data.segments est obligatoire et contient au moins une relation {from,to} reliant des labels de points existants; data.arrows est facultatif et complète les segments pour indiquer le sens du parcours; annotations peut fournir des repères lisibles.',
   '- rectangle: kind "rectangle", data.shape "rectangle", data.vertices = exactement 4 objets {x:number,y:number,label:string}, data.side_labels = 4 objets {from,to,label}.',
   '- triangle: kind "polygon", data.shape "triangle", data.vertices = exactement 3 objets {x,y,label}, data.side_labels = 3 objets {from,to,label}.',
   '- circle: kind "circle", data.center = {x:number,y:number,label}, data.radius = nombre > 0 ET data.diameter = nombre > 0 (diamètre = 2 × rayon).',
@@ -525,11 +548,15 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     && metadata.required_geometry_kinds.includes('triangle')
     ? 'NIVEAU 1 GÉOMÉTRIE — couverture obligatoire, pas un choix entre figures: sequence[0] est un concept avec visual.kind="rectangle" et quatre sommets étiquetés; sequence[1] est un AUTRE concept avec visual.kind="polygon", visual.data.shape="triangle", exactement trois sommets {x:number,y:number,label:string} et trois side_labels {from,to,label}. Les deux figures sont exigées dans CE niveau. Deux rectangles, un carré ou la simple mention du triangle dans le texte, une question ou alt_text ne remplacent pas le dessin du triangle. Utilise le bloc triangle complet de l’exemple ci-dessous comme contrat de structure, avec des données cohérentes avec ton explication. Avant de terminer la réponse initiale, vérifie que les deux visual.data sont complets et que le triangle porte bien data.shape="triangle"; aucun dessin manquant ne sera ajouté après la réponse, aucun autre niveau ne compense cette omission.'
     : '';
+  const spatialContract = isSpatialMovementTopic(metadata.id.replace(/-level-[1-4]$/, ''), topicName)
+    ? `CONTRAT SPATIAL AUTORITAIRE — ${SPATIAL_MOVEMENT_RENDERER_LIMITATION} Pour CM2, explique une coordonnée simplement comme deux nombres lus dans l’ordre : d’abord la position horizontale, puis la position verticale. Utilise uniquement kind "diagram" avec data.points (coordonnées numériques et labels), data.segments obligatoires reliant les labels de points existants, data.arrows facultatifs en complément des segments, et des annotations explicites. N’introduis ni axes formels, ni vecteurs, ni repère de collège. La progression est : repérer une position; décrire et suivre un déplacement; interpréter un parcours; programmer un parcours avec changements de direction. Distingue toujours distance parcourue (somme des segments) et déplacement net (du départ à l’arrivée).`
+    : '';
   return [
     'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4 — PROMPT ' + STAGING_PROMPT_VERSION,
     'Sujet: ' + topicName + '; niveau scolaire: ' + grade + '; langue: ' + language + '.',
     'But de ce niveau: ' + metadata.purpose,
     'Objectifs autorisés: ' + (objectiveText || 'aucun objectif précisé'),
+    spatialContract,
     required,
     levelOneGeometryCoverage,
     STAGING_JSON_OUTPUT_RULE + ' Le mode response_format={"type":"json_object"} est actif.',
