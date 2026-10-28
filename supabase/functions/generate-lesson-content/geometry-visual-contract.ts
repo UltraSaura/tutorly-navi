@@ -1,3 +1,6 @@
+import { solidVisualDataErrors } from '../../../shared/solid-visual-contract.ts';
+import { solidNetErrors } from '../../../shared/solid-net-contract.ts';
+
 export type GeometryContractIssue = { path: string; code: string; message: string };
 type Obj = Record<string, unknown>;
 const obj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -20,6 +23,7 @@ const points = (data: Obj, field: string, min: number, path: string, aliases: st
 };
 
 export function geometryVisualDataErrors(kind: string, data: unknown, basePath = 'visual.data'): GeometryContractIssue[] {
+  if (kind === 'geometric_solid') return solidVisualDataErrors(data, basePath);
   if (!['clock', 'timeline', 'unit_conversion', 'diagram', 'angle', 'circle', 'polygon', 'symmetry', 'triangle', 'rectangle'].includes(kind)) return [];
   if (!obj(data)) return [issue(basePath, 'missing_geometry_data', `Visual kind ${kind} requires complete renderable data.`)];
   const d = data;
@@ -52,6 +56,7 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
       const errors = points(d, 'points', 1, basePath);
       const relations = [...(Array.isArray(d.segments) ? d.segments : []), ...(Array.isArray(d.lines) ? d.lines : [])];
       if (!relations.length) errors.push(issue(`${basePath}.segments`, 'missing_geometry_data', 'A diagram requires at least one segment or line relation.'));
+      if (typeof d.netKind === 'string') errors.push(...solidNetErrors(d, basePath));
       return errors;
     }
     case 'angle': {

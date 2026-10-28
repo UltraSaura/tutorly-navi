@@ -61,6 +61,7 @@ import LearningContentManagement from "./components/admin/LearningContentManagem
 import CurriculumManager from "./components/admin/CurriculumManager";
 import GeneratedLessonsPage from "./components/admin/learning/GeneratedLessonsPage";
 import StagingLessonWorkflowPage, { StagingLessonDraftPreviewPage } from "./pages/admin/StagingLessonWorkflowPage";
+import SolidVisualGalleryPage from "./pages/admin/SolidVisualGalleryPage";
 import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
@@ -248,6 +249,9 @@ const App = () => {
                         {/* Management Dashboard (dev-only until a proper admin guard is added) */}
                         {isDev && (
                           <Route path="/management" element={<ManagementDashboard />} />
+                        )}
+                        {isDev && (
+                          <Route path="/dev/solid-gallery" element={<SolidVisualGalleryPage />} />
                         )}
                         
                         {/* Admin Panel Routes */}
