@@ -235,7 +235,7 @@ function GridSymmetry({ d }: { d: Data }) {
   </svg>;
 }
 function Symmetry({ d }: { d: Data }) { const gridSvg = GridSymmetry({ d }); if (gridSvg) return gridSvg; const rawOriginal = d.original ?? d.figure; const rawReflected = d.reflected ?? d.symmetric ?? d.symmetric_figure; const original = points(rawOriginal); const reflected = points(rawReflected); const rawAxis = point(d.axis); const coordinateArrays = (value: unknown): number[][] => Array.isArray(value) ? value.filter((v): v is number[] => Array.isArray(v) && typeof v[0] === 'number' && typeof v[1] === 'number') : []; const originalGrid = coordinateArrays(rawOriginal); const reflectedGrid = coordinateArrays(rawReflected); const allX = [...originalGrid, ...reflectedGrid].map((v) => v[0]); const maxX = Math.max(...allX, 0); const minX = Math.min(...allX, 0); const scale = (x: number) => 35 + ((x - minX) / Math.max(1, maxX - minX)) * 230; const gridOriginal = original.length >= 2 ? original : originalGrid.map(([x, y]) => ({ x: scale(x), y: 180 - y * 35 })); const gridReflected = reflected.length >= 2 ? reflected : reflectedGrid.map(([x, y]) => ({ x: scale(x), y: 180 - y * 35 })); const axis = rawAxis || (typeof d.axis === 'string' && d.axis.toLowerCase().includes('vertical') ? { x: scale((Math.min(...allX, 0) + Math.max(...allX, 0)) / 2), y: 0 } : null); if (gridOriginal.length < 2 || gridReflected.length < 2 || !axis) return fallback('La grille, la figure et l’axe de symétrie ne sont pas tous disponibles.', 'Symétrie incomplète'); const grid = data(d.grid); const gridSize = n(grid.size ?? grid.width, Math.max(4, Math.ceil(maxX - minX))); return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label="Figure de symétrie">{(grid === d.grid || d.grid === true) && <>{Array.from({length: Math.min(12, gridSize + 1)}, (_, i) => <line key={`grid-v-${i}`} x1={20 + i * (260 / gridSize)} y1="20" x2={20 + i * (260 / gridSize)} y2="180" stroke="#E2E8F0"/>)}{Array.from({length: 9}, (_, i) => <line key={`grid-h-${i}`} x1="20" y1={20 + i * 20} x2="280" y2={20 + i * 20} stroke="#E2E8F0"/>)}</>}<line x1={axis.x} y1="15" x2={axis.x} y2="185" stroke="#F59E0B" strokeWidth="3" strokeDasharray="7 5"/><polygon points={gridOriginal.map(p => `${p.x},${p.y}`).join(' ')} fill="#CCFBF1" stroke="#3448A5" strokeWidth="3"/><polygon points={gridReflected.map(p => `${p.x},${p.y}`).join(' ')} fill="#DBEAFE" stroke="#0F766E" strokeWidth="3"/></svg>; }
-function Solid({ d }: { d: Data }) {
+function LegacySolid({ d }: { d: Data }) {
   const errors = solidVisualDataErrors(d);
   if (errors.length > 0) return fallback('Le solide ne peut pas être dessiné avec ces données.', 'Solide indisponible');
   const solid = d as SolidVisualData;
@@ -251,6 +251,32 @@ function Solid({ d }: { d: Data }) {
   }
   if (solid.solidType === 'rectangular_prism') return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label={label}>{scaleNote}<path d="M55 65 L145 35 L235 65 L145 95 Z M55 145 L145 115 L235 145 L145 175 Z" fill="#cffafe" stroke="#0e7490" strokeWidth="3"/><path d="M55 65 V145 M145 35 V115 M235 65 V145 M145 95 V175" fill="none" stroke="#0e7490" strokeWidth="3"/><path d="M55 65 L145 95 L235 65 M55 145 L145 175 L235 145" fill="none" stroke="#0e7490" strokeWidth="2" strokeDasharray="6 5"/><text x="150" y="193" textAnchor="middle" fontSize="12">faces rectangulaires</text></svg>;
   return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label={label}>{scaleNote}<path d="M70 60 L150 25 L230 60 L150 95 Z M70 140 L150 105 L230 140 L150 175 Z" fill="#ccfbf1" stroke="#0f766e" strokeWidth="3"/><path d="M70 60 V140 M150 25 V105 M230 60 V140 M150 95 V175" fill="none" stroke="#0f766e" strokeWidth="3"/><path d="M70 60 L150 95 L230 60" fill="none" stroke="#0f766e" strokeWidth="2" strokeDasharray="6 5"/><text x="150" y="193" textAnchor="middle" fontSize="12">6 faces carrées</text></svg>;
+}
+const solidBasePoints = (base: SolidVisualData['base'], cx: number, cy: number, rx: number, ry: number) => {
+  if (base === 'square') return [{ x: cx - rx, y: cy - ry }, { x: cx + rx, y: cy - ry }, { x: cx + rx, y: cy + ry }, { x: cx - rx, y: cy + ry }];
+  if (base === 'rectangle') return [{ x: cx - rx, y: cy - ry * 0.7 }, { x: cx + rx, y: cy - ry * 0.7 }, { x: cx + rx, y: cy + ry * 0.7 }, { x: cx - rx, y: cy + ry * 0.7 }];
+  const sides = base === 'triangle' ? 3 : base === 'pentagon' ? 5 : 0;
+  return Array.from({ length: sides }, (_, index) => { const angle = -Math.PI / 2 + (index * 2 * Math.PI) / sides; return { x: cx + rx * Math.cos(angle), y: cy + ry * Math.sin(angle) }; });
+};
+const pointsAttr = (points: Array<{ x: number; y: number }>) => points.map((point) => `${point.x},${point.y}`).join(' ');
+function Solid({ d }: { d: Data }) {
+  const errors = solidVisualDataErrors(d);
+  if (errors.length > 0) return fallback('Le solide ne peut pas être dessiné avec ces données.', 'Solide indisponible');
+  const solid = d as SolidVisualData;
+  const label = { cube: 'Cube', rectangular_prism: 'Pavé droit', sphere: 'Boule', cone: 'Cône', cylinder: 'Cylindre', pyramid: `Pyramide à base ${solid.base}`, prism: `Prisme droit à base ${solid.base}` }[solid.solidType];
+  const scaleNote = <text x="150" y="12" textAnchor="middle" fontSize="9" fill="#667085">schéma non à l’échelle</text>;
+  if (solid.solidType === 'pyramid' || solid.solidType === 'prism') {
+    const base = solidBasePoints(solid.base, 150, solid.solidType === 'pyramid' ? 138 : 100, 78, 30);
+    if (base.length === 0) return fallback('Cette base n’est pas supportée par le renderer.', 'Solide indisponible');
+    const offset = solid.solidType === 'prism' ? 42 : 0;
+    const second = base.map((point) => ({ x: point.x + 42, y: point.y - offset }));
+    if (solid.solidType === 'pyramid') {
+      const apex = { x: 150, y: 28 };
+      return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label={label}>{scaleNote}<polygon points={pointsAttr(base)} fill="#fce7f3" stroke="#be185d" strokeWidth="3"/>{base.map((point, index) => <line key={`pyramid-edge-${index}`} data-base-edge="pyramid" x1={apex.x} y1={apex.y} x2={point.x} y2={point.y} stroke="#be185d" strokeWidth="3" strokeDasharray={index === base.length - 1 ? '6 5' : undefined}/>)}<text x="150" y="193" textAnchor="middle" fontSize="12">base {solid.base}</text></svg>;
+    }
+    return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label={label}>{scaleNote}<polygon points={pointsAttr(base)} fill="#ede9fe" stroke="#6d28d9" strokeWidth="3"/><polygon points={pointsAttr(second)} fill="#ddd6fe" stroke="#6d28d9" strokeWidth="3"/>{base.map((point, index) => <line key={`prism-edge-${index}`} data-base-edge="prism" x1={point.x} y1={point.y} x2={second[index].x} y2={second[index].y} stroke="#6d28d9" strokeWidth="3" strokeDasharray={index === base.length - 1 ? '6 5' : undefined}/>)}<text x="150" y="190" textAnchor="middle" fontSize="12">bases {solid.base}</text></svg>;
+  }
+  return <LegacySolid d={d}/>;
 }
 function Geometry({ kind, d }: { kind: string; d: Data }) { if (kind === 'diagram') return <Diagram d={d}/>; if (kind === 'angle') return <Angle d={d}/>; if (kind === 'circle') return <Circle d={d}/>; if (['triangle','rectangle','polygon'].includes(kind)) return <Polygon d={d} kind={kind}/>; if (kind === 'symmetry') return <Symmetry d={d}/>; if (kind === 'geometric_solid') return <Solid d={d}/>; return <svg viewBox="0 0 300 180" className="mx-auto w-full max-w-sm" role="img" aria-label={kind === 'solid_section' ? 'Solide avec plan de coupe' : kind === 'coordinate_plane' ? 'Repère cartésien' : 'Figure géométrique'}>{kind==='coordinate_plane'?<><line x1="25" y1="90" x2="275" y2="90" stroke="#0f766e" strokeWidth="2"/><line x1="150" y1="165" x2="150" y2="15" stroke="#0f766e" strokeWidth="2"/></>:<path d="M70 55 150 20 230 55 150 90Z M70 55V140L150 175V90 M230 55V140L150 175" fill="#ccfbf1" stroke="#0f766e" strokeWidth="3"/>}</svg>; }
 /** French unit plural: 60 minute → 60 minutes; units already ending in s/x stay unchanged. */

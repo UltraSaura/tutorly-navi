@@ -28,6 +28,23 @@ describe('geometric_solid renderer parity', () => {
     expect(markup).not.toContain('6 faces carrées');
   });
 
+  it.each(['triangle', 'square', 'rectangle', 'pentagon'] as const)('renders the declared pyramid base: %s', (base) => {
+    const markup = renderToStaticMarkup(<PedagogicalVisual block={block({ solidType: 'pyramid', base, dimensions: { width: 4, height: 5, depth: 4 } })} />);
+    expect(markup).toContain(`base ${base}`);
+    expect((markup.match(/data-base-edge="pyramid"/g) ?? []).length).toBe(base === 'triangle' ? 3 : base === 'pentagon' ? 5 : 4);
+  });
+
+  it.each(['triangle', 'square', 'rectangle', 'pentagon'] as const)('renders the declared prism base: %s', (base) => {
+    const markup = renderToStaticMarkup(<PedagogicalVisual block={block({ solidType: 'prism', base, dimensions: { width: 4, height: 5, depth: 4 } })} />);
+    expect(markup).toContain(`bases ${base}`);
+    expect((markup.match(/data-base-edge="prism"/g) ?? []).length).toBe(base === 'triangle' ? 3 : base === 'pentagon' ? 5 : 4);
+  });
+
+  it('rejects a base outside the renderer contract', () => {
+    const markup = renderToStaticMarkup(<PedagogicalVisual block={block({ solidType: 'pyramid', base: 'hexagon', dimensions: { width: 4, height: 5, depth: 4 } })} />);
+    expect(markup).toContain('Solide indisponible');
+  });
+
   it('does not render a structurally invalid net', () => {
     const markup = renderToStaticMarkup(<PedagogicalVisual block={{ ...block(INVALID_DISJOINT_CUBE_NET), visual: { kind: 'diagram', data: INVALID_DISJOINT_CUBE_NET, alt_text: 'Patron' } }} />);
     expect(markup).toContain('Patron indisponible');
