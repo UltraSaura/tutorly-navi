@@ -26,8 +26,8 @@ export default function SolidVisualGalleryPage() {
       </article>)}
     </section>
     <section className={`grid gap-4 ${mobilePreview ? 'grid-cols-1' : 'lg:grid-cols-3'}`} aria-label="Patrons">
-      <article className="rounded-xl border bg-white p-3 shadow-sm"><h2 className="mb-2 font-semibold">Patron de cube valide</h2><PedagogicalVisual block={card('Patron de cube valide', 'diagram', VALID_CUBE_NET, 'Patron vérifié structurellement.')} /></article>
-      <article className="rounded-xl border bg-white p-3 shadow-sm"><h2 className="mb-2 font-semibold">Patron de pavé valide</h2><PedagogicalVisual block={card('Patron de pavé valide', 'diagram', VALID_RECTANGULAR_PRISM_NET, 'Patron vérifié structurellement.')} /></article>
+      <article className="rounded-xl border bg-white p-3 shadow-sm"><h2 className="mb-2 font-semibold">Fixture structurelle de cube</h2><PedagogicalVisual block={card('Fixture structurelle de cube', 'diagram', VALID_CUBE_NET, 'Structure plane acceptée ; pliage 3D non démontré.')} /></article>
+      <article className="rounded-xl border bg-white p-3 shadow-sm"><h2 className="mb-2 font-semibold">Fixture structurelle de pavé</h2><PedagogicalVisual block={card('Fixture structurelle de pavé', 'diagram', VALID_RECTANGULAR_PRISM_NET, 'Structure plane acceptée ; pliage 3D non démontré.')} /></article>
       <article className="rounded-xl border bg-white p-3 shadow-sm"><h2 className="mb-2 font-semibold">Six carrés disjoints</h2><PedagogicalVisual block={card('Patron invalide', 'diagram', INVALID_DISJOINT_CUBE_NET, 'Rejeté par le contrat structurel.')} /></article>
     </section>
   </main>;

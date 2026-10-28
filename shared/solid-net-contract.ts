@@ -98,6 +98,19 @@ const cubePoints: SolidNetPoint[] = [...row('t', 0, 4, 50), ...row('m', 50, 4, 5
 const VALID_CUBE_NET_SEGMENTS = [{ from: 'm0', to: 'm1' }, { from: 'm1', to: 'm2' }, { from: 'm2', to: 'm3' }, { from: 'm3', to: 'm4' }, { from: 'm0', to: 'b0' }, { from: 'm1', to: 'b1' }, { from: 'm2', to: 'b2' }, { from: 'm3', to: 'b3' }, { from: 'm4', to: 'b4' }, { from: 'b0', to: 'b1' }, { from: 'b1', to: 'b2' }, { from: 'b2', to: 'b3' }, { from: 'b3', to: 'b4' }, { from: 't1', to: 't2' }, { from: 't1', to: 'm1' }, { from: 't2', to: 'm2' }, { from: 'd1', to: 'b1' }, { from: 'd2', to: 'b2' }, { from: 'd1', to: 'd2' }];
 export const VALID_CUBE_NET: SolidNetData = { netKind: 'cube', points: cubePoints, segments: VALID_CUBE_NET_SEGMENTS, faces: [{ id: 'f1', points: ['m0', 'm1', 'b1', 'b0'] }, { id: 'f2', points: ['m1', 'm2', 'b2', 'b1'] }, { id: 'f3', points: ['m2', 'm3', 'b3', 'b2'] }, { id: 'f4', points: ['m3', 'm4', 'b4', 'b3'] }, { id: 'f5', points: ['t1', 't2', 'm2', 'm1'] }, { id: 'f6', points: ['b1', 'b2', 'd2', 'd1'] }] };
 export const INVALID_DISJOINT_CUBE_NET: SolidNetData = { ...VALID_CUBE_NET, faces: VALID_CUBE_NET.faces.map((face, index) => ({ ...face, id: `disjoint-${index}`, points: face.points.map((_, pointIndex) => `d${index}-${pointIndex}`) })), points: Array.from({ length: 24 }, (_, index) => ({ id: `d${Math.floor(index / 4)}-${index % 4}`, x: (index % 4) * 50, y: Math.floor(index / 4) * 50 })) };
+export const INVALID_CYCLE_WITH_DISCONNECTED_PAIR: SolidNetData = {
+  netKind: 'cube',
+  points: [
+    { id: 'a', x: 0, y: 0 }, { id: 'b', x: 1, y: 0 }, { id: 'c', x: 1, y: 1 }, { id: 'd', x: 0, y: 1 },
+    { id: 'e', x: 2, y: 0 }, { id: 'f', x: 2, y: 1 }, { id: 'g', x: 0, y: 2 }, { id: 'h', x: 1, y: 2 }, { id: 'i', x: 2, y: 2 },
+    { id: 'j', x: 10, y: 0 }, { id: 'k', x: 11, y: 0 }, { id: 'l', x: 11, y: 1 }, { id: 'm', x: 10, y: 1 }, { id: 'n', x: 12, y: 0 }, { id: 'o', x: 12, y: 1 },
+  ],
+  faces: [
+    { id: 'block-1', points: ['a', 'b', 'c', 'd'] }, { id: 'block-2', points: ['b', 'e', 'f', 'c'] },
+    { id: 'block-3', points: ['d', 'c', 'h', 'g'] }, { id: 'block-4', points: ['c', 'f', 'i', 'h'] },
+    { id: 'separate-1', points: ['j', 'k', 'l', 'm'] }, { id: 'separate-2', points: ['k', 'n', 'o', 'l'] },
+  ],
+};
 export const INVALID_CONNECTED_RECTANGLE_CUBE_NET: SolidNetData = { ...VALID_CUBE_NET, points: VALID_CUBE_NET.points.map((point) => ({ ...point, x: point.x + point.y * 0.6, y: point.y * 0.8 })) };
 export const INVALID_OVERLAPPING_CUBE_NET: SolidNetData = { ...VALID_CUBE_NET, faces: [...VALID_CUBE_NET.faces.slice(0, 5), { ...VALID_CUBE_NET.faces[0], id: 'overlap' }] };
 export const VALID_RECTANGULAR_PRISM_NET: SolidNetData = { netKind: 'rectangular_prism', dimensions: { width: 60, height: 50, depth: 50 }, segments: [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }, { from: 'c', to: 'd' }, { from: 'd', to: 'e' }, { from: 'a', to: 'f' }, { from: 'b', to: 'g' }, { from: 'c', to: 'h' }, { from: 'd', to: 'i' }, { from: 'e', to: 'j' }, { from: 'f', to: 'g' }, { from: 'g', to: 'h' }, { from: 'h', to: 'i' }, { from: 'i', to: 'j' }, { from: 'a', to: 'p' }, { from: 'p', to: 'q' }, { from: 'q', to: 'f' }, { from: 'e', to: 'r' }, { from: 'r', to: 's' }, { from: 's', to: 'j' }], points: [{ id: 'a', x: 0, y: 50 }, { id: 'b', x: 60, y: 50 }, { id: 'c', x: 120, y: 50 }, { id: 'd', x: 180, y: 50 }, { id: 'e', x: 240, y: 50 }, { id: 'f', x: 0, y: 100 }, { id: 'g', x: 60, y: 100 }, { id: 'h', x: 120, y: 100 }, { id: 'i', x: 180, y: 100 }, { id: 'j', x: 240, y: 100 }, { id: 'p', x: -50, y: 100 }, { id: 'q', x: -50, y: 50 }, { id: 'r', x: 290, y: 50 }, { id: 's', x: 290, y: 100 }], faces: [{ id: 'front', points: ['a', 'b', 'g', 'f'] }, { id: 'side1', points: ['b', 'c', 'h', 'g'] }, { id: 'side2', points: ['c', 'd', 'i', 'h'] }, { id: 'side3', points: ['d', 'e', 'j', 'i'] }, { id: 'top', points: ['a', 'f', 'p', 'q'] }, { id: 'bottom', points: ['e', 'j', 's', 'r'] }] };

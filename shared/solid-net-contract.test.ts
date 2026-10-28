@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   INVALID_CONNECTED_RECTANGLE_CUBE_NET,
+  INVALID_CYCLE_WITH_DISCONNECTED_PAIR,
   INVALID_DIMENSION_RECTANGULAR_PRISM_NET,
   INVALID_DISJOINT_CUBE_NET,
   INVALID_OVERLAPPING_CUBE_NET,
@@ -26,6 +27,7 @@ describe('solid net contract', () => {
 
   it('checks face-graph connectivity rather than shared-edge counts', () => {
     expect(solidNetErrors(INVALID_DISJOINT_CUBE_NET).some((error) => error.code === 'disconnected_solid_net')).toBe(true);
+    expect(solidNetErrors(INVALID_CYCLE_WITH_DISCONNECTED_PAIR).some((error) => error.code === 'disconnected_solid_net')).toBe(true);
   });
 
   it('rejects overlapping faces', () => {
