@@ -77,7 +77,7 @@ export type StagingTopicKind = 'decimal' | 'time' | 'geometry' | 'general';
 
 export const SPATIAL_MOVEMENT_TOPIC_ID = '0dae3396-adbf-4464-8fa5-48726069977b';
 export const SPATIAL_MOVEMENT_TOPIC_NAME = "Le repérage et déplacements dans l'espace";
-export const SPATIAL_MOVEMENT_RENDERER_LIMITATION = 'Le renderer actuel sait dessiner un diagramme de points, segments, flèches et annotations; il ne sait pas dessiner une grille autonome de cases ni des obstacles. N’annonce donc jamais une grille ou un obstacle qui n’est pas présent dans les données dessinables.';
+export const SPATIAL_MOVEMENT_RENDERER_LIMITATION = 'Le renderer actuel sait dessiner un diagramme de points reliés par des segments, avec des flèches et annotations complémentaires; il ne sait pas dessiner une grille autonome de cases ni des obstacles. N’annonce donc jamais une grille ou un obstacle qui n’est pas présent dans les données dessinables.';
 
 function isSpatialMovementTopic(topicId: string, topicName: string): boolean {
   return topicId === SPATIAL_MOVEMENT_TOPIC_ID
@@ -523,7 +523,7 @@ export function assembleStagingSequenceFromCompact(value: Record<string, unknown
 
 const VISUAL_FIELD_RULES = [
   'Champs exacts exigés par le validateur pour visual.data:',
-  '- diagram: kind "diagram", data.points = au moins 2 objets {x:number,y:number,label:string}; data.segments ou data.lines contient au moins une relation {from,to}; data.arrows peut indiquer le sens du parcours; annotations peut fournir des repères lisibles.',
+  '- diagram: kind "diagram", data.points = au moins 2 objets {x:number,y:number,label:string}; data.segments est obligatoire et contient au moins une relation {from,to} reliant des labels de points existants; data.arrows est facultatif et complète les segments pour indiquer le sens du parcours; annotations peut fournir des repères lisibles.',
   '- rectangle: kind "rectangle", data.shape "rectangle", data.vertices = exactement 4 objets {x:number,y:number,label:string}, data.side_labels = 4 objets {from,to,label}.',
   '- triangle: kind "polygon", data.shape "triangle", data.vertices = exactement 3 objets {x,y,label}, data.side_labels = 3 objets {from,to,label}.',
   '- circle: kind "circle", data.center = {x:number,y:number,label}, data.radius = nombre > 0 ET data.diameter = nombre > 0 (diamètre = 2 × rayon).',
@@ -549,7 +549,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     ? 'NIVEAU 1 GÉOMÉTRIE — couverture obligatoire, pas un choix entre figures: sequence[0] est un concept avec visual.kind="rectangle" et quatre sommets étiquetés; sequence[1] est un AUTRE concept avec visual.kind="polygon", visual.data.shape="triangle", exactement trois sommets {x:number,y:number,label:string} et trois side_labels {from,to,label}. Les deux figures sont exigées dans CE niveau. Deux rectangles, un carré ou la simple mention du triangle dans le texte, une question ou alt_text ne remplacent pas le dessin du triangle. Utilise le bloc triangle complet de l’exemple ci-dessous comme contrat de structure, avec des données cohérentes avec ton explication. Avant de terminer la réponse initiale, vérifie que les deux visual.data sont complets et que le triangle porte bien data.shape="triangle"; aucun dessin manquant ne sera ajouté après la réponse, aucun autre niveau ne compense cette omission.'
     : '';
   const spatialContract = isSpatialMovementTopic(metadata.id.replace(/-level-[1-4]$/, ''), topicName)
-    ? `CONTRAT SPATIAL AUTORITAIRE — ${SPATIAL_MOVEMENT_RENDERER_LIMITATION} Pour CM2, explique une coordonnée simplement comme deux nombres lus dans l’ordre : d’abord la position horizontale, puis la position verticale. Utilise uniquement kind "diagram" avec data.points (coordonnées numériques et labels), data.segments et/ou data.arrows reliant les labels, plus des annotations explicites. N’introduis ni axes formels, ni vecteurs, ni repère de collège. La progression est : repérer une position; décrire et suivre un déplacement; interpréter un parcours; programmer un parcours avec changements de direction. Distingue toujours distance parcourue (somme des segments) et déplacement net (du départ à l’arrivée).`
+    ? `CONTRAT SPATIAL AUTORITAIRE — ${SPATIAL_MOVEMENT_RENDERER_LIMITATION} Pour CM2, explique une coordonnée simplement comme deux nombres lus dans l’ordre : d’abord la position horizontale, puis la position verticale. Utilise uniquement kind "diagram" avec data.points (coordonnées numériques et labels), data.segments obligatoires reliant les labels de points existants, data.arrows facultatifs en complément des segments, et des annotations explicites. N’introduis ni axes formels, ni vecteurs, ni repère de collège. La progression est : repérer une position; décrire et suivre un déplacement; interpréter un parcours; programmer un parcours avec changements de direction. Distingue toujours distance parcourue (somme des segments) et déplacement net (du départ à l’arrivée).`
     : '';
   return [
     'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4 — PROMPT ' + STAGING_PROMPT_VERSION,

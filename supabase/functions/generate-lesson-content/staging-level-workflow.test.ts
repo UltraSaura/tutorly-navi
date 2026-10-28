@@ -3,6 +3,7 @@ import { geometryDraftLesson } from '../../../src/components/admin/learning/geom
 import { pedagogicalWarnings, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { ANSWER_TYPE_VALUES } from './lesson-v21-contract.ts';
 import { determineVisualRequirement } from './visual-policy.ts';
+import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import {
   assembleStagingLesson,
   parseStagingLevelResponse,
@@ -841,6 +842,26 @@ describe('spatial-movement topic contract (providerCalls=0)', () => {
       expect(validation.geometryIssues).toEqual([]);
       expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds)).toEqual([]);
     }
+  });
+
+  it('requires segments and treats arrows as optional renderer-compatible additions', () => {
+    for (const level of metadata) {
+      const prompt = stagingLevelPrompt(topic, 'CM2', 'fr', level, objectiveText);
+      expect(prompt).toContain('data.segments obligatoires');
+      expect(prompt).toContain('data.arrows facultatifs en complément des segments');
+      expect(prompt).not.toContain('segments et/ou arrows');
+      expect(prompt).not.toContain('data.lines');
+    }
+
+    const exampleData = STAGING_VISUAL_EXAMPLES.diagram.visual.data as Record<string, unknown>;
+    expect(geometryVisualDataErrors('diagram', exampleData)).toEqual([]);
+    expect(geometryVisualDataErrors('diagram', {
+      points: exampleData.points,
+      arrows: exampleData.arrows,
+      annotations: exampleData.annotations,
+    })).toEqual([
+      expect.objectContaining({ path: 'visual.data.segments' }),
+    ]);
   });
 
   it('rejects a generic circle-only response for every spatial level', () => {
