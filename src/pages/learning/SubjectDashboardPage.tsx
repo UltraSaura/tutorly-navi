@@ -7,6 +7,7 @@ import { ArrowLeft, BookOpen, Play, CheckCircle2, Lock } from 'lucide-react';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { groupRelatedLessons } from '@/utils/groupRelatedLessons';
 
 const SubjectDashboardPage = () => {
   const subjectLabel = useSubjectLabel();
@@ -82,8 +83,8 @@ const SubjectDashboardPage = () => {
       </div>
 
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {categories.map((category: any) =>
-          (category.topics || []).map((topic: any) => {
+        {groupRelatedLessons(allTopics).map((group) => {
+          const cards = group.topics.map((topic: any) => {
             const hasLesson = !!topic.has_lesson;
             const isCompleted = !!topic.lesson_completed;
             const hasVideos = (topic.video_count || 0) > 0;
@@ -161,8 +162,14 @@ const SubjectDashboardPage = () => {
                 )}
               </button>
             );
-          })
-        )}
+          });
+          return group.topics.length > 1 ? (
+            <details key={group.key} className="rounded-2xl border border-slate-200 bg-white p-3">
+              <summary className="cursor-pointer font-semibold text-slate-900">{group.label} ({group.topics.length})</summary>
+              <div className="mt-3 flex flex-col gap-2">{cards}</div>
+            </details>
+          ) : <div key={group.key}>{cards}</div>;
+        })}
       </div>
     </div>
   );
