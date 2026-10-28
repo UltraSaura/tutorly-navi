@@ -271,7 +271,6 @@ const App = () => {
                           <Route path="generated-lessons" element={<GeneratedLessonsPage />} />
                           <Route path="staging-lessons" element={<StagingLessonWorkflowPage />} />
                           <Route path="staging-lessons/preview/:versionId" element={<StagingLessonDraftPreviewPage />} />
-                          <Route path="solid-visual-gallery" element={<SolidVisualGalleryPage />} />
                           <Route path="exams" element={<ExamAnnales />} />
                           <Route path="recent-updates" element={<RecentUpdates />} />
                           <Route path="settings" element={<AdminSettings />} />
