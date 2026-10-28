@@ -1,0 +1,39 @@
+name: Private beta Android candidate
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [development]
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      - run: npm run build:beta
+      - run: npm run sync:beta:android
+      - run: bash gradlew assembleStagingDebug bundleStagingRelease
+        working-directory: android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: private-beta-android-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            android/app/build/outputs/apk/staging/debug/*.apk
+            android/app/build/outputs/bundle/stagingRelease/*.aab
+            dist/beta-build.json
+      # Debug APK can be sideloaded by internal testers. The release AAB is
+      # UNSIGNED and must not be represented as ready for Google Play upload.

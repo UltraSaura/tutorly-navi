@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build:beta": "node scripts/build-private-beta.mjs",
+    "sync:beta:android": "bash scripts/sync-staging-native.sh android",
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
@@ -30,6 +32,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
+    "@capacitor/app": "7.1.2",
     "@capacitor/core": "^7.4.3",
     "@capacitor/ios": "^7.6.9",
     "@cortex-js/compute-engine": "^0.30.2",
@@ -109,8 +112,8 @@
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "ajv": "^6.12.6",
     "@vitejs/plugin-react-swc": "^3.5.0",
+    "ajv": "^6.12.6",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
