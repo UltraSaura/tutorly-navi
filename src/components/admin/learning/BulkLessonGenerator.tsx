@@ -20,6 +20,7 @@ interface TopicRow {
   name: string;
   lesson_content: unknown | null;
   curriculum_subject_id: string | null;
+  curriculum_country_code: string | null;
   curriculum_level_code: string | null;
 }
 
@@ -41,6 +42,7 @@ interface GenResult {
   providerCalls?: number;
   failedLevel?: number;
   failureStage?: string;
+  versionId?: string;
   httpStatus?: number;
   errorCode?: string;
   requestId?: string;
@@ -73,9 +75,9 @@ export function BulkLessonGenerator() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [filterCurriculum, setFilterCurriculum] = useState('all');
   const [filterSubject, setFilterSubject] = useState('all');
   const [filterLevel, setFilterLevel] = useState('all');
-  const [onlyMissing, setOnlyMissing] = useState(true);
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [results, setResults] = useState<GenResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -84,6 +86,7 @@ export function BulkLessonGenerator() {
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [dryRun, setDryRun] = useState(false);
   const [showLegacyControls, setShowLegacyControls] = useState(false);
+  const developerMode = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEVELOPER_MODE === 'true';
 
   useEffect(() => {
     if (!isRunning || runStartedAt === null) return;
@@ -100,7 +103,7 @@ export function BulkLessonGenerator() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
-        .select('id, name, lesson_content, curriculum_subject_id, curriculum_level_code')
+        .select('id, name, lesson_content, curriculum_subject_id, curriculum_country_code, curriculum_level_code')
         .eq('is_active', true)
         .order('name');
       if (error) throw error;
@@ -159,15 +162,21 @@ export function BulkLessonGenerator() {
     [topics],
   );
 
+  const curricula = useMemo(
+    () => [...new Set(topics.map((topic) => topic.curriculum_country_code).filter(Boolean))].sort() as string[],
+    [topics],
+  );
+
   const visible = useMemo(
     () =>
       topics.filter((t) => {
         if (filterSubject !== 'all' && t.curriculum_subject_id !== filterSubject) return false;
         if (filterLevel !== 'all' && t.curriculum_level_code !== filterLevel) return false;
-        if (onlyMissing && statusForTopic(t) !== 'none') return false;
+        if (filterCurriculum !== 'all' && t.curriculum_country_code !== filterCurriculum) return false;
+        if (statusForTopic(t) !== 'none') return false;
         return true;
       }),
-    [topics, filterSubject, filterLevel, onlyMissing, stagingStatusesByTopic],
+    [topics, filterCurriculum, filterSubject, filterLevel, stagingStatusesByTopic],
   );
 
   const toggle = (id: string) => {
@@ -223,12 +232,12 @@ export function BulkLessonGenerator() {
           providerCalls: progress.providerCalls,
           progress,
         } : result)),
-        { dryRun, dryRunContent: geometryDraftLesson, language },
+        { dryRun: developerMode && dryRun, dryRunContent: developerMode ? geometryDraftLesson : undefined, language },
       );
       setResults((previous) => previous.map((result) => {
         const workflowResult = workflowResults.find((candidate) => candidate.topicId === result.topicId);
         if (!workflowResult) return result;
-        if (workflowResult.status === 'saved') return { ...result, status: 'saved', providerCalls: result.providerCalls ?? (dryRun ? 0 : 4) };
+        if (workflowResult.status === 'saved') return { ...result, status: 'saved', versionId: workflowResult.version?.id, providerCalls: result.providerCalls ?? (developerMode && dryRun ? 0 : 4) };
         return {
           ...result,
           status: 'failed',
@@ -327,7 +336,7 @@ export function BulkLessonGenerator() {
       <DialogTrigger asChild>
         <Button variant="outline">
           <BookOpen className="mr-2 h-4 w-4" />
-          {ui("Générer des leçons")}
+          {ui("Ouvrir le générateur")}
         </Button>
       </DialogTrigger>
 
@@ -387,14 +396,15 @@ export function BulkLessonGenerator() {
                   {r.status === 'idle' && <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-muted" />}
                   <span className="flex-1 truncate">{r.name}</span>
                   {r.progress && <span className="text-xs text-muted-foreground">Topic {r.progress.topicIndex} of {r.progress.totalTopics} · Level {r.progress.level} of 4 · Provider calls: {r.providerCalls ?? 0} · Status: {r.progress.status}</span>}
-                  {r.status === 'failed' && <span className="text-xs text-red-500">{r.topicId} · Level {r.failedLevel ?? '?'} · {r.failureStage ?? 'failed'}{r.httpStatus ? ` · HTTP ${r.httpStatus}` : ''}</span>}
-                  {visibleErrorMessage && <span title={r.technicalDetail ?? visibleErrorMessage} className="max-w-[360px] break-words text-right text-xs text-red-500">{visibleErrorMessage}</span>}
-                  {r.status === 'failed' && <span className="max-w-[360px] break-words text-right text-[11px] text-muted-foreground">{[r.errorCode, r.requestId, `providerCalls=${r.providerCalls ?? 0}`, r.technicalDetail, formatProviderDiagnostics(r.providerDiagnostics)].filter(Boolean).join(' · ')}</span>}
+                  {developerMode && r.status === 'failed' && <span className="text-xs text-red-500">{r.topicId} · Level {r.failedLevel ?? '?'} · {r.failureStage ?? 'failed'}{r.httpStatus ? ` · HTTP ${r.httpStatus}` : ''}</span>}
+                  {r.status === 'saved' && r.versionId && <Button asChild size="sm" variant="outline"><Link to={`/admin/generated-lessons?version=${encodeURIComponent(r.versionId)}`}>Voir la leçon</Link></Button>}
+                  {visibleErrorMessage && <span title={developerMode ? (r.technicalDetail ?? visibleErrorMessage) : undefined} className="max-w-[360px] break-words text-right text-xs text-red-500">{visibleErrorMessage}</span>}
+                  {developerMode && r.status === 'failed' && <span className="max-w-[360px] break-words text-right text-[11px] text-muted-foreground">{[r.errorCode, r.requestId, `providerCalls=${r.providerCalls ?? 0}`, r.technicalDetail, formatProviderDiagnostics(r.providerDiagnostics)].filter(Boolean).join(' · ')}</span>}
                 </div>
                 );
               })}
             </div>
-            {!isRunning && (
+            {!isRunning && developerMode && (
               <Button asChild variant="outline" className="mt-2 w-full">
                 <Link to="/admin/generated-lessons?workflow=staging">Voir les versions staging</Link>
               </Button>
@@ -415,6 +425,16 @@ export function BulkLessonGenerator() {
         ) : (
           <>
             <div className="flex flex-wrap gap-2">
+              <Select value={filterCurriculum} onValueChange={setFilterCurriculum}>
+                <SelectTrigger className="h-8 w-32 text-sm">
+                  <SelectValue placeholder={ui("Curriculum")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ui("Tous les curricula")}</SelectItem>
+                  {curricula.map((curriculum) => <SelectItem key={curriculum} value={curriculum}>{curriculum}</SelectItem>)}
+                </SelectContent>
+              </Select>
+
               <Select value={filterSubject} onValueChange={setFilterSubject}>
                 <SelectTrigger className="h-8 w-40 text-sm">
                   <SelectValue placeholder={ui("Matière")} />
@@ -443,24 +463,16 @@ export function BulkLessonGenerator() {
                 </SelectContent>
               </Select>
 
-              <Select value={language} onValueChange={(v) => setLanguage(v as 'fr' | 'en')}>
-                <SelectTrigger className="h-8 w-28 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                  <SelectItem value="en">🇬🇧 English</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <label className="flex cursor-pointer items-center gap-1.5 text-sm">
-                <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(Boolean(v))} />
-                {ui("Sans leçon")}
-              </label>
-              {import.meta.env.DEV && <label className="flex cursor-pointer items-center gap-1.5 text-sm text-amber-700">
-                <Checkbox checked={dryRun} onCheckedChange={(v) => setDryRun(Boolean(v))} />
-                Dry-run staging (0 appels, aucune écriture)
-              </label>}
+              {developerMode && <div data-testid="bulk-developer-controls" className="flex flex-wrap gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                <label className="flex cursor-pointer items-center gap-1.5">
+                  <Checkbox checked={dryRun} onCheckedChange={(v) => setDryRun(Boolean(v))} />
+                  Dry-run staging (0 appels, aucune écriture)
+                </label>
+                <Select value={language} onValueChange={(v) => setLanguage(v as 'fr' | 'en')}>
+                  <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="fr">Français</SelectItem><SelectItem value="en">English</SelectItem></SelectContent>
+                </Select>
+              </div>}
             </div>
 
             <div className="flex gap-3 text-xs">
@@ -502,31 +514,15 @@ export function BulkLessonGenerator() {
                           {topic.curriculum_level_code}
                         </Badge>
                       )}
-                      {statusForTopic(topic) === 'staging' ? (
-                        <Badge className="h-5 border-blue-200 bg-blue-50 text-xs text-blue-700 hover:bg-blue-50">
-                          {ui("Brouillon staging")}
-                        </Badge>
-                      ) : topic.lesson_content ? (
-                        <>
-                          <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
-                            {ui("Leçon publiée")}
-                          </Badge>
-                          {showLegacyControls && <button
-                            onClick={(e) => handleDeleteOne(topic.id, e)}
-                            disabled={deletingIds.has(topic.id)}
-                            title={ui("Supprimer la leçon")}
-                            className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
-                          >
-                            {deletingIds.has(topic.id)
-                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              : <Trash2 className="h-3.5 w-3.5" />}
-                          </button>}
-                        </>
-                      ) : (
-                        <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
-                          {ui("Aucune version")}
-                        </Badge>
-                      )}
+                      <Badge variant="outline" className="h-5 text-xs text-muted-foreground">{topic.curriculum_country_code ?? '—'}</Badge>
+                      {developerMode && showLegacyControls && topic.lesson_content && <button
+                        onClick={(e) => handleDeleteOne(topic.id, e)}
+                        disabled={deletingIds.has(topic.id)}
+                        title={ui("Supprimer la leçon")}
+                        className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
+                      >
+                        {deletingIds.has(topic.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      </button>}
                     </div>
                   </div>
                 ))
@@ -549,19 +545,15 @@ export function BulkLessonGenerator() {
                     {ui("Supprimer les leçons")}
                   </Button>
                 )}
-                <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
+                <Button data-testid="bulk-generate-button" onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
                   <Wand2 className="h-4 w-4" />
-                  {`${dryRun ? 'Tester' : 'Générer'} ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''} (staging)`}
+                  Générer les leçons
                 </Button>
-                <Button variant="ghost" onClick={() => setShowLegacyControls((value) => !value)} aria-expanded={showLegacyControls}>
-                  {showLegacyControls ? 'Masquer les contrôles legacy' : 'Afficher les contrôles legacy'}
-                </Button>
-                {showLegacyControls && <Button variant="ghost" onClick={handleLegacyGenerate} disabled={!selected.length || isRunning} title="Ancien générateur; utilise l'ancien contrat et peut modifier le contenu public.">
-                  Générateur legacy (modifie topics.lesson_content)
-                </Button>}
+                {developerMode && <Button variant="ghost" onClick={() => setShowLegacyControls((value) => !value)} aria-expanded={showLegacyControls}>{showLegacyControls ? 'Masquer les contrôles legacy' : 'Afficher les contrôles legacy'}</Button>}
+                {developerMode && showLegacyControls && <Button variant="ghost" onClick={handleLegacyGenerate} disabled={!selected.length || isRunning} title="Ancien générateur; utilise l'ancien contrat et peut modifier le contenu public.">Générateur legacy (modifie topics.lesson_content)</Button>}
               </div>
             </div>
-            {showLegacyControls && <p className="text-xs text-amber-700">Legacy uniquement : ces contrôles peuvent modifier ou supprimer topics.lesson_content. Le bouton staging ci-dessus n’utilise jamais cette persistance.</p>}
+            {developerMode && showLegacyControls && <p className="text-xs text-amber-700">Legacy uniquement : ces contrôles peuvent modifier ou supprimer topics.lesson_content. Le bouton staging ci-dessus n’utilise jamais cette persistance.</p>}
           </>
         )}
       </DialogContent>
