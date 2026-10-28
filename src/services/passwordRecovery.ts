@@ -1,6 +1,7 @@
 import type { AuthError, SupabaseClient } from '@supabase/supabase-js';
 
-export const getPasswordRecoveryRedirectUrl = (origin: string): string => {
+export const getPasswordRecoveryRedirectUrl = (origin: string, override = import.meta.env.VITE_AUTH_RESET_REDIRECT_URL): string => {
+  if (override) return override;
   const base = origin.replace(/\/$/, '');
   return `${base}/auth`;
 };
@@ -8,8 +9,8 @@ export const getPasswordRecoveryRedirectUrl = (origin: string): string => {
 export const isPasswordRecoveryUrl = (url: string): boolean => {
   try {
     const parsed = new URL(url);
-    const values = new URLSearchParams(`${parsed.search}${parsed.hash.replace(/^#/, '?')}`);
-    return values.get('type') === 'recovery';
+    return new URLSearchParams(parsed.hash.slice(1)).get('type') === 'recovery'
+      || parsed.searchParams.get('type') === 'recovery';
   } catch {
     return false;
   }
