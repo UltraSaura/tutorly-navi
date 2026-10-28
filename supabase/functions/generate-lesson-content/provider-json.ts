@@ -100,10 +100,9 @@ export async function buildProviderResponseDiagnostics(input: {
 }
 
 const cleanText = (input: string): { text: string; changed: boolean } => {
-  let text = input.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
-  // eslint-disable-next-line no-control-regex
-  text = text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
-  text = text.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+  // Remove only the envelope. Typographic quotes and control characters may
+  // belong to lesson strings; rewriting them can corrupt JSON or alter content.
+  const text = input.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
   return { text, changed: text !== input };
 };
 
