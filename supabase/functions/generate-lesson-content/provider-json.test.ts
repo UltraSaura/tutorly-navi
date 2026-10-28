@@ -7,6 +7,13 @@ describe('provider JSON boundary', () => {
     const value = { content: 'L’aire se mesure en “unités carrées”.', label: 'Unité d’aire', literal: ',}' };
     expect(parseProviderJsonSafely(JSON.stringify(value))).toEqual({ ok: true, value, attemptedRepair: false });
   });
+  it.each([
+    (json: string) => `\`\`\`json\n${json}\n\`\`\``,
+    (json: string) => `Voici le résultat:\n${json}\nFin.`,
+  ])('preserves quoted lesson content inside an identifiable envelope', (wrap) => {
+    const value = { content: 'Observe les “faces” et l’arête.', literal: ',}' };
+    expect(parseProviderJsonSafely(wrap(JSON.stringify(value)))).toMatchObject({ ok: true, value });
+  });
   it('strips fences and surrounding prose', () => expect(parseProviderJsonSafely('Voici le résultat:\n```json\n{"sequence":[],}\n```')).toMatchObject({ ok: true, value: { sequence: [] } }));
   it('accepts one clearly identifiable JSON value followed by a short provider explanation', () => expect(parseProviderJsonSafely('{"sequence":[]}\nFin de la réponse.')).toMatchObject({ ok: true, value: { sequence: [] }, attemptedRepair: true }));
   it('removes trailing commas safely', () => expect(parseProviderJsonSafely('{"levels":[{"title":"Fractions",},],}')).toMatchObject({ ok: true }));
