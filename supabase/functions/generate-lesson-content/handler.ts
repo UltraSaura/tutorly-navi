@@ -441,14 +441,28 @@ export async function handleRequest(req: Request): Promise<Response> {
         const reference = String(row.objective_id_uuid ?? row.objective_id ?? '').trim();
         if (reference) linkedObjectiveIds.push(reference);
       }
+      const normalizedLinkedObjectiveIds: string[] = [];
       for (const reference of [...new Set(linkedObjectiveIds)]) {
         const { data: item } = await supabaseAdminEarly
           .from('objectives')
-          .select('id,text')
+          .select('id,id_new,text')
           .or(`id.eq.${reference},id_new.eq.${reference}`)
           .maybeSingle();
-        if (item?.id && item?.text) linkedObjectiveRows.push({ id: String(item.id), text: String(item.text) });
+        if (item?.text && (item?.id || item?.id_new)) {
+          // Migrated rows may be linked by either the legacy `id` or the
+          // canonical `id_new`. Normalize both sides to the canonical ID so
+          // explicit links remain authoritative after migration.
+          const canonicalId = String(item.id_new ?? item.id);
+          normalizedLinkedObjectiveIds.push(canonicalId);
+          linkedObjectiveRows.push({ id: canonicalId, text: String(item.text) });
+        } else {
+          // Preserve the reference so the preflight reports it as missing;
+          // broad domain suggestions must never replace an explicit link.
+          normalizedLinkedObjectiveIds.push(reference);
+        }
       }
+
+      linkedObjectiveIds.splice(0, linkedObjectiveIds.length, ...normalizedLinkedObjectiveIds);
 
       if (linkedObjectiveIds.length === 0) {
       // Get subject slug from curriculum_subject_id on the topic. This branch

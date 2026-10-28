@@ -18,10 +18,11 @@ const TIME_TOPIC = { id: 'time-topic-1', name: 'Le repérage dans le temps et le
 const timeLevels = stagingLevelMetadata(TIME_TOPIC.id, TIME_TOPIC.name, []);
 
 type ProviderReply = (level: number) => { content: unknown; finishReason?: string } | Response;
-type Calls = { provider: number; dbWrites: string[] };
+type Calls = { provider: number; dbWrites: string[]; prompts: string[] };
+type ObjectiveFixture = { reference: string; id: string; id_new?: string; text: string };
 
-function installFakes(reply: ProviderReply, topic = TOPIC): Calls {
-  const calls: Calls = { provider: 0, dbWrites: [] };
+function installFakes(reply: ProviderReply, topic = TOPIC, objectiveFixture?: ObjectiveFixture): Calls {
+  const calls: Calls = { provider: 0, dbWrites: [], prompts: [] };
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
   globalThis.fetch = async (input: Request | URL | string, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
@@ -30,12 +31,19 @@ function installFakes(reply: ProviderReply, topic = TOPIC): Calls {
     const p = url.pathname;
     if (p === '/functions/v1/ai-chat') {
       calls.provider += 1;
+      if (typeof init?.body === 'string') calls.prompts.push(init.body);
       const r = reply(calls.provider);
       if (r instanceof Response) return r;
       return json({ content: typeof r.content === 'string' ? r.content : JSON.stringify(r.content), providerMetadata: { finishReason: r.finishReason ?? 'stop', promptTokens: 10, completionTokens: 20, totalTokens: 30 } });
     }
     if (p.startsWith('/rest/v1/') && !p.startsWith('/rest/v1/rpc/') && method !== 'GET' && method !== 'HEAD') calls.dbWrites.push(method + ' ' + p);
     if (p === '/auth/v1/user') return json({ id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'admin@test' });
+    if (p.endsWith('/topic_objective_links')) {
+      return json(objectiveFixture ? [{ objective_id: objectiveFixture.reference }] : []);
+    }
+    if (p.endsWith('/objectives')) {
+      return json(objectiveFixture ? { id: objectiveFixture.id, id_new: objectiveFixture.id_new ?? null, text: objectiveFixture.text } : null);
+    }
     if (p.endsWith('/rpc/family_bootstrap')) return json({ approvalStatus: 'approved', isFamily: false, isGuardian: false });
     if (p.endsWith('/rpc/get_model_with_fallback')) return json([{ default_model_id: 'deepseek-chat' }]);
     if (p.endsWith('/rpc/resolve_edition')) return json(null);
@@ -47,8 +55,8 @@ function installFakes(reply: ProviderReply, topic = TOPIC): Calls {
   return calls;
 }
 
-async function run(reply: ProviderReply, requestId: string | undefined = 'req-1', topic = TOPIC) {
-  const calls = installFakes(reply, topic);
+async function run(reply: ProviderReply, requestId: string | undefined = 'req-1', topic = TOPIC, objectiveFixture?: ObjectiveFixture) {
+  const calls = installFakes(reply, topic, objectiveFixture);
   const headers = { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' } as Record<string, string>;
   if (requestId) headers['x-request-id'] = requestId;
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
@@ -139,6 +147,21 @@ test('browser-supplied approved specification cannot bypass the server preflight
   assertEquals(body.error.code, 'staging_preflight_failed');
   assertEquals(body.error.providerCalls, 0);
   assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('normalizes migrated objective links from legacy id to canonical id_new', async () => {
+  const migratedObjective: ObjectiveFixture = {
+    reference: 'legacy-objective-id',
+    id: 'legacy-objective-id',
+    id_new: 'canonical-objective-id',
+    text: 'Objectif lié après migration',
+  };
+  const { status, body, calls } = await run(valid, 'migrated-objective-link', TOPIC, migratedObjective);
+  assertEquals(status, 200);
+  assertEquals(body.providerCalls, 4);
+  assert(calls.prompts.some((prompt) => prompt.includes('canonical-objective-id')));
+  assertEquals(calls.provider, 4);
   assertEquals(calls.dbWrites, []);
 });
 
