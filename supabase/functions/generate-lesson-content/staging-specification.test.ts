@@ -119,6 +119,20 @@ it('prepares an unapproved solids proposal without inventing objective IDs', () 
   expect(preflight.errors.map((error) => error.code)).toEqual(expect.arrayContaining(['specification_not_approved']));
 });
 
+it('keeps the approved specification authoritative when merging the spatial contract', () => {
+  const topicId = '0dae3396-adbf-4464-8fa5-48726069977b';
+  const title = "Le repérage et déplacements dans l'espace";
+  const levels = stagingLevelMetadata(topicId, title, ['spatial-objective']);
+  const selection = resolveObjectiveSelection(['spatial-objective'], [{ id: 'spatial-objective', text: 'Décrire un parcours.' }], []);
+  const specification = buildProviderFreeApprovedSpecification({ topicId, curriculum: 'CM2', language: 'fr', topicKind: 'geometry', objectiveSelection: selection, metadata: levels });
+  for (const level of levels) {
+    const prompt = stagingLevelPrompt(title, 'CM2', 'fr', level, 'Décrire un parcours.', specification);
+    expect(prompt).toContain('SPECIFICATION PÉDAGOGIQUE');
+    expect(prompt).not.toContain('CONTRAT SPATIAL AUTORITAIRE');
+    expect(stagingLevelPrompt(title, 'CM2', 'fr', level)).toContain('CONTRAT SPATIAL AUTORITAIRE');
+  }
+});
+
 it('validates every supported solid fixture and rejects unknown or incomplete data', () => {
   for (const fixture of Object.values(SOLID_GALLERY_FIXTURES)) expect(solidVisualDataErrors(fixture)).toEqual([]);
   expect(solidVisualDataErrors({ solidType: 'unknown', dimensions: { edge: 1 } })[0].code).toBe('invalid_solid_type');
