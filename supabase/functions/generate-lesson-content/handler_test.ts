@@ -8,6 +8,7 @@ Deno.env.set('SUPABASE_URL', SB);
 Deno.env.set('SUPABASE_ANON_KEY', 'fake-anon');
 Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'fake-service');
 Deno.env.set('ALLOWED_ORIGINS', 'http://localhost:8080');
+Deno.env.set('DENO_ENV', 'test');
 
 const { handleRequest } = await import('./handler.ts');
 
@@ -17,10 +18,11 @@ const TIME_TOPIC = { id: 'time-topic-1', name: 'Le repérage dans le temps et le
 const timeLevels = stagingLevelMetadata(TIME_TOPIC.id, TIME_TOPIC.name, []);
 
 type ProviderReply = (level: number) => { content: unknown; finishReason?: string } | Response;
-type Calls = { provider: number; dbWrites: string[] };
+type Calls = { provider: number; dbWrites: string[]; prompts: string[] };
+type ObjectiveFixture = { reference: string; id: string; id_new?: string; text: string };
 
-function installFakes(reply: ProviderReply, topic = TOPIC): Calls {
-  const calls: Calls = { provider: 0, dbWrites: [] };
+function installFakes(reply: ProviderReply, topic = TOPIC, objectiveFixture?: ObjectiveFixture): Calls {
+  const calls: Calls = { provider: 0, dbWrites: [], prompts: [] };
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
   globalThis.fetch = async (input: Request | URL | string, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
@@ -29,12 +31,19 @@ function installFakes(reply: ProviderReply, topic = TOPIC): Calls {
     const p = url.pathname;
     if (p === '/functions/v1/ai-chat') {
       calls.provider += 1;
+      if (typeof init?.body === 'string') calls.prompts.push(init.body);
       const r = reply(calls.provider);
       if (r instanceof Response) return r;
       return json({ content: typeof r.content === 'string' ? r.content : JSON.stringify(r.content), providerMetadata: { finishReason: r.finishReason ?? 'stop', promptTokens: 10, completionTokens: 20, totalTokens: 30 } });
     }
     if (p.startsWith('/rest/v1/') && !p.startsWith('/rest/v1/rpc/') && method !== 'GET' && method !== 'HEAD') calls.dbWrites.push(method + ' ' + p);
     if (p === '/auth/v1/user') return json({ id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'admin@test' });
+    if (p.endsWith('/topic_objective_links')) {
+      return json(objectiveFixture ? [{ objective_id: objectiveFixture.reference }] : []);
+    }
+    if (p.endsWith('/objectives')) {
+      return json(objectiveFixture ? { id: objectiveFixture.id, id_new: objectiveFixture.id_new ?? null, text: objectiveFixture.text } : null);
+    }
     if (p.endsWith('/rpc/family_bootstrap')) return json({ approvalStatus: 'approved', isFamily: false, isGuardian: false });
     if (p.endsWith('/rpc/get_model_with_fallback')) return json([{ default_model_id: 'deepseek-chat' }]);
     if (p.endsWith('/rpc/resolve_edition')) return json(null);
@@ -46,17 +55,27 @@ function installFakes(reply: ProviderReply, topic = TOPIC): Calls {
   return calls;
 }
 
-async function run(reply: ProviderReply, requestId: string | undefined = 'req-1', topic = TOPIC) {
-  const calls = installFakes(reply, topic);
+async function run(reply: ProviderReply, requestId: string | undefined = 'req-1', topic = TOPIC, objectiveFixture?: ObjectiveFixture) {
+  const calls = installFakes(reply, topic, objectiveFixture);
   const headers = { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' } as Record<string, string>;
   if (requestId) headers['x-request-id'] = requestId;
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers,
-    body: JSON.stringify({ topicId: topic.id, mode: 'staging_draft', language: 'fr' }),
+    body: JSON.stringify({ topicId: topic.id, mode: 'staging_draft', language: 'fr', providerFreeFixture: true }),
   }));
   const body = await res.json();
   return { status: res.status, body, calls };
+}
+
+async function runWithoutApprovedSpecification() {
+  const calls = installFakes(valid);
+  const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+      body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+    }));
+  return { status: res.status, body: await res.json(), calls };
 }
 
 async function runExplicitMode(mode: unknown) {
@@ -97,6 +116,52 @@ test('rejects any unknown explicit mode before provider or database work', async
   assertEquals(body.error.providerCalls, 0);
   assertEquals(body.error.databaseWrite, false);
   assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('unapproved staging specification blocks before provider and database work', async () => {
+  const { status, body, calls } = await runWithoutApprovedSpecification();
+  assertEquals(status, 422);
+  assertEquals(body.error.code, 'staging_preflight_failed');
+  assertEquals(body.error.stage, 'pre_generation');
+  assertEquals(body.error.providerCalls, 0);
+  assertEquals(body.error.databaseWrite, false);
+  assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('browser-supplied approved specification cannot bypass the server preflight', async () => {
+  const calls = installFakes(valid);
+  const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+    body: JSON.stringify({
+      topicId: TOPIC.id,
+      mode: 'staging_draft',
+      language: 'fr',
+      specification: { review: { status: 'approved', reviewedBy: 'browser' } },
+    }),
+  }));
+  const body = await res.json();
+  assertEquals(res.status, 422);
+  assertEquals(body.error.code, 'staging_preflight_failed');
+  assertEquals(body.error.providerCalls, 0);
+  assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('normalizes migrated objective links from legacy id to canonical id_new', async () => {
+  const migratedObjective: ObjectiveFixture = {
+    reference: 'legacy-objective-id',
+    id: 'legacy-objective-id',
+    id_new: 'canonical-objective-id',
+    text: 'Objectif lié après migration',
+  };
+  const { status, body, calls } = await run(valid, 'migrated-objective-link', TOPIC, migratedObjective);
+  assertEquals(status, 200);
+  assertEquals(body.providerCalls, 4);
+  assert(calls.prompts.some((prompt) => prompt.includes('canonical-objective-id')));
+  assertEquals(calls.provider, 4);
   assertEquals(calls.dbWrites, []);
 });
 
@@ -153,7 +218,7 @@ test('successful response exposes the same request ID in JSON and headers', asyn
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080', 'x-request-id': 'success-request' },
-    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', providerFreeFixture: true }),
   }));
   const body = await res.json();
   assertEquals(body.requestId, 'success-request');
@@ -194,7 +259,7 @@ test('validation error exposes the same request ID in JSON and headers', async (
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080', 'x-request-id': 'validation-request' },
-    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', providerFreeFixture: true }),
   }));
   const body = await res.json();
   assertEquals(res.status, 422);
@@ -350,7 +415,7 @@ const runInBody = async (reply: ProviderReply) => {
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
-    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', rejectionInBody: true }),
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', rejectionInBody: true, providerFreeFixture: true }),
   }));
   return { status: res.status, body: await res.json(), calls };
 };

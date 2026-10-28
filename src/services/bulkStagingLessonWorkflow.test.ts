@@ -86,6 +86,24 @@ describe('bulk staging lesson workflow', () => {
     expect(results[0].failure).toMatchObject({ topicId: 'bad', topicTitle: 'Bad', failedLevel: 3, failureStage: 'level_validation', providerCalls: 3 });
   });
 
+  it('bulk preserves a server preflight block and continues independently', async () => {
+    const generate = vi.fn(async (id: string) => {
+      if (id === 'unapproved') throw Object.assign(new Error('review.status: specification_not_approved'), {
+        code: 'staging_preflight_failed', stage: 'pre_generation', providerCalls: 0,
+        databaseWrite: false, requestId: 'preflight-bulk',
+      });
+      return generated(id);
+    });
+    const save = vi.fn(async (id: string) => ({ id } as any));
+    const results = await runBulkStagingGeneration([
+      { id: 'unapproved', name: 'Sujet sans revue' },
+      { id: 'independent', name: 'Sujet indépendant' },
+    ], undefined, { generate, save, validate: valid });
+    expect(results.map((result) => result.status)).toEqual(['failed', 'saved']);
+    expect(results[0].failure).toMatchObject({ failureStage: 'pre_generation', providerCalls: 0, requestId: 'preflight-bulk' });
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects duplicate and missing IDs before any provider call', async () => {
     const generate = vi.fn();
     expect(() => validateBulkTopicIds([{ id: 'same', name: 'A' }, { id: 'same', name: 'B' }])).toThrow(/duplicate_topic_id/);
