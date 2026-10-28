@@ -53,7 +53,7 @@ export function FamilyProfileMenu() {
   const isChild = family.activeProfile?.kind === 'child';
   const isParent = family.activeProfile?.kind === 'parent' || family.isLegacyGuardian;
   const linkedChild = isChild
-    ? family.children.find(child => child.id === family.activeProfile?.childId)
+    ? family.children.find(child => child.id === (family.activeProfile as { childId?: string } | null)?.childId)
     : null;
   const name = linkedChild?.firstName || family.selection?.user?.user_metadata?.first_name as string | undefined;
   const avatar = linkedChild?.avatarUrl || family.selection?.user?.user_metadata?.avatar_url as string | undefined;

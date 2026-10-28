@@ -43,9 +43,11 @@ function fallbackVisual(block: RecordValue, topicName: string, candidate: Record
     return { kind: geometryKind, purpose: `Représenter ${label.toLocaleLowerCase()}.`, alt_text: label,
       data: { label } };
   }
-  // A generic diagram carries only labels already present in the lesson; it
-  // does not invent a numeric assertion, geometry, or clock time.
+  // Non-geometry preferred visuals can use a semantic measurement card. A
+  // required geometry visual deliberately remains a diagram with incomplete
+  // data so canonical validation reports the missing renderable fields.
   const label = String(block.title || block.content || topicName).trim().slice(0, 120);
+  if (policy.requirement !== 'required') return { kind: 'measurement', purpose: 'Représenter la notion décrite.', alt_text: label, data: { label } };
   return { kind: 'diagram', purpose: 'Représenter la notion décrite.', alt_text: label,
     data: { items: [{ label }] } };
 }
@@ -55,7 +57,10 @@ function normalizeVisual(block: RecordValue, topicName: string, path: string, ev
   const kind = candidate?.kind;
   const policy = determineVisualRequirement(block);
   const incompatible = block.type === 'concept' && policy.requirement === 'required' && !policy.suggestedKinds.includes(String(kind));
-  if (candidate && isSupportedVisualKind(kind) && !incompatible) return block;
+  // Preserve supported geometry payloads exactly as supplied. Their renderable
+  // contract is validated downstream; replacing incomplete data with a
+  // generic/fabricated figure would hide a content defect.
+  if (candidate && isSupportedVisualKind(kind)) return block;
   const fallback = fallbackVisual(block, topicName, candidate);
   events.push({ path: `${path}.visual.kind`, from: nonempty(kind) ? kind : 'missing', to: String(fallback.kind) });
   return { ...block, visual: fallback };
@@ -77,9 +82,11 @@ function normalizeOptionalConceptFields(block: RecordValue): RecordValue {
 }
 
 /** Pure, provider-free pass. Returns a new lesson and audit events without writing data. */
-export function normalizeGeneratedLesson(lesson: RecordValue, topicName: string): { lesson: RecordValue; events: NormalizationEvent[] } {
+export function normalizeGeneratedLesson(lesson: RecordValue, topicName: string, options: { preserveProviderSequence?: boolean } = {}): { lesson: RecordValue; events: NormalizationEvent[] } {
   const events: NormalizationEvent[] = [];
-  const sequence = Array.isArray(lesson.sequence) ? lesson.sequence.map((raw, index) => {
+  const sequence = options.preserveProviderSequence
+    ? lesson.sequence
+    : Array.isArray(lesson.sequence) ? lesson.sequence.map((raw, index) => {
     if (!object(raw)) return raw;
     let block = raw.type === 'concept' ? normalizeOptionalConceptFields(raw) : { ...raw };
     const policy = determineVisualRequirement(block);

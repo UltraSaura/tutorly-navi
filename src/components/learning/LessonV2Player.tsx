@@ -5,10 +5,31 @@ import { useLearner } from '@/context/FamilyProfileContext';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
 import type { LessonBlock, LessonV2 } from '@/types/lesson-generator';
 import { PedagogicalVisual } from './PedagogicalVisual';
+import { LessonVisualBlock } from './LessonVisualBlock';
 import { QuestionCard } from './QuestionCard';
 import type { Question } from '@/types/quiz-bank';
 
-type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void };
+type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void; readOnly?: boolean };
+
+export function lessonPlayerSessionKey(topicId: string, lesson: LessonV2): string {
+  return JSON.stringify({
+    topicId,
+    lessonGoal: lesson.lesson_goal,
+    prerequisites: lesson.prerequisites.map((item) => {
+      const prerequisite = item as unknown as Record<string, unknown>;
+      return {
+        id: String(prerequisite.id),
+        prompt: String(prerequisite.prompt ?? prerequisite.check_question ?? ''),
+        type: String(prerequisite.type ?? prerequisite.answer_type ?? ''),
+      };
+    }),
+    sequence: lesson.sequence.map((block) => ({
+      id: String(block.id),
+      type: block.type,
+      title: 'title' in block ? String(block.title) : '',
+    })),
+  });
+}
 
 function sameAnswer(expected: unknown, actual: string): boolean {
   if (typeof expected === 'number') return Number(actual) === expected;
@@ -78,16 +99,16 @@ function practiceQuestion(question: any): Question | null {
   return null;
 }
 
-function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) {
-  const data = block.visual.data && typeof block.visual.data === 'object' ? block.visual.data as Record<string, unknown> : {};
+function Visual({ block }: { block: any }) {
+  const data = block.visual.data && typeof block.visual.data === 'object' ? block.visual.data as Record<string, any> : {} as Record<string, any>;
   const items = Array.isArray(data.items) ? data.items as Array<Record<string, unknown>> : [];
   const nodes = Array.isArray(data.nodes) ? data.nodes as Array<Record<string, unknown>> : [];
   const groups = Array.isArray(data.groups) ? data.groups as Array<Record<string, unknown>> : [];
   const rows = Array.isArray(data.rows) ? data.rows as Array<Record<string, unknown>> : [];
   const labels = Array.isArray(data.labels) ? data.labels.map(String) : [];
   const values = items.length > 0 ? items : nodes.length > 0 ? nodes : groups.length > 0 ? groups : rows.length > 0 ? rows : labels.map((label) => ({ label }));
-  const nodeLabels = new Map(values.map((item) => [String(item.id ?? ''), String(item.label ?? item.value ?? '')]));
-  return <PedagogicalVisual block={block} />; /* legacy data fallback is rendered by PedagogicalVisual */ return <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
+  const nodeLabels = new Map<string, string>(values.map((item): [string, string] => [String(item.id ?? ''), String(item.label ?? item.value ?? '')]));
+  return <LessonVisualBlock visual={block.visual} title={block.title} content={block.content} />; /* legacy data fallback is rendered by PedagogicalVisual */ return <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
     <p className="text-xs font-bold uppercase tracking-wide text-teal-800">{block.visual.kind.replace('_', ' ')}</p>
     <p className="mt-2 text-sm text-teal-950">{block.content}</p>
     {values.length > 0 ? (
@@ -108,12 +129,12 @@ function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) 
   </div>;
 }
 
-function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'concept' }> }) {
+function ConceptPresentation({ block }: { block: any }) {
   const compactPoint = (point: { label: string; text: string }) => point.text.trim().length <= 64 && point.label.trim().length <= 28;
   return (
     <div className="space-y-3" data-concept-presentation>
       {block.visual && (
-        <PedagogicalVisual block={{ ...block, visual: block.visual, showText: false }} />
+        <LessonVisualBlock visual={block.visual} title={block.title} content={block.content} />
       )}
       <p className="max-w-2xl text-left text-base leading-7 text-[#344054]">{block.content}</p>
       {block.representation && (
@@ -147,7 +168,7 @@ function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'c
   );
 }
 
-export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMasteryResult, onSequencePosition }: Props) {
+function LessonV2PlayerSession({ topicId, subjectId, topicName, lesson, onMasteryResult, onSequencePosition, readOnly = false }: Props) {
   const { user } = useLearner();
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -174,12 +195,12 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   const allMasteryPractice = masteryQuestions.length > 0 && masteryPracticeQuestions.every(Boolean);
 
   const progress = useMemo(() => Math.round(((index + (completed ? 1 : 0)) / lesson.sequence.length) * 100), [index, completed, lesson.sequence.length]);
-  const record = (eventType: Parameters<typeof trackLearningInteraction>[0]['eventType'], data: Record<string, unknown> = {}) => trackLearningInteraction({ studentId: user?.id, eventType, topicId, metadata: { lessonVersion: '2.0', blockId: block?.id, ...data } });
+  const record = (eventType: Parameters<typeof trackLearningInteraction>[0]['eventType'], data: Record<string, unknown> = {}) => { if (!readOnly) void trackLearningInteraction({ studentId: user?.id, eventType, topicId, metadata: { lessonVersion: '2.0', blockId: block?.id, ...data } }); };
 
   const next = async () => {
     if (index >= lesson.sequence.length - 1) {
       setCompleted(true);
-      if (user?.id) await supabase.from('user_learning_progress').upsert({ user_id: user.id, topic_id: topicId, subject_id: subjectId ?? null, progress_type: 'lesson_completed', progress_percentage: 100, time_spent_seconds: 0 }, { onConflict: 'user_id,topic_id,progress_type' });
+      if (user?.id && !readOnly) await supabase.from('user_learning_progress').upsert({ user_id: user.id, topic_id: topicId, subject_id: subjectId ?? null, progress_type: 'lesson_completed', progress_percentage: 100, time_spent_seconds: 0 }, { onConflict: 'user_id,topic_id,progress_type' });
       record('lesson_completed');
       return;
     }
@@ -203,11 +224,13 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   };
 
   const prerequisite = lesson.prerequisites[prerequisiteIndex];
-  const prerequisiteAnswerType = String((prerequisite as Record<string, unknown>).answer_type ?? 'short_text');
+  const prerequisiteRecord = prerequisite as Record<string, unknown>;
+  const prerequisitePrompt = String(prerequisiteRecord.prompt ?? prerequisiteRecord.check_question ?? '');
+  const prerequisiteAnswerType = String(prerequisiteRecord.type ?? prerequisiteRecord.answer_type ?? 'short_text');
   const prerequisiteChoices = Array.isArray((prerequisite as Record<string, unknown>).choices) ? (prerequisite as Record<string, unknown>).choices as string[] : [];
   const prerequisitePracticeQuestion = practiceQuestion({
     id: prerequisite.id,
-    question: prerequisite.check_question,
+    question: prerequisitePrompt,
     answer_type: prerequisiteAnswerType,
     choices: prerequisiteChoices,
     correct_answer: prerequisite.expected_answer,
@@ -215,7 +238,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   const prerequisiteVisual = (prerequisite as Record<string, unknown>).visual && typeof (prerequisite as Record<string, unknown>).visual === 'object'
     ? { id: `${prerequisite.id}-visual`, type: 'visual' as const, title: 'Observe', content: prerequisite.description, visual: (prerequisite as Record<string, unknown>).visual as { kind: string; data: unknown; alt_text?: string; purpose?: string } }
     : null;
-  const prerequisiteFormat = responseGuidance(prerequisite.check_question, prerequisiteAnswerType);
+  const prerequisiteFormat = responseGuidance(prerequisitePrompt, prerequisiteAnswerType);
   const updateTimePart = (part: keyof typeof timeParts, value: string) => {
     const next = { ...timeParts, [part]: value.replace(/\D/g, '').slice(0, 2) };
     setTimeParts(next);
@@ -267,7 +290,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
                 }
               }}
             /> : <>
-            <p className="text-lg font-semibold">{prerequisite.check_question}</p>
+            <p className="text-lg font-semibold">{prerequisitePrompt}</p>
             {prerequisiteFormat.hint && <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{prerequisiteFormat.hint}</p>}
             {prerequisiteChoices.length > 0 || ['multiple_choice', 'selection'].includes(prerequisiteAnswerType)
               ? <div className="flex flex-wrap gap-2">{prerequisiteChoices.map((choice) => <button type="button" key={choice} onClick={() => { setPrerequisiteAnswer(choice); setPrerequisiteResult(null); }} className={`rounded-lg border px-4 py-3 text-left ${prerequisiteAnswer === choice ? 'border-[#12C6A0] bg-emerald-50' : 'bg-white'}`}>{choice}</button>)}</div>
@@ -333,7 +356,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
         <div className="space-y-4">
           <span className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase text-teal-800">{block.type.replace('_', ' ')}</span>
           {'title' in block && <h2 className="text-xl font-bold">{block.title}</h2>}
-          {block.type === 'visual' && <PedagogicalVisual block={block} />}
+          {block.type === 'visual' && <PedagogicalVisual block={block as any} />}
           {block.type === 'concept' && <ConceptPresentation block={block} />}
           {block.type === 'hook' || block.type === 'rule' ? <p className="whitespace-pre-wrap rounded-xl bg-card p-4 leading-7">{block.content}</p> : null}
           {block.type === 'contrast' && <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-muted p-4">{block.left}</div><div className="rounded-xl bg-muted p-4">{block.right}</div><p className="sm:col-span-2">{block.explanation}</p></div>}
@@ -358,7 +381,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
             const format = responseGuidance(item.question, item.answer_type); const hasChoices = Boolean(item.choices?.length);
             return <div key={item.id} className="space-y-2"><p className="font-medium">{item.question}</p>{hasChoices && item.choices?.map((choice) => <button key={choice} onClick={() => setMasteryAnswers((a) => ({ ...a, [item.id]: choice }))} className={`mr-2 rounded-lg border px-3 py-2 ${masteryAnswers[item.id] === choice ? 'border-primary bg-primary/10' : ''}`}>{choice}</button>)}{!hasChoices && <><p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{format.hint}</p><input className="w-full rounded-lg border p-2" value={masteryAnswers[item.id] ?? ''} placeholder={format.placeholder} inputMode={format.inputMode} onChange={(e) => setMasteryAnswers((a) => ({ ...a, [item.id]: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') submitMastery(); }} aria-label="Réponse" /></>}</div>;
           })}</div>}
-          {questionData && <div className="space-y-3">{practiceQuestionData ? <QuestionCard question={practiceQuestionData} allowRetry={false} hideCorrect onFinish={(result) => { setSubmitted(true); setCorrect(result); record(result ? 'quiz_completed' : 'quiz_wrong_answer', { wasCorrect: result }); }} /> : <><p className="text-lg font-semibold">{questionData.question}</p>{(() => { const format = responseGuidance(questionData.question, questionData.answer_type); return <><p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{format.hint}</p><input className="w-full rounded-lg border p-3" value={answer} placeholder={format.placeholder} inputMode={format.inputMode} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && answer) submit(); }} aria-label="Réponse" /></>; })()}</>}</div>}
+          {questionData && <div className="space-y-3">{practiceQuestionData ? <QuestionCard question={practiceQuestionData} allowRetry={false} hideCorrect onFinish={(result) => { setSubmitted(true); setCorrect(result); record(result ? 'quiz_completed' : 'quiz_wrong_answer', { wasCorrect: result }); }} /> : <><p className="text-lg font-semibold">{questionData.question}</p>{(() => { const format = responseGuidance(questionData.question, (questionData as any).answer_type); return <><p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{format.hint}</p><input className="w-full rounded-lg border p-3" value={answer} placeholder={format.placeholder} inputMode={format.inputMode} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && answer) submit(); }} aria-label="Réponse" /></>; })()}</>}</div>}
           {submitted && correct !== null && <div className={`rounded-xl p-3 ${correct ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>{correct ? <CheckCircle2 className="mr-2 inline h-5 w-5" /> : <XCircle className="mr-2 inline h-5 w-5" />}{correct ? (questionData && 'success_feedback' in questionData ? questionData.success_feedback : 'Bonne réponse.') : (questionData && 'error_feedback' in questionData ? questionData.error_feedback : 'Relis la question et essaie encore.')}</div>}
           {questionData && !correct && questionData.hints?.[hint] && <p className="rounded-xl bg-blue-50 p-3 text-blue-900"><Lightbulb className="mr-2 inline h-4 w-4" />{questionData.hints[hint]}</p>}
         </div>
@@ -396,4 +419,8 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
       </div>
     </div>
   );
+}
+
+export function LessonV2Player(props: Props) {
+  return <LessonV2PlayerSession key={lessonPlayerSessionKey(props.topicId, props.lesson)} {...props} />;
 }

@@ -4,6 +4,8 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { isPasswordRecoveryUrl, requestPasswordReset, updateRecoveredPassword } from '@/services/passwordRecovery';
+import { Capacitor } from '@capacitor/core';
+import { createNativeAuthCallback } from '@/services/nativeAuthCallback';
 
 interface AuthContextType {
   user: User | null;
@@ -115,6 +117,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, [detectLanguageFromUser, ensureAccountApproved]); // Use the memoized callbacks
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const callbackUrl = import.meta.env.VITE_AUTH_REDIRECT_URL;
+    if (!callbackUrl) return;
+    let disposed = false;
+    let remove: (() => Promise<void>) | undefined;
+    const reportError = () => toast({ title: 'Connexion impossible', description: 'Le lien a expiré ou est invalide. Demandez un nouveau lien.', variant: 'destructive' });
+    const handle = createNativeAuthCallback({
+      callbackUrl,
+      auth: supabase.auth,
+      setRecovery: setIsPasswordRecovery,
+      reportError,
+      navigate: () => {
+        // Never copy tokens to the WebView URL or browser history.
+        window.history.replaceState(null, '', '/auth');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      },
+    });
+    void import('@capacitor/app').then(async ({ App }) => {
+      const listener = await App.addListener('appUrlOpen', ({ url }) => {
+        if (!disposed) void handle(url);
+      });
+      if (disposed) { await listener.remove(); return; }
+      remove = () => listener.remove();
+      const launch = await App.getLaunchUrl();
+      if (!disposed && launch?.url) await handle(launch.url);
+    }).catch(() => { if (!disposed) reportError(); });
+    return () => { disposed = true; void remove?.(); };
+  }, [toast]);
 
   const signIn = async (emailOrUsername: string, password: string) => {
     // Check if input is email or username

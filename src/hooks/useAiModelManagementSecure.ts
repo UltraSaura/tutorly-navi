@@ -28,9 +28,28 @@ interface AiApiKey {
   updated_at: string;
 }
 
+export type ModelMetadataError = { code?: string; message: string; status?: number };
+
+/** Model metadata is auxiliary to the admin shell; keep failures structured and non-blocking. */
+export function describeModelMetadataError(error: unknown): ModelMetadataError {
+  const value = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  const code = typeof value.code === 'string' ? value.code : undefined;
+  const status = typeof value.status === 'number' ? value.status : undefined;
+  const message = typeof value.message === 'string' && value.message.trim()
+    ? value.message.trim()
+    : 'AI model metadata is unavailable.';
+  return { ...(code ? { code } : {}), ...(status !== undefined ? { status } : {}), message };
+}
+
+export function resolveModelMetadata(data: unknown, error: unknown): { models: AiModel[]; error?: ModelMetadataError } {
+  if (error) return { models: [], error: describeModelMetadataError(error) };
+  return { models: Array.isArray(data) ? data as AiModel[] : [] };
+}
+
 export const useAiModelManagementSecure = () => {
   const [providers, setProviders] = useState<AiProvider[]>([]);
   const [models, setModels] = useState<AiModel[]>([]);
+  const [modelMetadataError, setModelMetadataError] = useState<ModelMetadataError | undefined>();
   const [apiKeys, setApiKeys] = useState<AiApiKey[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,11 +79,12 @@ export const useAiModelManagementSecure = () => {
         .eq('is_active', true)
         .order('name');
 
-      if (error) throw error;
-      setModels(data || []);
+      const result = resolveModelMetadata(data, error);
+      setModels(result.models);
+      setModelMetadataError(result.error);
+      if (result.error) console.warn('AI model metadata unavailable; continuing without it.', result.error);
     } catch (error) {
       console.error('Error fetching models:', error);
-      toast.error('Failed to fetch AI models');
     }
   };
 
@@ -150,11 +170,7 @@ export const useAiModelManagementSecure = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       setLoading(true);
-      await Promise.all([
-        fetchProviders(),
-        fetchModels(),
-        fetchApiKeys()
-      ]);
+      await Promise.all([fetchProviders(), fetchApiKeys()]);
       setLoading(false);
     };
 
@@ -170,6 +186,7 @@ export const useAiModelManagementSecure = () => {
   return {
     providers,
     models,
+    modelMetadataError,
     apiKeys,
     loading,
     addApiKey,

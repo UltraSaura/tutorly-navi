@@ -7,6 +7,7 @@ import VideoManager from "./learning/VideoManager";
 import QuizManager from "./learning/QuizManager";
 import BankManager from "./learning/BankManager";
 import { PageMeta } from "@/components/seo/PageMeta";
+import { Link } from 'react-router-dom';
 
 const LearningContentManagement = () => {
   const ui = useInterfaceTranslation();
@@ -32,6 +33,7 @@ const LearningContentManagement = () => {
           <TabsTrigger value="quizzes">{ui("Quizzes")}</TabsTrigger>
           <TabsTrigger value="quiz-banks">{ui("Quiz Banks")}</TabsTrigger>
         </TabsList>
+        <div className="flex justify-end"><Link to="/admin/generated-lessons?workflow=staging" className="text-sm font-medium text-primary hover:underline">Versions de leçons staging →</Link></div>
 
         <TabsContent value="categories">
           <Card className="p-6">

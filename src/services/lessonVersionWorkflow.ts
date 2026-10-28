@@ -1,0 +1,509 @@
+import { supabase } from '@/integrations/supabase/client';
+import { getGenerationErrorDetails, getGenerationErrorTechnicalDetail } from '@/components/admin/learning/generationErrorMapping';
+import { validateLessonV21, type ContractIssue } from '@/types/lesson-v21-contract';
+
+export const LESSON_VERSION_STATUSES = ['draft', 'validated', 'published', 'rejected'] as const;
+export type LessonVersionStatus = typeof LESSON_VERSION_STATUSES[number];
+
+export type LessonVersion = {
+  id: string;
+  topic_id: string;
+  lesson_content: unknown;
+  status: LessonVersionStatus;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  validated_at?: string | null;
+  validated_by?: string | null;
+  published_at?: string | null;
+  published_by?: string | null;
+};
+
+export type StagingReviewMetadata = {
+  pedagogicalWarnings: ValidationIssue[];
+  pedagogicalReviewRequired: boolean;
+};
+
+export function getStoredStagingTopicKind(lesson: unknown): StagingTopicKind | undefined {
+  const value = object(lesson)?.staging_topic_kind;
+  return value === 'decimal' || value === 'time' || value === 'geometry' ? value : undefined;
+}
+
+export function withStagingTopicKind(lesson: unknown, topicKind?: StagingTopicKind): unknown {
+  if (!topicKind || !object(lesson)) return lesson;
+  return { ...(lesson as Record<string, unknown>), staging_topic_kind: topicKind };
+}
+
+const STAGING_METADATA_KEY = '_staging_metadata';
+
+export function withStagingMetadata(lesson: unknown, metadata?: unknown): unknown {
+  if (!metadata || !object(lesson)) return lesson;
+  const value = object(metadata);
+  if (!value || !Array.isArray(value.pedagogicalWarnings) || typeof value.pedagogicalReviewRequired !== 'boolean') return lesson;
+  return { ...(lesson as Record<string, unknown>), [STAGING_METADATA_KEY]: {
+    pedagogicalWarnings: value.pedagogicalWarnings,
+    pedagogicalReviewRequired: value.pedagogicalReviewRequired,
+  } };
+}
+
+export function getStoredStagingMetadata(lesson: unknown): StagingReviewMetadata | undefined {
+  const metadata = object(object(lesson)?.[STAGING_METADATA_KEY]);
+  if (!metadata || !Array.isArray(metadata.pedagogicalWarnings) || typeof metadata.pedagogicalReviewRequired !== 'boolean') return undefined;
+  return {
+    pedagogicalWarnings: metadata.pedagogicalWarnings.filter((issue): issue is ValidationIssue => Boolean(object(issue)) && typeof issue.path === 'string' && typeof issue.message === 'string'),
+    pedagogicalReviewRequired: metadata.pedagogicalReviewRequired,
+  };
+}
+
+export type ValidationIssue = { path: string; message: string };
+export type LessonValidation = {
+  canonicalValid: boolean;
+  pedagogicalValid: boolean;
+  prerequisiteValid?: boolean;
+  interactionValid?: boolean;
+  geometryValid: boolean;
+  canonicalIssues: ValidationIssue[];
+  pedagogicalIssues: ValidationIssue[];
+  geometryIssues: ValidationIssue[];
+};
+
+export type StagingTransportFailure = {
+  providerCallsKnown: false;
+  databaseWrite: false;
+  responseBodyAvailable: false;
+  lastKnownProgress?: unknown;
+};
+
+const object = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+
+const point = (value: unknown) => {
+  const item = object(value);
+  return item && typeof item.x === 'number' && Number.isFinite(item.x) && typeof item.y === 'number' && Number.isFinite(item.y);
+};
+
+const points = (value: unknown) => Array.isArray(value) && value.length >= 2 && value.every(point);
+
+const allVisuals = (lesson: any) => (lesson?.levels ?? []).flatMap((level: any) =>
+  (level?.lesson?.sequence ?? []).flatMap((block: any, index: number) => {
+    const visual = object(block?.visual);
+    return visual ? [{ visual, path: `levels[${level?.level_number ?? 1}].lesson.sequence[${index}].visual` }] : [];
+  }),
+);
+
+function geometryIssuesForVisual(kind: string, data: unknown, path: string): ValidationIssue[] {
+  const d = object(data);
+  if (!d) return [{ path: `${path}.data`, message: 'Drawable geometry data must be an object.' }];
+  const issue = (suffix: string, message: string) => ({ path: `${path}.data${suffix}`, message });
+  if (kind === 'number_line') {
+    return typeof d.min === 'number' && Number.isFinite(d.min) && typeof d.max === 'number' && Number.isFinite(d.max) && d.min < d.max
+      ? [] : [issue('', 'Number line requires numeric min < max.')];
+  }
+  if (kind === 'rectangle' || (kind === 'polygon' && d.shape === 'rectangle')) {
+    return Array.isArray(d.vertices) && d.vertices.length >= 4 && d.vertices.every(point)
+      ? [] : [issue('.vertices', 'Rectangle requires at least four numeric vertices.')];
+  }
+  if (kind === 'triangle' || (kind === 'polygon' && d.shape === 'triangle')) {
+    return Array.isArray(d.vertices) && d.vertices.length >= 3 && d.vertices.every(point)
+      ? [] : [issue('.vertices', 'Triangle requires at least three numeric vertices.')];
+  }
+  if (kind === 'circle') {
+    return point(d.center ?? d.centre) && Number.isFinite(Number(d.radius)) && Number(d.radius) > 0
+      ? [] : [issue('', 'Circle requires a numeric center and a positive radius.')];
+  }
+  if (kind === 'angle') {
+    return point(d.vertex) && Array.isArray(d.rays) && d.rays.length >= 2 && d.rays.every(point) && Number.isFinite(Number(d.degrees))
+      ? [] : [issue('', 'Angle requires a numeric vertex, two numeric rays, and degrees.')];
+  }
+  if (kind === 'symmetry') {
+    const axis = object(d.axis);
+    const grid = object(d.grid);
+    const axisKeys = axis ? Object.keys(axis).filter((key) => key === 'x' || key === 'y') : [];
+    const axisOk = !!axis && axisKeys.length === 1 && ((axisKeys[0] === 'x' && typeof axis.x === 'number' && Number.isFinite(axis.x)) || (axisKeys[0] === 'y' && typeof axis.y === 'number' && Number.isFinite(axis.y)));
+    return axisOk && points(d.original ?? d.figure) && points(d.reflected ?? d.symmetric_figure) && grid && typeof grid.width === 'number' && Number.isFinite(grid.width) && grid.width > 0 && typeof grid.height === 'number' && Number.isFinite(grid.height) && grid.height > 0
+      ? [] : [issue('', 'Symmetry requires an axis, grid dimensions, and original/reflected point sets.')];
+  }
+  return [];
+}
+
+/** Time-topic drawable visual kinds (clock, timeline, unit conversion). */
+export const TIME_VISUAL_KINDS = ['clock', 'timeline', 'unit_conversion'] as const;
+export type StagingTopicKind = 'decimal' | 'time' | 'geometry' | 'general';
+
+/**
+ * Mirrors the server's isTimeTopic classification in
+ * supabase/functions/generate-lesson-content/staging-level-workflow.ts so the
+ * client applies the same visual contract the generator was prompted with.
+ */
+const TIME_TOPIC_PATTERN = /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i;
+const DECIMAL_TOPIC_PATTERN = /nombre(?:s)?[\s-]+d[ée]cimal(?:e|es)?|d[ée]cimaux|decimal/i;
+const GEOMETRY_TOPIC_PATTERN = /figure|géométr|geometr|triangle|rectangle|cercle|angle|sym[ée]tr|espace/i;
+
+export function classifyStagingTopic(topicName: string | null | undefined): StagingTopicKind {
+  const name = topicName ?? '';
+  if (DECIMAL_TOPIC_PATTERN.test(name)) return 'decimal';
+  if (TIME_TOPIC_PATTERN.test(name)) return 'time';
+  if (!name.trim() || GEOMETRY_TOPIC_PATTERN.test(name)) return 'geometry';
+  return 'general';
+}
+
+function timeVisualDataIssues(kind: string, data: unknown, path: string): ValidationIssue[] {
+  const d = object(data);
+  if (!d) return [{ path: `${path}.data`, message: 'Drawable time visual data must be an object.' }];
+  if (kind === 'clock') {
+    const issues: ValidationIssue[] = [];
+    if (!(Number.isInteger(d.hour) && Number(d.hour) >= 1 && Number(d.hour) <= 12)) issues.push({ path: `${path}.data.hour`, message: 'Clock hour must be an integer from 1 to 12.' });
+    if (!(Number.isInteger(d.minute) && Number(d.minute) >= 0 && Number(d.minute) <= 59)) issues.push({ path: `${path}.data.minute`, message: 'Clock minute must be an integer from 0 to 59.' });
+    return issues;
+  }
+  if (kind === 'timeline') {
+    const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
+    const relations = Array.isArray(d.relations) ? d.relations : [];
+    return units.length >= 2 || relations.length >= 1
+      ? [] : [{ path: `${path}.data`, message: 'Timeline requires at least two non-empty units or one relation.' }];
+  }
+  if (kind === 'unit_conversion') {
+    const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
+    const relations = Array.isArray(d.relations) ? d.relations : [];
+    const pair = typeof d.from === 'string' && d.from.trim().length > 0
+      && typeof d.to === 'string' && d.to.trim().length > 0
+      && Number.isFinite(Number(d.factor)) && Number(d.factor) > 0;
+    return pair || (units.length >= 2 && relations.length >= 1)
+      ? [] : [{ path: `${path}.data`, message: 'Unit conversion requires from/to/factor or declared units and relations.' }];
+  }
+  return [];
+}
+
+/**
+ * Time-topic visual contract: at least one clock/timeline/unit_conversion
+ * visual must exist and every time visual must carry complete drawable data.
+ * Geometry visuals are never required here, but when present their data is
+ * still checked so incomplete figures cannot slip through.
+ */
+export function validateDrawableTimeVisuals(lesson: unknown): ValidationIssue[] {
+  const visuals = allVisuals(lesson);
+  const issues: ValidationIssue[] = [];
+  const timeVisuals = visuals.filter(({ visual }) => (TIME_VISUAL_KINDS as readonly string[]).includes(String(visual.kind)));
+  if (timeVisuals.length === 0) {
+    issues.push({ path: 'levels', message: `Missing required drawable visual: ${TIME_VISUAL_KINDS.join(', ')}.` });
+  }
+  timeVisuals.forEach(({ visual, path }) => issues.push(...timeVisualDataIssues(String(visual.kind), visual.data, path)));
+  visuals
+    .filter(({ visual }) => !(TIME_VISUAL_KINDS as readonly string[]).includes(String(visual.kind)))
+    .forEach(({ visual, path }) => issues.push(...geometryIssuesForVisual(String(visual.kind), visual.data, path)));
+  return issues;
+}
+
+/** Decimal topics require at least one number_line or rectangle visual. */
+export function validateDrawableDecimalVisuals(lesson: unknown): ValidationIssue[] {
+  const visuals = allVisuals(lesson);
+  const decimalVisuals = visuals.filter(({ visual }) => visual.kind === 'number_line' || visual.kind === 'rectangle' || (visual.kind === 'polygon' && object(visual.data)?.shape === 'rectangle'));
+  const issues: ValidationIssue[] = [];
+  if (decimalVisuals.length === 0) issues.push({ path: 'levels', message: 'Missing required drawable visual: number_line or rectangle.' });
+  visuals.forEach(({ visual, path }) => issues.push(...geometryIssuesForVisual(String(visual.kind), visual.data, path)));
+  return issues;
+}
+
+export function validateDrawableGeometry(lesson: unknown): ValidationIssue[] {
+  const visuals = allVisuals(lesson);
+  const required = [
+    ['rectangle', 'rectangle'],
+    ['triangle', 'triangle'],
+    ['circle', 'circle'],
+    ['angle', 'angle'],
+    ['symmetry', 'symmetry'],
+  ] as const;
+  const issues: ValidationIssue[] = [];
+  for (const [label, expected] of required) {
+    const matches = visuals.filter(({ visual }) => visual.kind === expected || (expected === 'triangle' && visual.kind === 'polygon' && object(visual.data)?.shape === 'triangle'));
+    if (matches.length === 0) {
+      issues.push({ path: 'levels', message: `Missing required drawable visual: ${label}.` });
+    } else {
+      matches.forEach(({ visual, path }) => issues.push(...geometryIssuesForVisual(String(visual.kind), visual.data, path)));
+    }
+  }
+  return issues;
+}
+
+export function validatePedagogicalLesson(lesson: unknown): ValidationIssue[] {
+  const value = object(lesson);
+  const issues: ValidationIssue[] = [];
+  if (!value?.topic_goal || typeof value.topic_goal !== 'string') issues.push({ path: 'topic_goal', message: 'Topic goal is required.' });
+  const levels = Array.isArray(value?.levels) ? value.levels : [];
+  levels.forEach((level: any, levelIndex) => {
+    const prefix = `levels[${levelIndex}].lesson`;
+    if (!level?.purpose || typeof level.purpose !== 'string') issues.push({ path: `levels[${levelIndex}].purpose`, message: 'Level purpose is required.' });
+    if (!level?.lesson?.lesson_goal || typeof level.lesson.lesson_goal !== 'string') issues.push({ path: `${prefix}.lesson_goal`, message: 'Lesson goal is required.' });
+    if (!Array.isArray(level?.lesson?.success_criteria) || level.lesson.success_criteria.length === 0) issues.push({ path: `${prefix}.success_criteria`, message: 'At least one success criterion is required.' });
+    const sequence = Array.isArray(level?.lesson?.sequence) ? level.lesson.sequence : [];
+    sequence.forEach((block: any, blockIndex: number) => {
+      const hasTeachingText = typeof block?.content === 'string' && block.content.trim().length > 0;
+      const hasQuestion = typeof block?.question === 'string' && block.question.trim().length > 0;
+      const hasContext = typeof block?.context === 'string' && block.context.trim().length > 0;
+      if (!hasTeachingText && !hasQuestion && !hasContext) issues.push({ path: `${prefix}.sequence[${blockIndex}]`, message: 'Each block must contain teaching text, a question, or a context.' });
+      if (typeof block?.content === 'string' && /voir la figure|figure ci-dessous/i.test(block.content)) issues.push({ path: `${prefix}.sequence[${blockIndex}].content`, message: 'Content must describe the visible figure instead of referring to an unavailable figure.' });
+    });
+  });
+  return issues;
+}
+
+export function validateLessonVersion(lesson: unknown, options?: { topicKind?: StagingTopicKind }): LessonValidation {
+  const canonical = validateLessonV21(lesson, { prerequisiteFormat: 'staging' });
+  const canonicalIssues = !('issues' in canonical) ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
+  const pedagogicalIssues = validatePedagogicalLesson(lesson);
+  const geometryIssues = options?.topicKind === 'decimal'
+    ? validateDrawableDecimalVisuals(lesson)
+    : options?.topicKind === 'time'
+      ? validateDrawableTimeVisuals(lesson)
+      : options?.topicKind === 'general'
+        ? allVisuals(lesson).flatMap(({ visual, path }) => geometryIssuesForVisual(String(visual.kind), visual.data, path))
+        : validateDrawableGeometry(lesson);
+  const prerequisiteIssues = canonicalIssues.filter((issue) => /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message));
+  const interactionIssues = canonicalIssues.filter((issue) => /sequence|interaction|answer_type|correct_answer|questions/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message));
+  return {
+    canonicalValid: canonical.success,
+    pedagogicalValid: pedagogicalIssues.length === 0,
+    prerequisiteValid: prerequisiteIssues.length === 0,
+    interactionValid: interactionIssues.length === 0,
+    geometryValid: geometryIssues.length === 0,
+    canonicalIssues,
+    pedagogicalIssues,
+    geometryIssues,
+  };
+}
+
+/** Staging generation has four initial level calls; JSON parsing may add a
+ * bounded retry, so the aggregate must be derived from per-level results. */
+export const STAGING_LEVEL_COUNT = 4;
+
+export function validateStagingGenerationEnvelope(data: any): void {
+  const results = Array.isArray(data?.levelResults)
+    ? data.levelResults
+    : Array.isArray(data?.progress) ? data.progress : null;
+  if (!results || results.length !== STAGING_LEVEL_COUNT) {
+    throw Object.assign(new Error('The generation response did not contain four complete level results. The draft was not saved.'), {
+      code: 'staging_level_results_invalid',
+      stage: 'response_parsing',
+      providerCalls: Number(data?.providerCalls) || 0,
+      technicalDetail: 'expected exactly four level results',
+      requestId: data?.requestId,
+    });
+  }
+  const ordered = [...results].sort((a, b) => Number(a?.level ?? 0) - Number(b?.level ?? 0));
+  if (ordered.some((entry, index) => Number(entry?.level) !== index + 1 || entry?.status !== 'complete' || !Number.isInteger(Number(entry?.providerCalls)) || Number(entry.providerCalls) < 1)) {
+    throw Object.assign(new Error('The generation response contained an incomplete level result. The draft was not saved.'), {
+      code: 'staging_level_results_invalid',
+      stage: 'response_parsing',
+      providerCalls: Number(data?.providerCalls) || 0,
+      technicalDetail: 'each level 1–4 must be complete with a positive provider call count',
+      requestId: data?.requestId,
+    });
+  }
+  const expectedCalls = ordered.reduce((sum, entry) => sum + Number(entry.providerCalls), 0);
+  const providerCalls = Number(data?.providerCalls);
+  if (!Number.isInteger(providerCalls) || providerCalls < STAGING_LEVEL_COUNT || providerCalls !== expectedCalls) {
+    throw Object.assign(new Error(`The generation reported providerCalls=${String(data?.providerCalls)} but level results sum to ${expectedCalls}. The draft was not saved.`), {
+      code: 'staging_provider_call_count_invalid',
+      stage: 'response_parsing',
+      technicalDetail: `expected at least ${STAGING_LEVEL_COUNT} calls and the sum of per-level calls (${expectedCalls}), received ${String(data?.providerCalls)}`,
+      providerCalls: Number.isFinite(providerCalls) ? providerCalls : 0,
+      requestId: data?.requestId,
+    });
+  }
+}
+
+/** The only topic the CM2 geometry staging generation may target. */
+export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
+/** Fixture/staging copies that must never be silently selected for CM2 generation. */
+export const FIXTURE_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'] as const;
+export const STAGING_BROWSER_TIMEOUT_MS = 120_000;
+
+export function withStagingBrowserTimeout<T>(operation: () => Promise<T>, timeoutMs = STAGING_BROWSER_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const startedAt = Date.now();
+    const timer = globalThis.setTimeout(() => {
+      reject(Object.assign(new Error('staging_browser_timeout'), {
+        clientDurationMs: Date.now() - startedAt,
+        timeoutMs,
+      }));
+    }, timeoutMs);
+    let operationPromise: Promise<T>;
+    try {
+      operationPromise = operation();
+    } catch (error) {
+      globalThis.clearTimeout(timer);
+      reject(error);
+      return;
+    }
+    operationPromise.then((value) => { globalThis.clearTimeout(timer); resolve(value); }, (error) => { globalThis.clearTimeout(timer); reject(error); });
+  });
+}
+
+export function assertExplicitStagingTopicId(topicId: string | null | undefined): string {
+  const value = (topicId ?? '').trim();
+  if (!value) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
+  if ((FIXTURE_TOPIC_IDS as readonly string[]).includes(value)) throw new Error(`fixture_topic_refused: ${value} is a fixture topic and cannot be selected for staging generation.`);
+  return value;
+}
+
+export function assertGenerationTopic(topicId: string | null | undefined, expected = CM2_GEOMETRY_TOPIC_ID): string {
+  const value = (topicId ?? '').trim();
+  if (!value) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
+  if ((FIXTURE_TOPIC_IDS as readonly string[]).includes(value)) throw new Error(`fixture_topic_refused: ${value} is a fixture topic and cannot be used for CM2 generation (expected ${expected}).`);
+  if (value !== expected) throw new Error(`unexpected_topic_id: ${value} is not the intended CM2 topic ${expected}.`);
+  return value;
+}
+
+export function assertReturnedTopicMatches(requestedTopicId: string, returnedTopicId: unknown): void {
+  if (typeof returnedTopicId !== 'string' || returnedTopicId !== requestedTopicId) {
+    throw new Error(`topic_id_mismatch: requested ${requestedTopicId}, generator returned ${String(returnedTopicId)}. Draft not saved.`);
+  }
+}
+
+export function buildDraftInsertPayload(topicId: string, lessonContent: unknown, userId: string) {
+  return { topic_id: topicId, lesson_content: lessonContent, status: 'draft' as const, created_by: userId };
+}
+
+export async function generateStagingDraft(topicId: string, modelId?: string, expectedTopicId: string | null = null, language: 'fr' | 'en' = 'fr') {
+  const requested = topicId.trim();
+  if (!requested) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
+  if (expectedTopicId === null) {
+    assertExplicitStagingTopicId(requested);
+  } else {
+    assertGenerationTopic(requested, expectedTopicId);
+  }
+  let data: any;
+  let error: any;
+  let response: Response | null | undefined;
+  const requestStartedAt = Date.now();
+  try {
+    ({ data, error, response } = await withStagingBrowserTimeout(() => supabase.functions.invoke('generate-lesson-content', {
+      body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false, rejectionInBody: true },
+    })));
+  } catch (requestError) {
+    const timeout = requestError instanceof Error && requestError.message === 'staging_browser_timeout';
+    throw Object.assign(new Error(timeout ? 'The staging generation request timed out before a response was received.' : 'The staging generation request could not start.'), {
+      code: timeout ? 'staging_browser_timeout' : 'staging_browser_request_failed',
+      stage: timeout ? 'provider_failure' : 'pre_generation',
+      providerCallsKnown: false,
+      databaseWrite: false,
+      responseBodyAvailable: false,
+      clientDurationMs: typeof (requestError as { clientDurationMs?: unknown })?.clientDurationMs === 'number'
+        ? (requestError as { clientDurationMs: number }).clientDurationMs
+        : Date.now() - requestStartedAt,
+    });
+  }
+  const clientDurationMs = Date.now() - requestStartedAt;
+  if (error && response) {
+    const payload = await response.clone().json().catch(() => null);
+    const details = getGenerationErrorDetails(payload ?? error, 'The Edge Function returned an error.');
+    const requestId = details.requestId ?? response.headers?.get('x-request-id') ?? undefined;
+    const errorMessage = details.technicalDetail ? `${details.message}\n${details.technicalDetail}` : details.message;
+    throw Object.assign(new Error(errorMessage), {
+      ...details,
+      message: errorMessage,
+      httpStatus: response.status,
+      requestId,
+      providerCalls: details.providerCalls,
+      providerCallsKnown: details.providerCalls !== undefined,
+      failedLevel: details.level,
+      failureStage: details.stage,
+      clientDurationMs,
+    });
+  }
+  if (error) {
+    const details = getGenerationErrorDetails(error, 'The generation request could not start.');
+    throw Object.assign(new Error(details.message), {
+      ...details,
+      stage: details.stage ?? 'pre_generation',
+      providerCalls: details.providerCalls,
+      providerCallsKnown: details.providerCalls !== undefined,
+      failedLevel: details.level,
+      failureStage: details.stage ?? 'pre_generation',
+      databaseWrite: false,
+      responseBodyAvailable: false,
+      clientDurationMs,
+    });
+  }
+  // Validation rejections arrive as a 200 body (rejectionInBody) so the
+  // preview doesn't show a crash dialog; surface them exactly like a 422.
+  if (data && data.success === false && data.error && Number(data.httpStatus) >= 400) {
+    const details = getGenerationErrorDetails(data, 'The Edge Function returned an error.');
+    const errorMessage = details.technicalDetail ? `${details.message}\n${details.technicalDetail}` : details.message;
+    throw Object.assign(new Error(errorMessage), {
+      ...details,
+      message: errorMessage,
+      httpStatus: Number(data.httpStatus),
+      requestId: details.requestId ?? data.requestId,
+      providerCalls: details.providerCalls ?? 0,
+      failedLevel: details.level,
+      failureStage: details.stage,
+      clientDurationMs,
+    });
+  }
+  // Staging generation makes one provider request per level (the server
+  // validates each level and the assembled lesson), so providerCalls is the
+  // number of levels, not 1. A successful response must report exactly one
+  // call per level; anything else means the run was partial or unexpected.
+  const providerCalls = Number(data?.providerCalls);
+  if (!data?.success || !data.lesson_content || !Number.isInteger(providerCalls) || providerCalls < 1) {
+    const technicalDetail = getGenerationErrorTechnicalDetail(data)
+      ?? (data?.success && data?.lesson_content ? `Unexpected providerCalls value: ${String(data?.providerCalls)}` : undefined);
+    const details = getGenerationErrorDetails({
+      ...(data ?? {}),
+      code: data?.code ?? 'malformed_response',
+      message: data?.message ?? 'The generation response was malformed or incomplete.',
+      technicalDetail,
+      stage: data?.stage ?? 'response_parsing',
+      providerCalls: Number(data?.providerCalls) || 0,
+    });
+    const errorMessage = technicalDetail ? `${details.message}\n${technicalDetail}` : details.message;
+    throw Object.assign(new Error(errorMessage), {
+      ...details,
+      message: errorMessage,
+      providerCalls: details.providerCalls ?? 0,
+      failedLevel: details.level,
+      failureStage: details.stage,
+    });
+  }
+  assertReturnedTopicMatches(requested, data.topic_id);
+  validateStagingGenerationEnvelope(data);
+  return { ...data, clientDurationMs } as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; clientDurationMs?: number; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
+}
+
+export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind, stagingMetadata?: StagingReviewMetadata): Promise<LessonVersion> {
+  if (expectedTopicId === null) assertExplicitStagingTopicId(topicId);
+  else assertGenerationTopic(topicId, expectedTopicId);
+  assertReturnedTopicMatches(topicId, returnedTopicId);
+  const validation = validateLessonVersion(lessonContent, { topicKind });
+  if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) {
+    throw Object.assign(new Error('Draft validation failed.'), { code: 'draft_validation_failed', stage: 'validation_failure', technicalDetail: JSON.stringify(validation) });
+  }
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) throw Object.assign(new Error('You must be signed in as an admin to save a lesson draft.'), { code: 'database_save_unauthorized', stage: 'database_save' });
+  const persistedLessonContent = withStagingMetadata(withStagingTopicKind(lessonContent, topicKind), stagingMetadata);
+  const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, persistedLessonContent, user.id) as any).select('*').single();
+  if (error) throw Object.assign(new Error(`Draft save failed: ${error.message}`), { code: 'database_save_failed', stage: 'database_save', technicalDetail: error.message });
+  return data as unknown as LessonVersion;
+}
+
+export async function validateSavedDraft(version: LessonVersion, topicKind?: StagingTopicKind): Promise<LessonVersion> {
+  const validation = validateLessonVersion(version.lesson_content, { topicKind });
+  if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) throw new Error(JSON.stringify({ code: 'draft_validation_failed', validation }));
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) throw new Error('You must be signed in as an admin to validate a lesson draft.');
+  const { data, error } = await supabase.from('topic_lesson_versions').update({ status: 'validated', validated_at: new Date().toISOString(), validated_by: user.id, updated_at: new Date().toISOString() }).eq('id', version.id).eq('status', 'draft').select('*').single();
+  if (error) throw new Error(`Draft validation save failed: ${error.message}`);
+  return data as unknown as LessonVersion;
+}
+
+export async function publishValidatedDraft(versionId: string, topicId: string, lessonContent: unknown, confirmed: boolean, topicKind?: StagingTopicKind): Promise<LessonVersion> {
+  if (!confirmed) throw new Error('Explicit admin confirmation is required before publishing.');
+  const validation = validateLessonVersion(lessonContent, { topicKind });
+  if (!validation.canonicalValid || !validation.pedagogicalValid || !validation.geometryValid) {
+    throw new Error(JSON.stringify({ code: 'publish_validation_failed', validation }));
+  }
+  const { data, error } = await supabase.rpc('publish_topic_lesson_version', { p_version_id: versionId, p_topic_id: topicId, p_confirm: true });
+  if (error) throw new Error(`Draft publish failed: ${error.message}`);
+  return data as unknown as LessonVersion;
+}

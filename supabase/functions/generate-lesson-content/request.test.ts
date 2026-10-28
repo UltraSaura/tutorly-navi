@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { describe, it, expect } from 'vitest';
+import { STAGING_CUSTOM_PROMPT } from './staging-level-workflow';
 
-const source = readFileSync(new URL('./index.ts', import.meta.url), 'utf8');
+const source = readFileSync(new URL('./handler.ts', import.meta.url), 'utf8');
 const transpile = (s: string) => ts.transpile(s, { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None });
 
 describe('lesson generation AI request', () => {
@@ -45,6 +46,28 @@ describe('lesson generation AI request', () => {
       expect(message).toContain('CM2 Durées: schema with sequence');
       expect(message).toContain('"wrong":');
     }
+  });
+
+  it('uses the compact deterministic JSON contract for staging calls', () => {
+    expect(source).toContain('STAGING_JSON_OUTPUT_RULE');
+    expect(source).toContain('maxTokens: STAGING_LEVEL_MAX_TOKENS');
+    expect(source).toContain('response_format');
+  });
+
+  it('sends the exact single staging customPrompt contract for all four levels', () => {
+    expect(source).toContain('body.mode === \'staging_draft\'');
+    expect(source).toContain('customPrompt: `${STAGING_CUSTOM_PROMPT}');
+    expect(STAGING_CUSTOM_PROMPT).toContain('one of exactly four level calls');
+    expect(STAGING_CUSTOM_PROMPT).toContain('student_try block MUST contain a non-null correct_answer');
+    expect(STAGING_CUSTOM_PROMPT).toContain('mastery_check.questions MUST contain 1–4 complete question objects');
+    expect(STAGING_CUSTOM_PROMPT).toContain('id, question, answer_type, correct_answer, skill, difficulty, success_feedback, error_feedback');
+    expect(STAGING_CUSTOM_PROMPT).not.toContain('exactly these eight required properties');
+    expect(STAGING_CUSTOM_PROMPT).toContain('optional choices property is allowed in addition');
+    expect(STAGING_CUSTOM_PROMPT).toContain('REQUIRED with at least two strings when answer_type is multiple_choice or selection');
+    expect(STAGING_CUSTOM_PROMPT).toContain('may be omitted for numeric or text questions');
+    expect(STAGING_CUSTOM_PROMPT).toContain('correct_answer MUST be non-null');
+    expect(STAGING_CUSTOM_PROMPT).toContain('before pedagogical validation');
+    expect(STAGING_CUSTOM_PROMPT).toContain('Return only the one JSON object for the requested level');
   });
 });
 

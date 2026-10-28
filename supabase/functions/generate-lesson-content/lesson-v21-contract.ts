@@ -1,18 +1,21 @@
 export type ContractIssue = { path: string; message: string; expected?: string; received?: string };
+import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 
 const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
 const array = (v: unknown): v is unknown[] => Array.isArray(v);
-const answers = ['multiple_choice', 'numeric', 'time', 'short_text', 'text', 'selection', 'ordering'];
+export const ANSWER_TYPE_VALUES = ['multiple_choice', 'numeric', 'time', 'short_text', 'text', 'selection', 'ordering'] as const;
+const answers = ANSWER_TYPE_VALUES;
 const visuals = ['clock','timeline','number_line','fraction_bar','fraction_circle','triangle','rectangle','circle','polygon','angle','symmetry','coordinate_plane','geometric_solid','solid_section','measurement','unit_conversion','groups','comparison','part_whole','table','equation','diagram','sequence'];
 
-export function validateLessonV21(value: unknown): { success: true } | { success: false; issues: ContractIssue[] } {
+export function validateLessonV21(value: unknown, _options?: { prerequisiteFormat?: string }): { success: true } | { success: false; issues: ContractIssue[] } {
   const issues: ContractIssue[] = [];
   const bad = (path: string, message: string, expected?: string, received?: unknown) => issues.push({ path, message, expected, received: received === undefined ? undefined : Array.isArray(received) ? 'array' : typeof received });
+  const unsupportedAnswerType = (path: string, value: unknown) => bad(path, `Unsupported answer type ${JSON.stringify(value)}. Allowed values: ${ANSWER_TYPE_VALUES.join(', ')}`, ANSWER_TYPE_VALUES.join(', '), value);
   const required = (v: Record<string, unknown>, path: string, fields: string[]) => fields.forEach((f) => { if (!text(v[f])) bad(`${path}.${f}`, 'Required non-empty string', 'string', v[f]); });
   const stringArray = (v: unknown, path: string, min = 0, max = Infinity) => { if (!array(v) || v.length < min || v.length > max || v.some((x) => !text(x))) bad(path, `Expected ${min}–${max === Infinity ? 'many' : max} non-empty strings`, 'array', v); };
   const structured = (v: unknown, path: string, fields: string[]) => { if (!array(v)) return bad(path, 'Expected array', 'array', v); v.forEach((x, i) => { const p = `${path}[${i}]`; if (!obj(x)) return bad(p, 'Expected object'); required(x, p, fields); }); };
-  const visual = (v: unknown, path: string) => { if (!obj(v)) return bad(path, 'Expected object'); if (!visuals.includes(String(v.kind))) bad(`${path}.kind`, 'Unsupported visual kind'); if (v.alt_text !== undefined && !text(v.alt_text)) bad(`${path}.alt_text`, 'Expected string'); if (v.purpose !== undefined && !text(v.purpose)) bad(`${path}.purpose`, 'Expected string'); };
+  const visual = (v: unknown, path: string) => { if (!obj(v)) return bad(path, 'Expected object'); if (!visuals.includes(String(v.kind))) bad(`${path}.kind`, 'Unsupported visual kind'); if (v.alt_text !== undefined && !text(v.alt_text)) bad(`${path}.alt_text`, 'Expected string'); if (v.purpose !== undefined && !text(v.purpose)) bad(`${path}.purpose`, 'Expected string'); geometryVisualDataErrors(String(v.kind), v.data, `${path}.data`).forEach((item) => bad(item.path, item.message)); };
   const conceptPresentation = (v: Record<string, unknown>, path: string) => {
     if (v.key_points !== undefined) {
       if (!array(v.key_points) || v.key_points.length < 1 || v.key_points.length > 6) bad(`${path}.key_points`, 'Expected 1–6 key points', 'array(1..6)', v.key_points);
@@ -23,9 +26,13 @@ export function validateLessonV21(value: unknown): { success: true } | { success
   };
   const prerequisite = (v: unknown, path: string) => {
     if (!obj(v)) return bad(path, 'Expected object');
-    required(v, path, ['id', 'description', 'check_question', 'remediation_hint']);
-    const answerType = String(v.answer_type ?? '');
-    if (!answers.includes(answerType)) bad(`${path}.answer_type`, 'Unsupported or missing prerequisite answer type');
+    required(v, path, ['id', 'description', 'remediation_hint']);
+    const usesStagingFields = v.type !== undefined || v.prompt !== undefined;
+    const promptField = usesStagingFields ? 'prompt' : 'check_question';
+    const typeField = usesStagingFields ? 'type' : 'answer_type';
+    required(v, path, [promptField]);
+    const answerType = String(v[ typeField ] ?? '');
+    if (!answers.includes(answerType as typeof ANSWER_TYPE_VALUES[number])) unsupportedAnswerType(`${path}.${typeField}`, v[typeField]);
     if (v.expected_answer === undefined || (typeof v.expected_answer === 'string' && !text(v.expected_answer))) bad(`${path}.expected_answer`, 'Required value');
     const choices = v.choices;
     if (choices !== undefined && (!array(choices) || choices.some((choice) => !text(choice)))) bad(`${path}.choices`, 'Expected string array');
@@ -35,11 +42,11 @@ export function validateLessonV21(value: unknown): { success: true } | { success
     }
     if (answerType === 'numeric' && !/^[-+]?\d+(?:[.,]\d+)?$/.test(String(v.expected_answer).trim())) bad(`${path}.expected_answer`, 'Numeric prerequisite requires a numeric expected answer');
     if (answerType === 'time' && !(/^\s*\d{1,2}\s*(?:h|heures?)\s*\d{1,2}\s*(?:min|minutes?)?\.?\s*$/i.test(String(v.expected_answer)) || /^\s*\d{1,2}\s*(?:h|heures?)\s*$/i.test(String(v.expected_answer)) || /^\s*\d{1,2}:\d{2}\s*$/.test(String(v.expected_answer)))) bad(`${path}.expected_answer`, 'Time prerequisite requires an hour/minute expected answer');
-    const question = String(v.check_question ?? '').toLowerCase();
-    if (/(aiguille|quelle forme|identifier|reconna[iî]tre)/.test(question) && ['numeric', 'time'].includes(answerType)) bad(`${path}.answer_type`, 'Identification question requires multiple_choice, selection, or short_text');
+    const question = String(v[promptField] ?? '').toLowerCase();
+    if (/(aiguille|quelle forme|identifier|reconna[iî]tre)/.test(question) && ['numeric', 'time'].includes(answerType)) bad(`${path}.${typeField}`, 'Identification question requires multiple_choice, selection, or short_text');
     if (v.visual !== undefined) visual(v.visual, `${path}.visual`);
   };
-  const question = (v: unknown, path: string) => { if (!obj(v)) return bad(path, 'Expected object'); required(v, path, ['id', 'question', 'skill', 'success_feedback', 'error_feedback']); if (!answers.includes(String(v.answer_type))) bad(`${path}.answer_type`, 'Unsupported answer type'); if (v.correct_answer === undefined) bad(`${path}.correct_answer`, 'Required value'); if (typeof v.difficulty !== 'string' && typeof v.difficulty !== 'number') bad(`${path}.difficulty`, 'Expected string or number'); if (v.choices !== undefined && (!array(v.choices) || v.choices.some((x) => !text(x)))) bad(`${path}.choices`, 'Expected string array'); };
+  const question = (v: unknown, path: string) => { if (!obj(v)) return bad(path, 'Expected object'); required(v, path, ['id', 'question', 'skill', 'success_feedback', 'error_feedback']); if (!answers.includes(String(v.answer_type) as typeof ANSWER_TYPE_VALUES[number])) unsupportedAnswerType(`${path}.answer_type`, v.answer_type); if (v.correct_answer === undefined) bad(`${path}.correct_answer`, 'Required value'); if (typeof v.difficulty !== 'string' && typeof v.difficulty !== 'number') bad(`${path}.difficulty`, 'Expected string or number'); if (v.choices !== undefined && (!array(v.choices) || v.choices.some((x) => !text(x)))) bad(`${path}.choices`, 'Expected string array'); };
   const block = (v: unknown, path: string) => {
     if (!obj(v)) return bad(path, 'Expected object');
     required(v, path, ['id']);
@@ -50,10 +57,10 @@ export function validateLessonV21(value: unknown): { success: true } | { success
       case 'hook': required(v, path, ['title', 'content']); optionalStrings('representation'); break;
       case 'concept': required(v, path, ['title', 'content']); optionalStrings('representation'); conceptPresentation(v, path); break;
       case 'rule': required(v, path, ['title', 'content']); optionalStrings('representation'); break;
-      case 'visual': required(v, path, ['title', 'content']); if (!obj(v.visual)) bad(`${path}.visual`, 'Required object'); else { if (!visuals.includes(String(v.visual.kind))) bad(`${path}.visual.kind`, 'Unsupported visual kind'); if (v.visual.alt_text !== undefined && !text(v.visual.alt_text)) bad(`${path}.visual.alt_text`, 'Expected string'); if (v.visual.purpose !== undefined && !text(v.visual.purpose)) bad(`${path}.visual.purpose`, 'Expected string'); } break;
+      case 'visual': required(v, path, ['title', 'content']); if (!obj(v.visual)) bad(`${path}.visual`, 'Required object'); else visual(v.visual, `${path}.visual`); break;
       case 'prediction': required(v, path, ['question', 'explanation']); if (v.correct_answer === undefined) bad(`${path}.correct_answer`, 'Required value'); if (v.choices !== undefined && (!array(v.choices) || v.choices.length < 2 || v.choices.some((x) => !text(x)))) bad(`${path}.choices`, 'Expected at least 2 strings'); optionalHints(); break;
       case 'guided_example': required(v, path, ['context']); if (!array(v.steps) || v.steps.length < 1) bad(`${path}.steps`, 'Expected non-empty array'); else v.steps.forEach((s, i) => { const p = `${path}.steps[${i}]`; if (!obj(s)) return bad(p, 'Expected object'); required(s, p, ['instruction', 'reason']); if (s.representation !== undefined && !text(s.representation)) bad(`${p}.representation`, 'Expected string'); }); break;
-      case 'student_try': case 'feedback_checkpoint': required(v, path, ['question', 'success_feedback', 'error_feedback']); if (!answers.includes(String(v.answer_type))) bad(`${path}.answer_type`, 'Unsupported answer type'); if (v.correct_answer === undefined) bad(`${path}.correct_answer`, 'Required value'); if (v.choices !== undefined && (!array(v.choices) || v.choices.some((x) => !text(x)))) bad(`${path}.choices`, 'Expected string array'); optionalHints(); break;
+      case 'student_try': case 'feedback_checkpoint': required(v, path, ['question', 'success_feedback', 'error_feedback']); if (!answers.includes(String(v.answer_type) as typeof ANSWER_TYPE_VALUES[number])) unsupportedAnswerType(`${path}.answer_type`, v.answer_type); if (v.correct_answer === undefined) bad(`${path}.correct_answer`, 'Required value'); if (v.choices !== undefined && (!array(v.choices) || v.choices.some((x) => !text(x)))) bad(`${path}.choices`, 'Expected string array'); optionalHints(); break;
       case 'contrast': required(v, path, ['title', 'left', 'right', 'explanation']); break;
       case 'worked_example': required(v, path, ['context', 'conclusion']); if (!array(v.steps) || v.steps.length < 1) bad(`${path}.steps`, 'Expected non-empty array'); else v.steps.forEach((s, i) => { const p = `${path}.steps[${i}]`; if (typeof s === 'string') { if (!text(s)) bad(p, 'Expected non-empty string'); } else if (obj(s)) { required(s, p, ['instruction', 'reason']); if (s.representation !== undefined && !text(s.representation)) bad(`${p}.representation`, 'Expected string'); } else bad(p, 'Expected string or object'); }); break;
       case 'reflection': required(v, path, ['question', 'expected_idea']); break;

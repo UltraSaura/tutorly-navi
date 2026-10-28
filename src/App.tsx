@@ -59,6 +59,9 @@ import PromptManagement from "./components/admin/PromptManagement";
 import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
 import LearningContentManagement from "./components/admin/LearningContentManagement";
 import CurriculumManager from "./components/admin/CurriculumManager";
+import GeneratedLessonsPage from "./components/admin/learning/GeneratedLessonsPage";
+import StagingLessonWorkflowPage, { StagingLessonDraftPreviewPage } from "./pages/admin/StagingLessonWorkflowPage";
+import SolidVisualGalleryPage from "./pages/admin/SolidVisualGalleryPage";
 import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
@@ -247,6 +250,9 @@ const App = () => {
                         {isDev && (
                           <Route path="/management" element={<ManagementDashboard />} />
                         )}
+                        {isDev && (
+                          <Route path="/dev/solid-gallery" element={<SolidVisualGalleryPage />} />
+                        )}
                         
                         {/* Admin Panel Routes */}
                         <Route path="/admin" element={
@@ -262,6 +268,9 @@ const App = () => {
                           <Route path="prompts" element={<PromptManagement />} />
                           <Route path="learning" element={<LearningContentManagement />} />
                           <Route path="curriculum" element={<CurriculumManager />} />
+                          <Route path="generated-lessons" element={<GeneratedLessonsPage />} />
+                          <Route path="staging-lessons" element={<StagingLessonWorkflowPage />} />
+                          <Route path="staging-lessons/preview/:versionId" element={<StagingLessonDraftPreviewPage />} />
                           <Route path="exams" element={<ExamAnnales />} />
                           <Route path="recent-updates" element={<RecentUpdates />} />
                           <Route path="settings" element={<AdminSettings />} />

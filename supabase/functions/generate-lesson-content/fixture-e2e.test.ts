@@ -76,8 +76,8 @@ describe('provider-free Fractions fixture pipeline', () => {
   it('passes fenced JSON with missing visual, repeated composition and serializes frontend shape', () => {
     const result = run('Voici:\n```json\n' + JSON.stringify(fixture()) + ',\n```');
     expect(result.response).toMatchObject({ success: true, providerCalls: 0, canonicalValid: true, pedagogicalValid: true, visualKind: 'fraction_bar' });
-    expect(result.normalizationEvents.length).toBeGreaterThan(0);
-    expect(result.compositionEvents.length).toBeGreaterThan(0);
+    expect(result.normalizationEvents?.length).toBeGreaterThan(0);
+    expect(result.compositionEvents?.length).toBeGreaterThan(0);
     expect(result.response.lesson_content).toBeTruthy();
   });
   it('passes all four topic families without provider calls', () => {
@@ -113,8 +113,8 @@ describe('requested provider-free topic and failure matrix', () => {
     ['CM2 — Fractions', 'fraction_bar', 'Une fraction décrit des parts égales d’un même tout.', { parts: 4, filled: 1, denominator: 4, numerator: 1 }],
     ['Calcul : mental, posé et instrumenté', 'groups', 'On choisit une méthode de calcul adaptée aux nombres et à la situation.', { groups: [10, 4, 2] }],
     ['La résolution de problèmes', 'sequence', 'Pour résoudre un problème, je repère les données, la question et l’opération utile.', { items: ['données', 'question', 'opération'] }],
-    ['Algèbre', 'equation', 'Une égalité reste vraie quand on effectue la même action des deux côtés.', { left: 'x + 3', right: '8' }],
-    ['Geometry', 'triangle', 'Une figure géométrique se décrit avec ses côtés, ses sommets et ses propriétés.', { sides: 3, vertices: 3 }],
+    ['Algèbre', 'equation', 'Une égalité reste vraie quand on effectue la même action sur les deux membres.', { left: 'x + 3', right: '8' }],
+    ['Geometry', 'triangle', 'Une figure géométrique se décrit avec ses côtés, ses sommets et ses propriétés.', { shape: 'triangle', vertices: [{ x: 0, y: 0 }, { x: 80, y: 0 }, { x: 40, y: 70 }] }],
     ['Measurement', 'measurement', 'Mesurer consiste à comparer une grandeur avec une unité adaptée.', { unit: 'cm', value: 7 }],
   ] as const;
 
@@ -128,7 +128,7 @@ describe('requested provider-free topic and failure matrix', () => {
     delete (source.sequence[0] as { visual?: unknown }).visual;
     const result = runPipeline(JSON.stringify(source), 'CM2 — Fractions');
     expect(result).toMatchObject({ success: true, providerCalls: 0 });
-    expect(result.normalizationEvents.length).toBeGreaterThan(0);
+    expect(result.normalizationEvents?.length).toBeGreaterThan(0);
   });
 
   it('hard-fails malformed, truncated, incomplete, and ambiguous provider output', () => {
@@ -148,13 +148,14 @@ describe('requested provider-free topic and failure matrix', () => {
     }
   });
 
-  it('keeps repeated explanatory content from becoming a validation failure after deterministic cleanup', () => {
+  it('keeps a textual explanation copy invalid even after legacy deterministic cleanup', () => {
     const repeated = topicFixture('CM2 — Fractions', 'fraction_bar', 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.', { parts: 4, filled: 1 });
     (repeated.sequence[0] as Record<string, unknown>).key_points = [{ label: 'Règle', text: 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.' }];
     (repeated.sequence[0] as Record<string, unknown>).takeaway = 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.';
     const result = runPipeline(JSON.stringify(repeated), 'CM2 — Fractions');
-    expect(result).toMatchObject({ success: true, providerCalls: 0 });
-    expect(result.compositionEvents.length).toBeGreaterThan(0);
+    expect(result).toMatchObject({ success: false, providerCalls: 0 });
+    expect(result.qualityIssues).toEqual(expect.arrayContaining([expect.objectContaining({ message: expect.stringContaining('copié textuellement') })]));
+    expect(result.compositionEvents?.length).toBeGreaterThan(0);
   });
 
   it('rejects a mathematically inconsistent visual/text example', () => {

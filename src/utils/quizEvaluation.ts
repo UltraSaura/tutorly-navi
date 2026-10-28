@@ -47,7 +47,7 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
       }
       const match = String(answer ?? '').trim().match(/^(\d{1,2})\s*(?:h|:|H)\s*(\d{1,2})$/);
       return Boolean(match)
-        && Number(match?.[1]) * 60 + Number(match?.[2]) === expectedMinutes;
+        && Number(match?.[1]) * 60 + Number(match?.[2]) === expectedSeconds / 60;
     }
     return Number(answer) === numQ.answer;
   }

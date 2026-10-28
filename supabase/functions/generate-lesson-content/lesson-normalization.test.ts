@@ -41,7 +41,7 @@ describe('provider-free V2.1 Fractions normalization', () => {
       const result = validate(lesson);
       expect(result.events).toHaveLength(1);
       expect(result.events[0].to).toBe('fraction_bar');
-      if (name === 'omitted kind') expect(result.visual.data).toMatchObject({ parts: 4, filled: 1 });
+      if (name === 'omitted kind') expect((result.visual as { data?: unknown }).data).toMatchObject({ parts: 4, filled: 1 });
     });
   }
 
@@ -69,7 +69,7 @@ describe('provider-free V2.1 Fractions normalization', () => {
 });
 
 describe('provider-free geometry normalization', () => {
-  it('selects a geometry-specific fallback instead of generic diagram', () => {
+  it('preserves an incomplete geometry visual for structured validation', () => {
     const lesson = fixture();
     lesson.sequence[0] = {
       id: 'c-angle', type: 'concept', title: 'Les angles',
@@ -78,11 +78,11 @@ describe('provider-free geometry normalization', () => {
     } as unknown as typeof lesson.sequence[number];
     const { lesson: normalized } = normalizeGeneratedLesson(lesson, 'Angles');
     const visual = (normalized.sequence as Array<Record<string, unknown>>)[0].visual as Record<string, unknown>;
-    expect(visual.kind).toBe('angle');
-    expect(pedagogicalIssues(normalized, 'CM2', 'Angles').filter((issue) => issue.path.endsWith('.visual.kind'))).toEqual([]);
+    expect(visual.kind).toBe('diagram');
+    expect(pedagogicalIssues(normalized, 'CM2', 'Angles').some((issue) => issue.path.includes('.visual.data'))).toBe(true);
   });
 
-  it('uses a polygon fallback for generic plane figures', () => {
+  it('does not fabricate polygon coordinates for generic plane figures', () => {
     const lesson = fixture();
     lesson.sequence[0] = {
       id: 'c-figures', type: 'concept', title: 'Construire et transformer des figures planes',
@@ -91,6 +91,6 @@ describe('provider-free geometry normalization', () => {
     } as unknown as typeof lesson.sequence[number];
     const { lesson: normalized } = normalizeGeneratedLesson(lesson, 'Construire et transformer des figures planes');
     const visual = (normalized.sequence as Array<Record<string, unknown>>)[0].visual as Record<string, unknown>;
-    expect(visual.kind).toBe('polygon');
+    expect(visual.kind).toBe('diagram');
   });
 });

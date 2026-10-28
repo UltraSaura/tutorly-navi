@@ -9,7 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { formatGenerationError, generationErrorMessages, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
+import { Link } from 'react-router-dom';
+import { formatGenerationErrorDetails, formatProviderDiagnostics, generationErrorMessages, getGenerationErrorDetails, type GenerationErrorDetails } from './generationErrorMapping';
+import { geometryDraftLesson } from './geometryDraft';
+import { runBulkStagingGeneration, type BulkStagingProgress } from '@/services/bulkStagingLessonWorkflow';
+import { deriveBulkLessonStatus, type BulkLessonStatus } from './bulkLessonStatus';
 
 interface TopicRow {
   id: string;
@@ -24,7 +28,7 @@ type SubjectRow = {
   name: string;
 };
 
-type GenStatus = 'idle' | 'running' | 'done' | 'error';
+type GenStatus = 'idle' | 'generating' | 'validating' | 'saved' | 'failed';
 
 interface GenResult {
   topicId: string;
@@ -33,41 +37,33 @@ interface GenResult {
   error?: string;
   technicalDetail?: string;
   currentStep?: string;
+  progress?: BulkStagingProgress;
+  providerCalls?: number;
+  failedLevel?: number;
+  failureStage?: string;
+  httpStatus?: number;
+  errorCode?: string;
+  requestId?: string;
+  providerDiagnostics?: GenerationErrorDetails['providerDiagnostics'];
 }
 
-// V2.1 performs one planning call plus one validated lesson call per level.
-// Four levels can legitimately take several minutes; do not abort the request
-// while the Edge Function is still generating and validating the topic.
-const GENERATION_TIMEOUT_MS = 300000;
-
-async function getFunctionErrorDetails(err: unknown, response?: Response) {
-  const fallback = err instanceof Error && err.message && err.message !== 'Unknown error'
-    ? err.message
-    : 'La génération a échoué.';
+async function getFunctionErrorDetails(err: unknown, response?: Response): Promise<GenerationErrorDetails> {
   const candidateResponse = response || (typeof err === 'object' && err !== null && 'context' in err && (err as { context?: Response }).context instanceof Response
     ? (err as { context?: Response }).context : undefined);
-  if (!candidateResponse) return {
-    message: formatGenerationError(err, fallback),
-    technicalDetail: getGenerationErrorTechnicalDetail(err),
-  };
+  if (!candidateResponse) return getGenerationErrorDetails(err, 'The generation request could not start.');
   try {
     const payload = await candidateResponse.clone().json();
     return {
-      message: formatGenerationError(payload, fallback),
-      technicalDetail: getGenerationErrorTechnicalDetail(payload),
+      ...getGenerationErrorDetails(payload, 'The Edge Function returned an error.'),
+      httpStatus: candidateResponse.status,
+      requestId: getGenerationErrorDetails(payload).requestId ?? candidateResponse.headers.get('x-request-id') ?? undefined,
     };
   } catch {
     try {
       const text = await candidateResponse.clone().text();
-      return {
-        message: formatGenerationError(text, fallback),
-        technicalDetail: getGenerationErrorTechnicalDetail(text),
-      };
+      return { ...getGenerationErrorDetails(text, 'The Edge Function returned an unreadable error.'), httpStatus: candidateResponse.status, requestId: candidateResponse.headers.get('x-request-id') ?? undefined };
     } catch {
-      return {
-        message: formatGenerationError(err, fallback),
-        technicalDetail: getGenerationErrorTechnicalDetail(err),
-      };
+      return { ...getGenerationErrorDetails(err, 'The Edge Function returned an error.'), httpStatus: candidateResponse.status, requestId: candidateResponse.headers.get('x-request-id') ?? undefined };
     }
   }
 }
@@ -86,6 +82,8 @@ export function BulkLessonGenerator() {
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [dryRun, setDryRun] = useState(false);
+  const [showLegacyControls, setShowLegacyControls] = useState(false);
 
   useEffect(() => {
     if (!isRunning || runStartedAt === null) return;
@@ -125,6 +123,37 @@ export function BulkLessonGenerator() {
     enabled: open,
   });
 
+  const topicIds = useMemo(() => topics.map((topic) => topic.id), [topics]);
+  const { data: stagingVersions = [], isLoading: isLoadingStagingVersions } = useQuery({
+    queryKey: ['topic-lesson-versions-bulk-lesson', topicIds],
+    queryFn: async () => {
+      if (!topicIds.length) return [] as Array<{ topic_id: string; status: string }>;
+      const { data, error } = await (supabase as any)
+        .from('topic_lesson_versions')
+        .select('topic_id, status')
+        .in('topic_id', topicIds)
+        .in('status', ['draft', 'validated']);
+      if (error) throw error;
+      return (data ?? []) as Array<{ topic_id: string; status: string }>;
+    },
+    enabled: open && topicIds.length > 0,
+  });
+
+  const stagingStatusesByTopic = useMemo(() => {
+    const statuses = new Map<string, string[]>();
+    stagingVersions.forEach((version) => {
+      const current = statuses.get(version.topic_id) ?? [];
+      current.push(version.status);
+      statuses.set(version.topic_id, current);
+    });
+    return statuses;
+  }, [stagingVersions]);
+
+  const statusForTopic = (topic: TopicRow): BulkLessonStatus => deriveBulkLessonStatus({
+    lessonContent: topic.lesson_content,
+    stagingStatuses: stagingStatusesByTopic.get(topic.id) ?? [],
+  });
+
   const levels = useMemo(
     () => [...new Set(topics.map((t) => t.curriculum_level_code).filter(Boolean))].sort() as string[],
     [topics],
@@ -135,10 +164,10 @@ export function BulkLessonGenerator() {
       topics.filter((t) => {
         if (filterSubject !== 'all' && t.curriculum_subject_id !== filterSubject) return false;
         if (filterLevel !== 'all' && t.curriculum_level_code !== filterLevel) return false;
-        if (onlyMissing && t.lesson_content) return false;
+        if (onlyMissing && statusForTopic(t) !== 'none') return false;
         return true;
       }),
-    [topics, filterSubject, filterLevel, onlyMissing],
+    [topics, filterSubject, filterLevel, onlyMissing, stagingStatusesByTopic],
   );
 
   const toggle = (id: string) => {
@@ -185,42 +214,50 @@ export function BulkLessonGenerator() {
     setRunStartedAt(Date.now());
     setElapsedMs(0);
 
-    for (const topic of batch) {
-      setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'running' } : r));
-      try {
-        const invokePromise = supabase.functions.invoke('generate-lesson-content', {
-          body: { topicId: topic.id, language },
-        });
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error('La génération a dépassé 5 minutes.')), GENERATION_TIMEOUT_MS);
-        });
-        const result = await Promise.race([invokePromise, timeoutPromise]);
-        const { data: fnData, error: fnError, response: invokeResponse } = result;
-        if (fnError) {
-          const details = await getFunctionErrorDetails(fnError, invokeResponse);
-          throw Object.assign(new Error(details.message), { technicalDetail: details.technicalDetail });
-        }
-        if (fnData?.error) {
-          const details = {
-            message: formatGenerationError(fnData),
-            technicalDetail: getGenerationErrorTechnicalDetail(fnData),
-          };
-          throw Object.assign(new Error(details.message), { technicalDetail: details.technicalDetail });
-        }
-        const stepCount = (fnData?.lesson_content?.steps?.length ?? 0);
-        setResults((p) => p.map((r) => r.topicId === topic.id
-          ? { ...r, status: 'done', currentStep: stepCount > 1 ? `${stepCount} étapes` : undefined }
-          : r));
-        void invokeResponse;
-      } catch (err) {
-        const details = await getFunctionErrorDetails(err);
-        setResults((p) => p.map((r) => r.topicId === topic.id ? {
-          ...r,
-          status: 'error',
-          error: details.message,
-          technicalDetail: details.technicalDetail,
-        } : r));
-      }
+    try {
+      const workflowResults = await runBulkStagingGeneration(
+        batch,
+        (progress) => setResults((previous) => previous.map((result) => result.topicId === progress.topicId ? {
+          ...result,
+          status: progress.status,
+          providerCalls: progress.providerCalls,
+          progress,
+        } : result)),
+        { dryRun, dryRunContent: geometryDraftLesson, language },
+      );
+      setResults((previous) => previous.map((result) => {
+        const workflowResult = workflowResults.find((candidate) => candidate.topicId === result.topicId);
+        if (!workflowResult) return result;
+        if (workflowResult.status === 'saved') return { ...result, status: 'saved', providerCalls: result.providerCalls ?? (dryRun ? 0 : 4) };
+        return {
+          ...result,
+          status: 'failed',
+          error: workflowResult.failure?.message ?? 'The staging generation failed.',
+          technicalDetail: workflowResult.failure?.technicalDiagnostic,
+          providerCalls: workflowResult.failure?.providerCalls ?? 0,
+          failedLevel: workflowResult.failure?.failedLevel,
+          failureStage: workflowResult.failure?.failureStage,
+          httpStatus: workflowResult.failure?.httpStatus,
+          errorCode: workflowResult.failure?.code,
+          requestId: workflowResult.failure?.requestId,
+          providerDiagnostics: workflowResult.failure?.providerDiagnostics,
+        };
+      }));
+    } catch (err) {
+      const details = await getFunctionErrorDetails(err);
+      setResults((previous) => previous.map((result) => selected.includes(result.topicId) ? {
+        ...result,
+        status: 'failed',
+        error: details.message,
+        technicalDetail: details.technicalDetail,
+        providerCalls: details.providerCalls ?? 0,
+        failedLevel: details.level,
+        failureStage: details.stage ?? 'pre_generation',
+        httpStatus: details.httpStatus,
+        errorCode: details.code,
+        requestId: details.requestId,
+        providerDiagnostics: details.providerDiagnostics,
+      } : result));
     }
 
     setIsRunning(false);
@@ -230,7 +267,46 @@ export function BulkLessonGenerator() {
     setSelected([]);
   };
 
-  const done = results.filter((r) => r.status === 'done').length;
+  const handleLegacyGenerate = async () => {
+    if (!selected.length) return;
+    const batch = topics.filter((topic) => selected.includes(topic.id));
+    setResults(batch.map((topic) => ({ topicId: topic.id, name: topic.name, status: 'idle' })));
+    setIsRunning(true);
+    setRunStartedAt(Date.now());
+    setElapsedMs(0);
+    for (const topic of batch) {
+      setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'generating' } : result));
+      try {
+        const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', { body: { topicId: topic.id, language } });
+        if (error) {
+          const details = await getFunctionErrorDetails(error, response);
+          throw Object.assign(new Error(details.message), details);
+        }
+        if (data?.error) throw Object.assign(new Error(getGenerationErrorDetails(data).message), getGenerationErrorDetails(data));
+        setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'saved' } : result));
+      } catch (error) {
+        const details = getGenerationErrorDetails(error);
+        setResults((previous) => previous.map((result) => result.topicId === topic.id ? {
+          ...result,
+          status: 'failed',
+          error: details.message,
+          technicalDetail: details.technicalDetail,
+          providerCalls: details.providerCalls ?? 0,
+          failedLevel: details.level,
+          failureStage: details.stage ?? 'pre_generation',
+          httpStatus: details.httpStatus,
+          errorCode: details.code,
+          requestId: details.requestId,
+          providerDiagnostics: details.providerDiagnostics,
+        } : result));
+      }
+    }
+    setIsRunning(false);
+    setRunStartedAt(null);
+    setSelected([]);
+  };
+
+  const done = results.filter((r) => r.status === 'saved').length;
   const showResults = results.length > 0;
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
@@ -268,7 +344,7 @@ export function BulkLessonGenerator() {
             <div className="flex items-center justify-between text-sm">
               <div className="flex flex-col">
                 <span className="font-medium">
-                  {isRunning ? 'Génération en cours…' : `Terminé — ${done} / ${results.length}`}
+                {isRunning ? 'Génération staging en cours…' : `Terminé — ${done} / ${results.length}`}
                 </span>
                 {isRunning && (
                   <span className="text-xs text-muted-foreground">
@@ -281,7 +357,11 @@ export function BulkLessonGenerator() {
             <Progress value={results.length ? (done / results.length) * 100 : 0} className="h-2" />
             <div className="mt-2 space-y-1">
               {results.map((r) => {
-                const formattedErrorMessage = r.error ? formatGenerationError(r.error) : undefined;
+                const formattedErrorMessage = r.error ? formatGenerationErrorDetails({
+                  message: r.error,
+                  technicalDetail: r.technicalDetail,
+                  stage: r.failureStage,
+                }) : undefined;
                 const visibleErrorMessage = formattedErrorMessage &&
                   typeof formattedErrorMessage === 'string' &&
                   formattedErrorMessage.trim() &&
@@ -297,23 +377,28 @@ export function BulkLessonGenerator() {
                 }
                 return (
                 <div key={r.topicId} className="flex items-center gap-3 border-b py-2 text-sm last:border-0">
-                  {r.status === 'running' && (
+                  {(r.status === 'generating' || r.status === 'validating') && (
                     <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-primary" />
                   )}
-                  {r.status === 'done' && (
+                  {r.status === 'saved' && (
                     <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-500" />
                   )}
-                  {r.status === 'error' && <XCircle className="h-4 w-4 flex-shrink-0 text-red-500" />}
+                  {r.status === 'failed' && <XCircle className="h-4 w-4 flex-shrink-0 text-red-500" />}
                   {r.status === 'idle' && <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-muted" />}
                   <span className="flex-1 truncate">{r.name}</span>
-                  {r.status === 'done' && r.currentStep && (
-                    <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
-                  )}
+                  {r.progress && <span className="text-xs text-muted-foreground">Topic {r.progress.topicIndex} of {r.progress.totalTopics} · Level {r.progress.level} of 4 · Provider calls: {r.providerCalls ?? 0} · Status: {r.progress.status}</span>}
+                  {r.status === 'failed' && <span className="text-xs text-red-500">{r.topicId} · Level {r.failedLevel ?? '?'} · {r.failureStage ?? 'failed'}{r.httpStatus ? ` · HTTP ${r.httpStatus}` : ''}</span>}
                   {visibleErrorMessage && <span title={r.technicalDetail ?? visibleErrorMessage} className="max-w-[360px] break-words text-right text-xs text-red-500">{visibleErrorMessage}</span>}
+                  {r.status === 'failed' && <span className="max-w-[360px] break-words text-right text-[11px] text-muted-foreground">{[r.errorCode, r.requestId, `providerCalls=${r.providerCalls ?? 0}`, r.technicalDetail, formatProviderDiagnostics(r.providerDiagnostics)].filter(Boolean).join(' · ')}</span>}
                 </div>
                 );
               })}
             </div>
+            {!isRunning && (
+              <Button asChild variant="outline" className="mt-2 w-full">
+                <Link to="/admin/generated-lessons?workflow=staging">Voir les versions staging</Link>
+              </Button>
+            )}
             {!isRunning && (
               <Button
                 variant="outline"
@@ -372,11 +457,15 @@ export function BulkLessonGenerator() {
                 <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(Boolean(v))} />
                 {ui("Sans leçon")}
               </label>
+              {import.meta.env.DEV && <label className="flex cursor-pointer items-center gap-1.5 text-sm text-amber-700">
+                <Checkbox checked={dryRun} onCheckedChange={(v) => setDryRun(Boolean(v))} />
+                Dry-run staging (0 appels, aucune écriture)
+              </label>}
             </div>
 
             <div className="flex gap-3 text-xs">
               <button
-                onClick={() => setSelected(visible.filter((t) => !t.lesson_content).map((t) => t.id))}
+                onClick={() => setSelected(visible.filter((t) => statusForTopic(t) === 'none').map((t) => t.id))}
                 className="text-primary hover:underline"
               >
                 {ui("Sélectionner sans leçon")}
@@ -392,7 +481,7 @@ export function BulkLessonGenerator() {
             </div>
 
             <div className="min-h-0 flex-1 divide-y overflow-y-auto rounded-lg border">
-              {isLoading ? (
+              {isLoading || isLoadingStagingVersions ? (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
@@ -413,12 +502,16 @@ export function BulkLessonGenerator() {
                           {topic.curriculum_level_code}
                         </Badge>
                       )}
-                      {topic.lesson_content ? (
+                      {statusForTopic(topic) === 'staging' ? (
+                        <Badge className="h-5 border-blue-200 bg-blue-50 text-xs text-blue-700 hover:bg-blue-50">
+                          {ui("Brouillon staging")}
+                        </Badge>
+                      ) : topic.lesson_content ? (
                         <>
                           <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
-                            {ui("Leçon ✓")}
+                            {ui("Leçon publiée")}
                           </Badge>
-                          <button
+                          {showLegacyControls && <button
                             onClick={(e) => handleDeleteOne(topic.id, e)}
                             disabled={deletingIds.has(topic.id)}
                             title={ui("Supprimer la leçon")}
@@ -427,11 +520,11 @@ export function BulkLessonGenerator() {
                             {deletingIds.has(topic.id)
                               ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               : <Trash2 className="h-3.5 w-3.5" />}
-                          </button>
+                          </button>}
                         </>
                       ) : (
                         <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
-                          {ui("Pas de leçon")}
+                          {ui("Aucune version")}
                         </Badge>
                       )}
                     </div>
@@ -445,7 +538,7 @@ export function BulkLessonGenerator() {
                 {selected.length} {ui("sélectionné")}{selected.length !== 1 ? 's' : ''}
               </span>
               <div className="flex gap-2">
-                {selected.some(id => topics.find(t => t.id === id)?.lesson_content) && (
+                {showLegacyControls && selected.some(id => topics.find(t => t.id === id)?.lesson_content) && (
                   <Button
                     variant="outline"
                     onClick={handleDeleteSelected}
@@ -458,10 +551,17 @@ export function BulkLessonGenerator() {
                 )}
                 <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
                   <Wand2 className="h-4 w-4" />
-                  {`Générer ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}`}
+                  {`${dryRun ? 'Tester' : 'Générer'} ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''} (staging)`}
                 </Button>
+                <Button variant="ghost" onClick={() => setShowLegacyControls((value) => !value)} aria-expanded={showLegacyControls}>
+                  {showLegacyControls ? 'Masquer les contrôles legacy' : 'Afficher les contrôles legacy'}
+                </Button>
+                {showLegacyControls && <Button variant="ghost" onClick={handleLegacyGenerate} disabled={!selected.length || isRunning} title="Ancien générateur; utilise l'ancien contrat et peut modifier le contenu public.">
+                  Générateur legacy (modifie topics.lesson_content)
+                </Button>}
               </div>
             </div>
+            {showLegacyControls && <p className="text-xs text-amber-700">Legacy uniquement : ces contrôles peuvent modifier ou supprimer topics.lesson_content. Le bouton staging ci-dessus n’utilise jamais cette persistance.</p>}
           </>
         )}
       </DialogContent>
