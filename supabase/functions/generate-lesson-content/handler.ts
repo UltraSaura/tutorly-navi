@@ -10,6 +10,7 @@ import { normalizeLessonComposition } from './composition-normalization.ts';
 import { buildProviderResponseDiagnostics, extractProviderContent, parseProviderJsonSafely } from './provider-json.ts';
 import { normalizeCanonicalAnswers } from './canonical-normalization.ts';
 import { compileV21LessonDraft } from './v21-draft-compiler.ts';
+import { SOLID_PROMPT_RULE } from '../../../shared/solid-visual-contract.ts';
 // The shared CORS policy also permits x-family-grant for family-access callers.
 import { DEFAULT_ALLOWED_ORIGINS, corsHeadersFor, isAllowedOrigin } from './cors-policy.ts';
 import {
@@ -39,6 +40,14 @@ import {
   type StagingDraftResponse,
 } from './staging-level-workflow.ts';
 import { stagingProviderOutputContract } from './staging-structured-output.ts';
+import {
+  buildProposedSpecification,
+  buildProviderFreeApprovedSpecification,
+  getServerApprovedStagingSpecification,
+  resolveObjectiveSelection,
+  runStagingPreflight,
+  type StagingObjective,
+} from './staging-specification.ts';
 
 const configuredOrigins = (Deno.env.get('STAGING_FRONTEND_ORIGINS') ?? Deno.env.get('STAGING_FRONTEND_ORIGIN') ?? '')
   .split(',')
@@ -385,7 +394,9 @@ export async function handleRequest(req: Request): Promise<Response> {
       throw new Error(`Topic not found: ${topicError?.message}`);
     }
 
-    const objectives: Array<{ id: string; text: string }> = [];
+    const objectives: StagingObjective[] = [];
+    const linkedObjectiveIds: string[] = [];
+    const linkedObjectiveRows: StagingObjective[] = [];
     const tasks: any[] = [];
     const practiceTasks = tasks.filter(t => t.type === 'practice');
     const exitTasks = tasks.filter(t => t.type === 'exit');
@@ -413,7 +424,35 @@ export async function handleRequest(req: Request): Promise<Response> {
       const rpcLevel = levelRpcMap[rawLevel] ?? rawLevel;
       const dbLevel  = levelDbMap[rawLevel]  ?? rawLevel.toLowerCase();
 
-      // Get subject slug from curriculum_subject_id on the topic
+      // Explicit topic links are authoritative. A broad domain query is only
+      // a suggestion source when the topic has no explicit links at all.
+      const { data: linkedRows, error: linkedRowsError } = await supabaseAdminEarly
+        .from('topic_objective_links')
+        .select('objective_id, objective_id_uuid')
+        .eq('topic_id', topicId)
+        .order('order_index');
+      if (linkedRowsError) {
+        // An explicit-link lookup failure must not be mistaken for "no links":
+        // broad domain objectives are suggestions only and cannot replace an
+        // authoritative relationship that we failed to read.
+        linkedObjectiveIds.push('__explicit_topic_objective_lookup_failed__');
+      }
+      for (const row of (linkedRows ?? []) as Array<{ objective_id?: string | null; objective_id_uuid?: string | null }>) {
+        const reference = String(row.objective_id_uuid ?? row.objective_id ?? '').trim();
+        if (reference) linkedObjectiveIds.push(reference);
+      }
+      for (const reference of [...new Set(linkedObjectiveIds)]) {
+        const { data: item } = await supabaseAdminEarly
+          .from('objectives')
+          .select('id,text')
+          .or(`id.eq.${reference},id_new.eq.${reference}`)
+          .maybeSingle();
+        if (item?.id && item?.text) linkedObjectiveRows.push({ id: String(item.id), text: String(item.text) });
+      }
+
+      if (linkedObjectiveIds.length === 0) {
+      // Get subject slug from curriculum_subject_id on the topic. This branch
+      // produces suggestions only; it never replaces explicit topic links.
       const { data: subjectRow } = await supabaseAdminEarly
         .from('subjects')
         .select('slug')
@@ -489,24 +528,13 @@ export async function handleRequest(req: Request): Promise<Response> {
           }
         }
       }
+      }
     } catch (curriculumErr) {
       // Non-fatal — lesson generation continues without objectives if resolution fails
       console.warn('[generate-lesson-content] Curriculum resolution failed (non-fatal):', curriculumErr);
     }
-    // Topic links are the authoritative objective source; use them when edition
-    // resolution is unavailable so V2.1 never invents or drops objective IDs.
-    if (objectives.length === 0) {
-      const objectiveClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-      const { data: linked } = await objectiveClient
-        .from('topic_objective_links')
-        .select('objective_id, objective_id_uuid')
-        .eq('topic_id', topicId)
-        .order('order_index');
-      for (const row of (linked ?? []) as any[]) {
-        const { data: item } = await objectiveClient.from('objectives').select('id,text').or(`id.eq.${row.objective_id},id_new.eq.${row.objective_id_uuid}`).maybeSingle();
-        if (item?.id && item?.text) objectives.push({ id: String(item.id), text: String(item.text) });
-      }
-    }
+    const objectiveSelection = resolveObjectiveSelection(linkedObjectiveIds, linkedObjectiveRows, objectives);
+    objectives.splice(0, objectives.length, ...objectiveSelection.selected);
 
     const categories = topic.learning_categories as { subjects?: { name: string } } | null;
     const subjectName = categories?.subjects?.name || 'General';
@@ -898,6 +926,59 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       const objectiveText = objectives.map((o) => o.text).join('; ');
       const topicKind = stagingTopicKind(topic.name, objectiveText);
       const metadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id), objectiveText);
+      const providerFreeTest = Deno.env.get('DENO_ENV') === 'test' && body.providerFreeFixture === true;
+      const effectiveObjectiveSelection = providerFreeTest && objectiveSelection.provenance === 'absent'
+        ? {
+          ...objectiveSelection,
+          selected: [{ id: 'provider-free-objective', text: `Comprendre ${topic.name}.` }],
+          provenance: 'linked' as const,
+        }
+        : objectiveSelection;
+      const proposedSpecification = buildProposedSpecification({
+        topicId: String(topicId),
+        curriculum: rawLevel,
+        language: responseLang,
+        topicKind,
+        objectiveSelection: effectiveObjectiveSelection,
+        metadata,
+      });
+      const serverApprovedSpecification = getServerApprovedStagingSpecification(String(topicId));
+      const specification = providerFreeTest
+        ? buildProviderFreeApprovedSpecification({
+          topicId: String(topicId),
+          curriculum: rawLevel,
+          language: responseLang,
+          topicKind,
+          objectiveSelection: effectiveObjectiveSelection,
+          metadata,
+        })
+        : serverApprovedSpecification ?? proposedSpecification;
+      const preflight = runStagingPreflight({ specification, objectiveSelection: effectiveObjectiveSelection });
+      if (!preflight.providerAllowed) {
+        const first = preflight.errors[0];
+        return new Response(JSON.stringify({
+          success: false,
+          ok: false,
+          requestId,
+          httpStatus: 422,
+          error: {
+            code: 'staging_preflight_failed',
+            message: 'La génération staging est bloquée par le préflight pédagogique.',
+            technicalDetail: preflight.errors.map((error) => `${error.path}: ${error.message}`).join('; '),
+            validationCategory: first?.code ?? 'specification',
+            stage: 'pre_generation',
+            providerCalls: 0,
+            databaseWrite: false,
+            requestId,
+            objectives: preflight.objectiveSelection,
+            specification: preflight.specification,
+          },
+          objectives: preflight.objectiveSelection,
+          specification: preflight.specification,
+          providerCalls: 0,
+          databaseWrite: false,
+        }), { status: 422, headers: responseHeaders() });
+      }
       console.info('[generate-lesson-content] staging request started', { requestId, topicId: String(topicId), levels: STAGING_LEVEL_COUNT, providerCallsAttempted: aiProviderCalls });
       const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
       let totalRetryCount = 0;
@@ -907,7 +988,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         let levelValidation;
         try {
           console.info('[generate-lesson-content] staging level started', { requestId, level: levelIndex, providerCallsAttempted: aiProviderCalls });
-          const result = await callStagingLevelWithBoundedJsonRetry(stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, objectives.map((o) => o.text).join('; ')), levelMetadata);
+          const result = await callStagingLevelWithBoundedJsonRetry(stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, objectives.map((o) => o.text).join('; '), specification), levelMetadata);
           levelTokenUsage = result.tokenUsage;
           totalRetryCount += result.retryCount;
           const normalized = normalizeGeneratedLesson(result.value, topic.name, { preserveProviderSequence: true });
@@ -1104,6 +1185,7 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         levelPrompt = `LESSON GENERATOR V2.1 — UNE LEÇON\nSujet: ${topic.name}; objectif: ${plan.topic_goal}; niveau: ${p.title}\nObjectifs assignés: ${assigned.map((id: string) => `${id}: ${objectives.find((o) => o.id === id)?.text ?? id}`).join('; ')}\nCritères de réussite obligatoires (1 à 5 chaînes non vides): ${(p.success_criteria ?? []).join('; ')}\nRetourne uniquement l'objet lesson JSON. Champs obligatoires: lesson_goal, success_criteria (1 à 5 chaînes non vides), prerequisites: [], sequence non vide avec types canoniques, misconceptions: [], mastery avec 1 à 4 questions et correct_answer. Ne génère aucun objet prerequisite ou misconception: ces métadonnées optionnelles sont ajoutées uniquement par une étape dédiée et validée. Chaque question interactive doit avoir answer_type, correct_answer, success_feedback et error_feedback. Chaque concept doit avoir content. Les visuels obligatoires utilisent un kind supporté. N'utilise pas teacher_actions/student_actions. JSON strict uniquement.`;
         const pedagogyInstruction = `\n\nPÉDAGOGIE: un concept enseigne une seule petite idée, en 1 à 3 phrases courtes. Quand le concept est structuré, son contenu explique l'idée centrale, le visual la montre, les key_points ajoutent uniquement des informations essentielles qui ne sont pas déjà évidentes, et le takeaway la compresse en une règle mémorable. Ne répète pas la même phrase dans content, key_points et takeaway. Découpe les idées uniquement avec les types canoniques concept, visual, guided_example, prediction, student_try et feedback_checkpoint; ne crée jamais de type example, interaction ou feedback. Progresse situation concrète → visual → concept → prediction/student_try → feedback_checkpoint. Respecte le but de ce niveau et n'enseigne pas les compétences ultérieures. Utilise un langage enfantin et un français naturel (par exemple «Chaque grand chiffre correspond à 5 minutes», jamais une formulation télégraphique). Les prérequis doivent toujours déclarer un answer_type compatible avec leur question; les questions d'identification utilisent multiple_choice/selection/short_text, les nombres numeric, les heures time. FORMES EXACTES: visual={"id":"v1","type":"visual","title":"...","content":"...","visual":{"kind":"clock|timeline|number_line|unit_conversion|measurement|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|diagram","purpose":"...","alt_text":"...","data":{}}}; prediction={"id":"p1","type":"prediction","question":"...","choices":["...","..."],"correct_answer":"...","explanation":"..."}; guided_example={"id":"g1","type":"guided_example","context":"...","steps":[{"instruction":"...","representation":"...","reason":"..."}]}; student_try/feedback_checkpoint={"id":"s1","type":"student_try","question":"...","answer_type":"multiple_choice|numeric|time|short_text|text|selection|ordering","choices":["..."],"correct_answer":"...","hints":["..."],"success_feedback":"...","error_feedback":"..."}.`;
       const structuredConceptInstruction = `\n\nSTRUCTURE CONCEPTUELLE: décide au cas par cas si le concept bénéficie d'un modèle visuel. Politique visuelle partagée obligatoire: lecture de l'heure/horloge → visual kind clock requis; fractions partie/tout → fraction_bar ou fraction_circle requis; droite graduée → number_line requis; géométrie/angles/symétrie/coordonnées → figure appropriée requise; conversion et unités de durée → unit_conversion ou timeline requis; mesure/comparaison/processus → visual préféré mais non obligatoire; prose et relations non visuelles (par exemple commutativité) → visual optionnel. Les visuels de géométrie doivent contenir des données compactes et réellement dessinables, jamais «voir la figure» ou seulement un nom: diagram={points:[{x:40,y:120,label:"A"}],segments:[{from:"A",to:"B"}],lines:[{through:["A","B"],arrows:true}]}; angle={vertex:{x:100,y:120,label:"B"},rays:[{x:100,y:40,label:"A"},{x:200,y:120,label:"C"}],degrees:90,rightAngle:true}; circle={center:{x:150,y:100,label:"O"},radius:60,radiusEnd:{x:210,y:100,label:"A"},diameterEnd:{x:90,y:100,label:"B"}}; polygon={shape:"rectangle",vertices:[{x:20,y:20},{x:180,y:20},{x:180,y:120},{x:20,y:120}]}; symmetry={axis:{x:150},grid:{width:8,height:8},figure:[{x:1,y:2},{x:1,y:3},{x:2,y:3}],symmetric_figure:[{x:5,y:2},{x:5,y:3},{x:4,y:3}]}. Toutes les coordonnées, sommets, axes et valeurs nécessaires sont obligatoires; ne fabrique jamais de coordonnées. Pour les relations difficiles à organiser mentalement, préfère un concept autonome avec content court + visual déterministe + 1 à 4 key_points utiles + takeaway concis. Chaque champ doit avoir un rôle distinct: content introduit le modèle en 1 à 2 phrases, visual montre la relation, key_points ajoutent des faits opérationnels indispensables, takeaway donne une stratégie mémorable. Ne répète pas les mêmes conversions dans les quatre champs. N'ajoute pas de visuel décoratif. Pour une horloge, fournis dans visual.data les annotations ou relations pédagogiques nécessaires; le frontend n'invente aucune annotation. Les unités doivent rester limitées à celles nécessaires à l'objectif immédiat. Ne génère jamais HTML, CSS, Markdown ou SVG.`;
+        const solidInstruction = `\n\nCONTRAT DES SOLIDES: ${SOLID_PROMPT_RULE}`;
         let generated: unknown;
         try {
           // A complete V2.1 level contains several canonical sequence blocks,
@@ -1111,7 +1193,7 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
           // reported finish_reason `length` at 4500 even when the JSON is
           // otherwise valid. Keep this as one bounded request (no automatic
           // paid retry), with enough headroom for the canonical contract.
-          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 6500);
+          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction + solidInstruction, 6500);
         } catch (generationError) {
           console.warn('[generate-lesson-content] V2.1 level JSON failed; paid repair skipped.', { category: 'provider_json' });
           if (!allowPaidRepair) throw generationError;

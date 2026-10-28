@@ -2,6 +2,7 @@ import { ANSWER_TYPE_VALUES, validateLessonV21 } from './lesson-v21-contract.ts'
 import { pedagogicalIssues, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import { parseProviderJsonSafely, type ProviderResponseDiagnostics } from './provider-json.ts';
+import { specificationPromptContext, type StagingSpecification } from './staging-specification.ts';
 
 export type StagingLevelMetadata = {
   id: string;
@@ -509,10 +510,15 @@ const VISUAL_FIELD_RULES = [
   'N’ajoute width/height à une figure que si leurs proportions sont cohérentes avec les coordonnées.',
 ].join('\n');
 
-export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string): string {
-  const kinds = stagingPromptVisualKinds(metadata);
+export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string, specification?: StagingSpecification): string {
+  const specificationLevel = specification?.levels.find((level) => level.levelNumber === metadata.level_number);
+  const kinds = specificationLevel ? specificationLevel.visualKinds : stagingPromptVisualKinds(metadata);
   const allowedKinds = kinds.map((kind) => `kind "${kind}"`).join(' ou ');
-  const required = metadata.required_geometry_alternatives?.length
+  const required = specificationLevel
+    ? (specificationLevel.visualsRequired
+      ? 'Visuel obligatoire selon la spécification approuvée: utilise exactement ' + (allowedKinds || 'aucun kind déclaré') + ' et fournis toutes les données dessinables requises.'
+      : 'Aucun visuel n’est obligatoire selon la spécification approuvée; n’en fabrique pas un décoratif.')
+    : metadata.required_geometry_alternatives?.length
     ? 'Visuel obligatoire pour ce niveau: chaque concept doit utiliser une représentation conforme au contrat explicite, avec ' + allowedKinds + '. Les données doivent être complètes et réellement dessinables; un visuel d’un autre domaine ne remplace pas ce contrat.'
     : metadata.required_geometry_kinds.length > 0
     ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '. Chaque bloc concept DOIT contenir un visual dessinable complet.'
@@ -530,6 +536,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'Sujet: ' + topicName + '; niveau scolaire: ' + grade + '; langue: ' + language + '.',
     'But de ce niveau: ' + metadata.purpose,
     'Objectifs autorisés: ' + (objectiveText || 'aucun objectif précisé'),
+    specification ? specificationPromptContext(specification, metadata.level_number) : '',
     required,
     levelOneGeometryCoverage,
     STAGING_JSON_OUTPUT_RULE + ' Le mode response_format={"type":"json_object"} est actif.',

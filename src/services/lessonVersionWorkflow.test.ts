@@ -296,6 +296,32 @@ describe('lesson version workflow', () => {
     expect(from).not.toHaveBeenCalled();
   });
 
+  it('single staging preserves an unapproved server preflight failure and never saves', async () => {
+    invoke.mockResolvedValue({
+      data: {
+        success: false,
+        httpStatus: 422,
+        requestId: 'preflight-single',
+        providerCalls: 0,
+        databaseWrite: false,
+        error: {
+          code: 'staging_preflight_failed',
+          stage: 'pre_generation',
+          message: 'La spécification pédagogique doit être approuvée.',
+          technicalDetail: 'review.status: specification_not_approved',
+          providerCalls: 0,
+        },
+      },
+      error: null,
+      response: null,
+    });
+    await expect(generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81')).rejects.toMatchObject({
+      code: 'staging_preflight_failed',
+      providerCalls: 0,
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
   it('publishes a time-topic draft without requiring geometry visuals', async () => {
     const timeLesson = structuredClone(geometryDraftLesson) as any;
     timeLesson.levels[0].lesson.sequence = [

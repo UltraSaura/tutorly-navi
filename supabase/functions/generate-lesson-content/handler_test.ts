@@ -8,6 +8,7 @@ Deno.env.set('SUPABASE_URL', SB);
 Deno.env.set('SUPABASE_ANON_KEY', 'fake-anon');
 Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'fake-service');
 Deno.env.set('ALLOWED_ORIGINS', 'http://localhost:8080');
+Deno.env.set('DENO_ENV', 'test');
 
 const { handleRequest } = await import('./handler.ts');
 
@@ -53,10 +54,20 @@ async function run(reply: ProviderReply, requestId: string | undefined = 'req-1'
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers,
-    body: JSON.stringify({ topicId: topic.id, mode: 'staging_draft', language: 'fr' }),
+    body: JSON.stringify({ topicId: topic.id, mode: 'staging_draft', language: 'fr', providerFreeFixture: true }),
   }));
   const body = await res.json();
   return { status: res.status, body, calls };
+}
+
+async function runWithoutApprovedSpecification() {
+  const calls = installFakes(valid);
+  const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+      body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+    }));
+  return { status: res.status, body: await res.json(), calls };
 }
 
 async function runExplicitMode(mode: unknown) {
@@ -96,6 +107,37 @@ test('rejects any unknown explicit mode before provider or database work', async
   assertEquals(body.error.code, 'unsupported_mode');
   assertEquals(body.error.providerCalls, 0);
   assertEquals(body.error.databaseWrite, false);
+  assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('unapproved staging specification blocks before provider and database work', async () => {
+  const { status, body, calls } = await runWithoutApprovedSpecification();
+  assertEquals(status, 422);
+  assertEquals(body.error.code, 'staging_preflight_failed');
+  assertEquals(body.error.stage, 'pre_generation');
+  assertEquals(body.error.providerCalls, 0);
+  assertEquals(body.error.databaseWrite, false);
+  assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('browser-supplied approved specification cannot bypass the server preflight', async () => {
+  const calls = installFakes(valid);
+  const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+    body: JSON.stringify({
+      topicId: TOPIC.id,
+      mode: 'staging_draft',
+      language: 'fr',
+      specification: { review: { status: 'approved', reviewedBy: 'browser' } },
+    }),
+  }));
+  const body = await res.json();
+  assertEquals(res.status, 422);
+  assertEquals(body.error.code, 'staging_preflight_failed');
+  assertEquals(body.error.providerCalls, 0);
   assertEquals(calls.provider, 0);
   assertEquals(calls.dbWrites, []);
 });
@@ -153,7 +195,7 @@ test('successful response exposes the same request ID in JSON and headers', asyn
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080', 'x-request-id': 'success-request' },
-    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', providerFreeFixture: true }),
   }));
   const body = await res.json();
   assertEquals(body.requestId, 'success-request');
@@ -194,7 +236,7 @@ test('validation error exposes the same request ID in JSON and headers', async (
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080', 'x-request-id': 'validation-request' },
-    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', providerFreeFixture: true }),
   }));
   const body = await res.json();
   assertEquals(res.status, 422);
@@ -350,7 +392,7 @@ const runInBody = async (reply: ProviderReply) => {
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
-    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', rejectionInBody: true }),
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', rejectionInBody: true, providerFreeFixture: true }),
   }));
   return { status: res.status, body: await res.json(), calls };
 };
