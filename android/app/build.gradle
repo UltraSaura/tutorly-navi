@@ -16,6 +16,17 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Keep staging installable beside the public app. The staging flavor uses
+    // the same web client and staging Supabase project, but has its own package
+    // identity so it can never replace the production install.
+    flavorDimensions "environment"
+    productFlavors {
+        staging {
+            dimension "environment"
+            applicationId "com.tutorly.learning.staging"
+            versionNameSuffix "-staging"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false

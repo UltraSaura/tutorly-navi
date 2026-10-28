@@ -71,7 +71,7 @@ function textErrors(field: string, value: unknown): MasteryAdapterError[] {
 }
 
 function slotAnswerTypes(slot: MasteryAdapterSlot): BlueprintAnswerType[] {
-  return 'answerTypes' in slot ? slot.answerTypes ?? [] : slot.allowedAnswerTypes;
+  return 'allowedAnswerTypes' in slot ? slot.allowedAnswerTypes : slot.answerTypes ?? [];
 }
 
 function questionErrors(slot: MasteryAdapterSlot, raw: unknown, index: number, seenQuestions: Set<string>): MasteryAdapterError[] {
@@ -97,7 +97,7 @@ function questionErrors(slot: MasteryAdapterSlot, raw: unknown, index: number, s
     if (new Set(choices).size !== choices.length) errors.push(error(`${path}.choices`, 'duplicate_choice', 'Choices must be distinct after normalization.'));
     if (['multiple_choice', 'selection'].includes(answerType) && !choices.includes(normalized(raw.correct_answer))) errors.push(error(`${path}.correct_answer`, 'choice_membership', 'The correct answer must be one of the choices.'));
   }
-  if (answerType === 'ordering' && (!Array.isArray(raw.correct_answer) || !Array.isArray(raw.choices) || raw.correct_answer.length !== raw.choices.length || new Set(raw.correct_answer.map(normalized)).size !== raw.correct_answer.length || !raw.correct_answer.every((value) => raw.choices!.map(normalized).includes(normalized(value))))) errors.push(error(`${path}.correct_answer`, 'ordering_format', 'Ordering answers must be a complete permutation of the choices.'));
+  if (answerType === 'ordering' && (!Array.isArray(raw.correct_answer) || !Array.isArray(raw.choices) || raw.correct_answer.length !== raw.choices.length || new Set(raw.correct_answer.map(normalized)).size !== raw.correct_answer.length || !raw.correct_answer.every((value) => (raw.choices as unknown[]).map(normalized).includes(normalized(value))))) errors.push(error(`${path}.correct_answer`, 'ordering_format', 'Ordering answers must be a complete permutation of the choices.'));
   const answerText = typeof raw.correct_answer === 'string' ? normalized(raw.correct_answer) : '';
   if (answerText.length >= 2 && questionKey && (plainNumeric(raw.correct_answer) ? new RegExp(`(?:^|\\D)${answerText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\D|$)`).test(questionKey) : questionKey.includes(answerText))) errors.push(error(`${path}.question`, 'answer_leakage', 'The question exposes its exact answer.'));
   return errors;
@@ -108,7 +108,7 @@ export function adaptMasteryContent(slot: MasteryAdapterSlot, raw: unknown): Mas
   const errors: MasteryAdapterError[] = [];
   Object.keys(raw).forEach((field) => { if (!ALLOWED_FIELDS.has(field)) errors.push(error(field, STRUCTURAL_FIELDS.has(field) ? 'structural_mutation' : 'unexpected_field', STRUCTURAL_FIELDS.has(field) ? 'Blueprint-owned mastery fields cannot be supplied by the content provider.' : 'Field is not part of the mastery content contract.')); });
   if (!Array.isArray(raw.questions)) return { ok: false, errors: [...errors, error('questions', 'question_count', 'Mastery content requires a questions array.')] };
-  const bounds = slot.questionCount;
+  const bounds = slot.questionCount ?? { min: 1, max: 4 };
   if (raw.questions.length < bounds.min || raw.questions.length > bounds.max) errors.push(error('questions', 'question_count', `Mastery requires ${bounds.min}–${bounds.max} questions.`));
   const seenQuestions = new Set<string>();
   raw.questions.forEach((question, index) => errors.push(...questionErrors(slot, question, index, seenQuestions)));

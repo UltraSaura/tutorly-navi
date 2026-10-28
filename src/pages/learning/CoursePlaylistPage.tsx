@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCoursePlaylist } from '@/hooks/useCoursePlaylist';
 import { useAllBanks } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,7 +26,7 @@ const CoursePlaylistPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const requestedVideoId = searchParams.get('video');

@@ -19,6 +19,22 @@ import EditChildDialog from '@/components/guardian/EditChildDialog';
 import { useCountriesAndLevels } from '@/hooks/useCountriesAndLevels';
 import { PageMeta } from '@/components/seo/PageMeta';
 
+const getFunctionErrorMessage = async (error: unknown) => {
+  const context = (error as { context?: Response })?.context;
+  if (context) {
+    try {
+      const payload = await context.clone().json();
+      if (typeof payload?.error === 'string' && payload.error.trim()) {
+        return payload.error;
+      }
+    } catch {
+      // Fall back to the Supabase client error below.
+    }
+  }
+
+  return error instanceof Error ? error.message : 'Failed to create child account';
+};
+
 export default function GuardianChildren() {
   const ui = useInterfaceTranslation();
   const navigate = useNavigate();
@@ -102,7 +118,7 @@ export default function GuardianChildren() {
         },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error));
       if (!result.success) throw new Error(result.error || ui("Failed to create child account"));
 
       return result;

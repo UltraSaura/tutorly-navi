@@ -1,3 +1,4 @@
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Subject, SubjectProgress } from '@/types/learning';
@@ -16,6 +17,7 @@ const EMPTY: Omit<SubjectProgress, 'subject'> = {
 };
 
 export function useLearningSubjects() {
+  const { learnerId, user: learner } = useLearner();
   const activeSchoolLevel = useActiveSchoolLevel();
   const { profile } = useUserCurriculumProfile();
   const effectiveCountryCode =
@@ -25,7 +27,7 @@ export function useLearningSubjects() {
 
   return useQuery({
     queryKey: [
-      'learning-subjects',
+      'learning-subjects', learnerId,
       activeSchoolLevel.activeLevel,
       effectiveCountryCode,
       effectiveLevelCode,
@@ -34,7 +36,7 @@ export function useLearningSubjects() {
       try {
         const {
           data: { user },
-        } = await supabase.auth.getUser();
+        } = { data: { user: learner } };
 
         const { data: subjects, error: subjectsError } = await supabase
           .from('subjects')

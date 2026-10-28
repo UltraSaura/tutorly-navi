@@ -1,0 +1,8 @@
+# Stuwy
+
+> Stuwy is an AI-powered tutoring app for French primary and middle school students, with interactive lessons, practice quizzes and progress tracking for guardians.
+
+## Pages
+
+- [Home](/): Overview of Stuwy and its learning features.
+- [Sign in](/auth): Create an account or sign in.

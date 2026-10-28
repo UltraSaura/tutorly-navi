@@ -1,0 +1,107 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { validateLessonV21 } from '@/types/lesson-v21-contract';
+import { parseLessonContent, parseLessonV21 } from '@/types/lesson-generator';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { CheckCircle2, ChevronDown, ExternalLink, Search, XCircle, AlertTriangle, Eye } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { LessonVisualBlock } from '@/components/learning/LessonVisualBlock';
+import { storedGeometryVisualFixture } from './geometryLesson.fixture';
+import { geometryDraftLesson, validateGeometryDraft } from './geometryDraft';
+import { StagingLessonVersionPanel } from './StagingLessonVersionPanel';
+import { classifyStagingTopic, getStoredStagingTopicKind, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
+
+type Row = { id: string; name: string; lesson_content: unknown; curriculum_country_code: string | null; curriculum_level_code: string | null; curriculum_subject_id: string | null; created_at: string; updated_at: string };
+type Check = { status: 'ok' | 'warning' | 'error'; label: string; detail?: string; path?: string };
+
+const safeText = (value: unknown) => typeof value === 'string' ? value : value == null ? '' : JSON.stringify(value);
+const object = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+const parseStoredLesson = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch { return value; }
+};
+type VisualEntry = { block: Record<string, unknown>; visual: Record<string, unknown>; path: string };
+const visualFrom = (value: unknown): Record<string, unknown> | null => {
+  const record = object(value);
+  return object(parseStoredLesson(record?.visual)) ?? object(object(record?.data)?.visual) ?? object(parseStoredLesson(record?.visual_data));
+};
+export function discoverLessonVisuals(lesson: unknown): VisualEntry[] {
+  const entries: VisualEntry[] = [];
+  const visit = (value: unknown, path: string) => {
+    value = parseStoredLesson(value);
+    if (Array.isArray(value)) { value.forEach((item, index) => visit(item, `${path}[${index}]`)); return; }
+    const record = object(value); if (!record) return;
+    const visual = visualFrom(record);
+    if (visual) entries.push({ block: record, visual, path });
+    for (const key of ['sequence', 'content', 'prerequisites', 'visuals']) {
+      if (record[key] !== undefined) visit(record[key], `${path}.${key}`);
+    }
+  };
+  visit(lesson, '$');
+  return entries;
+}
+export const deriveLessonReview = (value: unknown): { format: string; status: string; checks: Check[]; parsed: any } => {
+  value = parseStoredLesson(value);
+  if (value == null) return { format: '—', status: 'Aucun contenu', checks: [{ status: 'warning', label: 'Aucun contenu' }], parsed: null };
+  const v21 = parseLessonV21(value);
+  if (v21) return { format: 'V2.1', status: 'Contrat valide', checks: [{ status: 'ok', label: 'Contrat V2.1 valide' }, { status: 'ok', label: 'Structure interactive détectée' }], parsed: v21 };
+  const legacy = parseLessonContent(value);
+  const legacyCandidate = value && typeof value === 'object' && !Array.isArray(value) && ('explanation' in value || 'example' in value || 'steps' in value);
+  if (legacy || legacyCandidate) return { format: 'Legacy', status: 'Généré — à vérifier', checks: [{ status: 'warning', label: 'Format legacy interprété' }], parsed: legacy ?? value };
+  const contract = validateLessonV21(value);
+  const issue = 'issues' in contract ? contract.issues[0] : undefined;
+  return { format: 'V2.1', status: 'Contrat invalide', checks: [{ status: 'error', label: issue?.message ?? 'Contenu invalide', path: issue?.path }], parsed: value };
+};
+
+export function GeneratedLessonPreview({ lesson, topicId }: { lesson: any; topicId?: string }) {
+  const v21 = lesson?.version === '2.1' ? lesson : null;
+  const levels = v21 ? v21.levels : [{ title: 'Leçon', lesson }];
+  const [level, setLevel] = useState(0);
+  const current = parseStoredLesson(levels[Math.min(level, levels.length - 1)]?.lesson) as Record<string, any> ?? {};
+  const sequence = Array.isArray(current.sequence) ? current.sequence : [];
+  const discovered = discoverLessonVisuals(current);
+  if (import.meta.env.DEV) console.info('[AdminLessonPreview] visual diagnostics', { topicId, lessonContentType: typeof lesson, levels: levels.length, selectedLevel: level + 1, blocks: sequence.length, visuals: discovered.length, kinds: discovered.map((entry) => safeText(entry.visual.kind)), reachedPedagogicalVisual: discovered.length });
+  const renderVisual = (entry: VisualEntry, index: number) => {
+    const rawVisual = entry.visual;
+    const visualKind = safeText(rawVisual.kind);
+    const title = safeText(entry.block.title || 'Visuel');
+    return <div key={`visual-${entry.path}-${index}`} data-testid="admin-lesson-visual" data-visual-kind={visualKind} data-visual-path={entry.path} className="space-y-2">
+      <h4 className="text-base font-semibold">{title}</h4>
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-muted-foreground">Visuel : {visualKind}{rawVisual.alt_text && ` — ${safeText(rawVisual.alt_text)}`}</p>
+        <LessonVisualBlock testId="admin-lesson-visual-rendered" title={title} content={safeText(entry.block.content)} visual={{ kind: visualKind, data: rawVisual.data, alt_text: safeText(rawVisual.alt_text), purpose: safeText(rawVisual.purpose) }} />
+      </div>
+    </div>;
+  };
+  return <div className="space-y-4">
+    {import.meta.env.DEV && <div data-testid="admin-lesson-visual-diagnostics" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">payload visuals found: {discovered.length} · visual components rendered: {discovered.length}</div>}
+    {v21 && <div className="flex flex-wrap gap-2">{levels.map((item: any, index: number) => <Button key={item.id ?? index} size="sm" variant={index === level ? 'default' : 'outline'} onClick={() => setLevel(index)}>Niveau {item.level_number ?? index + 1}: {item.title}</Button>)}</div>}
+    <Card><CardHeader><CardTitle>{safeText(current.lesson_goal || v21?.topic_goal)}</CardTitle></CardHeader><CardContent><h4 className="font-semibold">Critères de réussite</h4><ul className="list-disc pl-5 text-sm">{(current.success_criteria ?? []).map((x: unknown, i: number) => <li key={i}>{safeText(x)}</li>)}</ul></CardContent></Card>
+    {sequence.map((block: any, index: number) => <Card key={block.id ?? index}><CardHeader><CardTitle className="text-base">{block.title || block.type || `Étape ${index + 1}`}</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><Badge variant="outline">{block.type}</Badge>{block.content && <p>{safeText(block.content)}</p>}{block.question && <p className="font-medium">{safeText(block.question)}</p>}{block.context && <p>{safeText(block.context)}</p>}{block.takeaway && <p className="font-medium">À retenir : {safeText(block.takeaway)}</p>}{block.type === 'mastery_check' && Array.isArray(block.questions) && <div className="space-y-2">{block.questions.map((q: any, qi: number) => <div key={q.id ?? qi} className="rounded border p-2"><p>{safeText(q.question)}</p><p className="text-xs text-muted-foreground">Réponse (admin) : {safeText(q.correct_answer)}</p></div>)}</div>}</CardContent></Card>)}
+    {discovered.length > 0 && <section data-testid="admin-lesson-visuals" aria-label={`Visuels du niveau ${level + 1}`} className="space-y-4"><h3 className="text-xl font-semibold">Visuels du niveau</h3>{discovered.map(renderVisual)}</section>}
+  </div>;
+}
+
+export default function GeneratedLessonsPage() {
+  const ui = useInterfaceTranslation();
+  const [searchParams] = useSearchParams();
+  const [rows, setRows] = useState<Row[]>([]); const [subjects, setSubjects] = useState<Array<{ id: string; name: string }>>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState(''); const [status, setStatus] = useState('all'); const [country, setCountry] = useState('all'); const [levelFilter, setLevelFilter] = useState('all'); const [subject, setSubject] = useState('all'); const [selected, setSelected] = useState<Row | null>(null); const [selectedVersion, setSelectedVersion] = useState<LessonVersion | null>(null); const [rawOpen, setRawOpen] = useState(false);
+  useEffect(() => { if (searchParams.get("demo") === "geometry" || searchParams.get("draft") === "geometry") { setLoading(false); return; } let active = true; (async () => { const { data, error: queryError } = await supabase.from('topics').select('id,name,lesson_content,curriculum_country_code,curriculum_level_code,curriculum_subject_id,created_at,updated_at').order('updated_at', { ascending: false }); if (!active) return; if (queryError) setError(queryError.message); else setRows((data ?? []) as Row[]); const subjectResult = await supabase.from('subjects').select('id,name').eq('is_active', true).order('name'); if (active) setSubjects((subjectResult.data ?? []) as Array<{ id: string; name: string }>); const versionId = searchParams.get('version'); if (versionId) { const versionResult = await supabase.from('topic_lesson_versions').select('*').eq('id', versionId).maybeSingle(); if (versionResult.error) setError(versionResult.error.message); else setSelectedVersion(versionResult.data as unknown as LessonVersion); } else setSelectedVersion(null); setLoading(false); })(); return () => { active = false; }; }, [searchParams]);
+  const filtered = useMemo(() => rows.filter((row) => { const q = search.toLocaleLowerCase(); const matches = !q || `${row.name} ${row.curriculum_level_code ?? ''} ${row.curriculum_country_code ?? ''}`.toLocaleLowerCase().includes(q); const info = deriveLessonReview(row.lesson_content); return matches && (status === 'all' || info.status === status) && (country === 'all' || row.curriculum_country_code === country) && (levelFilter === 'all' || row.curriculum_level_code === levelFilter) && (subject === 'all' || row.curriculum_subject_id === subject); }), [rows, search, status, country, levelFilter, subject]);
+  if (searchParams.get("draft") === "geometry") {
+    const validation = validateGeometryDraft();
+    return <div className="space-y-6"><PageMeta title="Brouillon — géométrie complète" description="Aperçu staging provider-free d'une nouvelle version géométrique" /><div className="flex flex-wrap items-center justify-between gap-3"><div><Badge variant="outline">STAGING DRAFT — provider-free</Badge><h1 className="mt-2 text-3xl font-bold">Nouvelle version candidate : géométrie complète</h1><p className="text-muted-foreground">Aperçu séparé, non enregistré. Aucun appel IA/provider et aucune écriture de leçon ne sont effectués.</p></div><Button asChild variant="outline"><Link to="/admin/generated-lessons">Retour aux leçons</Link></Button></div><Card><CardHeader><CardTitle>Validation avant enregistrement</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><div><Badge variant={validation.canonicalValid ? 'default' : 'destructive'}>{validation.canonicalValid ? 'Contrat canonique valide' : 'Contrat canonique invalide'}</Badge></div><div><Badge variant={validation.pedagogicalValid ? 'default' : 'destructive'}>{validation.pedagogicalValid ? 'Contrôle pédagogique valide' : 'Contrôle pédagogique à corriger'}</Badge></div>{validation.canonicalIssues.length > 0 && <ul className="list-disc pl-5 text-destructive">{validation.canonicalIssues.map((issue, index) => <li key={index}>{issue.path} : {issue.message}</li>)}</ul>}{validation.pedagogicalIssues.length > 0 && <ul className="list-disc pl-5 text-destructive">{validation.pedagogicalIssues.map((issue, index) => <li key={index}>{issue}</li>)}</ul>}<p className="text-muted-foreground">{validation.canonicalValid && validation.pedagogicalValid ? 'Prêt pour approbation manuelle. L’enregistrement reste désactivé dans ce workflow.' : 'Cette version doit être corrigée avant toute proposition d’enregistrement.'}</p></CardContent></Card><GeneratedLessonPreview lesson={geometryDraftLesson} topicId="staging-geometry-draft" /></div>;
+  }
+  if (searchParams.get("demo") === "geometry") return <div className="space-y-6"><PageMeta title="Démo — visuels de géométrie" description="Aperçu provider-free des visuels géométriques" /><div className="flex flex-wrap items-center justify-between gap-3"><div><Badge variant="outline">DÉMO FIXTURE — provider-free</Badge><h1 className="mt-2 text-3xl font-bold">Démo du rendu géométrique</h1><p className="text-muted-foreground">Aperçu de test uniquement : ces figures ne sont pas du contenu de leçon généré ni enregistré.</p></div><Button asChild variant="outline"><Link to="/admin/generated-lessons">Retour aux leçons</Link></Button></div><Card><CardHeader><CardTitle>Exemples canoniques rendables</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Rectangle ABCD (6 cm × 4 cm), triangle ABC, cercle avec O/rayon/diamètre, angle et symétrie sur quadrillage.</p></CardContent></Card><GeneratedLessonPreview lesson={storedGeometryVisualFixture} /></div>;
+  if (searchParams.get('workflow') === 'staging') return <div className="space-y-6"><PageMeta title="Versions de leçons staging" description="Générer, valider et publier des versions séparées" /><Button asChild variant="outline"><Link to="/admin/generated-lessons">← Retour aux leçons</Link></Button><StagingLessonVersionPanel topics={rows.map((row) => ({ id: row.id, name: row.name, curriculum_level_code: row.curriculum_level_code }))} /></div>;
+  if (selectedVersion) { const versionTopicKind = getStoredStagingTopicKind(selectedVersion.lesson_content) ?? classifyStagingTopic(rows.find((row) => row.id === selectedVersion.topic_id)?.name); const validation = validateLessonVersion(selectedVersion.lesson_content, { topicKind: versionTopicKind }); return <div className="space-y-6"><PageMeta title="Aperçu d’une version staging" description="Aperçu authentifié d’une version de leçon staging" /><Button asChild variant="outline"><Link to="/admin/generated-lessons?workflow=staging">← Retour aux versions</Link></Button><div><Badge variant="outline">{selectedVersion.status.toUpperCase()}</Badge><h1 className="mt-2 text-3xl font-bold">Aperçu de la version staging</h1><p className="text-sm text-muted-foreground">Version {selectedVersion.id} · topic {selectedVersion.topic_id}</p></div><Card><CardHeader><CardTitle>Validation</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><p>Canonical: {validation.canonicalValid ? 'valide' : 'invalide'}</p><p>Pédagogique: {validation.pedagogicalValid ? 'valide' : 'invalide'}</p><p>{versionTopicKind === 'time' ? 'Visuels temporels dessinables' : 'Géométrie dessinable'}: {validation.geometryValid ? 'valide' : 'à compléter'}</p>{[...validation.canonicalIssues, ...validation.pedagogicalIssues, ...validation.geometryIssues].map((issue, index) => <p key={index} className="text-destructive">{issue.path}: {issue.message}</p>)}</CardContent></Card><GeneratedLessonPreview lesson={selectedVersion.lesson_content} topicId={selectedVersion.topic_id} /></div>; }
+  if (selected) { const info = deriveLessonReview(selected.lesson_content); return <div className="space-y-6"><PageMeta title={`Leçon — ${selected.name}`} description={`Revue de la leçon générée ${selected.name}`} /><Button variant="outline" onClick={() => setSelected(null)}>← Retour aux leçons</Button><div className="flex flex-wrap items-center gap-3"><div><h1 className="text-3xl font-bold">{selected.name}</h1><p className="text-muted-foreground">{selected.curriculum_level_code ?? 'Niveau non renseigné'} · {selected.curriculum_country_code ?? 'Pays non renseigné'} · {info.format}</p></div><Badge>{info.status}</Badge></div><div className="grid gap-6 lg:grid-cols-[1fr_280px]"><div><h2 className="mb-3 text-xl font-semibold">Aperçu élève</h2><GeneratedLessonPreview lesson={info.parsed} topicId={selected.id} /></div><Card className="h-fit"><CardHeader><CardTitle>Contrôles qualité</CardTitle></CardHeader><CardContent className="space-y-3">{info.checks.map((check, i) => <div key={i} className="text-sm">{check.status === 'ok' ? <CheckCircle2 className="mr-2 inline h-4 w-4 text-green-600" /> : check.status === 'warning' ? <AlertTriangle className="mr-2 inline h-4 w-4 text-amber-600" /> : <XCircle className="mr-2 inline h-4 w-4 text-red-600" />}{check.label}{check.path && <div className="ml-6 text-xs text-muted-foreground">{check.path}</div>}</div>)}<Collapsible open={rawOpen} onOpenChange={setRawOpen}><CollapsibleTrigger className="text-sm underline">Voir le JSON brut <ChevronDown className="inline h-4 w-4" /></CollapsibleTrigger><CollapsibleContent><pre className="mt-2 max-h-96 overflow-auto rounded bg-muted p-2 text-xs">{JSON.stringify(selected.lesson_content, null, 2)}</pre></CollapsibleContent></Collapsible></CardContent></Card></div></div>; }
+  return <div className="space-y-6"><PageMeta title="Leçons générées" description="Inspecter les leçons générées" /><div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-3xl font-bold">Leçons générées</h1><p className="text-muted-foreground">Inspection en lecture seule des contenus stockés.</p></div><Button asChild variant="outline"><Link to="/admin/learning"><ExternalLink className="mr-2 h-4 w-4" />Retour au contenu pédagogique</Link></Button></div><div className="flex flex-wrap gap-2"><div className="relative"><Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-8" placeholder="Rechercher un sujet…" value={search} onChange={(e) => setSearch(e.target.value)} /></div><select className="rounded-md border bg-background px-3 text-sm" value={country} onChange={(e) => setCountry(e.target.value)}><option value="all">Tous les pays</option>{Array.from(new Set(rows.map((r) => r.curriculum_country_code).filter(Boolean))).map((x) => <option key={x} value={x!}>{x}</option>)}</select><select className="rounded-md border bg-background px-3 text-sm" value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}><option value="all">Tous les niveaux</option>{Array.from(new Set(rows.map((r) => r.curriculum_level_code).filter(Boolean))).map((x) => <option key={x} value={x!}>{x}</option>)}</select><select className="rounded-md border bg-background px-3 text-sm" value={subject} onChange={(e) => setSubject(e.target.value)}><option value="all">Toutes les matières</option>{subjects.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><select className="rounded-md border bg-background px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}><option value="all">Tous les statuts</option><option value="Contrat valide">Contrat valide</option><option value="Généré — à vérifier">Généré — à vérifier</option><option value="Contrat invalide">Contrat invalide</option><option value="Aucun contenu">Aucun contenu</option></select></div>{error && <div className="text-destructive">Le contenu ne peut pas être chargé : {error}</div>}{loading ? <p>Chargement…</p> : <div className="grid gap-3">{filtered.map((row) => { const info = deriveLessonReview(row.lesson_content); return <Card key={row.id}><CardContent className="flex flex-wrap items-center gap-3 p-4"><div className="min-w-0 flex-1"><h2 className="font-semibold">{row.name}</h2><p className="text-sm text-muted-foreground">{row.curriculum_level_code ?? '—'} · {row.curriculum_country_code ?? '—'} · {info.format}</p></div><Badge variant={info.status === 'Contrat invalide' ? 'destructive' : 'outline'}>{info.status}</Badge>{row.lesson_content && <Button size="sm" onClick={() => { setSelected(row); setRawOpen(false); }}><Eye className="mr-2 h-4 w-4" />Voir la leçon</Button>}</CardContent></Card>; })}{!filtered.length && <p className="py-8 text-center text-muted-foreground">Aucune leçon ne correspond aux filtres.</p>}</div>}</div>;
+}

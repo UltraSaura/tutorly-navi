@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizeLearningStyle, type LearningStyle } from '@/types/learning-style';
@@ -12,7 +12,7 @@ export interface UserContextData {
 }
 
 export const useUserContext = () => {
-  const { user } = useAuth();
+  const { user } = useLearner();
 
   const { data: userContext, isLoading, isFetched } = useQuery({
     queryKey: ['user-context', user?.id],

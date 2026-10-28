@@ -10,7 +10,8 @@ export async function callDeepSeek(
   isExercise: boolean = false,
   requestExplanation: boolean = false,
   maxTokens: number = 800,
-  responseFormat?: { type: 'json_object' | 'text' }
+  responseFormat?: { type: 'json_object' | 'text' },
+  temperature?: number,
 ): Promise<any> {
   const { value: deepseekApiKey, source } = await resolveProviderKey('DeepSeek');
 
@@ -30,7 +31,7 @@ export async function callDeepSeek(
   const requestBody: any = {
     model: model,
     messages: messages,
-    temperature: 0.7,
+    temperature: temperature ?? 0.7,
     max_tokens: maxTokens,
   };
   if (responseFormat) requestBody.response_format = responseFormat;
@@ -118,14 +119,26 @@ export async function callDeepSeek(
   }
   
   const data = await response.json();
+  const metadata = {
+    choiceCount: Array.isArray(data.choices) ? data.choices.length : 0,
+    finishReason: data.choices?.[0]?.finish_reason ?? null,
+    promptTokens: data.usage?.prompt_tokens ?? null,
+    completionTokens: data.usage?.completion_tokens ?? null,
+    totalTokens: data.usage?.total_tokens ?? null,
+    contentLength: typeof data.choices?.[0]?.message?.content === 'string'
+      ? data.choices[0].message.content.length
+      : 0,
+  };
+  console.log('[DeepSeek] response metadata:', metadata);
 
   // Handle tool calling response
   if (requestExplanation && data.choices?.[0]?.message?.tool_calls) {
     return {
       tool_calls: data.choices[0].message.tool_calls,
-      content: data.choices[0].message.content
+      content: data.choices[0].message.content,
+      metadata,
     };
   }
 
-  return data.choices[0].message.content;
+  return { content: data.choices[0].message.content, metadata };
 }

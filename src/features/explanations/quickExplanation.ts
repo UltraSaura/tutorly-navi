@@ -123,7 +123,7 @@ export function validateQuickExplanation(source: string, value: unknown, languag
   if (Object.keys(v.check).some(k => !permitted.includes(k))) errors.push('Check must not include a visual or extra answer presentation.');
   // Never disclose the original quotient, even through a coincidentally equal distractor.
   const visible = [v.concept, ...(v.frames || []).map(f => f.body), v.check.question, ...(v.check.choices || []), v.check.hint, v.check.hintLevel1, v.check.hintLevel2].join(' ');
-  if ((visible.match(/\d+/g) || []).includes(String(quotient(original)))) errors.push('Content exposes the original quotient.');
+  if ((visible.match(/\d+/g) || ([] as string[])).includes(String(quotient(original)))) errors.push('Content exposes the original quotient.');
   return errors;
 }
 

@@ -77,7 +77,7 @@ export function FullPageError({
         error={error}
         onRetry={onRetry}
         onGoHome={onGoHome}
-        showDetails={process.env.NODE_ENV === 'development'}
+        showDetails={import.meta.env.DEV}
       />
     </div>
   );

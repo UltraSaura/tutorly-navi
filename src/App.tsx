@@ -1,3 +1,5 @@
+import { FamilyProfileProvider } from './context/FamilyProfileContext';
+import { FamilyRouteBoundary } from './features/family/FamilyRouteBoundary';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -40,6 +42,7 @@ const LessonPage = lazy(() => import("./pages/learning/LessonPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
+const GraduatedNumberLinePage = lazy(() => import("./pages/practice/GraduatedNumberLinePage"));
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
@@ -56,9 +59,14 @@ import PromptManagement from "./components/admin/PromptManagement";
 import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
 import LearningContentManagement from "./components/admin/LearningContentManagement";
 import CurriculumManager from "./components/admin/CurriculumManager";
+import GeneratedLessonsPage from "./components/admin/learning/GeneratedLessonsPage";
+import StagingLessonWorkflowPage, { StagingLessonDraftPreviewPage } from "./pages/admin/StagingLessonWorkflowPage";
+import SolidVisualGalleryPage from "./pages/admin/SolidVisualGalleryPage";
 import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
+
+const FamilyPage = lazy(() => import("./pages/FamilyPage"));
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -83,6 +91,18 @@ const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDe
 const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
 
 const isDev = import.meta.env.DEV;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+const isLocalSupabase = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(supabaseUrl);
+const isStagingSupabase = supabaseUrl === 'https://sibprjxhbxahouejygeu.supabase.co';
+
+const EnvironmentIndicator = () => (isLocalSupabase || isStagingSupabase) ? (
+  <div
+    data-testid={isLocalSupabase ? 'local-environment-indicator' : 'staging-environment-indicator'}
+    className="fixed right-3 top-3 z-[10000] rounded-full border border-amber-700 bg-amber-300 px-3 py-1 text-xs font-bold tracking-wide text-amber-950 shadow-lg"
+  >
+    {isLocalSupabase ? 'LOCAL · Supabase isolé' : 'STAGING · Supabase'}
+  </div>
+) : null;
 
 // Loading Component
 const LoadingFallback = () => {
@@ -152,17 +172,20 @@ const App = () => {
       <HelmetProvider>
       <ErrorBoundary>
         <TooltipProvider>
+          <EnvironmentIndicator />
           <Toaster />
           <Sonner />
           <OverlayProvider>
             <AuthProvider>
+            <FamilyProfileProvider>
               <AdminPreviewProvider>
                 <SimpleLanguageProvider>
                   <AdminProvider>
                     <BrowserRouter>
-                    <AnimatePresence mode="wait">
+                    <FamilyRouteBoundary><AnimatePresence mode="wait">
                       <Suspense fallback={<LoadingFallback />}>
                       <Routes>
+                        <Route path="/family" element={<FamilyPage />} />
                         {/* Auth Routes */}
                         <Route path="/auth" element={<AuthPage />} />
                         
@@ -209,6 +232,7 @@ const App = () => {
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         <Route path="/practice" element={<MainLayout />}>
                           <Route index element={<PracticePage />} />
+                          <Route path="number-line" element={<GraduatedNumberLinePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
@@ -226,6 +250,9 @@ const App = () => {
                         {isDev && (
                           <Route path="/management" element={<ManagementDashboard />} />
                         )}
+                        {isDev && (
+                          <Route path="/dev/solid-gallery" element={<SolidVisualGalleryPage />} />
+                        )}
                         
                         {/* Admin Panel Routes */}
                         <Route path="/admin" element={
@@ -241,6 +268,9 @@ const App = () => {
                           <Route path="prompts" element={<PromptManagement />} />
                           <Route path="learning" element={<LearningContentManagement />} />
                           <Route path="curriculum" element={<CurriculumManager />} />
+                          <Route path="generated-lessons" element={<GeneratedLessonsPage />} />
+                          <Route path="staging-lessons" element={<StagingLessonWorkflowPage />} />
+                          <Route path="staging-lessons/preview/:versionId" element={<StagingLessonDraftPreviewPage />} />
                           <Route path="exams" element={<ExamAnnales />} />
                           <Route path="recent-updates" element={<RecentUpdates />} />
                           <Route path="settings" element={<AdminSettings />} />
@@ -289,11 +319,12 @@ const App = () => {
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
-                  </AnimatePresence>
+                  </AnimatePresence></FamilyRouteBoundary>
                     </BrowserRouter>
                   </AdminProvider>
                 </SimpleLanguageProvider>
               </AdminPreviewProvider>
+            </FamilyProfileProvider>
             </AuthProvider>
         </OverlayProvider>
       </TooltipProvider>

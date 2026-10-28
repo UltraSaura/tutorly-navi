@@ -1,5 +1,6 @@
+import { FamilyProfileMenu } from '@/features/family/FamilyProfileMenu';
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Menu, LogOut } from "lucide-react";
+import { ArrowLeft, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -48,16 +49,9 @@ export function GuardianStickyHeader({ title, onMenuClick, onSignOut }: Guardian
           <h1 className="text-lg font-semibold text-foreground">{title}</h1>
         </div>
         
-        {!showBackButton && onSignOut && isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onSignOut}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
-        )}
+        <div className="hidden sm:block">
+          <FamilyProfileMenu />
+        </div>
       </div>
     </div>
   );

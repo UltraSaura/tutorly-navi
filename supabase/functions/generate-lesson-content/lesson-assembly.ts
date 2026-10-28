@@ -99,8 +99,8 @@ function requiredFields(slot: StructuralSlot): string[] {
 
 function structuralSlot(levelNumber: number, slot: ConceptSlot | InteractionSlot | PrerequisiteSlot | MasterySlot, kind: AssemblySlotKind, objectiveIds: string[]): StructuralSlot {
   const base: StructuralSlot = { slotId: slot.slotId, kind, levelNumber, requirement: kind === 'prerequisite' && 'source' in slot && slot.source !== 'deterministic-domain-rule' ? 'optional' : 'mandatory', objectiveIds: [...objectiveIds], status: 'pending' };
-  if (kind === 'concept' && slot.type === 'concept') return { ...base, visualRequirement: slot.visualRequirement, allowedVisualKinds: [...slot.allowedVisualKinds], requiresKeyPoints: slot.requiresKeyPoints, keyPointCount: { ...slot.keyPointCount }, requiresTakeaway: slot.requiresTakeaway };
-  if (kind === 'interaction' && 'type' in slot) return { ...base, blockType: slot.type, answerTypes: slot.answerTypes ? [...slot.answerTypes] : undefined };
+  if (kind === 'concept' && 'type' in slot && slot.type === 'concept') return { ...base, visualRequirement: slot.visualRequirement, allowedVisualKinds: [...slot.allowedVisualKinds], requiresKeyPoints: slot.requiresKeyPoints, keyPointCount: { ...slot.keyPointCount }, requiresTakeaway: slot.requiresTakeaway };
+  if (kind === 'interaction' && 'type' in slot && slot.type !== 'concept') return { ...base, blockType: slot.type, answerTypes: slot.answerTypes ? [...slot.answerTypes] : undefined };
   if (kind === 'prerequisite' && 'priorSkill' in slot) return { ...base, priorSkill: slot.priorSkill, source: slot.source, diagnosticSkillStatus: slot.source === 'deterministic-domain-rule' ? 'resolved' : slot.source === 'previous-level-objectives' ? 'generic' : 'missing', mustPrecedeObjectiveIds: [...slot.mustPrecedeObjectiveIds], forbiddenTargetObjectiveIds: [...slot.forbiddenTargetObjectiveIds], answerTypes: [...slot.allowedAnswerTypes] };
   if (kind === 'mastery' && 'placement' in slot) return { ...base, questionCount: { ...slot.questionCount }, answerTypes: [...slot.allowedAnswerTypes], placement: slot.placement };
   return base;

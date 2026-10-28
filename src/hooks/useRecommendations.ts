@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import type { RecommendedTopic, RecommendationOptions } from '@/types/recommendations';
 
 interface RecommendationsResponse {
@@ -16,7 +16,7 @@ interface RecommendationsResponse {
  * Calculates priority_score = 1 - masteryRatio for each topic
  */
 export function useRecommendations(options: RecommendationOptions = {}) {
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { subjectId, excludeTopicId, preferSameSubdomain, limit = 10 } = options;
 
   return useQuery({

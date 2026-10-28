@@ -18,6 +18,7 @@ import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLoca
 import { TopicObjectivesSelector } from './TopicObjectivesSelector';
 import { GenerateLessonButton } from './GenerateLessonButton';
 import { BulkLessonGenerator } from './BulkLessonGenerator';
+import { Link } from 'react-router-dom';
 import { LessonContentDisplay } from './LessonContentDisplay';
 import { useProgramTopicsForAdmin } from '@/hooks/useProgramTopicsForAdmin';
 import { useAutoLinkObjectives } from '@/hooks/useAutoSuggestObjectives';
@@ -206,6 +207,7 @@ const TopicManager = () => {
         </div>
         <div className="flex gap-2">
           <BulkLessonGenerator />
+          <Button variant="outline" asChild><Link to="/admin/generated-lessons?workflow=staging">Versions staging</Link></Button>
           <Button variant="outline" onClick={() => setGenerateDialogOpen(true)}>
             <Sparkles className="w-4 h-4 mr-2" />
             {ui("Generate from Objectives")}

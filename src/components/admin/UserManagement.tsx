@@ -426,6 +426,7 @@ const UserManagement = () => {
               user={selectedUser}
               onAddChildClick={() => setIsAddChildDialogOpen(true)}
               onUserSelect={handleUserSelect}
+              onApprovalChange={handleApprovalChange}
             />
           ) : (
             <Card className="glass">

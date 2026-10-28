@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useCoursePlaylist } from '@/hooks/useCoursePlaylist';
 import { useAllBanks } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
 import { LessonCardPlayer } from '@/components/learning/LessonCardPlayer';
@@ -24,7 +24,7 @@ export default function LessonPage() {
     topicSlug: string;
   }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useLearner();
 
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [completedVideoIds, setCompletedVideoIds] = useState<string[]>([]);

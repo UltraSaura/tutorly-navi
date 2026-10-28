@@ -2,7 +2,7 @@ import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Lock, Play, ArrowLeft, Trophy, Zap } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useLessonLevelProgress } from '@/hooks/useLessonLevelProgress';
 import { LessonCardPlayer, CelebrationOverlay, buzz } from './LessonCardPlayer';
 import type { LessonContent } from '@/types/learning';
@@ -31,7 +31,7 @@ export function LessonLevelPath({
   topicId, topicName, lessonContent, inlineBankId, onSexercer, subjectId,
 }: LessonLevelPathProps) {
   const ui = useInterfaceTranslation();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const steps = (lessonContent.steps ?? []) as unknown as LessonContent[];
   const total = steps.length;
 

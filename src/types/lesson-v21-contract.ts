@@ -1,4 +1,5 @@
 export type ContractIssue = { path: string; message: string; expected?: string; received?: string };
+export type LessonV21ValidationOptions = { prerequisiteFormat?: 'legacy' | 'staging' };
 
 const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
@@ -6,7 +7,7 @@ const array = (v: unknown): v is unknown[] => Array.isArray(v);
 const answers = ['multiple_choice', 'numeric', 'time', 'short_text', 'text', 'selection', 'ordering'];
 const visuals = ['clock','timeline','number_line','fraction_bar','fraction_circle','triangle','rectangle','circle','polygon','angle','symmetry','coordinate_plane','geometric_solid','solid_section','measurement','unit_conversion','groups','comparison','part_whole','table','equation','diagram','sequence'];
 
-export function validateLessonV21(value: unknown): { success: true } | { success: false; issues: ContractIssue[] } {
+export function validateLessonV21(value: unknown, options: LessonV21ValidationOptions = {}): { success: true } | { success: false; issues: ContractIssue[] } {
   const issues: ContractIssue[] = [];
   const bad = (path: string, message: string, expected?: string, received?: unknown) => issues.push({ path, message, expected, received: received === undefined ? undefined : Array.isArray(received) ? 'array' : typeof received });
   const required = (v: Record<string, unknown>, path: string, fields: string[]) => fields.forEach((f) => { if (!text(v[f])) bad(`${path}.${f}`, 'Required non-empty string', 'string', v[f]); });
@@ -23,8 +24,11 @@ export function validateLessonV21(value: unknown): { success: true } | { success
   };
   const prerequisite = (v: unknown, path: string) => {
     if (!obj(v)) return bad(path, 'Expected object');
-    required(v, path, ['id', 'description', 'check_question', 'remediation_hint']);
-    const answerType = String(v.answer_type ?? '');
+    const staging = options.prerequisiteFormat === 'staging';
+    required(v, path, staging ? ['id', 'description', 'prompt', 'remediation_hint'] : ['id', 'description', 'check_question', 'remediation_hint']);
+    if (staging && v.check_question !== undefined) bad(`${path}.check_question`, 'Legacy prerequisite field is not allowed; use prompt');
+    if (staging && v.answer_type !== undefined) bad(`${path}.answer_type`, 'Legacy prerequisite field is not allowed; use type');
+    const answerType = String(staging ? v.type ?? '' : v.answer_type ?? '');
     if (!answers.includes(answerType)) bad(`${path}.answer_type`, 'Unsupported or missing prerequisite answer type');
     if (v.expected_answer === undefined || (typeof v.expected_answer === 'string' && !text(v.expected_answer))) bad(`${path}.expected_answer`, 'Required value');
     const choices = v.choices;
@@ -33,9 +37,9 @@ export function validateLessonV21(value: unknown): { success: true } | { success
       if (!array(choices) || choices.length < 2) bad(`${path}.choices`, 'Multiple-choice prerequisite requires at least 2 choices');
       else if (!choices.some((choice) => String(choice).trim().toLowerCase() === String(v.expected_answer).trim().toLowerCase())) bad(`${path}.expected_answer`, 'Expected answer must be one of the choices');
     }
-    if (answerType === 'numeric' && !/^[-+]?\d+(?:[.,]\d+)?$/.test(String(v.expected_answer).trim())) bad(`${path}.expected_answer`, 'Numeric prerequisite requires a numeric expected answer');
+    if (answerType === 'numeric' && (staging ? typeof v.expected_answer !== 'number' || !Number.isFinite(v.expected_answer) : !/^[-+]?\d+(?:[.,]\d+)?$/.test(String(v.expected_answer).trim()))) bad(`${path}.expected_answer`, 'Numeric prerequisite requires a numeric expected answer');
     if (answerType === 'time' && !(/^\s*\d{1,2}\s*(?:h|heures?)\s*\d{1,2}\s*(?:min|minutes?)?\.?\s*$/i.test(String(v.expected_answer)) || /^\s*\d{1,2}\s*(?:h|heures?)\s*$/i.test(String(v.expected_answer)) || /^\s*\d{1,2}:\d{2}\s*$/.test(String(v.expected_answer)))) bad(`${path}.expected_answer`, 'Time prerequisite requires an hour/minute expected answer');
-    const question = String(v.check_question ?? '').toLowerCase();
+    const question = String((staging ? v.prompt : v.check_question) ?? '').toLowerCase();
     if (/(aiguille|quelle forme|identifier|reconna[iî]tre)/.test(question) && ['numeric', 'time'].includes(answerType)) bad(`${path}.answer_type`, 'Identification question requires multiple_choice, selection, or short_text');
     if (v.visual !== undefined) visual(v.visual, `${path}.visual`);
   };

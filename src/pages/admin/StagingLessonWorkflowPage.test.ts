@@ -1,0 +1,66 @@
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
+import { runBulkStagingGeneration } from '@/services/bulkStagingLessonWorkflow';
+import { formatStagingTopicLabel } from '@/components/admin/learning/StagingLessonVersionPanel';
+import { playerLesson, previewVisualKinds, providerFreeFourLevelLesson, topicIds } from './StagingLessonWorkflowPage';
+
+describe('independent staging lesson-version workflow', () => {
+  it('maps the CM2 time topic to its database UUID and selector label', () => {
+    const topic = { id: '7588497a-6173-4144-864e-25bcab6b4011', name: 'Le repérage dans le temps et les durées', curriculum_level_code: 'cm2' };
+    expect(formatStagingTopicLabel(topic)).toBe('Le repérage dans le temps et les durées · cm2');
+    const panelSource = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/StagingLessonVersionPanel.tsx'), 'utf8');
+    expect(panelSource).toContain('assertExplicitStagingTopicId');
+    expect(panelSource).toContain('generateStagingDraft(topicId, undefined, null)');
+    expect(panelSource).not.toContain('topicId !== CM2_GEOMETRY_TOPIC_ID');
+    expect(panelSource).not.toContain('required: {CM2_GEOMETRY_TOPIC_ID}');
+  });
+
+  it('keeps destructive legacy controls isolated and clearly labelled', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/BulkLessonGenerator.tsx'), 'utf8');
+    expect(source).toContain('Afficher les contrôles legacy');
+    expect(source).toContain('Générateur legacy (modifie topics.lesson_content)');
+    expect(source).toContain('Le bouton staging ci-dessus n’utilise jamais cette persistance.');
+  });
+
+  it('adapts every stored level for the shared student player and keeps visuals', () => {
+    const level = storedGeometryVisualFixture.levels[3] as Parameters<typeof playerLesson>[0];
+    const player = playerLesson(level);
+    expect(player.version).toBe('2.0');
+    expect(player.sequence.length).toBeGreaterThan(0);
+    expect(previewVisualKinds(level.lesson)).toEqual(['diagram', 'angle', 'rectangle', 'circle', 'symmetry']);
+  });
+
+  it('supports one-topic and multi-topic provider-free runs without writes', async () => {
+    const save = async () => { throw new Error('save must not be called in dry-run'); };
+    const one = await runBulkStagingGeneration([{ id: 'topic-one', name: 'One' }], undefined, { dryRun: true, dryRunContent: providerFreeFourLevelLesson, save });
+    const batch2Ids = ['0dae3396-adbf-4464-8fa5-48726069977b', '7be61901-cc83-4cb3-90bb-b7056c4542bc', 'bad44ee1-7063-4d99-9875-e7cd4d2a517b', '07fe506e-71f4-44c9-bf7f-98c51a2ca68a', 'b19a95bd-ea70-487f-b5fb-0b9f7893c35e'];
+    const available = [...batch2Ids, 'unselected-topic'].map((id) => ({ id, name: 'Batch 2', curriculum_level_code: 'cm2' }));
+    const selectedIds = topicIds(available, new Set(batch2Ids));
+    expect(selectedIds).toEqual(batch2Ids);
+    expect(selectedIds).toHaveLength(5);
+    const many = await runBulkStagingGeneration(available.filter((topic) => selectedIds.includes(topic.id)), undefined, { dryRun: true, dryRunContent: providerFreeFourLevelLesson, save });
+    expect(one[0]).toMatchObject({ status: 'saved', providerCalls: 0 });
+    expect(many).toHaveLength(5);
+    expect(many.map((result) => result.topicId)).toEqual(batch2Ids);
+    expect(many.every((result) => result.providerCalls === 0)).toBe(true);
+    expect(many.every((result) => result.status === 'saved')).toBe(true);
+    expect(one[0].providerCalls).toBe(0);
+    expect(one[0].levelResults).toHaveLength(4);
+    expect(JSON.stringify(one[0])).not.toContain('[object Object]');
+  });
+
+  it('continues after a failed topic and preserves per-topic diagnostics', async () => {
+    const results = await runBulkStagingGeneration([{ id: 'bad', name: 'Bad' }, { id: 'good', name: 'Good' }], undefined, {
+      generate: async (id) => id === 'bad'
+        ? Promise.reject({ code: 'level_validation_failed', message: 'Bad level', technicalDetail: 'exact diagnostic', stage: 'validation_failure', providerCalls: 1, level: 2 })
+        : Promise.resolve({ success: true, lesson_content: storedGeometryVisualFixture, topic_id: id, providerCalls: 4, canonicalValid: true, pedagogicalValid: true, geometryValid: true, levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: 1 })), progress: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: 1 })) }),
+      validate: () => ({ canonicalValid: true, pedagogicalValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] }),
+      save: async (id) => ({ id: `draft-${id}` } as any),
+    });
+    expect(results.map((result) => result.status)).toEqual(['failed', 'saved']);
+    expect(results[0].failure).toMatchObject({ failureStage: 'validation_failure', failedLevel: 2, providerCalls: 1, technicalDiagnostic: expect.stringContaining('exact diagnostic') });
+    expect(results[1].version?.id).toBe('draft-good');
+  });
+});

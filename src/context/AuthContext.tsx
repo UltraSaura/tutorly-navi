@@ -1,7 +1,11 @@
+import { familyRpc } from '@/features/family/familyApi';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { isPasswordRecoveryUrl, requestPasswordReset, updateRecoveredPassword } from '@/services/passwordRecovery';
+import { Capacitor } from '@capacitor/core';
+import { createNativeAuthCallback } from '@/services/nativeAuthCallback';
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +14,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (password: string) => Promise<{ error: any }>;
+  isPasswordRecovery: boolean;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
@@ -28,6 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const { toast } = useToast();
   
 
@@ -38,14 +45,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const ensureAccountApproved = useCallback(async (authUser: User) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('approval_status')
-      .eq('id', authUser.id)
-      .maybeSingle();
+    let data: { approval_status?: string } | null = null;
+    let error: Error | null = null;
+    try {
+      const status = await familyRpc<{ approvalStatus?: string } | null>('family_bootstrap');
+      if (!status) throw new Error('Your session has expired. Please sign in again.');
+      data = { approval_status: status.approvalStatus };
+    } catch (cause) { error = cause as Error; }
 
     if (error) {
       await supabase.auth.signOut();
+      if (error.message === 'family.backendUnavailable') return error;
       return new Error('We could not verify your account approval. Please try again.');
     }
     if (data?.approval_status === 'pending') {
@@ -60,9 +70,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    // PASSWORD_RECOVERY is normally emitted by Supabase, but also detect the
+    // link explicitly so a slow/late listener never redirects the user away
+    // from the password form.
+    if (typeof window !== 'undefined' && isPasswordRecoveryUrl(window.location.href)) {
+      setIsPasswordRecovery(true);
+    }
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') setIsPasswordRecovery(true);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -100,6 +118,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, [detectLanguageFromUser, ensureAccountApproved]); // Use the memoized callbacks
 
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const callbackUrl = import.meta.env.VITE_AUTH_REDIRECT_URL;
+    if (!callbackUrl) return;
+    let disposed = false;
+    let remove: (() => Promise<void>) | undefined;
+    const reportError = () => toast({ title: 'Connexion impossible', description: 'Le lien a expiré ou est invalide. Demandez un nouveau lien.', variant: 'destructive' });
+    const handle = createNativeAuthCallback({
+      callbackUrl,
+      auth: supabase.auth,
+      setRecovery: setIsPasswordRecovery,
+      reportError,
+      navigate: () => {
+        // Never copy tokens to the WebView URL or browser history.
+        window.history.replaceState(null, '', '/auth');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      },
+    });
+    void import('@capacitor/app').then(async ({ App }) => {
+      const listener = await App.addListener('appUrlOpen', ({ url }) => {
+        if (!disposed) void handle(url);
+      });
+      if (disposed) { await listener.remove(); return; }
+      remove = () => listener.remove();
+      const launch = await App.getLaunchUrl();
+      if (!disposed && launch?.url) await handle(launch.url);
+    }).catch(() => { if (!disposed) reportError(); });
+    return () => { disposed = true; void remove?.(); };
+  }, [toast]);
+
   const signIn = async (emailOrUsername: string, password: string) => {
     // Check if input is email or username
     const isEmail = emailOrUsername.includes('@');
@@ -133,7 +181,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, userData?: any) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Keep redirect targets explicit for native/staging builds. The value is
+    // configured at build time and never contains a service-role credential.
+    const redirectUrl = import.meta.env.VITE_AUTH_REDIRECT_URL || `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -152,11 +202,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/auth`;
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
+    const { error } = await requestPasswordReset(supabase.auth, email, window.location.origin);
+    return { error };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await updateRecoveredPassword(supabase.auth, password);
+    if (!error) setIsPasswordRecovery(false);
     return { error };
   };
 
@@ -199,6 +251,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     resetPassword,
+    updatePassword,
+    isPasswordRecovery,
     signOut,
     deleteAccount,
   };

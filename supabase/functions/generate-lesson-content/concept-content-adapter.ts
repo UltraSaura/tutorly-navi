@@ -1,5 +1,6 @@
 import { semanticDuplicationDiagnostics } from './pedagogical-quality.ts';
 import { isSupportedVisualKind } from './visual-policy.ts';
+import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import type { ConceptSlot } from './lesson-blueprint.ts';
 
 export type GeneratedConceptContent = {
@@ -50,6 +51,8 @@ function visualDataErrors(kind: string, data: unknown): ConceptAdapterError[] {
   const errors: ConceptAdapterError[] = [];
   if (!object(data) || Object.keys(data).length === 0) return [error('visual.data', 'malformed_visual_data', `Visual kind ${kind} requires non-empty semantic data.`)];
   const d = data as Record<string, unknown>;
+  const geometryErrors = geometryVisualDataErrors(kind, data);
+  if (geometryErrors.length) return geometryErrors.map((item) => error(item.path, item.code, item.message));
   const relationScopeErrors = (): ConceptAdapterError[] => {
     if (!Array.isArray(d.relations)) return [];
     if (!Array.isArray(d.units) || d.units.length < 1) return [error('visual.data.relations', 'undeclared_relation_unit', 'Every visual relation requires a declared units array.')];
@@ -71,7 +74,7 @@ function visualDataErrors(kind: string, data: unknown): ConceptAdapterError[] {
       break;
     case 'unit_conversion':
       if (Array.isArray(d.relations) || Array.isArray(d.units)) {
-        if ((d.relations ?? d.units as unknown[]).length < 1) errors.push(error('visual.data', 'malformed_visual_data', 'Conversion relations/units cannot be empty.'));
+        if (((d.relations ?? d.units) as unknown[]).length < 1) errors.push(error('visual.data', 'malformed_visual_data', 'Conversion relations/units cannot be empty.'));
       } else if (!(nonEmpty(d.from) && nonEmpty(d.to) && positiveNumber(d.factor))) {
         errors.push(error('visual.data', 'malformed_visual_data', 'Unit conversion needs from, to, and a positive factor, or non-empty relations/units.'));
       }
@@ -89,18 +92,7 @@ function visualDataErrors(kind: string, data: unknown): ConceptAdapterError[] {
     case 'number_line':
       if (typeof d.min !== 'number' || typeof d.max !== 'number' || d.max <= d.min) errors.push(error('visual.data', 'malformed_visual_data', 'Number line needs numeric min/max with max greater than min.'));
       break;
-    case 'triangle':
-    case 'polygon':
-      if (!(Array.isArray(d.points) && d.points.length >= 3) && !(Number.isInteger(d.sides) && Number(d.sides) >= 3)) errors.push(error('visual.data', 'malformed_visual_data', `${kind} needs at least three points or sides.`));
-      break;
-    case 'rectangle':
-      if (!(positiveNumber(d.width) && positiveNumber(d.height)) && !(Array.isArray(d.points) && d.points.length >= 4)) errors.push(error('visual.data', 'malformed_visual_data', 'Rectangle needs positive width/height or four points.'));
-      break;
-    case 'circle':
-      if (!positiveNumber(d.radius)) errors.push(error('visual.data.radius', 'malformed_visual_data', 'Circle needs a positive radius.'));
-      break;
-    case 'angle':
-      if (!(typeof d.degrees === 'number' && d.degrees > 0 && d.degrees <= 360) && !Array.isArray(d.rays)) errors.push(error('visual.data', 'malformed_visual_data', 'Angle needs degrees or rays.'));
+    case 'triangle': case 'polygon': case 'rectangle': case 'circle': case 'angle':
       break;
     default:
       // Other supported visual families still require structured, non-empty
@@ -152,7 +144,7 @@ export function adaptConceptContent(slot: ConceptSlot, raw: unknown): ConceptAda
   } else if (slot.visualRequirement === 'required') {
     errors.push(error('visual', 'required_visual', `A visual is required; allowed kinds: ${(slot.allowedVisualKinds ?? []).join(', ')}.`));
   }
-  for (const duplicate of semanticDuplicationDiagnostics(content as unknown as Record<string, unknown>)) {
+  for (const duplicate of semanticDuplicationDiagnostics(content as unknown as Record<string, unknown>).filter((item) => item.blocking)) {
     errors.push(error(duplicate.fieldB, 'semantic_duplication', duplicate.reason));
   }
   if (errors.length) return { ok: false, errors };

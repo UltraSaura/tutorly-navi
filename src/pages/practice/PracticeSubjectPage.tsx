@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useExamPapers, useTrainingItems } from '@/hooks/useExamImport';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
@@ -126,7 +126,7 @@ export default function PracticeSubjectPage() {
   const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
   const { subject } = useParams<{ subject: string }>();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const activeSchoolLevel = useActiveSchoolLevel();
   const { data: learningSubjects = [] } = useLearningSubjects();
 

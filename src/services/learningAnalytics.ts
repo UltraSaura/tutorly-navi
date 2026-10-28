@@ -1,3 +1,5 @@
+import { beginLearnerJob } from '@/features/family/profileRuntime';
+import { getLearnerUser } from '@/features/family/learnerIdentity';
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
 import type {
@@ -5,6 +7,8 @@ import type {
   LearningContextSource,
   LearningResourceRecommendation,
 } from "@/types/smart-learning";
+
+export const learningAnalyticsEnabled = import.meta.env.VITE_ENABLE_LEARNING_ANALYTICS === 'true';
 
 export type LearningInteractionEventType =
   | "explanation_opened"
@@ -139,46 +143,51 @@ function sanitizeMetadata(metadata?: Record<string, unknown>): Record<string, un
 export async function trackLearningInteractionEvent(
   input: LearningInteractionEventInput
 ): Promise<void> {
+  // Optional analytics schema is outside this release. Do not send writes until enabled explicitly.
+  if (!learningAnalyticsEnabled) return;
+  const finishLearnerJob = beginLearnerJob();
   try {
-    const explicitStudentId = nullableUuid(input.studentId);
-    const studentId = explicitStudentId || (await supabase.auth.getUser()).data.user?.id;
-    if (!studentId) return;
+    try {
+      const explicitStudentId = nullableUuid(input.studentId);
+      const studentId = explicitStudentId || (await getLearnerUser()).data.user?.id;
+      if (!studentId) return;
 
-    const payload = {
-      student_id: studentId,
-      event_type: input.eventType,
-      learning_style_used: styleValue(input.learningStyleUsed),
-      support_type: styleValue(input.supportType),
-      practice_style: styleValue(input.practiceStyle),
-      subject: nullableText(input.subject),
-      concept: nullableText(input.concept),
-      skill_tag: nullableText(input.skillTag),
-      topic_id: nullableUuid(input.topicId),
-      objective_id: nullableUuid(input.objectiveId),
-      quiz_id: nullableText(input.quizId, 120),
-      question_id: nullableText(input.questionId, 120),
-      question_kind: questionKindValue(input.questionKind),
-      visual_subtype: nullableText(input.visualSubtype, 80),
-      difficulty: nullableText(input.difficulty, 80),
-      was_correct: typeof input.wasCorrect === "boolean" ? input.wasCorrect : null,
-      attempt_number: numberValue(input.attemptNumber),
-      hint_used: typeof input.hintUsed === "boolean" ? input.hintUsed : null,
-      time_to_answer_ms: numberValue(input.timeToAnswerMs),
-      metadata: sanitizeMetadata(input.metadata),
-    };
+      const payload = {
+        student_id: studentId,
+        event_type: input.eventType,
+        learning_style_used: styleValue(input.learningStyleUsed),
+        support_type: styleValue(input.supportType),
+        practice_style: styleValue(input.practiceStyle),
+        subject: nullableText(input.subject),
+        concept: nullableText(input.concept),
+        skill_tag: nullableText(input.skillTag),
+        topic_id: nullableUuid(input.topicId),
+        objective_id: nullableUuid(input.objectiveId),
+        quiz_id: nullableText(input.quizId, 120),
+        question_id: nullableText(input.questionId, 120),
+        question_kind: questionKindValue(input.questionKind),
+        visual_subtype: nullableText(input.visualSubtype, 80),
+        difficulty: nullableText(input.difficulty, 80),
+        was_correct: typeof input.wasCorrect === "boolean" ? input.wasCorrect : null,
+        attempt_number: numberValue(input.attemptNumber),
+        hint_used: typeof input.hintUsed === "boolean" ? input.hintUsed : null,
+        time_to_answer_ms: numberValue(input.timeToAnswerMs),
+        metadata: sanitizeMetadata(input.metadata),
+      };
 
-    const { error } = await (supabase as any)
-      .from("learning_interaction_events")
-      .insert(payload);
+      const { error } = await (supabase as any)
+        .from("learning_interaction_events")
+        .insert(payload);
 
-    if (error && import.meta.env.DEV) {
-      console.debug("[LearningAnalytics] Event not recorded:", error.message);
+      if (error && import.meta.env.DEV) {
+        console.debug("[LearningAnalytics] Event not recorded:", error.message);
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.debug("[LearningAnalytics] Event tracking failed:", error);
+      }
     }
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.debug("[LearningAnalytics] Event tracking failed:", error);
-    }
-  }
+  } finally { finishLearnerJob(); }
 }
 
 export function trackLearningInteraction(input: LearningInteractionEventInput): void {
