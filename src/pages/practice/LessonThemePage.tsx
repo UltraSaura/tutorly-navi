@@ -2,11 +2,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { LessonV21Path } from '@/components/learning/LessonV21Path';
-import { LessonContentStudent } from '@/components/learning/LessonContentStudent';
-import { parseLessonV21 } from '@/types/lesson-generator';
+import { LegacyThemePath } from '@/components/learning/LegacyThemePath';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
-import { getThemeTopicDisplayLabels } from '@/features/practice/lessonThemes';
+import { buildThemeLessonPlan } from '@/features/practice/lessonThemes';
 
 export default function LessonThemePage() {
   const navigate = useNavigate();
@@ -18,7 +17,19 @@ export default function LessonThemePage() {
 
   if (isLoading) return <div className="p-8 text-center">Chargement…</div>;
   if (!theme) return <div className="p-8 text-center">Ce thème n’est pas disponible.</div>;
-  const topicDisplayLabels = getThemeTopicDisplayLabels(theme.topics);
+  const plan = buildThemeLessonPlan(theme);
+  const aggregateLesson = plan.v21Levels.length > 0 ? {
+    version: '2.1' as const,
+    topic_goal: theme.label,
+    levels: plan.v21Levels.map((entry, index, all) => ({
+      ...entry.level,
+      // Keep the first source's persisted level IDs stable; namespace only
+      // colliding IDs from another published topic.
+      id: all.findIndex((candidate) => candidate.level.id === entry.level.id) === index
+        ? entry.level.id
+        : `${entry.topicId}:${entry.level.id}`,
+    })),
+  } : null;
 
   return (
     <div className="min-h-screen bg-[#F3F6FA] pb-10" data-testid="lesson-theme-page">
@@ -30,15 +41,25 @@ export default function LessonThemePage() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-5 sm:px-6">
-        {theme.topics.map((topic, index) => {
-          const lesson = parseLessonV21(topic.lessonContent);
-          return (
-            <section key={topic.id} className="rounded-2xl border border-[#EAECEF] bg-white p-3 shadow-sm" data-testid="theme-topic-lesson" data-topic-id={topic.id}>
-              {theme.topics.length > 1 && <h2 className="px-2 pb-2 text-base font-bold text-[#0F172A]">{topicDisplayLabels[index]}</h2>}
-              {lesson ? <LessonV21Path topicId={topic.id} topicName={topic.topicLabel} lesson={lesson} /> : <LessonContentStudent topicId={topic.id} />}
-            </section>
-          );
-        })}
+        <section
+          className="rounded-2xl border border-[#EAECEF] bg-white p-3 shadow-sm"
+          data-testid="theme-level-list"
+          data-topic-ids={theme.topics.map((topic) => topic.id).join(',')}
+        >
+          {aggregateLesson ? (
+            <LessonV21Path
+              topicId={theme.topics[0]?.id ?? theme.id}
+              topicName=""
+              lesson={aggregateLesson}
+              levelLabelsOnly
+              levelTopicIds={plan.v21Levels.map((entry) => entry.topicId)}
+            />
+          ) : plan.legacyTopics.length > 0 ? (
+            <LegacyThemePath entries={plan.legacyTopics} topicName={theme.label} />
+          ) : (
+            <p className="p-4 text-sm text-muted-foreground">Cette leçon publiée n’est pas compatible avec le lecteur.</p>
+          )}
+        </section>
       </main>
     </div>
   );
