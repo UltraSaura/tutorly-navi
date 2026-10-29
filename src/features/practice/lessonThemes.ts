@@ -27,6 +27,22 @@ export type LessonThemeGroup = {
   topics: PublishedLessonTopic[];
 };
 
+export function canonicalTopicLabel(topicLabel: string) {
+  const trimmed = topicLabel.trim();
+  const withoutArticle = trimmed.replace(/^(?:la|le|les|l['’])\s+/i, '');
+  return withoutArticle ? withoutArticle.charAt(0).toUpperCase() + withoutArticle.slice(1) : trimmed;
+}
+
+export function getThemeTopicDisplayLabels(topics: PublishedLessonTopic[]) {
+  const canonicalLabels = topics.map((topic) => canonicalTopicLabel(topic.topicLabel));
+  const counts = new Map<string, number>();
+  for (const label of canonicalLabels) counts.set(label, (counts.get(label) ?? 0) + 1);
+
+  return canonicalLabels.map((label, index) => (
+    (counts.get(label) ?? 0) > 1 ? `Parcours ${index + 1}` : label
+  ));
+}
+
 function normalize(value: string) {
   return value
     .normalize('NFD')
