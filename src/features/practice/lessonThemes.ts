@@ -8,7 +8,14 @@ export const LESSON_THEMES = [
   { id: 'aires', label: 'Aires', terms: ['aire'] },
   { id: 'angles', label: 'Angles', terms: ['angle'] },
   { id: 'solides', label: 'Solides', terms: ['solide'] },
-  { id: 'reperage-deplacements', label: 'Repérage et déplacements', terms: ['reperage', 'deplacement', 'espace'] },
+  { id: 'reperage-deplacements', label: 'Repérage', terms: ['reperage', 'deplacement', 'espace'] },
+] as const;
+
+export const CANONICAL_LEVEL_LABELS = [
+  'Niveau 1 — Découverte',
+  'Niveau 2 — Comprendre',
+  'Niveau 3 — S’entraîner',
+  'Niveau 4 — Maîtriser',
 ] as const;
 
 export type LessonThemeId = (typeof LESSON_THEMES)[number]['id'];
@@ -26,22 +33,6 @@ export type LessonThemeGroup = {
   label: string;
   topics: PublishedLessonTopic[];
 };
-
-export function canonicalTopicLabel(topicLabel: string) {
-  const trimmed = topicLabel.trim();
-  const withoutArticle = trimmed.replace(/^(?:la|le|les|l['’])\s+/i, '');
-  return withoutArticle ? withoutArticle.charAt(0).toUpperCase() + withoutArticle.slice(1) : trimmed;
-}
-
-export function getThemeTopicDisplayLabels(topics: PublishedLessonTopic[]) {
-  const canonicalLabels = topics.map((topic) => canonicalTopicLabel(topic.topicLabel));
-  const counts = new Map<string, number>();
-  for (const label of canonicalLabels) counts.set(label, (counts.get(label) ?? 0) + 1);
-
-  return canonicalLabels.map((label, index) => (
-    (counts.get(label) ?? 0) > 1 ? `Parcours ${index + 1}` : label
-  ));
-}
 
 function normalize(value: string) {
   return value

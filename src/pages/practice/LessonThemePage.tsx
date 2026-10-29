@@ -1,12 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { LessonV21Path } from '@/components/learning/LessonV21Path';
-import { LessonContentStudent } from '@/components/learning/LessonContentStudent';
 import { parseLessonV21 } from '@/types/lesson-generator';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
-import { getThemeTopicDisplayLabels } from '@/features/practice/lessonThemes';
+import { CANONICAL_LEVEL_LABELS } from '@/features/practice/lessonThemes';
 
 export default function LessonThemePage() {
   const navigate = useNavigate();
@@ -18,7 +17,11 @@ export default function LessonThemePage() {
 
   if (isLoading) return <div className="p-8 text-center">Chargement…</div>;
   if (!theme) return <div className="p-8 text-center">Ce thème n’est pas disponible.</div>;
-  const topicDisplayLabels = getThemeTopicDisplayLabels(theme.topics);
+  const sourceTopic = theme.topics.find((topic) => {
+    const lesson = parseLessonV21(topic.lessonContent);
+    return lesson?.levels.length === 4;
+  }) ?? theme.topics[0];
+  const lesson = sourceTopic ? parseLessonV21(sourceTopic.lessonContent) : null;
 
   return (
     <div className="min-h-screen bg-[#F3F6FA] pb-10" data-testid="lesson-theme-page">
@@ -30,15 +33,25 @@ export default function LessonThemePage() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-5 sm:px-6">
-        {theme.topics.map((topic, index) => {
-          const lesson = parseLessonV21(topic.lessonContent);
-          return (
-            <section key={topic.id} className="rounded-2xl border border-[#EAECEF] bg-white p-3 shadow-sm" data-testid="theme-topic-lesson" data-topic-id={topic.id}>
-              {theme.topics.length > 1 && <h2 className="px-2 pb-2 text-base font-bold text-[#0F172A]">{topicDisplayLabels[index]}</h2>}
-              {lesson ? <LessonV21Path topicId={topic.id} topicName={topic.topicLabel} lesson={lesson} /> : <LessonContentStudent topicId={topic.id} />}
-            </section>
-          );
-        })}
+        <section
+          className="rounded-2xl border border-[#EAECEF] bg-white p-3 shadow-sm"
+          data-testid="theme-level-list"
+          data-topic-ids={theme.topics.map((topic) => topic.id).join(',')}
+        >
+          {lesson && sourceTopic && lesson.levels.length === 4 ? (
+            <LessonV21Path topicId={sourceTopic.id} topicName="" lesson={lesson} levelLabelsOnly />
+          ) : (
+            <div className="space-y-3">
+              {CANONICAL_LEVEL_LABELS.map((label, index) => (
+                <div key={label} data-testid="lesson-level-card" className="flex items-center gap-3 rounded-2xl border bg-white p-4 opacity-60">
+                  <Lock className="h-5 w-5 text-slate-400" />
+                  <span className="font-bold">{label}</span>
+                  {index > 0 && <span className="ml-auto text-xs text-slate-500">Termine le niveau précédent</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );

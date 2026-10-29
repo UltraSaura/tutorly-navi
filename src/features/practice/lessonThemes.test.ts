@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalTopicLabel, getThemeTopicDisplayLabels, groupPublishedLessonTopics, resolveLessonThemeId } from './lessonThemes';
+import { CANONICAL_LEVEL_LABELS, groupPublishedLessonTopics, resolveLessonThemeId } from './lessonThemes';
 
 const topic = (name: string, id = name) => ({
   id,
@@ -15,14 +15,6 @@ describe('published lesson theme navigation', () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].label).toBe('Résolution de problèmes');
     expect(groups[0].topics.map((entry) => entry.id)).toEqual(['a', 'b']);
-    expect(getThemeTopicDisplayLabels(groups[0].topics)).toEqual(['Parcours 1', 'Parcours 2']);
-  });
-
-  it('canonicalizes article variants without changing topic IDs', () => {
-    expect(canonicalTopicLabel('Les fractions')).toBe('Fractions');
-    expect(canonicalTopicLabel('Les angles')).toBe('Angles');
-    expect(canonicalTopicLabel('La résolution de problèmes')).toBe('Résolution de problèmes');
-    expect(canonicalTopicLabel('Aires')).toBe('Aires');
   });
 
   it('keeps proportion subdomains in one theme while retaining their topic IDs', () => {
@@ -34,6 +26,35 @@ describe('published lesson theme navigation', () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].id).toBe('proportionnalite');
     expect(groups[0].topics.map((entry) => entry.id)).toEqual(['numbers', 'measures', 'geometry']);
+  });
+
+  it('renders one tile for the complete proportionnalité and aires families', () => {
+    const groups = groupPublishedLessonTopics([
+      topic('Proportionnalité', 'proportion'),
+      topic('Proportionnalité (nombres)', 'numbers'),
+      topic('Proportionnalité (géométrie)', 'geometry'),
+      topic('Proportionnalité (mesures)', 'measures'),
+      topic('Aires', 'areas'),
+      topic('Les aires', 'legacy-areas'),
+    ]);
+    const visibleTiles = groups.map((group) => group.label);
+    expect(visibleTiles).toEqual(['Proportionnalité', 'Aires']);
+    expect(new Set(visibleTiles).size).toBe(2);
+    expect(visibleTiles).not.toContain('Proportionnalité (géométrie)');
+    expect(visibleTiles).not.toContain('Les aires');
+    expect(groups.flatMap((group) => group.topics.map((entry) => entry.id))).toEqual([
+      'proportion', 'numbers', 'geometry', 'measures', 'areas', 'legacy-areas',
+    ]);
+  });
+
+  it('defines the four level labels in order without child parcours labels', () => {
+    expect(CANONICAL_LEVEL_LABELS).toEqual([
+      'Niveau 1 — Découverte',
+      'Niveau 2 — Comprendre',
+      'Niveau 3 — S’entraîner',
+      'Niveau 4 — Maîtriser',
+    ]);
+    expect(CANONICAL_LEVEL_LABELS.join(' ')).not.toContain('Parcours');
   });
 
   it('hides drafts and topics without a supported canonical theme', () => {

@@ -6,7 +6,7 @@ import { LessonV2Player } from './LessonV2Player';
 import type { LessonV21 } from '@/types/lesson-generator';
 import { updateMasteryFromTaskResult } from '@/lib/mastery';
 
-type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV21 };
+type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV21; levelLabelsOnly?: boolean };
 const key = (topicId: string, learnerId?: string) => learnerStorageKey(`stuwy:v21-levels:${topicId}`, learnerId);
 const positionKey = (topicId: string, learnerId?: string) => learnerStorageKey(`stuwy:v21-level-position:${topicId}`, learnerId);
 export const LESSON_LEVEL_LABELS = ['Découverte', 'Comprendre', "S’entraîner", 'Maîtriser'] as const;
@@ -17,7 +17,7 @@ export function getLessonLevelState(index: number, completedCount: number, total
   return 'locked' as const;
 }
 
-export function LessonV21Path({ topicId, subjectId, topicName, lesson }: Props) {
+export function LessonV21Path({ topicId, subjectId, topicName, lesson, levelLabelsOnly = false }: Props) {
   const { user } = useLearner();
   const [completed, setCompleted] = useState<Record<string, number>>({});
   const [positions, setPositions] = useState<Record<string, number>>({});
@@ -57,7 +57,7 @@ export function LessonV21Path({ topicId, subjectId, topicName, lesson }: Props) 
           </button>
           <div>
             <p className="text-xs font-bold uppercase text-primary">Niveau {selected + 1} — {LESSON_LEVEL_LABELS[selected] ?? `Étape ${selected + 1}`}</p>
-            <p className="font-bold">{level.title}</p>
+            {!levelLabelsOnly && <p className="font-bold">{level.title}</p>}
           </div>
         </div>
         <div className="min-h-0 flex-1">
@@ -99,7 +99,7 @@ export function LessonV21Path({ topicId, subjectId, topicName, lesson }: Props) 
               </div>
               <button disabled={state === 'locked'} onClick={() => setSelected(index)} style={{ flex: 1, minWidth: 0, textAlign: 'left', margin: '6px 0', padding: '14px 16px', borderRadius: 16, cursor: state === 'locked' ? 'default' : 'pointer', fontFamily: 'Poppins, sans-serif', background: state === 'current' ? '#F2FBF8' : state === 'completed' ? 'white' : '#F8FAFC', border: state === 'current' ? '1px solid #9FE1CB' : '0.5px solid #EAECEF', opacity: state === 'locked' ? 0.7 : 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 11, fontWeight: 800, color: state === 'locked' ? '#9CA3AF' : '#12B894', letterSpacing: '0.03em' }}>NIVEAU {level.level_number} — {LESSON_LEVEL_LABELS[index] ?? `Étape ${index + 1}`}</span>{state === 'completed' && <span style={{ fontSize: 11, fontWeight: 700, color: '#085041' }}>· Terminé ✓</span>}</div>
-                <p style={{ fontSize: 16, fontWeight: 800, color: state === 'locked' ? '#9CA3AF' : '#0F172A', margin: '4px 0 0', lineHeight: 1.3 }}>{level.title}</p>
+                {!levelLabelsOnly && <p style={{ fontSize: 16, fontWeight: 800, color: state === 'locked' ? '#9CA3AF' : '#0F172A', margin: '4px 0 0', lineHeight: 1.3 }}>{level.title}</p>}
                 {state === 'current' && <><p style={{ fontSize: 13, color: '#667085', margin: '6px 0 0', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{level.lesson.lesson_goal}</p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 11, padding: '8px 16px', borderRadius: 999, background: '#55C6A5', color: '#0F172A', fontSize: 13, fontWeight: 800 }}>{resumable ? 'Continuer →' : 'Commencer →'}</span></>}
                 {state === 'completed' && <p style={{ fontSize: 12, color: '#9CA3AF', margin: '5px 0 0', fontWeight: 600 }}>Appuie pour revoir</p>}
                 {state === 'locked' && <p style={{ fontSize: 12, color: '#9CA3AF', margin: '5px 0 0', fontWeight: 600 }}>Termine le niveau précédent</p>}
