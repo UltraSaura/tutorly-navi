@@ -1,3 +1,5 @@
+import { parseLessonContent, parseLessonV21, type LessonV2, type LessonV21, type LessonLevelV21 } from '@/types/lesson-generator';
+
 export const LESSON_THEMES = [
   { id: 'calcul', label: 'Calcul', terms: ['calcul'] },
   { id: 'nombres-decimaux', label: 'Nombres décimaux', terms: ['decimal', 'decimaux'] },
@@ -32,6 +34,20 @@ export type LessonThemeGroup = {
   id: LessonThemeId;
   label: string;
   topics: PublishedLessonTopic[];
+};
+
+export type AggregatedLessonLevel = {
+  topicId: string;
+  topicLabel: string;
+  levelNumber: number;
+  level: LessonLevelV21;
+  sourceOrder: number;
+};
+
+export type ThemeLessonPlan = {
+  v21Levels: AggregatedLessonLevel[];
+  legacyTopics: Array<{ topicId: string; topicLabel: string; lesson?: LessonV2 }>;
+  unsupportedTopicIds: string[];
 };
 
 function normalize(value: string) {
@@ -72,4 +88,66 @@ export function groupPublishedLessonTopics(
       label: theme.label,
       topics: [...(groups.get(theme.id) ?? [])].sort((a, b) => a.orderIndex - b.orderIndex),
     }));
+}
+
+function stableJson(value: unknown): string {
+  return JSON.stringify(value);
+}
+
+function levelContentKey(level: LessonLevelV21): string {
+  const { id: _id, ...content } = level;
+  return stableJson(content);
+}
+
+function isCanonicalTopic(topic: PublishedLessonTopic, theme: LessonThemeGroup): boolean {
+  const topicName = normalize(topic.topicLabel).replace(/^les\s+/, '');
+  const themeName = normalize(theme.label).replace(/^les\s+/, '');
+  return topicName === themeName;
+}
+
+/**
+ * Creates the student-facing plan without inventing missing levels.
+ *
+ * The canonical topic is considered first. Other published topics can fill a
+ * missing level, and a distinct conflict at an existing level is retained as
+ * a second source entry rather than being silently discarded. Exact duplicate
+ * level payloads are the only entries deduplicated.
+ */
+export function buildThemeLessonPlan(theme: LessonThemeGroup): ThemeLessonPlan {
+  const orderedTopics = [...theme.topics].sort((a, b) => {
+    const canonicalDelta = Number(isCanonicalTopic(b, theme)) - Number(isCanonicalTopic(a, theme));
+    return canonicalDelta || a.orderIndex - b.orderIndex || a.id.localeCompare(b.id);
+  });
+  const v21Levels: AggregatedLessonLevel[] = [];
+  const legacyTopics: ThemeLessonPlan['legacyTopics'] = [];
+  const unsupportedTopicIds: string[] = [];
+  const seenLevelPayloads = new Set<string>();
+
+  orderedTopics.forEach((topic, sourceOrder) => {
+    const v21 = parseLessonV21(topic.lessonContent);
+    if (v21) {
+      v21.levels.forEach((level) => {
+        const payloadKey = levelContentKey(level);
+        if (seenLevelPayloads.has(payloadKey)) return;
+        seenLevelPayloads.add(payloadKey);
+        v21Levels.push({ topicId: topic.id, topicLabel: topic.topicLabel, levelNumber: level.level_number, level, sourceOrder });
+      });
+      return;
+    }
+
+    const v2 = parseLessonContent(topic.lessonContent);
+    if (v2) {
+      legacyTopics.push({ topicId: topic.id, topicLabel: topic.topicLabel, lesson: v2 });
+      return;
+    }
+    const raw = topic.lessonContent;
+    if (raw && typeof raw === 'object' && typeof (raw as { explanation?: unknown }).explanation === 'string' && typeof (raw as { example?: unknown }).example === 'string') {
+      legacyTopics.push({ topicId: topic.id, topicLabel: topic.topicLabel });
+      return;
+    }
+    unsupportedTopicIds.push(topic.id);
+  });
+
+  v21Levels.sort((a, b) => a.levelNumber - b.levelNumber || a.sourceOrder - b.sourceOrder || a.topicId.localeCompare(b.topicId));
+  return { v21Levels, legacyTopics, unsupportedTopicIds };
 }

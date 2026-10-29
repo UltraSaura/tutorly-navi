@@ -1,11 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { LessonV21Path } from '@/components/learning/LessonV21Path';
-import { parseLessonV21 } from '@/types/lesson-generator';
+import { LegacyThemePath } from '@/components/learning/LegacyThemePath';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
-import { CANONICAL_LEVEL_LABELS } from '@/features/practice/lessonThemes';
+import { buildThemeLessonPlan } from '@/features/practice/lessonThemes';
 
 export default function LessonThemePage() {
   const navigate = useNavigate();
@@ -17,11 +17,19 @@ export default function LessonThemePage() {
 
   if (isLoading) return <div className="p-8 text-center">Chargement…</div>;
   if (!theme) return <div className="p-8 text-center">Ce thème n’est pas disponible.</div>;
-  const sourceTopic = theme.topics.find((topic) => {
-    const lesson = parseLessonV21(topic.lessonContent);
-    return lesson?.levels.length === 4;
-  }) ?? theme.topics[0];
-  const lesson = sourceTopic ? parseLessonV21(sourceTopic.lessonContent) : null;
+  const plan = buildThemeLessonPlan(theme);
+  const aggregateLesson = plan.v21Levels.length > 0 ? {
+    version: '2.1' as const,
+    topic_goal: theme.label,
+    levels: plan.v21Levels.map((entry, index, all) => ({
+      ...entry.level,
+      // Keep the first source's persisted level IDs stable; namespace only
+      // colliding IDs from another published topic.
+      id: all.findIndex((candidate) => candidate.level.id === entry.level.id) === index
+        ? entry.level.id
+        : `${entry.topicId}:${entry.level.id}`,
+    })),
+  } : null;
 
   return (
     <div className="min-h-screen bg-[#F3F6FA] pb-10" data-testid="lesson-theme-page">
@@ -38,18 +46,18 @@ export default function LessonThemePage() {
           data-testid="theme-level-list"
           data-topic-ids={theme.topics.map((topic) => topic.id).join(',')}
         >
-          {lesson && sourceTopic && lesson.levels.length === 4 ? (
-            <LessonV21Path topicId={sourceTopic.id} topicName="" lesson={lesson} levelLabelsOnly />
+          {aggregateLesson ? (
+            <LessonV21Path
+              topicId={theme.topics[0]?.id ?? theme.id}
+              topicName=""
+              lesson={aggregateLesson}
+              levelLabelsOnly
+              levelTopicIds={plan.v21Levels.map((entry) => entry.topicId)}
+            />
+          ) : plan.legacyTopics.length > 0 ? (
+            <LegacyThemePath entries={plan.legacyTopics} topicName={theme.label} />
           ) : (
-            <div className="space-y-3">
-              {CANONICAL_LEVEL_LABELS.map((label, index) => (
-                <div key={label} data-testid="lesson-level-card" className="flex items-center gap-3 rounded-2xl border bg-white p-4 opacity-60">
-                  <Lock className="h-5 w-5 text-slate-400" />
-                  <span className="font-bold">{label}</span>
-                  {index > 0 && <span className="ml-auto text-xs text-slate-500">Termine le niveau précédent</span>}
-                </div>
-              ))}
-            </div>
+            <p className="p-4 text-sm text-muted-foreground">Cette leçon publiée n’est pas compatible avec le lecteur.</p>
           )}
         </section>
       </main>
