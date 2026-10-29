@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import SubjectDashboardPage, { learningThemePath } from './SubjectDashboardPage';
+import SubjectDashboardPage, { CANONICAL_THEMES_BUILD_MARKER, learningThemePath } from './SubjectDashboardPage';
 
 vi.mock('@/hooks/useSubjectDashboard', () => ({
   useSubjectDashboard: () => ({
@@ -52,6 +52,7 @@ describe('learning canonical theme route', () => {
     );
 
     expect((html.match(/data-testid="lesson-theme-tile"/g) ?? [])).toHaveLength(2);
+    expect(html).toContain(`data-build-marker="${CANONICAL_THEMES_BUILD_MARKER}"`);
     expect(html).toContain('>Proportionnalité</span>');
     expect(html).toContain('>Aires</span>');
     expect(html).not.toContain('Proportionnalité (nombres)');

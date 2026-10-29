@@ -7,6 +7,8 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
 import { groupPublishedLessonTopics } from '@/features/practice/lessonThemes';
 
+export const CANONICAL_THEMES_BUILD_MARKER = 'canonical-themes-v1';
+
 export function learningThemePath(subjectSlug: string, themeId: string): string {
   return `/learning/${encodeURIComponent(subjectSlug)}/theme/${themeId}`;
 }
@@ -36,7 +38,7 @@ export default function SubjectDashboardPage() {
   const subjectName = getSubjectNameForSlug(subjectSlug, i18n.language, data?.subject?.name);
 
   return (
-    <div className="min-h-screen bg-[#F3F6FA] pb-24">
+    <div className="min-h-screen bg-[#F3F6FA] pb-24" data-build-marker={CANONICAL_THEMES_BUILD_MARKER}>
       <PageMeta title={subjectName} description="" />
       <header className="border-b border-border bg-white px-4 py-4 sm:px-6">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3">
