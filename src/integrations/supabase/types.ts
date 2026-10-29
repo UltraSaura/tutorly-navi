@@ -3364,6 +3364,7 @@ export type Database = {
         | "parent"
         | "guardian"
         | "teacher"
+        | "tester"
       applicability_status: "en_vigueur" | "transitoire" | "planifie"
       class_level:
         | "CP"
@@ -3526,6 +3527,7 @@ export const Constants = {
         "parent",
         "guardian",
         "teacher",
+        "tester",
       ],
       applicability_status: ["en_vigueur", "transitoire", "planifie"],
       class_level: [
