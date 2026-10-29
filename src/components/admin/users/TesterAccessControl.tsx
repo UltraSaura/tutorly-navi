@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -11,6 +12,7 @@ interface TesterAccessControlProps {
 /** Tester is a capability attached to an existing account, never an admin promotion. */
 export function TesterAccessControl({ userId }: TesterAccessControlProps) {
   const { isAdmin } = useAdminAuth();
+  const queryClient = useQueryClient();
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,6 +50,7 @@ export function TesterAccessControl({ userId }: TesterAccessControlProps) {
       else {
         const enabled = (data?.length ?? 0) > 0;
         setHasAccess(enabled);
+        void queryClient.invalidateQueries({ queryKey: ['tester-role-list'] });
         toast.success(enabled ? 'Tester access enabled' : 'Tester access revoked');
       }
     }
