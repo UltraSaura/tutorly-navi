@@ -1,178 +1,83 @@
-import { useSubjectLabel } from '@/i18n/useSubjectLabel';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
-import { useLanguage } from '@/context/SimpleLanguageContext';
 import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Play, CheckCircle2, Lock } from 'lucide-react';
-import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
+import { ArrowLeft, BookOpen, ChevronRight, Loader2 } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
-import { groupRelatedLessons } from '@/utils/groupRelatedLessons';
+import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
+import { groupPublishedLessonTopics } from '@/features/practice/lessonThemes';
 
-const SubjectDashboardPage = () => {
-  const subjectLabel = useSubjectLabel();
+export function learningThemePath(subjectSlug: string, themeId: string): string {
+  return `/learning/${encodeURIComponent(subjectSlug)}/theme/${themeId}`;
+}
+
+/**
+ * The learning library and the practice library intentionally share the same
+ * published-theme source. Topic IDs remain inside each theme and are used by
+ * the theme reader for routing and progress; child topic titles never become
+ * student-facing cards here.
+ */
+export default function SubjectDashboardPage() {
   const ui = useInterfaceTranslation();
-  const { language, t } = useLanguage();
-  const { subjectSlug } = useParams<{ subjectSlug: string }>();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
-  const { data, isLoading } = useSubjectDashboard(subjectSlug || '');
-
-  if (isLoading) {
-    return (
-      <div style={{ background: '#F3F6FA', minHeight: '100vh', paddingBottom: 96 }}>
-        <div style={{ background: 'white', padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: '0.5px solid #EAECEF' }}>
-          <Skeleton className="h-7 w-7 rounded-full" />
-          <Skeleton className="h-5 w-40" />
-        </div>
-        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[1, 2, 3, 4, 5].map((item) => <Skeleton key={item} className="h-20 w-full rounded-2xl" />)}
-        </div>
-      </div>
-    );
-  }
-
-  if (!data?.subject) {
-    return (
-      <div style={{ background: '#F3F6FA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>{t('learning.subjectNotFound')}</p>
-      </div>
-    );
-  }
-
-  const { subject, categories, overallProgress } = data;
-  const subjectName = getSubjectNameForSlug(subject.slug, language, subject.name);
-  const allTopics = categories.flatMap((category) => (category.topics || []) as any[]);
-  const lessonsAvailable = allTopics.filter((topic: any) => topic.has_lesson).length;
-  const lessonsCompleted = allTopics.filter((topic: any) => topic.lesson_completed).length;
+  const { subjectSlug = '' } = useParams<{ subjectSlug: string }>();
+  const { data, isLoading, error } = useSubjectDashboard(subjectSlug);
+  const themeGroups = groupPublishedLessonTopics(
+    (data?.categories ?? []).flatMap((category) => (category.topics ?? []).map((topic) => ({
+      id: topic.id,
+      slug: topic.slug,
+      topicLabel: topic.name,
+      orderIndex: topic.order_index,
+      lessonContent: topic.lesson_content,
+      domainLabel: category.name,
+    }))),
+  );
+  const subjectName = getSubjectNameForSlug(subjectSlug, i18n.language, data?.subject?.name);
 
   return (
-    <div style={{ background: '#F3F6FA', minHeight: '100vh', paddingBottom: 96 }}>
-      <PageMeta title={subjectName} description={`${t('learning.libraryTitle')} - ${subjectName}`} />
-
-      <div style={{ background: 'white', borderBottom: '0.5px solid #EAECEF', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            onClick={() => navigate('/learning')}
-            aria-label={ui("Retour")}
-            style={{ width: 28, height: 28, borderRadius: '50%', border: '0.5px solid #EAECEF', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-          >
-            <ArrowLeft className="h-3.5 w-3.5" style={{ color: '#667085' }} />
+    <div className="min-h-screen bg-[#F3F6FA] pb-24">
+      <PageMeta title={subjectName} description="" />
+      <header className="border-b border-border bg-white px-4 py-4 sm:px-6">
+        <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-[#0F172A]">{subjectName}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Choisis un thème pour apprendre à ton rythme.</p>
+          </div>
+          <button type="button" onClick={() => navigate('/learning')} className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm text-muted-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            {ui('Retour')}
           </button>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-              {subjectName}
-            </p>
-          </div>
-          {lessonsAvailable > 0 && (
-            <span style={{ background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600, flexShrink: 0 }}>
-              {lessonsCompleted}/{lessonsAvailable} {t('learning.lessons')}
-            </span>
-          )}
         </div>
+      </header>
 
-        {overallProgress.totalTopics > 0 && (
-          <div style={{ padding: '0 16px 10px' }}>
-            <div style={{ height: 4, background: '#EAECEF', borderRadius: 999, overflow: 'hidden' }}>
-              <div style={{ width: `${overallProgress.percentage}%`, height: '100%', background: '#12C6A0', borderRadius: 999, transition: 'width 0.4s ease' }} />
-            </div>
-            <p style={{ fontSize: 10, color: '#667085', margin: '3px 0 0', fontFamily: 'Poppins, sans-serif' }}>
-              {overallProgress.completedTopics}/{overallProgress.totalTopics} {ui("termines")}
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {groupRelatedLessons(allTopics).map((group) => {
-          const cards = group.topics.map((topic: any) => {
-            const hasLesson = !!topic.has_lesson;
-            const isCompleted = !!topic.lesson_completed;
-            const hasVideos = (topic.video_count || 0) > 0;
-            const isAccessible = hasLesson || hasVideos;
-
-            return (
-              <button
-                key={topic.id}
-                onClick={() => isAccessible && navigate(`/learning/${subjectSlug}/${topic.slug}`)}
-                disabled={!isAccessible}
-                style={{
-                  width: '100%',
-                  background: 'white',
-                  borderRadius: 14,
-                  border: `1px solid ${isCompleted ? '#9FE1CB' : '#EAECEF'}`,
-                  padding: '12px 14px',
-                  cursor: isAccessible ? 'pointer' : 'not-allowed',
-                  textAlign: 'left',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  opacity: isAccessible ? 1 : 0.5,
-                  transition: 'box-shadow 0.15s',
-                }}
-              >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    flexShrink: 0,
-                    background: isCompleted ? '#F2FBF8' : hasLesson ? '#F3F6FA' : '#F9F9F9',
-                    border: `1px solid ${isCompleted ? '#9FE1CB' : '#EAECEF'}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5" style={{ color: '#12C6A0' }} />
-                  ) : hasLesson ? (
-                    <BookOpen className="h-4.5 w-4.5" style={{ color: '#667085' }} />
-                  ) : hasVideos ? (
-                    <Play className="h-4.5 w-4.5" style={{ color: '#667085' }} />
-                  ) : (
-                    <Lock className="h-4 w-4" style={{ color: '#9CA3AF' }} />
-                  )}
-                </div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 4px', fontFamily: 'Poppins, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {topic.name}
-                  </p>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {hasLesson && (
-                      <span style={{ background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600 }}>
-                        {ui("Lecon")}
-                      </span>
-                    )}
-                    {hasVideos && (
-                      <span style={{ background: '#F3F6FA', color: '#667085', border: '0.5px solid #EAECEF', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600 }}>
-                        {topic.video_count} {ui("video")}{topic.video_count > 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {!hasLesson && !hasVideos && (
-                      <span style={{ color: '#9CA3AF', fontSize: 10 }}>{ui("Bientot disponible")}</span>
-                    )}
-                  </div>
-                </div>
-
-                {isAccessible && (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M6 4l4 4-4 4" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
-            );
-          });
-          return group.topics.length > 1 ? (
-            <details key={group.key} className="rounded-2xl border border-slate-200 bg-white p-3">
-              <summary className="cursor-pointer font-semibold text-slate-900">{group.label} ({group.topics.length})</summary>
-              <div className="mt-3 flex flex-col gap-2">{cards}</div>
-            </details>
-          ) : <div key={group.key}>{cards}</div>;
-        })}
-      </div>
+      <main className="mx-auto w-full max-w-2xl space-y-4 px-4 py-6 sm:px-6" data-testid="lesson-theme-list">
+        <div>
+          <h2 className="text-lg font-bold text-[#0F172A]">Tes thèmes</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Les thèmes disponibles contiennent une leçon publiée.</p>
+        </div>
+        {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" aria-label="Chargement" />}
+        {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">Impossible de charger les leçons.</p>}
+        {!isLoading && !error && themeGroups.length === 0 && <div className="rounded-2xl border border-dashed bg-white p-8 text-center text-sm text-muted-foreground">Aucune leçon publiée pour ce niveau.</div>}
+        <div className="space-y-3">
+          {themeGroups.map((theme) => (
+            <button
+              key={theme.id}
+              type="button"
+              data-testid="lesson-theme-tile"
+              data-theme-id={theme.id}
+              onClick={() => navigate(learningThemePath(subjectSlug, theme.id))}
+              className="flex w-full items-center gap-4 rounded-2xl border border-[#EAECEF] bg-white p-4 text-left shadow-sm transition hover:border-[#9FE1CB] hover:bg-[#F2FBF8]"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E2F7F1] text-[#085041]"><BookOpen className="h-5 w-5" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-base font-bold text-[#0F172A]">{theme.label}</span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+            </button>
+          ))}
+        </div>
+      </main>
     </div>
   );
-};
-
-export default SubjectDashboardPage;
+}

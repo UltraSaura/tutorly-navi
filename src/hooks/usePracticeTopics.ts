@@ -25,15 +25,16 @@ export function usePracticeTopics(subjectSlug: string, levelCode: string, countr
       if (subjectError) throw subjectError;
       if (!subjectData) return [];
 
-      const { data: topicRows, error: topicsError } = await supabase
+      let topicsQuery = supabase
         .from('topics')
         .select('id, slug, name, order_index, lesson_content, curriculum_domain_id')
-        .ilike('curriculum_level_code', levelCode)
         .eq('curriculum_subject_id', subjectData.id)
-        .ilike('curriculum_country_code', countryCode)
         .or('is_active.eq.true,is_active.is.null')
         .not('lesson_content', 'is', null)
         .order('order_index', { ascending: true });
+      if (levelCode) topicsQuery = topicsQuery.ilike('curriculum_level_code', levelCode);
+      if (countryCode) topicsQuery = topicsQuery.ilike('curriculum_country_code', countryCode);
+      const { data: topicRows, error: topicsError } = await topicsQuery;
       if (topicsError) throw topicsError;
 
       const rows = (topicRows ?? []) as TopicRow[];
@@ -54,7 +55,7 @@ export function usePracticeTopics(subjectSlug: string, levelCode: string, countr
         domainLabel: row.curriculum_domain_id ? domainLabelMap.get(row.curriculum_domain_id) : '',
       })));
     },
-    enabled: Boolean(subjectSlug && levelCode && countryCode),
+    enabled: Boolean(subjectSlug && countryCode),
   });
 
   return { themeGroups: query.data || [], isLoading: query.isLoading, error: query.error };
