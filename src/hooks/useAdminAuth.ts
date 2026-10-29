@@ -25,12 +25,17 @@ export const useAdminAuth = () => {
   });
 
   const isAdmin = !family.isFamily && (userRoles?.includes('admin') ?? false);
+  // A tester can preview curriculum levels but never inherits admin access.
+  const isTester = !family.isFamily && (userRoles?.includes('tester') ?? false);
+  const canPreviewSchoolLevels = isAdmin || isTester;
   const isAuthenticated = !!user;
   // Only consider loading if auth is loading OR if user exists and we're fetching their context
   const isLoading_ = authLoading || (!!user && isLoading);
 
   return {
     isAdmin,
+    isTester,
+    canPreviewSchoolLevels,
     isAuthenticated,
     canAccessAdmin: isAuthenticated && isAdmin,
     isLoading: isLoading_,

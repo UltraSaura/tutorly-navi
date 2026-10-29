@@ -22,9 +22,9 @@ const REAL_PROFILE_VALUE = 'real_profile';
 export function AdminPreviewSelector({ compact = false }: { compact?: boolean }) {
   const ui = useInterfaceTranslation();
   const { i18n } = useTranslation();
-  const { isAdmin } = useAdminAuth();
+  const { canPreviewSchoolLevels } = useAdminAuth();
   const { previewLevel, setPreviewLevel, clearPreviewMode } = useAdminPreview();
-  if (!isAdmin) return null;
+  if (!canPreviewSchoolLevels) return null;
 
   const language = i18n.resolvedLanguage ?? i18n.language ?? 'fr';
 
@@ -60,7 +60,7 @@ export function AdminPreviewBanner() {
   const { i18n } = useTranslation();
   const { isAdmin } = useAdminAuth();
   const { isAdminPreviewEnabled, previewLevel, clearPreviewMode } = useAdminPreview();
-  if (!isAdmin || !isAdminPreviewEnabled || !previewLevel) return null;
+  if (!canPreviewSchoolLevels || !isAdminPreviewEnabled || !previewLevel) return null;
 
   const language = i18n.resolvedLanguage ?? i18n.language ?? 'fr';
   const label = labelForAdminPreviewLevel(previewLevel, language);
