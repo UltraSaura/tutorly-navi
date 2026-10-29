@@ -111,6 +111,25 @@ describe('published lesson theme navigation', () => {
     expect(new Set(plan.v21Levels.map((entry) => entry.topicId))).toEqual(new Set(['canonical', 'numbers', 'measures']));
   });
 
+  it('assembles all published Aires topics without creating a second theme path', () => {
+    const plan = buildThemeLessonPlan({
+      ...asTheme([
+        v21Topic('Aires', 'areas-canonical', [1, 2], 1),
+        v21Topic('Les aires', 'areas-legacy', [3, 4], 2, 'legacy'),
+      ], 'Aires'),
+      id: 'aires',
+      label: 'Aires',
+    });
+    expect(plan.v21Levels.map((entry) => entry.levelNumber)).toEqual([1, 2, 3, 4]);
+    expect(plan.v21Levels.map((entry) => entry.topicId)).toEqual(['areas-canonical', 'areas-canonical', 'areas-legacy', 'areas-legacy']);
+  });
+
+  it('keeps a single published four-level V2.1 lesson as four real levels', () => {
+    const plan = buildThemeLessonPlan(asTheme([v21Topic('Proportionnalité', 'canonical', [1, 2, 3, 4])]));
+    expect(plan.v21Levels).toHaveLength(4);
+    expect(plan.v21Levels.map((entry) => entry.levelNumber)).toEqual([1, 2, 3, 4]);
+  });
+
   it('deduplicates only identical level content, not merely the same level number', () => {
     const canonical = v21Topic('Aires', 'areas', [1]);
     const duplicate = v21Topic('Les aires', 'legacy-areas', [1]);
