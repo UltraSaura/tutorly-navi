@@ -6,6 +6,7 @@ import { LessonContentStudent } from '@/components/learning/LessonContentStudent
 import { parseLessonV21 } from '@/types/lesson-generator';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
+import { getThemeTopicDisplayLabels } from '@/features/practice/lessonThemes';
 
 export default function LessonThemePage() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function LessonThemePage() {
 
   if (isLoading) return <div className="p-8 text-center">Chargement…</div>;
   if (!theme) return <div className="p-8 text-center">Ce thème n’est pas disponible.</div>;
+  const topicDisplayLabels = getThemeTopicDisplayLabels(theme.topics);
 
   return (
     <div className="min-h-screen bg-[#F3F6FA] pb-10" data-testid="lesson-theme-page">
@@ -28,11 +30,11 @@ export default function LessonThemePage() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-5 sm:px-6">
-        {theme.topics.map((topic) => {
+        {theme.topics.map((topic, index) => {
           const lesson = parseLessonV21(topic.lessonContent);
           return (
-            <section key={topic.id} className="rounded-2xl border border-[#EAECEF] bg-white p-3 shadow-sm" data-testid="theme-topic-lesson">
-              {theme.topics.length > 1 && <h2 className="px-2 pb-2 text-base font-bold text-[#0F172A]">{topic.topicLabel}</h2>}
+            <section key={topic.id} className="rounded-2xl border border-[#EAECEF] bg-white p-3 shadow-sm" data-testid="theme-topic-lesson" data-topic-id={topic.id}>
+              {theme.topics.length > 1 && <h2 className="px-2 pb-2 text-base font-bold text-[#0F172A]">{topicDisplayLabels[index]}</h2>}
               {lesson ? <LessonV21Path topicId={topic.id} topicName={topic.topicLabel} lesson={lesson} /> : <LessonContentStudent topicId={topic.id} />}
             </section>
           );

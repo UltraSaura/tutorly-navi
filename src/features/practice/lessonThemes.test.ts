@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupPublishedLessonTopics, resolveLessonThemeId } from './lessonThemes';
+import { canonicalTopicLabel, getThemeTopicDisplayLabels, groupPublishedLessonTopics, resolveLessonThemeId } from './lessonThemes';
 
 const topic = (name: string, id = name) => ({
   id,
@@ -15,6 +15,14 @@ describe('published lesson theme navigation', () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].label).toBe('Résolution de problèmes');
     expect(groups[0].topics.map((entry) => entry.id)).toEqual(['a', 'b']);
+    expect(getThemeTopicDisplayLabels(groups[0].topics)).toEqual(['Parcours 1', 'Parcours 2']);
+  });
+
+  it('canonicalizes article variants without changing topic IDs', () => {
+    expect(canonicalTopicLabel('Les fractions')).toBe('Fractions');
+    expect(canonicalTopicLabel('Les angles')).toBe('Angles');
+    expect(canonicalTopicLabel('La résolution de problèmes')).toBe('Résolution de problèmes');
+    expect(canonicalTopicLabel('Aires')).toBe('Aires');
   });
 
   it('keeps proportion subdomains in one theme while retaining their topic IDs', () => {
