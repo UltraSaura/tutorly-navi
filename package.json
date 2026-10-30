@@ -6,6 +6,8 @@
   "scripts": {
     "build:beta": "node scripts/build-private-beta.mjs",
     "sync:beta:android": "bash scripts/sync-staging-native.sh android",
+    "verify:play:android": "node scripts/verify-play-android-bundle.mjs",
+    "build:play:android": "npm run build:beta && npx cap sync android && npm run verify:play:android",
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
