@@ -2,7 +2,7 @@ name: Private beta Android candidate
 on:
   workflow_dispatch:
   pull_request:
-    branches: [development]
+    branches: [development, practice]
 permissions:
   contents: read
 jobs:
@@ -27,6 +27,11 @@ jobs:
       - run: npx tsc --noEmit
       - run: npx vitest run
       - run: npm run build:beta
+      # Validate the existing Google Play listing package before staging flavor sync.
+      - run: npx cap sync android
+      - run: npm run verify:play:android
+      - run: bash gradlew bundleRelease
+        working-directory: android
       - run: npm run sync:beta:android
       - run: bash gradlew assembleStagingDebug bundleStagingRelease
         working-directory: android
@@ -37,6 +42,7 @@ jobs:
           path: |
             android/app/build/outputs/apk/staging/debug/*.apk
             android/app/build/outputs/bundle/stagingRelease/*.aab
+            android/app/build/outputs/bundle/release/*.aab
             dist/beta-build.json
       # Debug APK can be sideloaded by internal testers. The release AAB is
       # UNSIGNED and must not be represented as ready for Google Play upload.
