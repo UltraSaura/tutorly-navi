@@ -14,6 +14,7 @@ const fail = (message) => { console.error('Android Play preflight FAILED: ' + me
 const configPath = 'android/app/src/main/assets/capacitor.config.json';
 const indexPath = 'android/app/src/main/assets/public/index.html';
 const gradlePath = 'android/app/build.gradle';
+const variablesPath = 'android/variables.gradle';
 if (!existsSync(resolve(root, configPath))) {
   fail('Generated Capacitor config missing. Run npm run build:beta, then npx cap sync android.');
 } else {
@@ -30,6 +31,10 @@ if (!existsSync(resolve(root, configPath))) {
 if (!existsSync(resolve(root, indexPath))) fail('Bundled index.html missing; Android will not have offline web assets.');
 else if (!read(indexPath).trim()) fail('Bundled index.html is empty.');
 const gradle = read(gradlePath);
+const variables = read(variablesPath);
+const minSdkMatch = variables.match(/\bminSdkVersion\s*=\s*(\d+)/);
+if (!minSdkMatch || Number(minSdkMatch[1]) < 24) fail('Google Play automatic protection requires minSdkVersion >= 24.');
+if (!/minSdkVersion\s+rootProject\.ext\.minSdkVersion/.test(gradle)) fail('App Gradle is not consuming the verified minSdkVersion.');
 if (!/applicationId\s+["']com\.tutorly\.learning["']/.test(gradle)) fail('Base Google Play application ID mismatch in Gradle.');
 if (/applicationIdSuffix\s+["']\.staging["']/.test(gradle)) fail('Unexpected applicationIdSuffix.');
 if (!process.exitCode) console.log('Android Play preflight OK: embedded web assets, no server.url, Google Play package com.tutorly.learning. Signing and runtime checks still required.');
