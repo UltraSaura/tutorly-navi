@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { familyRpc, learnerFromRow, readSelection, type ActiveFamilyProfile, type FamilyChild, type FamilySelection } from '@/features/family/familyApi';
+import { familyRpc, learnerFromRow, normalizeCurrentProfile, normalizeFamilyChildren, readSelection, type ActiveFamilyProfile, type FamilyChild, type FamilySelection } from '@/features/family/familyApi';
 import { profileIsBusy, setProfileRuntime, subscribeProfileBusy } from '@/features/family/profileRuntime';
 
 interface FamilyProfileContextValue {
@@ -56,7 +56,7 @@ export function FamilyProfileProvider({ children }: { children: React.ReactNode 
     const state = await familyRpc<{ isFamily: boolean; isGuardian: boolean; pinConfigured: boolean }>('family_bootstrap');
     setIsFamily(Boolean(state?.isFamily)); setIsLegacyGuardian(Boolean(state?.isGuardian && !state?.isFamily));
     setPinConfigured(Boolean(state?.pinConfigured));
-    setProfiles(state?.isFamily ? await familyRpc<FamilyChild[]>('family_profiles') : []);
+    setProfiles(state?.isFamily ? normalizeFamilyChildren(await familyRpc<unknown>('family_profiles')) : []);
   }, []);
 
   // Initialization runs for a new Auth session, not for token refresh events.
@@ -86,12 +86,12 @@ export function FamilyProfileProvider({ children }: { children: React.ReactNode 
         if (cancelled) return;
         setIsFamily(Boolean(state?.isFamily)); setIsLegacyGuardian(Boolean(state?.isGuardian && !state?.isFamily)); setPinConfigured(Boolean(state?.pinConfigured));
         if (!state?.isFamily) { setProfileRuntime({ family: false, user, token: null, legacyGuardian: Boolean(state.isGuardian) }); return; }
-        const cards = await familyRpc<FamilyChild[]>('family_profiles');
+        const cards = normalizeFamilyChildren(await familyRpc<unknown>('family_profiles'));
         if (cancelled) return;
         setProfiles(cards);
         const saved = sessionId ? readSelection(account, sessionId) : null;
         setProfileRuntime({ family: true, user: null, token: saved?.token ?? null });
-        const current = saved ? await familyRpc<{ kind: 'parent' | 'child'; childId: string; learner: Record<string, unknown> | null; expiresAt: string } | null>('family_current_profile') : null;
+        const current = saved ? normalizeCurrentProfile(await familyRpc<unknown>('family_current_profile')) : null;
         if (cancelled) return;
         if (current && saved) {
           const restored: FamilySelection = { profile: current.kind === 'parent' ? { kind: 'parent', familyAccountId: account } : { kind: 'child', familyAccountId: account, childId: current.childId }, user: current.learner ? learnerFromRow(current.learner) : null, token: saved.token, expiresAt: current.expiresAt };
@@ -135,9 +135,9 @@ export function FamilyProfileProvider({ children }: { children: React.ReactNode 
       const grant = await familyRpc<{ token: string; expiresAt: string }>(kind === 'child' ? 'family_select_child' : 'family_unlock_parent', kind === 'child' ? { child: value } : { pin: value });
       if (activeAccount.current !== account) return;
       setProfileRuntime({ family: true, user: null, token: grant.token });
-      const current = await familyRpc<{ childId: string; learner: Record<string, unknown> | null }>('family_current_profile');
-      if (!current || activeAccount.current !== account) throw new Error('family.unavailable');
-      const next: FamilySelection = { profile: kind === 'parent' ? { kind, familyAccountId: account } : { kind, familyAccountId: account, childId: current.childId }, user: current.learner ? learnerFromRow(current.learner) : null, ...grant };
+      const current = normalizeCurrentProfile(await familyRpc<unknown>('family_current_profile'));
+      if (!current || activeAccount.current !== account || (kind === 'child' && !current.childId)) throw new Error('family.unavailable');
+      const next: FamilySelection = { profile: kind === 'parent' ? { kind, familyAccountId: account } : { kind, familyAccountId: account, childId: current.childId as string }, user: current.learner ? learnerFromRow(current.learner) : null, ...grant };
       setProfileRuntime({ family: true, user: next.user, token: next.token });
       sessionStorage.setItem(`stuwy:family:${account}`, JSON.stringify({ token: next.token, sessionId }));
       setSelection(next);
