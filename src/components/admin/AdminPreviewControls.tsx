@@ -58,7 +58,7 @@ export function AdminPreviewSelector({ compact = false }: { compact?: boolean })
 
 export function AdminPreviewBanner() {
   const { i18n } = useTranslation();
-  const { isAdmin } = useAdminAuth();
+  const { canPreviewSchoolLevels } = useAdminAuth();
   const { isAdminPreviewEnabled, previewLevel, clearPreviewMode } = useAdminPreview();
   if (!canPreviewSchoolLevels || !isAdminPreviewEnabled || !previewLevel) return null;
 
