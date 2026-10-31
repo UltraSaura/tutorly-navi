@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc } }));
-import { familyRpc, readSelection } from './familyApi';
+import { familyRpc, normalizeCurrentProfile, normalizeFamilyChildren, readSelection } from './familyApi';
 
 beforeEach(() => rpc.mockReset());
 describe('family RPC failures', () => {
@@ -33,5 +33,31 @@ describe('family selection persistence', () => {
     vi.mocked(sessionStorage.getItem).mockReturnValue(JSON.stringify({ token: 'grant', sessionId: 'session-a' }));
     expect(readSelection('account', 'session-a')).toEqual({ token: 'grant' });
     expect(readSelection('account', 'session-b')).toBeNull();
+  });
+});
+
+describe('family RPC payload normalization', () => {
+  it('turns a null or non-array profile payload into an empty list', () => {
+    expect(normalizeFamilyChildren(null)).toEqual([]);
+    expect(normalizeFamilyChildren({ error: 'temporary failure' })).toEqual([]);
+  });
+
+  it('keeps only complete child identity rows and never exposes malformed rows to React', () => {
+    expect(normalizeFamilyChildren([
+      null,
+      { id: 'missing-learner' },
+      { id: 'child-a', learnerId: 'learner-a', firstName: 'Alice', grade: 'CM1', available: true },
+      { id: 'child-b', learnerId: 'learner-b', firstName: 42, available: 'yes' },
+    ])).toEqual([
+      { id: 'child-a', learnerId: 'learner-a', firstName: 'Alice', grade: 'CM1', avatarUrl: null, available: true },
+      { id: 'child-b', learnerId: 'learner-b', firstName: null, grade: null, avatarUrl: null, available: false },
+    ]);
+  });
+
+  it('rejects an incomplete current child profile instead of mounting it', () => {
+    expect(normalizeCurrentProfile({ kind: 'child', expiresAt: '2030-01-01T00:00:00Z' })).toBeNull();
+    expect(normalizeCurrentProfile({ kind: 'parent', expiresAt: '2030-01-01T00:00:00Z' })).toEqual({
+      kind: 'parent', childId: null, learner: null, expiresAt: '2030-01-01T00:00:00Z',
+    });
   });
 });
