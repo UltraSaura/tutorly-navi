@@ -25,6 +25,7 @@ import { getLearningMode } from "@/domain/learningMode";
 import { buildSimilarArithmeticQuiz } from '@/utils/generatedExactPractice';
 import { toast } from '@/hooks/use-toast';
 import type { QuizBank } from '@/types/quiz-bank';
+import { detectMathTaskIntent } from '@/utils/mathTaskIntent';
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -194,6 +195,10 @@ export function TwoCards({
   // Check if exercise is pure arithmetic (not a word problem)
   const isPureArithmeticProblem = (text: string): boolean => {
     const lower = text.toLowerCase();
+    const taskIntent = detectMathTaskIntent(text);
+    if (taskIntent === 'fraction_encadrement' || taskIntent === 'fraction_comparison' || taskIntent === 'fraction_simplification' || taskIntent === 'ambiguous_fraction') {
+      return false;
+    }
     const conceptualKeywords = [
       'heure', 'minute', 'départ', 'arrivée', 'durée', 'temps',
       'hour', 'time', 'clock', 'am', 'pm',

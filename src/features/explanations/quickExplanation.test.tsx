@@ -5,6 +5,8 @@ import {
   buildRestoredDivisionSteps,
   classifyDivision,
   divisionExplanation,
+  isSupportedDivision,
+  parseSourceDivision,
   safeDivisionExplanation,
   validateQuickExplanation,
 } from './quickExplanation';
@@ -14,6 +16,24 @@ import { canonicalLessonRoute, resolveCanonicalSkill } from './canonicalSkill';
 import { AnimatedStepCard } from '@/components/kids/AnimatedStepCard';
 
 describe('validated quick division explanation', () => {
+  it('does not route fraction bounds, comparison, simplification, or bare slash notation to division', () => {
+    for (const source of [
+      'Encadrer la fraction 7/3',
+      'Comparer les fractions 3/4 et 5/8',
+      'Simplifie la fraction 12/18',
+      '7/3',
+    ]) {
+      expect(isSupportedDivision(source)).toBe(false);
+      expect(parseSourceDivision(source)).toBeNull();
+    }
+  });
+
+  it('accepts explicit French division instructions, including slash notation', () => {
+    expect(isSupportedDivision('Calcule 7/3')).toBe(true);
+    expect(parseSourceDivision('Effectue la division de 84 par 7')).toEqual({ dividend: 84, divisor: 7 });
+    expect(classifyDivision('Calcule 7/3')).toBe('integer_division_with_remainder');
+  });
+
   it('keeps exact division exact and does not expose the original answer', () => {
     const source = '66 ÷ 6';
     const lesson = safeDivisionExplanation(source, 'fr');
