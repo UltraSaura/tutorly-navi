@@ -27,6 +27,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        DispatchQueue.main.async { [weak self] in
+            guard let view = self?.window?.rootViewController?.view else { return }
+            // WebKit can finish loading the local DOM before its first native
+            // surface draw. Invalidate the view once the app is active.
+            view.setNeedsLayout()
+            view.layoutIfNeeded()
+            view.setNeedsDisplay()
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
