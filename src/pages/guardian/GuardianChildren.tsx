@@ -1,5 +1,5 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -42,7 +42,7 @@ export default function GuardianChildren() {
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [relation, setRelation] = useState('parent');
-  const [editChild, setEditChild] = useState<any>(null);
+  const [editChild, setEditChild] = useState<ChildWithUser | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const { countries, getSchoolLevelsByCountry } = useCountriesAndLevels();
@@ -60,7 +60,7 @@ export default function GuardianChildren() {
   };
 
   // Fetch children
-  const { data: children, isLoading } = useQuery({
+  const { data: children, isLoading, error: childrenError } = useQuery({
     queryKey: ['guardian-children', guardianId],
     queryFn: async () => {
       if (!guardianId) return null;
@@ -99,6 +99,13 @@ export default function GuardianChildren() {
     enabled: !!guardianId,
   });
 
+  useEffect(() => {
+    const message = childrenError instanceof Error ? childrenError.message : String(childrenError ?? '');
+    if (/parent authorization|required|profile access|family\.expired|signal is aborted/i.test(message)) {
+      navigate('/family', { replace: true, state: { returnTo: '/guardian/children' } });
+    }
+  }, [childrenError, navigate]);
+
   // Add child mutation
   const addChildMutation = useMutation({
     mutationFn: async (data: ChildRegistrationData & { relation: string }) => {
@@ -132,6 +139,9 @@ export default function GuardianChildren() {
       });
     },
     onError: (error: Error) => {
+      if (/parent authorization|required|profile access|family\.expired|signal is aborted/i.test(error.message)) {
+        navigate('/family', { replace: true, state: { returnTo: '/guardian/children' } });
+      }
       toast({
         title: 'Error',
         description: error.message,
@@ -144,7 +154,7 @@ export default function GuardianChildren() {
     addChildMutation.mutate({ ...formData, relation });
   };
 
-  const handleEditClick = (child: any) => {
+  const handleEditClick = (child: ChildWithUser) => {
     setEditChild(child);
     setIsEditOpen(true);
   };

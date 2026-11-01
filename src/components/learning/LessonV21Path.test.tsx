@@ -47,4 +47,13 @@ describe('student lesson theme level path', () => {
     expect(getLessonLevelState(2, 1, 4)).toBe('locked');
     expect(getLessonLevelState(3, 1, 4)).toBe('locked');
   });
+
+  it('renders only the levels that exist in an older two-level lesson', () => {
+    const olderLesson = { ...lesson, levels: lesson.levels.slice(0, 2) };
+    const html = renderToStaticMarkup(<LessonV21Path topicId="old-topic" topicName="Fractions" lesson={olderLesson} />);
+    expect((html.match(/data-testid="lesson-level-card"/g) ?? []).length).toBe(2);
+    expect(html).toContain('NIVEAU 2');
+    expect(html).not.toContain('NIVEAU 3');
+    expect(html).not.toContain('NIVEAU 4');
+  });
 });

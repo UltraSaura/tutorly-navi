@@ -238,21 +238,23 @@ const ChatInterface = () => {
 
   return (
     <div
-      className={`relative h-[calc(100vh-4rem)] overflow-x-hidden max-w-full ${
+      className={`relative flex min-h-0 h-[calc(100vh-4rem)] h-[calc(100dvh-4rem)] overflow-hidden overflow-x-hidden max-w-full ${
         showWelcomeState ? 'bg-white' : 'bg-neutral-bg'
       }`}
     >
       <PageMeta title={ui("Tutor Chat")} description={ui("Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor.")} />
       {/* Scrollable Content Area */}
       <div 
-        className={`h-full overflow-x-hidden ${
+        className={`min-h-0 flex-1 w-full overflow-x-hidden ${
           showWelcomeState
-            ? 'overflow-hidden flex flex-col items-center justify-start bg-white'
+            ? 'overflow-hidden flex flex-col items-center justify-center bg-white'
             : 'overflow-auto'
         }`}
         style={{
           paddingBottom: showWelcomeState
-            ? 0
+            ? keyboardVisible && keyboardHeight > 0
+              ? `${keyboardHeight + 88}px`
+              : `calc(${isMobile ? 148 : 88}px + env(safe-area-inset-bottom, 0px))`
             : keyboardVisible && keyboardHeight > 0
               ? `${keyboardHeight + 80}px`  // Keyboard height + input height
               : `${isMobile ? 128 : 80}px`  // Normal bottom padding
@@ -264,6 +266,7 @@ const ChatInterface = () => {
           {showWelcomeState && (
             <motion.div
               key="welcome-fox"
+              className="flex min-h-0 w-full flex-1"
               exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
             >
               <WelcomeFox />
