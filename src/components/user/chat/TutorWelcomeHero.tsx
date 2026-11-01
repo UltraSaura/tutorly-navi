@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -40,6 +41,7 @@ export default function TutorWelcomeHero({
   foxSrc,
   className = "",
 }: TutorWelcomeHeroProps) {
+  const ui = useInterfaceTranslation();
   const text = copy[language] ?? copy.en;
   const firstName = useMemo(
     () => getFirstName(userName, text.fallbackName),
@@ -90,7 +92,7 @@ export default function TutorWelcomeHero({
   return (
     <section
       className={`relative w-full overflow-hidden bg-[rgb(241,247,255)] ${className}`}
-      aria-label="Tutor welcome hero"
+      aria-label={ui("Tutor welcome hero")}
     >
       <div className="relative mx-auto h-[760px] w-full max-w-[760px] overflow-hidden bg-[rgb(241,247,255)]">
         <AnimatePresence>
@@ -220,7 +222,7 @@ export default function TutorWelcomeHero({
             muted
             playsInline
             preload="auto"
-            aria-label="Tutor fox assistant"
+            aria-label={ui("Tutor fox assistant")}
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
@@ -230,7 +232,7 @@ export default function TutorWelcomeHero({
         ) : (
           <motion.img
             src={foxSrc}
-            alt="Tutor fox assistant"
+            alt={ui("Tutor fox assistant")}
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.35, ease: "easeOut" }}

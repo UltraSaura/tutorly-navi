@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -125,6 +126,7 @@ export function scoreVideoMatch(videoTags: string[], homeworkKeywords: string[])
 }
 
 const VideoManager = () => {
+  const ui = useInterfaceTranslation();
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
 
@@ -200,15 +202,15 @@ const VideoManager = () => {
   };
 
   if (topicsError) {
-    return <div className="text-destructive">Error loading topics: {topicsError.message}</div>;
+    return <div className="text-destructive">{ui("Error loading topics:")} {topicsError.message}</div>;
   }
 
   if (videosError) {
-    return <div className="text-destructive">Error loading videos: {videosError.message}</div>;
+    return <div className="text-destructive">{ui("Error loading videos:")} {videosError.message}</div>;
   }
 
   if (topicsLoading) {
-    return <div className="text-muted-foreground">Loading topics...</div>;
+    return <div className="text-muted-foreground">{ui("Loading topics...")}</div>;
   }
 
   // Get language flags for a video (shows all variants if grouped)
@@ -247,22 +249,22 @@ const VideoManager = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Learning Videos</h2>
-          <p className="text-muted-foreground">Manage videos within topics</p>
+          <h2 className="text-2xl font-bold">{ui("Learning Videos")}</h2>
+          <p className="text-muted-foreground">{ui("Manage videos within topics")}</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          Add Video
+          {ui("Add Video")}
         </Button>
 
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <Label>Select Topic</Label>
+          <Label>{ui("Select Topic")}</Label>
           <Select value={selectedTopicId} onValueChange={setSelectedTopicId}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a topic to view videos" />
+              <SelectValue placeholder={ui("Select a topic to view videos")} />
             </SelectTrigger>
             <SelectContent>
               {topics.map((topic) => (
@@ -272,13 +274,13 @@ const VideoManager = () => {
           </Select>
         </div>
         <div>
-          <Label>Filter by Language</Label>
+          <Label>{ui("Filter by Language")}</Label>
           <Select value={selectedLanguageFilter} onValueChange={setSelectedLanguageFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="All languages" />
+              <SelectValue placeholder={ui("All languages")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Languages</SelectItem>
+              <SelectItem value="all">{ui("All Languages")}</SelectItem>
               <SelectItem value="en">🇺🇸 English</SelectItem>
               <SelectItem value="fr">🇫🇷 Français</SelectItem>
               <SelectItem value="ar">🇸🇦 العربية</SelectItem>
@@ -289,33 +291,33 @@ const VideoManager = () => {
 
       {videosLoading ? (
         <div className="text-center py-12 text-muted-foreground">
-          Loading videos...
+          {ui("Loading videos...")}
         </div>
       ) : (
         <>
         {!selectedTopicId && (
           <p className="text-sm text-muted-foreground mb-4">
-            Showing all videos. Select a topic to filter.
+            {ui("Showing all videos. Select a topic to filter.")}
           </p>
         )}
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Languages</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead>Topic</TableHead>
-              <TableHead>Duration</TableHead>
+              <TableHead>{ui("Title")}</TableHead>
+              <TableHead>{ui("Languages")}</TableHead>
+              <TableHead>{ui("Subject")}</TableHead>
+              <TableHead>{ui("Topic")}</TableHead>
+              <TableHead>{ui("Duration")}</TableHead>
               <TableHead>XP</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{ui("Status")}</TableHead>
+              <TableHead>{ui("Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayedVideos.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  No videos found for this topic
+                  {ui("No videos found for this topic")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -329,7 +331,7 @@ const VideoManager = () => {
               <TableCell>{video.xp_reward} XP</TableCell>
               <TableCell>
                 <span className={video.is_active ? 'text-green-600' : 'text-red-600'}>
-                  {video.is_active ? 'Active' : 'Inactive'}
+                  {video.is_active ? ui("Active") : 'Inactive'}
                 </span>
               </TableCell>
               <TableCell>

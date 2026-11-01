@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,29 +8,52 @@ import { OverviewTab } from './tabs/OverviewTab';
 import { ActivityTab } from './tabs/ActivityTab';
 import { ProgressTab } from './tabs/ProgressTab';
 import { ChildrenTab } from './tabs/ChildrenTab';
+import { Button } from '@/components/ui/button';
+import { Check, X } from 'lucide-react';
+import { TesterAccessControl } from './TesterAccessControl';
 
 interface UserDetailsProps {
   user: UserType;
   onAddChildClick: () => void;
   onUserSelect: (user: UserType) => void;
+  onApprovalChange: (user: UserType, status: 'approved' | 'rejected') => void;
 }
 
-export const UserDetails = ({ user, onAddChildClick, onUserSelect }: UserDetailsProps) => {
+export const UserDetails = ({ user, onAddChildClick, onUserSelect, onApprovalChange }: UserDetailsProps) => {
+  const ui = useInterfaceTranslation();
   return (
     <Card className="glass">
       <CardHeader className="pb-3">
         <UserHeader user={user} />
       </CardHeader>
       <CardContent>
+        <TesterAccessControl userId={user.id} />
+        {user.approval_status === 'pending' && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="mb-3 text-sm font-medium text-amber-900">
+              {ui('This account is waiting for approval.')}
+            </p>
+            <div className="flex gap-2">
+              <Button type="button" size="sm" onClick={() => onApprovalChange(user, 'approved')}>
+                <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                {ui('Approve Account')}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => onApprovalChange(user, 'rejected')}>
+                <X className="mr-2 h-4 w-4" aria-hidden="true" />
+                {ui('Reject Account')}
+              </Button>
+            </div>
+          </div>
+        )}
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid grid-cols-3 w-full glass">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="overview">{ui("Overview")}</TabsTrigger>
+            <TabsTrigger value="activity">{ui("Activity")}</TabsTrigger>
             {user.user_type === 'student' && (
-              <TabsTrigger value="progress">Progress</TabsTrigger>
+              <TabsTrigger value="progress">{ui("Progress")}</TabsTrigger>
             )}
             {user.user_type === 'parent' && (
-              <TabsTrigger value="children">Children</TabsTrigger>
+              <TabsTrigger value="children">{ui("Children")}</TabsTrigger>
             )}
           </TabsList>
           

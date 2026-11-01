@@ -1,9 +1,11 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import ChatMathField from './ChatMathField';
 import MathPad from './MathPad';
 import { useMathField } from '@/hooks/useMathField';
 
 export default function MathFieldWithPad() {
+  const ui = useInterfaceTranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { mfRef, insert, next, backspace, insertSnippet } = useMathField();
 
@@ -21,13 +23,13 @@ export default function MathFieldWithPad() {
       {/* Example of using snippets directly */}
       <div className="flex gap-2">
         <button onClick={() => insertSnippet('frac')}>
-          Insert Fraction
+          {ui("Insert Fraction")}
         </button>
         <button onClick={() => insertSnippet('sqrt')}>
-          Insert Square Root
+          {ui("Insert Square Root")}
         </button>
         <button onClick={() => insertSnippet('sin')}>
-          Insert Sine
+          {ui("Insert Sine")}
         </button>
       </div>
     </div>

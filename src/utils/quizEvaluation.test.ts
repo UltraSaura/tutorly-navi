@@ -139,3 +139,49 @@ describe("column-fill questions", () => {
     expect(evaluateQuestion(question, answer)).toBe(false);
   });
 });
+
+describe("clock-time numeric questions", () => {
+  const question: Question = {
+    id: "time-1",
+    kind: "numeric",
+    prompt: "À quelle heure arrive le bus ?",
+    answer: 955,
+    answerFormat: "time",
+    timeAnswer: { hours: 9, minutes: 55 },
+  };
+
+  it("accepts matching hour and minute fields", () => {
+    expect(evaluateQuestion(question, { hours: "9", minutes: "55" })).toBe(true);
+  });
+
+  it("rejects an invalid minute value", () => {
+    expect(evaluateQuestion(question, { hours: "9", minutes: "95" })).toBe(false);
+  });
+
+  it("keeps a 3:00 clock answer separate from quantity conversions", () => {
+    const clock: Question = {
+      id: "time-3",
+      kind: "numeric",
+      prompt: "Quelle heure est indiquée ?",
+      answer: 180,
+      answerFormat: "time",
+      timeAnswer: { hours: 3, minutes: 0 },
+    };
+    expect(evaluateQuestion(clock, { hours: "3", minutes: "0" })).toBe(true);
+  });
+});
+
+describe("unit-conversion numeric questions", () => {
+  it("grades the numeric value while the target unit remains explicit UI metadata", () => {
+    const cases: Array<[number, string, string]> = [
+      [300, "s", "5 minutes en secondes"],
+      [120, "min", "2 heures en minutes"],
+      [300, "cm", "3 mètres en centimètres"],
+    ];
+    for (const [answer, answerUnit, prompt] of cases) {
+      const question: Question = { id: answerUnit, kind: "numeric", prompt, answer, answerUnit };
+      expect(evaluateQuestion(question, answer)).toBe(true);
+      expect(evaluateQuestion(question, `${answer} min`)).toBe(false);
+    }
+  });
+});

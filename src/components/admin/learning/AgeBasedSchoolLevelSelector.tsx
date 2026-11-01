@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useMemo, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,6 +30,7 @@ export function AgeBasedSchoolLevelSelector({
   onLevelsChange,
   selectedLanguage = 'en'
 }: AgeBasedSchoolLevelSelectorProps) {
+  const ui = useInterfaceTranslation();
   const [ageFilter, setAgeFilter] = useState<string>('');
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
@@ -165,10 +167,10 @@ export function AgeBasedSchoolLevelSelector({
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Globe className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm font-medium">Select Countries</Label>
+          <Label className="text-sm font-medium">{ui("Select Countries")}</Label>
           {selectedLanguage && (
             <Badge variant="outline" className="text-xs">
-              Language: {selectedLanguage === 'en' ? '🇺🇸 English' : selectedLanguage === 'fr' ? '🇫🇷 Français' : selectedLanguage === 'ar' ? '🇸🇦 العربية' : selectedLanguage}
+              {ui("Language:")} {selectedLanguage === 'en' ? '🇺🇸 English' : selectedLanguage === 'fr' ? '🇫🇷 Français' : selectedLanguage === 'ar' ? '🇸🇦 العربية' : selectedLanguage}
             </Badge>
           )}
         </div>
@@ -190,7 +192,7 @@ export function AgeBasedSchoolLevelSelector({
                   <span className="mr-1">{info.flag}</span>
                   {info.name}
                   {isSuggested && !isSelected && (
-                    <Badge variant="secondary" className="ml-1 text-[10px] px-1">suggested</Badge>
+                    <Badge variant="secondary" className="ml-1 text-[10px] px-1">{ui("suggested")}</Badge>
                   )}
                 </Button>
               </div>
@@ -210,7 +212,7 @@ export function AgeBasedSchoolLevelSelector({
                     onClick={() => selectAllForCountry(country)}
                     className="text-xs h-7"
                   >
-                    Select all {info.flag} {info.name}
+                    {ui("Select all")} {info.flag} {info.name}
                   </Button>
                   <Button
                     type="button"
@@ -219,7 +221,7 @@ export function AgeBasedSchoolLevelSelector({
                     onClick={() => clearCountry(country)}
                     className="text-xs h-7 text-muted-foreground"
                   >
-                    Clear
+                    {ui("Clear")}
                   </Button>
                 </div>
               );
@@ -233,7 +235,7 @@ export function AgeBasedSchoolLevelSelector({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by level name..."
+            placeholder={ui("Search by level name...")}
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             className="pl-10"
@@ -242,7 +244,7 @@ export function AgeBasedSchoolLevelSelector({
         <div className="flex gap-2">
           <Input
             type="number"
-            placeholder="Filter by age (3-18)"
+            placeholder={ui("Filter by age (3-18)")}
             min="3"
             max="18"
             value={ageFilter}
@@ -258,7 +260,7 @@ export function AgeBasedSchoolLevelSelector({
               className="flex items-center gap-1"
             >
               <X className="h-4 w-4" />
-              Clear All
+              {ui("Clear All")}
             </Button>
           )}
         </div>
@@ -268,11 +270,11 @@ export function AgeBasedSchoolLevelSelector({
       <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
         <div className="text-sm text-blue-800 dark:text-blue-200">
-          <p className="font-medium mb-1">How to use:</p>
+          <p className="font-medium mb-1">{ui("How to use:")}</p>
           <ul className="list-disc list-inside space-y-1 text-xs">
-            <li>First select the countries you want to target (based on the video language)</li>
-            <li>Check "Select All" to select all levels for an age across selected countries</li>
-            <li>Or check individual boxes to select specific country/level combinations</li>
+            <li>{ui("First select the countries you want to target (based on the video language)")}</li>
+            <li>{ui("Check \"Select All\" to select all levels for an age across selected countries")}</li>
+            <li>{ui("Or check individual boxes to select specific country/level combinations")}</li>
           </ul>
         </div>
       </div>
@@ -281,15 +283,15 @@ export function AgeBasedSchoolLevelSelector({
       {displayedCountries.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground border rounded-md">
           <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p>Select at least one country above to see school levels</p>
+          <p>{ui("Select at least one country above to see school levels")}</p>
         </div>
       ) : (
         <ScrollArea className="h-[400px] border rounded-md">
           <Table>
             <TableHeader className="sticky top-0 bg-background z-10">
               <TableRow>
-                <TableHead className="w-[80px] text-center">Age</TableHead>
-                <TableHead className="w-[100px] text-center">Select All</TableHead>
+                <TableHead className="w-[80px] text-center">{ui("Age")}</TableHead>
+                <TableHead className="w-[100px] text-center">{ui("Select All")}</TableHead>
                 {displayedCountries.map(country => {
                   const info = COUNTRY_INFO[country];
                   return (
@@ -305,7 +307,7 @@ export function AgeBasedSchoolLevelSelector({
               {filteredMappings.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={displayedCountries.length + 2} className="text-center text-muted-foreground py-8">
-                    No levels found matching your filters.
+                    {ui("No levels found matching your filters.")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -313,7 +315,7 @@ export function AgeBasedSchoolLevelSelector({
                   <TableRow key={mapping.age}>
                     <TableCell className="text-center font-bold">
                       <Badge variant="outline" className="text-sm">
-                        Age {mapping.age}
+                        {ui("Age")} {mapping.age}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
@@ -364,10 +366,10 @@ export function AgeBasedSchoolLevelSelector({
         <div className="text-muted-foreground">
           {selectedLevels.length > 0 ? (
             <span>
-              <strong>{selectedLevels.length}</strong> level{selectedLevels.length !== 1 ? 's' : ''} selected
+              <strong>{selectedLevels.length}</strong> {ui("level")}{selectedLevels.length !== 1 ? 's' : ''} {ui("selected")}
             </span>
           ) : (
-            <span>No levels selected (video will be visible to all ages/levels)</span>
+            <span>{ui("No levels selected (video will be visible to all ages/levels)")}</span>
           )}
         </div>
         {selectedLevels.length > 0 && (
@@ -379,7 +381,7 @@ export function AgeBasedSchoolLevelSelector({
               console.log('Selected levels:', selectedLevels);
             }}
           >
-            View Selected
+            {ui("View Selected")}
           </Button>
         )}
       </div>

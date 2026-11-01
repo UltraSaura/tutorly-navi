@@ -1,7 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { buildLearningResourceAnalyticsMetadata } from "./learningAnalytics";
+import { describe, expect, it, vi } from "vitest";
+import { buildLearningResourceAnalyticsMetadata, trackLearningInteractionEvent } from "./learningAnalytics";
 
 describe("learning analytics", () => {
+  it("does not request the optional analytics table in this release", async () => {
+    const network = vi.spyOn(globalThis, 'fetch');
+    try {
+      await trackLearningInteractionEvent({ eventType: 'lesson_completed', studentId: '00000000-0000-4000-8000-000000000001' });
+      expect(network).not.toHaveBeenCalled();
+    } finally { network.mockRestore(); }
+  });
   it("keeps Smart Learning Resources metadata safe and aggregate-only", () => {
     const metadata = buildLearningResourceAnalyticsMetadata({
       source: "explanation",

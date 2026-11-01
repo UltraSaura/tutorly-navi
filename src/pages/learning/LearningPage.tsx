@@ -1,3 +1,5 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useNavigate } from 'react-router-dom';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
@@ -24,6 +26,8 @@ const getSubjectTileBackground = (colorScheme?: string | null) => {
 };
 
 const LearningPage = () => {
+  const subjectLabel = useSubjectLabel();
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const { profile } = useUserCurriculumProfile();
@@ -73,7 +77,7 @@ const LearningPage = () => {
       <header className="pt-6 pr-6 pb-4 pl-[20px] bg-[#253c7b] shadow-md">
         <div className="flex justify-between items-center">
           <h1 className="font-extrabold text-white text-xl">
-            {t('learning.chooseSubject') || 'Choose Your Subject'}
+            {t('learning.chooseSubject') || ui("Choose Your Subject")}
           </h1>
           <CompactStreakChip
             days={stats?.currentStreak ?? 0}
@@ -86,13 +90,16 @@ const LearningPage = () => {
 
       {/* Subject List */}
       <main className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4">
-        {subjects?.map(({
+        {subjects?.filter(({ subject, lessons_ready }) =>
+          lessons_ready > 0 && (subject.display_context === 'learn' || subject.display_context === 'both')
+        ).map(({
         subject,
         videos_ready,
+        lessons_ready,
         lessons_completed
       }) => {
         const subjectName = getSubjectNameForSlug(subject.slug, language, subject.name);
-        const isReady = videos_ready > 0;
+        const isReady = lessons_ready > 0;
         const subjectTitleFontSize = Math.max(subject.lesson_font_size ?? subject.font_size ?? 18, 12);
         const subjectTitleFontFamily = subject.lesson_font_family ?? subject.font_family ?? 'Poppins, sans-serif';
         return <div 

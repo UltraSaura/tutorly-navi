@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +8,10 @@ import { CreditCard, Download, Calendar, DollarSign, CheckCircle } from 'lucide-
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianBilling() {
+  const ui = useInterfaceTranslation();
+  const { locale } = useLocale();
+  const currency = new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' });
+  const billingDate = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString(locale, { dateStyle: 'medium' });
   const { billingCustomerId } = useGuardianAuth();
 
   // Mock billing data (replace with Stripe integration)
@@ -32,12 +38,12 @@ export default function GuardianBilling() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Billing" description="Manage your Stuwy subscription, payment method, and billing history." />
+      <PageMeta title={ui("Billing")} description={ui("Manage your Stuwy subscription, payment method, and billing history.")} />
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Billing & Subscription</h1>
+        <h1 className="text-3xl font-bold text-foreground">{ui("Billing & Subscription")}</h1>
         <p className="text-muted-foreground mt-1">
-          Manage your subscription and payment methods
+          {ui("Manage your subscription and payment methods")}
         </p>
       </div>
 
@@ -48,34 +54,34 @@ export default function GuardianBilling() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                Current Plan
+                {ui("Current Plan")}
               </CardTitle>
               <CardDescription className="mt-2">
-                You are on the <strong>{currentPlan.name}</strong> plan
+                {ui("You are on the")} <strong>{ui(currentPlan.name)}</strong> {ui("plan")}
               </CardDescription>
             </div>
-            <Badge variant="default">Active</Badge>
+            <Badge variant="default">{ui("Active")}</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Price</p>
-              <p className="text-2xl font-bold">${currentPlan.price}</p>
-              <p className="text-xs text-muted-foreground">per {currentPlan.billingCycle}</p>
+              <p className="text-sm text-muted-foreground">{ui("Price")}</p>
+              <p className="text-2xl font-bold">{currency.format(currentPlan.price)}</p>
+              <p className="text-xs text-muted-foreground">{ui("per")} {ui(currentPlan.billingCycle)}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Children</p>
+              <p className="text-sm text-muted-foreground">{ui("Children")}</p>
               <p className="text-2xl font-bold">{currentPlan.children}/{currentPlan.maxChildren}</p>
-              <p className="text-xs text-muted-foreground">active accounts</p>
+              <p className="text-xs text-muted-foreground">{ui("active accounts")}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Next Billing</p>
-              <p className="text-lg font-semibold">{currentPlan.nextBillingDate}</p>
+              <p className="text-sm text-muted-foreground">{ui("Next Billing")}</p>
+              <p className="text-lg font-semibold">{billingDate(currentPlan.nextBillingDate)}</p>
             </div>
             <div className="flex items-end">
               <Button variant="outline" size="sm">
-                Change Plan
+                {ui("Change Plan")}
               </Button>
             </div>
           </div>
@@ -87,7 +93,7 @@ export default function GuardianBilling() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Payment Method
+            {ui("Payment Method")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -95,12 +101,12 @@ export default function GuardianBilling() {
             <div className="flex items-center gap-4">
               <CreditCard className="h-8 w-8 text-muted-foreground" />
               <div>
-                <p className="font-medium">{paymentMethod.type} ending in {paymentMethod.last4}</p>
-                <p className="text-sm text-muted-foreground">Expires {paymentMethod.expiry}</p>
+                <p className="font-medium">{paymentMethod.type} {ui("ending in")} {paymentMethod.last4}</p>
+                <p className="text-sm text-muted-foreground">{ui("Expires")} {paymentMethod.expiry}</p>
               </div>
             </div>
             <Button variant="outline" size="sm">
-              Update
+              {ui("Update")}
             </Button>
           </div>
         </CardContent>
@@ -111,10 +117,10 @@ export default function GuardianBilling() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Billing History
+            {ui("Billing History")}
           </CardTitle>
           <CardDescription>
-            Download your invoices and payment receipts
+            {ui("Download your invoices and payment receipts")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -127,20 +133,20 @@ export default function GuardianBilling() {
                 <div className="flex items-center gap-4">
                   <DollarSign className="h-5 w-5 text-green-500" />
                   <div>
-                    <p className="font-medium">{invoice.date}</p>
+                    <p className="font-medium">{billingDate(invoice.date)}</p>
                     <p className="text-sm text-muted-foreground">
-                      Invoice #{invoice.id}
+                      {ui("Invoice #")}{invoice.id}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className="font-semibold">${invoice.amount.toFixed(2)}</p>
+                    <p className="font-semibold">{currency.format(invoice.amount)}</p>
                     <Badge
                       variant={invoice.status === 'paid' ? 'default' : 'secondary'}
                       className="text-xs"
                     >
-                      {invoice.status}
+                      {ui(invoice.status)}
                     </Badge>
                   </div>
                   <Button variant="ghost" size="icon">
@@ -156,11 +162,11 @@ export default function GuardianBilling() {
       {/* Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Account Actions</CardTitle>
+          <CardTitle>{ui("Account Actions")}</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-2">
-          <Button variant="outline">Cancel Subscription</Button>
-          <Button variant="outline">Request Refund</Button>
+          <Button variant="outline">{ui("Cancel Subscription")}</Button>
+          <Button variant="outline">{ui("Request Refund")}</Button>
         </CardContent>
       </Card>
     </div>

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ApiKeyManagement from "./ApiKeyManagement";
@@ -9,24 +10,25 @@ import { PageMeta } from "@/components/seo/PageMeta";
 
 // This component gives you tabs for all model-related admin settings.
 const AIModelManagement = () => {
+  const ui = useInterfaceTranslation();
   // Tab values match those below for deep linking, if desired.
   const [selectedTab, setSelectedTab] = useState("overview");
 
   return (
     <div className="space-y-6">
-      <PageMeta title="AI Models" description="Configure AI models and providers powering Stuwy." />
+      <PageMeta title={ui("AI Models")} description={ui("Configure AI models and providers powering Stuwy.")} />
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">AI Model Management</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{ui("AI Model Management")}</h1>
         <p className="text-muted-foreground mt-1">
-          Manage your AI-related integrations, model selection, and prompt templates from one place.
+          {ui("Manage your AI-related integrations, model selection, and prompt templates from one place.")}
         </p>
       </div>
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="api-keys">Legacy API Keys</TabsTrigger>
-          <TabsTrigger value="models">Model Selection</TabsTrigger>
-          <TabsTrigger value="prompts">System Prompts</TabsTrigger>
+          <TabsTrigger value="overview">{ui("Overview")}</TabsTrigger>
+          <TabsTrigger value="api-keys">{ui("Legacy API Keys")}</TabsTrigger>
+          <TabsTrigger value="models">{ui("Model Selection")}</TabsTrigger>
+          <TabsTrigger value="prompts">{ui("System Prompts")}</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <ModelManagementNew />

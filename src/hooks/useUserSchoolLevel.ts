@@ -1,3 +1,4 @@
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserAgeFromLevel, getUserAgeRangeFromLevel } from '@/utils/schoolLevelFilter';
@@ -9,10 +10,11 @@ export interface UserSchoolLevel {
 }
 
 export function useUserSchoolLevel() {
+  const { learnerId, user: learner } = useLearner();
   return useQuery({
-    queryKey: ['user-school-level'],
+    queryKey: ['user-school-level', learnerId],
     queryFn: async (): Promise<UserSchoolLevel> => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = { data: { user: learner } };
       
       if (!user) {
         return { level: null, age: null, ageRange: null };

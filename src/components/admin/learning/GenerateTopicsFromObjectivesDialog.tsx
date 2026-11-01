@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -45,6 +46,7 @@ interface Props {
 type Step = "filters" | "preview" | "done";
 
 export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props) => {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const { data: categories = [] } = useLearningCategories();
   const generate = useGenerateTopicsFromObjectives();
@@ -149,11 +151,10 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5" />
-            Generate Topics from Objectives
+            {ui("Generate Topics from Objectives")}
           </DialogTitle>
           <DialogDescription>
-            Auto-create one topic per (level × subdomain) from imported curriculum
-            objectives. Each topic is pre-linked to its source objectives.
+            {ui("Auto-create one topic per (level × subdomain) from imported curriculum objectives. Each topic is pre-linked to its source objectives.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -161,25 +162,25 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Country</Label>
+                <Label>{ui("Country")}</Label>
                 <Select value={countryCode} onValueChange={setCountryCode}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fr">France (fr)</SelectItem>
-                    <SelectItem value="en">English (en)</SelectItem>
+                    <SelectItem value="fr">{ui("France (fr)")}</SelectItem>
+                    <SelectItem value="en">{ui("English (en)")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Level</Label>
+                <Label>{ui("Level")}</Label>
                 <Select value={levelCode} onValueChange={setLevelCode}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__all__">All levels</SelectItem>
+                    <SelectItem value="__all__">{ui("All levels")}</SelectItem>
                     {(filterOptions?.levels || []).map((l) => (
                       <SelectItem key={l} value={l}>
                         {l}
@@ -189,13 +190,13 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
                 </Select>
               </div>
               <div>
-                <Label>Subject</Label>
+                <Label>{ui("Subject")}</Label>
                 <Select value={subjectId} onValueChange={setSubjectId}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__all__">All subjects</SelectItem>
+                    <SelectItem value="__all__">{ui("All subjects")}</SelectItem>
                     {(filterOptions?.subjects || []).map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
@@ -205,14 +206,14 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
                 </Select>
               </div>
               <div>
-                <Label>Category</Label>
+                <Label>{ui("Category")}</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Auto-create from domains" />
+                    <SelectValue placeholder={ui("Auto-create from domains")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__auto__">
-                      Auto-create from curriculum domains
+                      {ui("Auto-create from curriculum domains")}
                     </SelectItem>
                     {categories.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
@@ -222,7 +223,7 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Leave blank to auto-create categories from curriculum domains
+                  {ui("Leave blank to auto-create categories from curriculum domains")}
                 </p>
               </div>
             </div>
@@ -230,18 +231,17 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Topics are upserted by (level, subdomain, category) so re-running
-                this is safe. Existing topics will not be duplicated.
+                {ui("Topics are upserted by (level, subdomain, category) so re-running this is safe. Existing topics will not be duplicated.")}
               </AlertDescription>
             </Alert>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => handleClose(false)}>
-                Cancel
+                {ui("Cancel")}
               </Button>
               <Button onClick={runDryRun} disabled={generate.isPending}>
                 {generate.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Preview
+                {ui("Preview")}
               </Button>
             </DialogFooter>
           </div>
@@ -250,14 +250,14 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
         {step === "preview" && preview && (
           <div className="space-y-4">
             <div className="flex gap-2 flex-wrap">
-              <Badge variant="default">{willCreate} will create</Badge>
-              <Badge variant="secondary">{alreadyExists} already exist</Badge>
+              <Badge variant="default">{willCreate} {ui("will create")}</Badge>
+              <Badge variant="secondary">{alreadyExists} {ui("already exist")}</Badge>
               {orphans > 0 && (
-                <Badge variant="destructive">{orphans} orphan objectives</Badge>
+                <Badge variant="destructive">{orphans} {ui("orphan objectives")}</Badge>
               )}
               {preview.auto_categories && (
                 <Badge variant="outline">
-                  {preview.categories_created ?? 0} categories auto-created
+                  {preview.categories_created ?? 0} {ui("categories auto-created")}
                 </Badge>
               )}
             </div>
@@ -266,13 +266,13 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Level</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Domain</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Topic name</TableHead>
-                    <TableHead className="text-right"># objectives</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{ui("Level")}</TableHead>
+                    <TableHead>{ui("Subject")}</TableHead>
+                    <TableHead>{ui("Domain")}</TableHead>
+                    <TableHead>{ui("Category")}</TableHead>
+                    <TableHead>{ui("Topic name")}</TableHead>
+                    <TableHead className="text-right">{ui("# objectives")}</TableHead>
+                    <TableHead>{ui("Status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -286,13 +286,13 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
                       <TableCell className="text-right">{t.objective_count}</TableCell>
                       <TableCell>
                         {t.status === "will_create" && (
-                          <Badge variant="default">will create</Badge>
+                          <Badge variant="default">{ui("will create")}</Badge>
                         )}
                         {t.status === "already_exists" && (
-                          <Badge variant="secondary">exists</Badge>
+                          <Badge variant="secondary">{ui("exists")}</Badge>
                         )}
                         {t.status === "skipped_orphan" && (
-                          <Badge variant="destructive">orphan</Badge>
+                          <Badge variant="destructive">{ui("orphan")}</Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -303,11 +303,11 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setStep("filters")}>
-                Back
+                {ui("Back")}
               </Button>
               <Button onClick={runCommit} disabled={generate.isPending || willCreate === 0}>
                 {generate.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Create {willCreate} topics
+                {ui("Create")} {willCreate} {ui("topics")}
               </Button>
             </DialogFooter>
           </div>
@@ -318,13 +318,13 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
             <Alert>
               <Sparkles className="h-4 w-4" />
               <AlertDescription>
-                Created <strong>{preview.created}</strong> topics, skipped{" "}
-                <strong>{preview.skipped_existing}</strong>, linked{" "}
-                <strong>{preview.links_added}</strong> objectives.
+                {ui("Created")} <strong>{preview.created}</strong> {ui("topics, skipped")}{" "}
+                <strong>{preview.skipped_existing}</strong>{ui(", linked")}{" "}
+                <strong>{preview.links_added}</strong> {ui("objectives.")}
               </AlertDescription>
             </Alert>
             <DialogFooter>
-              <Button onClick={() => handleClose(false)}>Done</Button>
+              <Button onClick={() => handleClose(false)}>{ui("Done")}</Button>
             </DialogFooter>
           </div>
         )}

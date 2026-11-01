@@ -1,13 +1,15 @@
+import { SwitchFamilyProfile } from '@/features/family/FamilyProfileMenu';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from "react";
 import { User, HeadphonesIcon, Globe, LogOut, Settings, BookOpen, Trophy, Zap } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/context/AuthContext";
+import { useLearner } from "@/context/FamilyProfileContext";
 import { hardLogout } from "@/lib/logout";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useStudentStats } from "@/hooks/useStudentStats";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import MobileLanguageMenuItems from "./MobileLanguageMenuItems";
@@ -18,23 +20,29 @@ interface AccountTabContentProps {
 }
 
 export function AccountTabContent({ onClose }: AccountTabContentProps) {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { toast } = useToast();
-  const { isAdmin } = useAdminAuth();
+  const { isAdmin, canPreviewSchoolLevels } = useAdminAuth();
   const { data: stats } = useStudentStats();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
 
   const handleSignOut = () => { hardLogout(); };
+  const handleReplayTour = () => {
+    onClose();
+    window.dispatchEvent(new Event('stuwy:replay-product-tour'));
+  };
 
   return (
     <div className="flex min-h-full flex-col gap-4 py-4">
       {/* User Profile Section */}
       <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg">
         <Avatar className="h-12 w-12">
+          <AvatarImage src={user?.user_metadata?.avatar_url} alt="" />
           <AvatarFallback className="text-lg font-semibold">
             {userInitials}
           </AvatarFallback>
@@ -42,7 +50,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         <div className="flex flex-col">
           <span className="font-semibold">{t('nav.myAccount')}</span>
           <span className="text-sm text-muted-foreground truncate">
-            {user?.email}
+            {user?.user_metadata?.first_name || user?.email}
           </span>
         </div>
       </div>
@@ -61,13 +69,13 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
                   {stats.totalXp}
                 </span>
                 <span style={{ fontSize: 12, color: '#0F6E56', fontWeight: 600 }}>XP</span>
-                <span style={{ fontSize: 11, color: '#667085', marginLeft: 'auto' }}>Niveau {stats.level}</span>
+                <span style={{ fontSize: 11, color: '#667085', marginLeft: 'auto' }}>{ui("Niveau")} {stats.level}</span>
               </div>
               <div style={{ height: 4, background: '#EAECEF', borderRadius: 999, overflow: 'hidden', marginTop: 6 }}>
                 <div style={{ width: `${Math.round(stats.xpProgressInLevel * 100)}%`, height: '100%', background: '#12C6A0', borderRadius: 999, transition: 'width 0.4s ease' }} />
               </div>
               <p style={{ fontSize: 10, color: '#667085', margin: '3px 0 0', fontFamily: 'Poppins, sans-serif' }}>
-                {stats.lessonsCompleted} lecon{stats.lessonsCompleted !== 1 ? 's' : ''} terminee{stats.lessonsCompleted !== 1 ? 's' : ''} · encore {stats.xpToNextLevel} XP pour le niveau {stats.level + 1}
+                {ui("completedLessonCount", { count: stats.lessonsCompleted })} {ui("· encore")} {stats.xpToNextLevel} {ui("XP pour le niveau")} {stats.level + 1}
               </p>
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '0.5px solid rgba(18, 198, 160, 0.22)', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 32, height: 32, borderRadius: 10, background: '#FFF3DC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -75,19 +83,19 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-                    {stats.currentStreak > 0 ? `${stats.currentStreak} jours de suite` : 'Aucune serie active'}
+                    {stats.currentStreak > 0 ? `${stats.currentStreak} jours de suite` : ui("Aucune serie active")}
                   </p>
                   <p style={{ fontSize: 10, color: '#667085', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
                     {stats.streakAtRisk
-                      ? 'Ta serie est en danger aujourd hui.'
+                      ? ui("Ta serie est en danger aujourd hui.")
                       : stats.activeToday
-                        ? 'Serie maintenue aujourd hui.'
-                        : `Record: ${stats.longestStreak} jour${stats.longestStreak > 1 ? 's' : ''}`}
+                        ? ui("Serie maintenue aujourd hui.")
+                        : ui("streakRecord", { count: stats.longestStreak })}
                   </p>
                 </div>
                 {stats.longestStreak > stats.currentStreak && stats.longestStreak > 0 ? (
                   <div style={{ borderRadius: 999, background: '#FFF3DC', border: '0.5px solid #FAC775', padding: '4px 8px', fontSize: 10, fontWeight: 700, color: '#854F0B', whiteSpace: 'nowrap' }}>
-                    Record {stats.longestStreak}
+                    {ui("Record")} {stats.longestStreak}
                   </div>
                 ) : null}
               </div>
@@ -97,6 +105,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         </>
       )}
 
+      <SwitchFamilyProfile onClose={onClose} />
       {/* Account Actions */}
       <div className="space-y-2">
         <Button
@@ -119,7 +128,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         >
           <NavLink to="/my-program" className="flex items-center">
             <BookOpen className="mr-3 h-5 w-5" />
-            <span>My Program</span>
+            <span>{ui("My Program")}</span>
           </NavLink>
         </Button>
 
@@ -131,7 +140,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         >
           <NavLink to="/dashboard" className="flex items-center">
             <Trophy className="mr-3 h-5 w-5" />
-            <span>Dashboard</span>
+            <span>{ui("Dashboard")}</span>
           </NavLink>
         </Button>
 
@@ -156,7 +165,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
           >
             <NavLink to="/admin" className="flex items-center">
               <Settings className="mr-3 h-5 w-5" />
-              <span>Admin Panel</span>
+              <span>{ui("Admin Panel")}</span>
             </NavLink>
           </Button>
         )}
@@ -164,7 +173,16 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
 
       <Separator />
 
-      {isAdmin ? (
+      <Button
+        variant="ghost"
+        onClick={handleReplayTour}
+        className="w-full justify-start h-12"
+      >
+        <BookOpen className="mr-3 h-5 w-5" />
+        <span>{t('productTour.actions.replay')}</span>
+      </Button>
+
+      {canPreviewSchoolLevels ? (
         <>
           <div className="space-y-2 px-1">
             <AdminPreviewSelector compact />

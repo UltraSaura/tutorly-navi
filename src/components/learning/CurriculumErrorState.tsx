@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -9,6 +10,7 @@ export const CurriculumErrorState = ({
   error: Error;
   onRetry: () => void;
 }) => {
+  const ui = useInterfaceTranslation();
   const { t } = useLanguage();
 
   return (
@@ -22,7 +24,7 @@ export const CurriculumErrorState = ({
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
           <Button onClick={onRetry} variant="outline">
-            {t('common.retry') || 'Retry'}
+            {t('common.retry') || ui("Retry")}
           </Button>
         </CardContent>
       </Card>

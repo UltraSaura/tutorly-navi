@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { MobileBottomTabs } from "./MobileBottomTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AdminPreviewBanner } from "@/components/admin/AdminPreviewControls";
+import { StudentProductTour } from "@/components/onboarding/StudentProductTour";
 
 const MainLayout = () => {
   const { t } = useTranslation();
@@ -44,6 +45,7 @@ const MainLayout = () => {
       
       {/* Mobile Bottom Tabs */}
       {!isFocusSession ? <MobileBottomTabs /> : null}
+      {!isFocusSession ? <StudentProductTour /> : null}
     </div>
   );
 };

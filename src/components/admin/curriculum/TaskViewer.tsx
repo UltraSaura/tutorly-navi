@@ -1,3 +1,5 @@
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +22,8 @@ interface TaskViewerProps {
 }
 
 export function TaskViewer({ successCriterionId, countryId }: TaskViewerProps) {
+  const ui = useInterfaceTranslation();
+  const { language } = useLanguage();
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks', successCriterionId],
     queryFn: async () => {
@@ -34,11 +38,11 @@ export function TaskViewer({ successCriterionId, countryId }: TaskViewerProps) {
   });
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading tasks...</p>;
+    return <p className="text-sm text-muted-foreground">{ui("Loading tasks...")}</p>;
   }
 
   if (!tasks || tasks.length === 0) {
-    return <p className="text-sm text-muted-foreground">No tasks defined</p>;
+    return <p className="text-sm text-muted-foreground">{ui("No tasks defined")}</p>;
   }
 
   return (
@@ -46,7 +50,7 @@ export function TaskViewer({ successCriterionId, countryId }: TaskViewerProps) {
       {tasks.map((task) => (
         <Card key={task.id} className="shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Task: {task.type}</CardTitle>
+            <CardTitle className="text-sm font-medium">{ui("Task:")} {task.type}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="text-sm">{task.stem}</div>
@@ -54,7 +58,7 @@ export function TaskViewer({ successCriterionId, countryId }: TaskViewerProps) {
             {/* Curriculum Location */}
             <div className="p-2 bg-muted/50 rounded-md border border-border">
               <div className="text-xs font-semibold mb-1 text-muted-foreground uppercase">
-                Curriculum Location
+                {ui("Curriculum Location")}
               </div>
               <CurriculumLocation
                 countryId={countryId}
@@ -62,7 +66,7 @@ export function TaskViewer({ successCriterionId, countryId }: TaskViewerProps) {
                 subjectId={task.subject_id}
                 domainId={task.domain_id}
                 subdomainId={task.subdomain_id}
-                locale="en"
+                locale={language}
                 variant="compact"
               />
             </div>

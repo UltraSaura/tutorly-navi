@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo, useState } from 'react';
 import { ExternalLink, FileText, RefreshCw, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,6 +27,7 @@ import type { ExamExercise, ExamPaperFilters, ExamPaperListItem, ExerciseProgram
 const ALL = 'all';
 
 export default function ExamAnnales() {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ExamPaperFilters>({ exam: 'dnb' });
   const [search, setSearch] = useState('');
@@ -81,66 +83,66 @@ export default function ExamAnnales() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <PageMeta title="Annales" description="Consulter les annales d'examens importées." />
+      <PageMeta title={ui("Annales")} description={ui("Consulter les annales d'examens importées.")} />
 
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <FileText className="h-7 w-7" />
-            Annales
+            {ui("Annales")}
           </h1>
           <p className="text-muted-foreground">
-            Consultez les sujets importés, inspectez les exercices et préparez la validation des liens programme.
+            {ui("Consultez les sujets importés, inspectez les exercices et préparez la validation des liens programme.")}
           </p>
         </div>
         <Button variant="outline" className="gap-2" onClick={() => queryClient.invalidateQueries({ queryKey: ['exam-import'] })}>
           <RefreshCw className="h-4 w-4" />
-          Refresh
+          {ui("Refresh")}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Filtres</CardTitle>
-          <CardDescription>Lecture seule. Les liens programme restent au statut proposé tant que la validation n'est pas activée.</CardDescription>
+          <CardTitle>{ui("Filtres")}</CardTitle>
+          <CardDescription>{ui("Lecture seule. Les liens programme restent au statut proposé tant que la validation n'est pas activée.")}</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          <FilterSelect label="Examen" value={filters.exam ?? ALL} onChange={(value) => setFilter('exam', value)} options={[{ value: 'dnb', label: 'DNB' }]} />
+          <FilterSelect label={ui("Examen")} value={filters.exam ?? ALL} onChange={(value) => setFilter('exam', value)} options={[{ value: 'dnb', label: 'DNB' }]} />
           <FilterSelect
-            label="Année"
+            label={ui("Année")}
             value={filters.session_year ? String(filters.session_year) : ALL}
             onChange={(value) => setFilter('session_year', value)}
             options={(optionsQuery.data?.years ?? []).map((year) => ({ value: String(year), label: String(year) }))}
           />
           <FilterSelect
-            label="Discipline"
+            label={ui("Discipline")}
             value={(Array.isArray(filters.discipline) ? filters.discipline[0] : filters.discipline) ?? ALL}
             onChange={(value) => setFilter('discipline', value)}
             options={(optionsQuery.data?.disciplines ?? []).map((value) => ({ value, label: value }))}
           />
           <FilterSelect
-            label="Série"
+            label={ui("Série")}
             value={filters.series ?? ALL}
             onChange={(value) => setFilter('series', value)}
             options={(optionsQuery.data?.series ?? []).map((value) => ({ value, label: value === 'none' ? 'Toutes / non renseignée' : value }))}
           />
           <FilterSelect
-            label="Source"
+            label={ui("Source")}
             value={filters.source_name ?? ALL}
             onChange={(value) => setFilter('source_name', value)}
             options={(optionsQuery.data?.sources ?? []).map((value) => ({ value, label: value }))}
           />
           <FilterSelect
-            label="Parsing"
+            label={ui("Parsing")}
             value={filters.parsing_status ?? ALL}
             onChange={(value) => setFilter('parsing_status', value)}
             options={(optionsQuery.data?.parsingStatuses ?? []).map((value) => ({ value, label: value }))}
           />
           <div className="space-y-2 md:col-span-3 xl:col-span-6">
-            <Label htmlFor="exam-search">Recherche</Label>
+            <Label htmlFor="exam-search">{ui("Recherche")}</Label>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input id="exam-search" value={search} onChange={(event) => setSearch(event.target.value)} className="pl-8" placeholder="Titre, discipline, source, année..." />
+              <Input id="exam-search" value={search} onChange={(event) => setSearch(event.target.value)} className="pl-8" placeholder={ui("Titre, discipline, source, année...")} />
             </div>
           </div>
         </CardContent>
@@ -148,8 +150,8 @@ export default function ExamAnnales() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Sujets importés</CardTitle>
-          <CardDescription>{visiblePapers.length} sujet(s) affiché(s)</CardDescription>
+          <CardTitle>{ui("Sujets importés")}</CardTitle>
+          <CardDescription>{visiblePapers.length} {ui("sujet(s) affiché(s)")}</CardDescription>
         </CardHeader>
         <CardContent>
           {papersQuery.isLoading ? (
@@ -185,13 +187,14 @@ function FilterSelect({
   options: Array<{ value: string; label: string }>;
   onChange: (value: string) => void;
 }) {
+  const ui = useInterfaceTranslation();
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger><SelectValue /></SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL}>Tous</SelectItem>
+          <SelectItem value={ALL}>{ui("Tous")}</SelectItem>
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
           ))}
@@ -202,18 +205,19 @@ function FilterSelect({
 }
 
 function ExamPapersTable({ papers, selectedPaperId, onSelect }: { papers: ExamPaperListItem[]; selectedPaperId: string | null; onSelect: (id: string) => void }) {
+  const ui = useInterfaceTranslation();
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Exam</TableHead>
-          <TableHead>Année</TableHead>
-          <TableHead>Discipline</TableHead>
-          <TableHead>Série</TableHead>
-          <TableHead>Variante</TableHead>
-          <TableHead>Source</TableHead>
-          <TableHead>Parsing</TableHead>
-          <TableHead className="text-right">Exercices</TableHead>
+          <TableHead>{ui("Exam")}</TableHead>
+          <TableHead>{ui("Année")}</TableHead>
+          <TableHead>{ui("Discipline")}</TableHead>
+          <TableHead>{ui("Série")}</TableHead>
+          <TableHead>{ui("Variante")}</TableHead>
+          <TableHead>{ui("Source")}</TableHead>
+          <TableHead>{ui("Parsing")}</TableHead>
+          <TableHead className="text-right">{ui("Exercices")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -250,6 +254,7 @@ function ExamPaperDetailPanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const detailQuery = useExamPaperDetail(paperId);
   const exercisesQuery = useExamExercises(paperId);
   const exerciseIds = useMemo(() => (exercisesQuery.data ?? []).map((exercise) => exercise.id), [exercisesQuery.data]);
@@ -284,11 +289,11 @@ function ExamPaperDetailPanel({
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Traçabilité</CardTitle>
+                  <CardTitle className="text-base">{ui("Traçabilité")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   <LinkRow label="PDF" href={paper.pdf_url} />
-                  <LinkRow label="Source" href={paper.source_url} />
+                  <LinkRow label={ui("Source")} href={paper.source_url} />
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="outline">{paper.source_name}</Badge>
                     <ParsingBadge status={paper.parsing_status} />
@@ -296,7 +301,7 @@ function ExamPaperDetailPanel({
                   </div>
                   <Collapsible>
                     <CollapsibleTrigger asChild>
-                      <Button variant="outline" size="sm">Voir raw_text</Button>
+                      <Button variant="outline" size="sm">{ui("Voir raw_text")}</Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-3">
                       <pre className="max-h-72 overflow-auto rounded-md border bg-muted/40 p-3 text-xs whitespace-pre-wrap">
@@ -308,13 +313,13 @@ function ExamPaperDetailPanel({
               </Card>
 
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Exercices</h3>
+                <h3 className="text-lg font-semibold">{ui("Exercices")}</h3>
                 {exercisesQuery.isLoading ? (
                   <div className="space-y-3"><Skeleton className="h-24 w-full" /><Skeleton className="h-24 w-full" /></div>
                 ) : exercisesQuery.error ? (
                   <ErrorState message={exercisesQuery.error instanceof Error ? exercisesQuery.error.message : 'Impossible de charger les exercices.'} />
                 ) : (exercisesQuery.data ?? []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground border rounded-md p-4">Aucun exercice enregistré pour ce sujet.</p>
+                  <p className="text-sm text-muted-foreground border rounded-md p-4">{ui("Aucun exercice enregistré pour ce sujet.")}</p>
                 ) : (
                   (exercisesQuery.data ?? []).map((exercise) => (
                     <ExerciseCard
@@ -335,6 +340,7 @@ function ExamPaperDetailPanel({
 }
 
 function ExerciseCard({ exercise, links, linksLoading }: { exercise: ExamExercise; links: ExerciseProgramLink[]; linksLoading: boolean }) {
+  const ui = useInterfaceTranslation();
   const statement = exercise.raw_text || 'Énoncé vide ou non extrait.';
   const parsedRaw = exercise.parsed_content ?? null;
   const parsed =
@@ -350,7 +356,7 @@ function ExerciseCard({ exercise, links, linksLoading }: { exercise: ExamExercis
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-base">Exercice {exercise.exercise_number ?? '—'}</CardTitle>
+            <CardTitle className="text-base">{ui("Exercice")} {exercise.exercise_number ?? '—'}</CardTitle>
             {exercise.title && <CardDescription>{exercise.title}</CardDescription>}
           </div>
           <ParsingBadge status={exercise.parsing_status} />
@@ -372,19 +378,19 @@ function ExerciseCard({ exercise, links, linksLoading }: { exercise: ExamExercis
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           <InfoBox label="parsing_confidence (colonne)" value={confidence ?? '—'} />
           <InfoBox label="parsing_status" value={exercise.parsing_status} />
-          <InfoBox label="raw_text length" value={statement.length} />
+          <InfoBox label={ui("raw_text length")} value={statement.length} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-          <InfoBox label="Correction" value={exercise.correction ?? 'Non disponible'} />
-          <InfoBox label="Points" value={exercise.points ?? 'Non renseigné'} />
-          <InfoBox label="Tags" value={Array.isArray(exercise.tags) && exercise.tags.length > 0 ? exercise.tags.join(', ') : 'Non renseigné'} />
+          <InfoBox label={ui("Correction")} value={exercise.correction ?? 'Non disponible'} />
+          <InfoBox label={ui("Points")} value={exercise.points ?? 'Non renseigné'} />
+          <InfoBox label={ui("Tags")} value={Array.isArray(exercise.tags) && exercise.tags.length > 0 ? exercise.tags.join(', ') : 'Non renseigné'} />
         </div>
         <div className="space-y-2">
-          <Label>Propositions de liens programme</Label>
+          <Label>{ui("Propositions de liens programme")}</Label>
           {linksLoading ? (
             <Skeleton className="h-16 w-full" />
           ) : links.length === 0 ? (
-            <p className="text-sm text-muted-foreground border rounded-md p-3">Aucune proposition de lien pour cet exercice.</p>
+            <p className="text-sm text-muted-foreground border rounded-md p-3">{ui("Aucune proposition de lien pour cet exercice.")}</p>
           ) : (
             <div className="space-y-2">
               {links.map((link) => (
@@ -392,14 +398,14 @@ function ExerciseCard({ exercise, links, linksLoading }: { exercise: ExamExercis
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">{link.program_entry_type}</Badge>
                     <code className="text-xs bg-muted px-2 py-1 rounded">{link.program_entry_id}</code>
-                    <Badge variant="secondary">confidence {Number(link.confidence).toFixed(2)}</Badge>
+                    <Badge variant="secondary">{ui("confidence")} {Number(link.confidence).toFixed(2)}</Badge>
                     <Badge>{link.status ?? 'proposed'}</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{link.rationale || 'Pas de justification.'}</p>
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" disabled>Accepter le lien</Button>
-                    <Button size="sm" variant="outline" disabled>Rejeter le lien</Button>
-                    <Button size="sm" disabled>Convertir en tâche</Button>
+                    <Button size="sm" variant="outline" disabled>{ui("Accepter le lien")}</Button>
+                    <Button size="sm" variant="outline" disabled>{ui("Rejeter le lien")}</Button>
+                    <Button size="sm" disabled>{ui("Convertir en tâche")}</Button>
                   </div>
                 </div>
               ))}
@@ -448,18 +454,20 @@ function PapersLoading() {
 }
 
 function EmptyState() {
+  const ui = useInterfaceTranslation();
   return (
     <div className="border rounded-md p-8 text-center">
-      <p className="font-medium">Aucune annale trouvée</p>
-      <p className="text-sm text-muted-foreground mt-1">Importez un bundle DNB ou ajustez les filtres.</p>
+      <p className="font-medium">{ui("Aucune annale trouvée")}</p>
+      <p className="text-sm text-muted-foreground mt-1">{ui("Importez un bundle DNB ou ajustez les filtres.")}</p>
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
+  const ui = useInterfaceTranslation();
   return (
     <Alert variant="destructive">
-      <AlertTitle>Erreur</AlertTitle>
+      <AlertTitle>{ui("Erreur")}</AlertTitle>
       <AlertDescription>{message}</AlertDescription>
     </Alert>
   );

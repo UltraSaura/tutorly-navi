@@ -8,7 +8,9 @@ export async function callOpenAI(
   model: string, 
   isExercise: boolean = false,
   requestExplanation: boolean = false,
-  maxTokens: number = 800
+  maxTokens: number = 800,
+  responseFormat?: { type: 'json_object' | 'text' },
+  temperature?: number,
 ): Promise<any> {
   const { value: openAIApiKey, source } = await resolveProviderKey('OpenAI');
   console.log(`[OpenAI] key source: ${source}`);
@@ -39,6 +41,8 @@ export async function callOpenAI(
       model: actualModel,
       messages: messages,
     };
+
+    if (responseFormat) requestBody.response_format = responseFormat;
     
     // Add tool calling for explanation requests
     if (requestExplanation) {
@@ -102,7 +106,7 @@ export async function callOpenAI(
       requestBody.max_completion_tokens = maxTokens;
     } else {
       requestBody.max_tokens = maxTokens;
-      requestBody.temperature = 0.7;
+      requestBody.temperature = temperature ?? 0.7;
     }
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -128,12 +132,24 @@ export async function callOpenAI(
     }
     
     const data = await response.json();
+    const metadata = {
+      choiceCount: Array.isArray(data.choices) ? data.choices.length : 0,
+      finishReason: data.choices?.[0]?.finish_reason ?? null,
+      promptTokens: data.usage?.prompt_tokens ?? null,
+      completionTokens: data.usage?.completion_tokens ?? null,
+      totalTokens: data.usage?.total_tokens ?? null,
+      contentLength: typeof data.choices?.[0]?.message?.content === 'string'
+        ? data.choices[0].message.content.length
+        : 0,
+    };
+    console.log('[OpenAI] response metadata:', metadata);
     
     // Handle tool calling response
     if (requestExplanation && data.choices?.[0]?.message?.tool_calls) {
       return {
         tool_calls: data.choices[0].message.tool_calls,
-        content: data.choices[0].message.content
+        content: data.choices[0].message.content,
+        metadata,
       };
     }
     
@@ -142,7 +158,7 @@ export async function callOpenAI(
       throw new Error('Invalid response received from OpenAI');
     }
     
-    return data.choices[0].message.content;
+    return { content: data.choices[0].message.content, metadata };
   } catch (error) {
     console.error('Error in OpenAI API call:', error);
     

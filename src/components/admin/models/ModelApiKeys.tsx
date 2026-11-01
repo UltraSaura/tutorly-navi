@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useState } from 'react';
 import { useAdmin } from '@/context/AdminContext';
@@ -14,6 +16,8 @@ interface ModelApiKeysProps {
 }
 
 export const ModelApiKeys = ({ provider, isExpanded }: ModelApiKeysProps) => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const { apiKeys, addApiKey, deleteApiKey, testApiKeyConnection } = useAdmin();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
@@ -66,25 +70,25 @@ export const ModelApiKeys = ({ provider, isExpanded }: ModelApiKeysProps) => {
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium flex items-center gap-2">
           <Key className="h-4 w-4" />
-          API Keys for {provider}
+          {ui("API Keys for")} {provider}
         </h4>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="h-8">
               <Plus className="h-4 w-4 mr-2" />
-              Add Key
+              {ui("Add Key")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New API Key for {provider}</DialogTitle>
+              <DialogTitle>{ui("Add New API Key for")} {provider}</DialogTitle>
               <DialogDescription>
-                Enter the details for your new {provider} API key.
+                {ui("Enter the details for your new")} {provider} {ui("API key.")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <label htmlFor="keyName" className="text-sm font-medium">Key Name</label>
+                <label htmlFor="keyName" className="text-sm font-medium">{ui("Key Name")}</label>
                 <Input
                   id="keyName"
                   placeholder={`e.g., ${provider} Production`}
@@ -93,19 +97,19 @@ export const ModelApiKeys = ({ provider, isExpanded }: ModelApiKeysProps) => {
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="keyValue" className="text-sm font-medium">API Key</label>
+                <label htmlFor="keyValue" className="text-sm font-medium">{ui("API Key")}</label>
                 <Input
                   id="keyValue"
                   type="password"
-                  placeholder="Enter your API key"
+                  placeholder={ui("Enter your API key")}
                   value={newKeyValue}
                   onChange={(e) => setNewKeyValue(e.target.value)}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
-              <Button onClick={handleAddKey}>Add Key</Button>
+              <Button variant="outline" onClick={() => setShowAddDialog(false)}>{ui("Cancel")}</Button>
+              <Button onClick={handleAddKey}>{ui("Add Key")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -113,14 +117,14 @@ export const ModelApiKeys = ({ provider, isExpanded }: ModelApiKeysProps) => {
 
       <div className="space-y-2">
         {providerKeys.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No API keys added for {provider}</p>
+          <p className="text-sm text-muted-foreground">{ui("No API keys added for")} {provider}</p>
         ) : (
           providerKeys.map((key) => (
             <div key={key.id} className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
               <div>
                 <p className="text-sm font-medium">{key.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  Added: {new Date(key.createdAt).toLocaleDateString()}
+                  {ui("Added:")} {new Date(key.createdAt).toLocaleDateString(locale)}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -129,7 +133,7 @@ export const ModelApiKeys = ({ provider, isExpanded }: ModelApiKeysProps) => {
                   size="sm"
                   onClick={() => handleTestConnection(key.id)}
                 >
-                  Test
+                  {ui("Test")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -137,7 +141,7 @@ export const ModelApiKeys = ({ provider, isExpanded }: ModelApiKeysProps) => {
                   className="text-destructive hover:text-destructive"
                   onClick={() => handleDeleteKey(key.id)}
                 >
-                  Delete
+                  {ui("Delete")}
                 </Button>
               </div>
             </div>

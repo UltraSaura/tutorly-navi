@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractTrueFalseGroupedProblem } from './trueFalseExtraction';
+import { extractTrueFalseGroupedProblem } from './trueFalseExtraction.ts';
 
 const worksheetText = `
 Exercice 1 : (20 points)
@@ -26,7 +26,7 @@ describe('extractTrueFalseGroupedProblem', () => {
     });
     expect(problem?.sections).toHaveLength(1);
     expect(problem?.sections[0].rows).toHaveLength(2);
-    expect(problem?.sections[0].rows.map(row => row.label)).toEqual(['A', 'B']);
+    expect(problem?.sections[0].rows.map((row: { label: string }) => row.label)).toEqual(['A', 'B']);
   });
 
   it('keeps printed values in the question instead of using them as answers', () => {

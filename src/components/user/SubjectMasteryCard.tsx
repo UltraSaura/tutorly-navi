@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
 interface SubjectMasteryCardProps {
@@ -13,6 +14,7 @@ export function SubjectMasteryCard({
   totalTopics,
   colorScheme = '#7c3aed' // Default purple
 }: SubjectMasteryCardProps) {
+  const ui = useInterfaceTranslation();
   const { t } = useLanguage();
 
   return (
@@ -21,7 +23,7 @@ export function SubjectMasteryCard({
       style={{ backgroundColor: colorScheme }}
     >
       <h2 className="text-3xl font-extrabold mb-1">
-        {t('learning.subjectMastery') || 'Subject Mastery'}
+        {t('learning.subjectMastery') || ui("Subject Mastery")}
       </h2>
       <p className="text-sm opacity-90 mb-3">
         {t('learning.yourProgress') || 'Your overall progress in this subject'}

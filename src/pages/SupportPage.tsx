@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import {
 import { PageMeta } from "@/components/seo/PageMeta";
 
 const SupportPage = () => {
+  const ui = useInterfaceTranslation();
   const { t } = useLanguage();
   const { filteredMessages } = useChat();
   const [showChatHistory, setShowChatHistory] = useState(false);
@@ -28,50 +30,50 @@ const SupportPage = () => {
   const contactMethods = [
     {
       icon: MessageCircle,
-      title: "Live Chat",
-      description: "Get instant help from our support team",
+      title: ui("Live Chat"),
+      description: ui("Get instant help from our support team"),
       availability: "24/7",
       status: "online",
-      action: "Start Chat"
+      action: ui("Start Chat")
     },
     {
       icon: Mail,
-      title: "Email Support",
-      description: "Send us a detailed message about your issue",
-      availability: "Response within 24h",
+      title: ui("Email Support"),
+      description: ui("Send us a detailed message about your issue"),
+      availability: ui("Response within 24h"),
       status: "available",
-      action: "Send Email"
+      action: ui("Send Email")
     },
     {
       icon: Phone,
-      title: "Phone Support",
-      description: "Speak directly with our technical team",
-      availability: "Mon-Fri 9AM-6PM",
+      title: ui("Phone Support"),
+      description: ui("Speak directly with our technical team"),
+      availability: ui("Mon-Fri 9AM-6PM"),
       status: "business-hours",
-      action: "Call Now"
+      action: ui("Call Now")
     }
   ];
 
   const faqItems = [
     {
-      question: "How do I submit homework for AI tutoring?",
-      answer: "Navigate to the Tutor section and upload your homework documents or type your questions directly. Our AI will analyze and provide personalized explanations."
+      question: ui("How do I submit homework for AI tutoring?"),
+      answer: ui("Navigate to the Tutor section and upload your homework documents or type your questions directly. Our AI will analyze and provide personalized explanations.")
     },
     {
-      question: "How does the grading system work?",
-      answer: "Our AI evaluates your submissions based on accuracy, methodology, and understanding. You'll receive detailed feedback and suggestions for improvement."
+      question: ui("How does the grading system work?"),
+      answer: ui("Our AI evaluates your submissions based on accuracy, methodology, and understanding. You'll receive detailed feedback and suggestions for improvement.")
     },
     {
-      question: "Can I track my learning progress?",
-      answer: "Yes! Visit the Dashboard to see your progress across subjects, skill mastery levels, and performance analytics."
+      question: ui("Can I track my learning progress?"),
+      answer: ui("Yes! Visit the Dashboard to see your progress across subjects, skill mastery levels, and performance analytics.")
     },
     {
-      question: "What subjects are supported?",
-      answer: "Stuwy supports mathematics, science, literature, history, and many other subjects. Our AI adapts to different academic levels and curricula."
+      question: ui("What subjects are supported?"),
+      answer: ui("Stuwy supports mathematics, science, literature, history, and many other subjects. Our AI adapts to different academic levels and curricula.")
     },
     {
-      question: "Is my data secure?",
-      answer: "Absolutely. We use enterprise-grade encryption and follow strict privacy policies to protect your academic data and personal information."
+      question: ui("Is my data secure?"),
+      answer: ui("Absolutely. We use enterprise-grade encryption and follow strict privacy policies to protect your academic data and personal information.")
     }
   ];
 
@@ -103,12 +105,12 @@ const SupportPage = () => {
 
   return (
     <div className="space-y-8">
-      <PageMeta title="Support" description="Get help with Stuwy — find answers, contact support, and learn how to use the platform." />
+      <PageMeta title={ui("Support")} description={ui("Get help with Stuwy — find answers, contact support, and learn how to use the platform.")} />
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Support Center</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{ui("Support Center")}</h1>
         <p className="text-muted-foreground">
-          Get help with Stuwy AI and make the most of your learning experience
+          {ui("Get help with Stuwy AI and make the most of your learning experience")}
         </p>
       </div>
 
@@ -143,10 +145,10 @@ const SupportPage = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <History className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <CardTitle>Chat History</CardTitle>
+            <CardTitle>{ui("Chat History")}</CardTitle>
           </div>
           <CardDescription>
-            Review your previous conversations and interactions with the AI tutor
+            {ui("Review your previous conversations and interactions with the AI tutor")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -154,12 +156,12 @@ const SupportPage = () => {
             <SheetTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">
                 <History className="mr-2 h-4 w-4" />
-                View Chat History
+                {ui("View Chat History")}
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[500px] sm:w-[600px]">
               <SheetHeader>
-                <SheetTitle>Chat History</SheetTitle>
+                <SheetTitle>{ui("Chat History")}</SheetTitle>
               </SheetHeader>
               <div className="h-full mt-6">
                 <MessageList messages={filteredMessages} isLoading={false} />
@@ -173,7 +175,7 @@ const SupportPage = () => {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <HelpCircle className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-bold">{ui("Frequently Asked Questions")}</h2>
         </div>
         
         <div className="grid gap-4">
@@ -195,16 +197,16 @@ const SupportPage = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Book className="h-6 w-6 text-primary" />
-            <CardTitle>Documentation & Guides</CardTitle>
+            <CardTitle>{ui("Documentation & Guides")}</CardTitle>
           </div>
           <CardDescription>
-            Explore our comprehensive documentation to learn about all features and capabilities
+            {ui("Explore our comprehensive documentation to learn about all features and capabilities")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="outline" className="w-full sm:w-auto">
             <Book className="mr-2 h-4 w-4" />
-            View Documentation
+            {ui("View Documentation")}
           </Button>
         </CardContent>
       </Card>

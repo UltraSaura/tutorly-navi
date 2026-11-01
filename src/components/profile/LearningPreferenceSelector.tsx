@@ -1,9 +1,10 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useEffect, useState } from 'react';
 import { Check, Loader2, Palette } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -27,7 +28,8 @@ const OPTIONS: LearningPreferenceOption[] = [
 ];
 
 export function LearningPreferenceSelector() {
-  const { user } = useAuth();
+  const ui = useInterfaceTranslation();
+  const { user } = useLearner();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedStyle, setSelectedStyle] = useState<LearningStyle>('mixed');
@@ -106,10 +108,10 @@ export function LearningPreferenceSelector() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Palette className="h-5 w-5" />
-          Learning Preference
+          {ui("Learning Preference")}
         </CardTitle>
         <CardDescription>
-          Choose the kind of help that feels best for you.
+          {ui("Choose the kind of help that feels best for you.")}
         </CardDescription>
       </CardHeader>
       <CardContent>

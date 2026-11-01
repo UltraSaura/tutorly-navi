@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useSuggestedVideos } from '@/hooks/useSuggestedVideos';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ interface VideoSuggestionsProps {
 }
 
 export function VideoSuggestions({ homeworkContent, subjectSlug }: VideoSuggestionsProps) {
+  const ui = useInterfaceTranslation();
   const { data: suggestedVideos, isLoading } = useSuggestedVideos(homeworkContent, 3);
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -83,7 +85,7 @@ export function VideoSuggestions({ homeworkContent, subjectSlug }: VideoSuggesti
                   </span>
                   {video.matchScore > 0 && (
                     <span className="text-xs">
-                      {Math.round(video.matchScore * 100)}% match
+                      {Math.round(video.matchScore * 100)}{ui("% match")}
                     </span>
                   )}
                 </div>
@@ -96,7 +98,7 @@ export function VideoSuggestions({ homeworkContent, subjectSlug }: VideoSuggesti
                   handleVideoClick(video.id);
                 }}
               >
-                Watch
+                {ui("Watch")}
               </Button>
             </div>
           ))}

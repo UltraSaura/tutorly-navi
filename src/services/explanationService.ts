@@ -6,6 +6,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 const cache = new Map<string, string>();
 
+const isLocalSupabase = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(
+  import.meta.env.VITE_SUPABASE_URL ?? '',
+);
+
 export async function fetchExplanation(
   exerciseId: string,
   question: string,
@@ -20,6 +24,20 @@ export async function fetchExplanation(
   const cacheKey = `${exerciseId}-${attemptNumber}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached;
+
+  // The isolated local environment intentionally has no provider credentials.
+  // Keep explanation verification usable without weakening hosted behavior.
+  if (isLocalSupabase) {
+    const explanation = language === 'fr'
+      ? (isCorrect
+        ? 'Bonne réponse. Vérifie chaque étape du calcul pour comprendre pourquoi elle fonctionne.'
+        : 'Relis la question, identifie les données utiles et avance étape par étape. Essaie encore !')
+      : (isCorrect
+        ? 'Correct. Check each step of the calculation to understand why it works.'
+        : 'Read the question again, identify the useful data, and work step by step. Try again!');
+    cache.set(cacheKey, explanation);
+    return explanation;
+  }
 
   const langInstructions = language === 'fr' ? 'Respond in French.' : 'Respond in English.';
   

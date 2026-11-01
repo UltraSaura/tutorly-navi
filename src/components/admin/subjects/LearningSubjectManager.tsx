@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -170,6 +171,7 @@ const getIconUploadErrorMessage = (error: unknown) => {
 };
 
 const LearningSubjectManager = () => {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const { subjects: chatSubjects } = useAdmin();
   const { data: learningSubjects = [], isLoading } = useLearningSubjects();
@@ -317,7 +319,7 @@ const LearningSubjectManager = () => {
     });
 
     if (learningSubjects.length === 0) {
-      toast.success(`${context === 'lesson' ? 'Lesson' : 'Practice'} font size ${parsedFontSize}px applied to local subject rows`);
+      toast.success(`${context === 'lesson' ? 'Lesson' : ui("Practice")} font size ${parsedFontSize}px applied to local subject rows`);
       return;
     }
 
@@ -338,7 +340,7 @@ const LearningSubjectManager = () => {
       toast.success(`Applied ${parsedFontSize}px ${context} font size to all subjects`);
     } catch (error) {
       console.error('Error applying bulk font size:', error);
-      toast.error(`Failed to apply font size to all subjects: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to apply font size to all subjects: ${error instanceof Error ? error.message : ui("Unknown error")}`);
     } finally {
       setPending(false);
     }
@@ -361,7 +363,7 @@ const LearningSubjectManager = () => {
     });
 
     if (learningSubjects.length === 0) {
-      toast.success(`${context === 'lesson' ? 'Lesson' : 'Practice'} font style applied to local subject rows`);
+      toast.success(`${context === 'lesson' ? 'Lesson' : ui("Practice")} font style applied to local subject rows`);
       return;
     }
 
@@ -382,7 +384,7 @@ const LearningSubjectManager = () => {
       toast.success(`Applied ${context} font style to all subjects`);
     } catch (error) {
       console.error('Error applying bulk font family:', error);
-      toast.error(`Failed to apply font style to all subjects: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to apply font style to all subjects: ${error instanceof Error ? error.message : ui("Unknown error")}`);
     } finally {
       setPending(false);
     }
@@ -476,7 +478,7 @@ const LearningSubjectManager = () => {
       toast.success(`Learning subject "${payload.name}" saved successfully`);
     } catch (error) {
       console.error('Error saving learning subject:', error);
-      toast.error(`Failed to save learning subject: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to save learning subject: ${error instanceof Error ? error.message : ui("Unknown error")}`);
     }
   };
 
@@ -508,32 +510,32 @@ const LearningSubjectManager = () => {
       toast.success(`Learning subject "${name}" deleted`);
     } catch (error) {
       console.error('Error deleting learning subject:', error);
-      toast.error(`Failed to delete learning subject: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to delete learning subject: ${error instanceof Error ? error.message : ui("Unknown error")}`);
     }
   };
 
   if (isLoading) {
-    return <div className="text-center py-12 text-muted-foreground">Loading learning subjects...</div>;
+    return <div className="text-center py-12 text-muted-foreground">{ui("Loading learning subjects...")}</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Learning Platform Subjects</h2>
+          <h2 className="text-2xl font-bold">{ui("Learning Platform Subjects")}</h2>
           <p className="text-muted-foreground">
-            Manage subject buttons, high-definition icon images, and where each button appears.
+            {ui("Manage subject buttons, high-definition icon images, and where each button appears.")}
           </p>
         </div>
         <Button onClick={handleAddSubject}>
           <Plus className="mr-2 h-4 w-4" />
-          Add subject button
+          {ui("Add subject button")}
         </Button>
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/20 p-4">
         <div className="space-y-2">
-          <Label htmlFor="lesson-bulk-subject-font-size">Font size for all lesson subjects</Label>
+          <Label htmlFor="lesson-bulk-subject-font-size">{ui("Font size for all lesson subjects")}</Label>
           <Input
             id="lesson-bulk-subject-font-size"
             type="number"
@@ -551,16 +553,16 @@ const LearningSubjectManager = () => {
           disabled={isApplyingLessonBulkFontSize}
         >
           {isApplyingLessonBulkFontSize ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Apply to all lesson subjects
+          {ui("Apply to all lesson subjects")}
         </Button>
         <p className="text-sm text-muted-foreground">
-          Updates lesson subject-title sizes everywhere the Learn tiles appear.
+          {ui("Updates lesson subject-title sizes everywhere the Learn tiles appear.")}
         </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/20 p-4">
         <div className="space-y-2">
-          <Label htmlFor="lesson-bulk-subject-font-family">Font style for all lesson subjects</Label>
+          <Label htmlFor="lesson-bulk-subject-font-family">{ui("Font style for all lesson subjects")}</Label>
           <Select value={lessonBulkFontFamily} onValueChange={setLessonBulkFontFamily}>
             <SelectTrigger id="lesson-bulk-subject-font-family" className="w-56">
               <SelectValue />
@@ -581,16 +583,16 @@ const LearningSubjectManager = () => {
           disabled={isApplyingLessonBulkFontFamily}
         >
           {isApplyingLessonBulkFontFamily ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Apply style to all lesson subjects
+          {ui("Apply style to all lesson subjects")}
         </Button>
         <p className="text-sm text-muted-foreground">
-          Changes the subject title font family everywhere the Learn tiles appear.
+          {ui("Changes the subject title font family everywhere the Learn tiles appear.")}
         </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/20 p-4">
         <div className="space-y-2">
-          <Label htmlFor="practice-bulk-subject-font-size">Font size for all practice subjects</Label>
+          <Label htmlFor="practice-bulk-subject-font-size">{ui("Font size for all practice subjects")}</Label>
           <Input
             id="practice-bulk-subject-font-size"
             type="number"
@@ -608,16 +610,16 @@ const LearningSubjectManager = () => {
           disabled={isApplyingPracticeBulkFontSize}
         >
           {isApplyingPracticeBulkFontSize ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Apply to all practice subjects
+          {ui("Apply to all practice subjects")}
         </Button>
         <p className="text-sm text-muted-foreground">
-          Updates practice subject-title sizes everywhere the Practice tiles appear.
+          {ui("Updates practice subject-title sizes everywhere the Practice tiles appear.")}
         </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/20 p-4">
         <div className="space-y-2">
-          <Label htmlFor="practice-bulk-subject-font-family">Font style for all practice subjects</Label>
+          <Label htmlFor="practice-bulk-subject-font-family">{ui("Font style for all practice subjects")}</Label>
           <Select value={practiceBulkFontFamily} onValueChange={setPracticeBulkFontFamily}>
             <SelectTrigger id="practice-bulk-subject-font-family" className="w-56">
               <SelectValue />
@@ -638,10 +640,10 @@ const LearningSubjectManager = () => {
           disabled={isApplyingPracticeBulkFontFamily}
         >
           {isApplyingPracticeBulkFontFamily ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Apply style to all practice subjects
+          {ui("Apply style to all practice subjects")}
         </Button>
         <p className="text-sm text-muted-foreground">
-          Changes the subject title font family everywhere the Practice tiles appear.
+          {ui("Changes the subject title font family everywhere the Practice tiles appear.")}
         </p>
       </div>
 
@@ -649,17 +651,17 @@ const LearningSubjectManager = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Preview</TableHead>
-              <TableHead>Subject display name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Upload icon image</TableHead>
-              <TableHead>Fallback icon</TableHead>
-              <TableHead>Color Scheme</TableHead>
-              <TableHead>Text Style</TableHead>
-              <TableHead>Display</TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{ui("Preview")}</TableHead>
+              <TableHead>{ui("Subject display name")}</TableHead>
+              <TableHead>{ui("Slug")}</TableHead>
+              <TableHead>{ui("Upload icon image")}</TableHead>
+              <TableHead>{ui("Fallback icon")}</TableHead>
+              <TableHead>{ui("Color Scheme")}</TableHead>
+              <TableHead>{ui("Text Style")}</TableHead>
+              <TableHead>{ui("Display")}</TableHead>
+              <TableHead>{ui("Order")}</TableHead>
+              <TableHead>{ui("Active")}</TableHead>
+              <TableHead>{ui("Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -697,20 +699,20 @@ const LearningSubjectManager = () => {
                     {isEditing ? (
                       <div className="space-y-2">
                         <Label htmlFor={`subject-name-${row.id}`} className="sr-only">
-                          Subject display name
+                          {ui("Subject display name")}
                         </Label>
                         <Input
                           id={`subject-name-${row.id}`}
                           value={data.name}
                           onChange={(e) => updateField(row.id, 'name', e.target.value)}
-                          placeholder="Subject display name"
+                          placeholder={ui("Subject display name")}
                         />
                       </div>
                     ) : (
                       <div className="space-y-1">
                         <span className="font-medium">{data.name}</span>
                         {!isSynced && (
-                          <span className="block text-xs text-muted-foreground">(Not synced)</span>
+                          <span className="block text-xs text-muted-foreground">{ui("(Not synced)")}</span>
                         )}
                       </div>
                     )}
@@ -739,7 +741,7 @@ const LearningSubjectManager = () => {
                           ) : (
                             <Upload className="mr-2 h-4 w-4" />
                           )}
-                          Upload icon image
+                          {ui("Upload icon image")}
                         </Label>
                         <Input
                           id={`subject-icon-upload-${row.id}`}
@@ -760,16 +762,16 @@ const LearningSubjectManager = () => {
                             onClick={() => updateField(row.id, 'icon_image_url', null)}
                           >
                             <X className="mr-1 h-4 w-4" />
-                            Remove image
+                            {ui("Remove image")}
                           </Button>
                         ) : null}
                       </div>
                     ) : data.icon_image_url ? (
-                      <span className="text-sm text-muted-foreground">Image uploaded</span>
+                      <span className="text-sm text-muted-foreground">{ui("Image uploaded")}</span>
                     ) : (
                       <span className="inline-flex items-center text-sm text-muted-foreground">
                         <ImageIcon className="mr-1 h-4 w-4" />
-                        No image
+                        {ui("No image")}
                       </span>
                     )}
                   </TableCell>
@@ -798,7 +800,7 @@ const LearningSubjectManager = () => {
                     {isEditing ? (
                       <div className="flex flex-col gap-2">
                         <div>
-                          <span className="text-xs text-muted-foreground mb-1 block">Fond</span>
+                          <span className="text-xs text-muted-foreground mb-1 block">{ui("Fond")}</span>
                           <ColorPicker
                             value={data.color_scheme}
                             onChange={(color) => updateField(row.id, 'color_scheme', color)}
@@ -806,7 +808,7 @@ const LearningSubjectManager = () => {
                           />
                         </div>
                         <div>
-                          <span className="text-xs text-muted-foreground mb-1 block">Icône</span>
+                          <span className="text-xs text-muted-foreground mb-1 block">{ui("Icône")}</span>
                           <ColorPicker
                             value={data.icon_color}
                             onChange={(color) => updateField(row.id, 'icon_color', color)}
@@ -828,10 +830,10 @@ const LearningSubjectManager = () => {
                         <div>
                           {STYLE_CONTEXTS.map((styleContext) => (
                             <div key={styleContext.key} className="rounded-lg border p-3">
-                              <span className="mb-2 block text-sm font-medium">{styleContext.label} text style</span>
+                              <span className="mb-2 block text-sm font-medium">{styleContext.label} {ui("text style")}</span>
                               <div className="flex flex-col gap-3">
                                 <div>
-                                  <span className="mb-1 block text-xs text-muted-foreground">Text color</span>
+                                  <span className="mb-1 block text-xs text-muted-foreground">{ui("Text color")}</span>
                                   <ColorPicker
                                     value={String(data[styleContext.colorField])}
                                     onChange={(color) => updateField(row.id, styleContext.colorField as keyof LearningSubjectData, color)}
@@ -839,7 +841,7 @@ const LearningSubjectManager = () => {
                                   />
                                 </div>
                                 <div>
-                                  <span className="mb-1 block text-xs text-muted-foreground">Font size</span>
+                                  <span className="mb-1 block text-xs text-muted-foreground">{ui("Font size")}</span>
                                   <Input
                                     type="number"
                                     min={12}
@@ -850,7 +852,7 @@ const LearningSubjectManager = () => {
                                   />
                                 </div>
                                 <div>
-                                  <span className="mb-1 block text-xs text-muted-foreground">Font style</span>
+                                  <span className="mb-1 block text-xs text-muted-foreground">{ui("Font style")}</span>
                                   <Select
                                     value={String(data[styleContext.familyField])}
                                     onValueChange={(value) => updateField(row.id, styleContext.familyField as keyof LearningSubjectData, value)}
@@ -900,18 +902,18 @@ const LearningSubjectManager = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="both">Learn + Practice</SelectItem>
-                          <SelectItem value="learn">Learn only</SelectItem>
-                          <SelectItem value="practice">Practice only</SelectItem>
+                          <SelectItem value="both">{ui("Learn + Practice")}</SelectItem>
+                          <SelectItem value="learn">{ui("Learn only")}</SelectItem>
+                          <SelectItem value="practice">{ui("Practice only")}</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
                       <span className="text-sm">
                         {data.display_context === 'both'
-                          ? 'Learn + Practice'
+                          ? ui("Learn + Practice")
                           : data.display_context === 'learn'
-                            ? 'Learn only'
-                            : 'Practice only'}
+                            ? ui("Learn only")
+                            : ui("Practice only")}
                       </span>
                     )}
                   </TableCell>
@@ -935,7 +937,7 @@ const LearningSubjectManager = () => {
                       />
                     ) : (
                       <span className={data.is_active ? 'text-green-600' : 'text-red-600'}>
-                        {data.is_active ? 'Active' : 'Inactive'}
+                        {data.is_active ? ui("Active") : 'Inactive'}
                       </span>
                     )}
                   </TableCell>
@@ -949,7 +951,7 @@ const LearningSubjectManager = () => {
                           disabled={createSubject.isPending || updateSubject.isPending || isUploading}
                         >
                           <Save className="w-4 h-4 mr-1" />
-                          Save
+                          {ui("Save")}
                         </Button>
                         <Button
                           variant="outline"
@@ -957,7 +959,7 @@ const LearningSubjectManager = () => {
                           onClick={handleCancel}
                         >
                           <X className="w-4 h-4 mr-1" />
-                          Cancel
+                          {ui("Cancel")}
                         </Button>
                         {canDelete ? (
                           <Button
@@ -968,7 +970,7 @@ const LearningSubjectManager = () => {
                             disabled={deleteSubject.isPending}
                           >
                             <Trash2 className="w-4 h-4 mr-1" />
-                            Delete
+                            {ui("Delete")}
                           </Button>
                         ) : null}
                       </div>
@@ -980,7 +982,7 @@ const LearningSubjectManager = () => {
                           onClick={() => handleEdit(row.id)}
                         >
                           <Pencil className="w-4 h-4 mr-1" />
-                          Edit
+                          {ui("Edit")}
                         </Button>
                         {canDelete ? (
                           <Button
@@ -1005,18 +1007,17 @@ const LearningSubjectManager = () => {
 
       <div className="text-sm text-muted-foreground">
         <p className="mb-2">
-          <strong>Note:</strong> This section manages learning-specific properties for subjects.
-          Subject icon images and display names are separate fields.
+          <strong>{ui("Note:")}</strong> {ui("This section manages learning-specific properties for subjects. Subject icon images and display names are separate fields.")}
         </p>
         <ul className="list-disc list-inside space-y-1">
-          <li><strong>Subject display name:</strong> Text shown on the Learn and Practice subject buttons</li>
-          <li><strong>Upload icon image:</strong> High-definition image shown on subject buttons; fallback icon is used when no image is uploaded</li>
-          <li><strong>Fallback icon:</strong> Lucide icon name or emoji used only when no icon image exists</li>
-          <li><strong>Color Scheme:</strong> Tile background color supporting RGB or hex values</li>
-          <li><strong>Text Style:</strong> Lesson and Practice each have separate title color, size, and font family controls</li>
-          <li><strong>Display:</strong> Choose whether the button appears on Learn, Practice, or both</li>
-          <li><strong>Order:</strong> Display order in the learning platform</li>
-          <li><strong>Active:</strong> Whether the subject button is visible anywhere</li>
+          <li><strong>{ui("Subject display name:")}</strong> {ui("Text shown on the Learn and Practice subject buttons")}</li>
+          <li><strong>{ui("Upload icon image:")}</strong> {ui("High-definition image shown on subject buttons; fallback icon is used when no image is uploaded")}</li>
+          <li><strong>{ui("Fallback icon:")}</strong> {ui("Lucide icon name or emoji used only when no icon image exists")}</li>
+          <li><strong>{ui("Color Scheme:")}</strong> {ui("Tile background color supporting RGB or hex values")}</li>
+          <li><strong>{ui("Text Style:")}</strong> {ui("Lesson and Practice each have separate title color, size, and font family controls")}</li>
+          <li><strong>{ui("Display:")}</strong> {ui("Choose whether the button appears on Learn, Practice, or both")}</li>
+          <li><strong>{ui("Order:")}</strong> {ui("Display order in the learning platform")}</li>
+          <li><strong>{ui("Active:")}</strong> {ui("Whether the subject button is visible anywhere")}</li>
         </ul>
       </div>
     </div>

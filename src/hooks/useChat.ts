@@ -1,3 +1,4 @@
+import { learnerOperation } from '@/features/family/profileRuntime';
 
 import { useState, useMemo } from 'react';
 import { Message } from '@/types/chat';
@@ -298,7 +299,7 @@ export const useChat = () => {
     addExercises?: (exercises: Exercise[]) => Promise<void>,
     subjectId?: string
   ) => {
-    handleFileUpload(
+    return handleFileUpload(
       file, 
       messages, 
       setMessages, 
@@ -317,7 +318,7 @@ export const useChat = () => {
     addExercises?: (exercises: Exercise[]) => Promise<void>,
     subjectId?: string
   ) => {
-    handlePhotoUpload(
+    return handlePhotoUpload(
       file, 
       messages, 
       setMessages, 
@@ -342,10 +343,10 @@ export const useChat = () => {
     addMessage,
     clearMessages,
     removeMessage,
-    handleSendMessage,
-    submitGroupedProblemAnswers,
-    handleFileUpload: handleDocumentUpload,
-    handlePhotoUpload: handleImageUpload,
+    handleSendMessage: learnerOperation(handleSendMessage),
+    submitGroupedProblemAnswers: learnerOperation(submitGroupedProblemAnswers),
+    handleFileUpload: learnerOperation(handleDocumentUpload),
+    handlePhotoUpload: learnerOperation(handleImageUpload),
     // Add calculation state back to return
     calculationState,
     updateCalculationStatus

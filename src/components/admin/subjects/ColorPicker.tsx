@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ interface ColorPickerProps {
 }
 
 export function ColorPicker({ value, onChange, format = 'rgb' }: ColorPickerProps) {
+  const ui = useInterfaceTranslation();
   const [hexValue, setHexValue] = useState(() => parseColorToHex(value));
   const [textValue, setTextValue] = useState(value);
   const [isValid, setIsValid] = useState(true);
@@ -62,14 +64,14 @@ export function ColorPicker({ value, onChange, format = 'rgb' }: ColorPickerProp
       <div
         className="w-8 h-8 rounded border border-border flex-shrink-0 cursor-pointer relative overflow-hidden"
         style={{ backgroundColor: textValue || '#000000' }}
-        title="Click to pick color"
+        title={ui("Click to pick color")}
       >
         <input
           type="color"
           value={hexValue}
           onChange={handleColorPickerChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          title="Pick a color"
+          title={ui("Pick a color")}
         />
       </div>
       
@@ -79,7 +81,7 @@ export function ColorPicker({ value, onChange, format = 'rgb' }: ColorPickerProp
         variant="outline"
         size="sm"
         className="relative w-10 h-10 p-0 flex-shrink-0"
-        title="Open color picker"
+        title={ui("Open color picker")}
       >
         <Palette className="w-4 h-4" />
         <input
@@ -87,7 +89,7 @@ export function ColorPicker({ value, onChange, format = 'rgb' }: ColorPickerProp
           value={hexValue}
           onChange={handleColorPickerChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          title="Pick a color"
+          title={ui("Pick a color")}
         />
       </Button>
       

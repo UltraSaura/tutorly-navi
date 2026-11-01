@@ -165,7 +165,7 @@ export function useVisibleBanks(topicId: string, completedVideoIds: string[], us
   const activeSchoolLevel = useActiveSchoolLevel();
   const { language } = useLanguage();
   return useQuery({
-    queryKey: ['visible-banks', topicId, completedVideoIds.join(','), activeSchoolLevel.normalizedLevel, language],
+    queryKey: ['visible-banks', topicId, userId, completedVideoIds.join(','), activeSchoolLevel.normalizedLevel, language],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('quiz-bank-visible', {
         body: {
@@ -190,7 +190,7 @@ export function useAllBanks(topicId: string, videoId: string, completedVideoIds:
   const activeSchoolLevel = useActiveSchoolLevel();
   const { language } = useLanguage();
   return useQuery({
-    queryKey: ['quiz-banks-all', topicId, videoId, completedVideoIds.join(','), context, activeSchoolLevel.normalizedLevel, language],
+    queryKey: ['quiz-banks-all', topicId, userId, videoId, completedVideoIds.join(','), context, activeSchoolLevel.normalizedLevel, language],
     queryFn: async () => {
       try {
         const { data, error } = await supabase.functions.invoke('quiz-bank-all', {

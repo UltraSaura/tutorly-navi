@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -196,6 +197,7 @@ const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
 >(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+  const ui = useInterfaceTranslation();
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
 
   return (
@@ -215,7 +217,7 @@ const CarouselPrevious = React.forwardRef<
       {...props}
     >
       <ArrowLeft className="h-4 w-4" />
-      <span className="sr-only">Previous slide</span>
+      <span className="sr-only">{ui("Previous slide")}</span>
     </Button>
   )
 })
@@ -225,6 +227,7 @@ const CarouselNext = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
 >(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+  const ui = useInterfaceTranslation();
   const { orientation, scrollNext, canScrollNext } = useCarousel()
 
   return (
@@ -244,7 +247,7 @@ const CarouselNext = React.forwardRef<
       {...props}
     >
       <ArrowRight className="h-4 w-4" />
-      <span className="sr-only">Next slide</span>
+      <span className="sr-only">{ui("Next slide")}</span>
     </Button>
   )
 })

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import type { ColumnFillQ } from "@/types/quiz-bank";
@@ -72,6 +73,7 @@ export function ColumnFillQuestionView({
   onChange,
   submittedAnswer,
 }: ColumnFillQuestionViewProps) {
+  const ui = useInterfaceTranslation();
   const blankSequence = useMemo(() => buildBlankSequence(question), [question]);
   const [selectedBlankId, setSelectedBlankId] = useState<string | null>(blankSequence[0] ?? null);
   const blanksById = useMemo(() => blankMap(question), [question]);
@@ -267,7 +269,7 @@ export function ColumnFillQuestionView({
                 clearBlankValue(selectedBlankId);
               }}
             >
-              Effacer la case
+              {ui("Effacer la case")}
             </button>
             <button
               type="button"
@@ -281,7 +283,7 @@ export function ColumnFillQuestionView({
                 setSelectedBlankId(blankSequence[currentIndex - 1]);
               }}
             >
-              Case précédente
+              {ui("Case précédente")}
             </button>
           </div>
         </div>

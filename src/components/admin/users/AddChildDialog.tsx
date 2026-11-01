@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
@@ -52,6 +53,7 @@ export const AddChildDialog = ({
   selectedParent,
   onAddChild
 }: AddChildDialogProps) => {
+  const ui = useInterfaceTranslation();
   const [username, setUsername] = useState('');
   const [childEmail, setChildEmail] = useState('');
   const [childFirstName, setChildFirstName] = useState('');
@@ -126,27 +128,27 @@ export const AddChildDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Child Account</DialogTitle>
+          <DialogTitle>{ui("Add Child Account")}</DialogTitle>
           <DialogDescription>
-            Create a new student account for this parent's child.
+            {ui("Create a new student account for this parent's child.")}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="username" className="text-right">
-              Username *
+              {ui("Username *")}
             </Label>
             <Input
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="col-span-3"
-              placeholder="e.g., john_2024"
+              placeholder={ui("e.g., john_2024")}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="firstName" className="text-right">
-              First name *
+              {ui("First name *")}
             </Label>
             <Input
               id="firstName"
@@ -157,7 +159,7 @@ export const AddChildDialog = ({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="lastName" className="text-right">
-              Last name *
+              {ui("Last name *")}
             </Label>
             <Input
               id="lastName"
@@ -168,7 +170,7 @@ export const AddChildDialog = ({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="childEmail" className="text-right">
-              Email (Optional)
+              {ui("Email (Optional)")}
             </Label>
             <Input
               id="childEmail"
@@ -176,12 +178,12 @@ export const AddChildDialog = ({
               value={childEmail}
               onChange={(e) => setChildEmail(e.target.value)}
               className="col-span-3"
-              placeholder="For notifications (optional)"
+              placeholder={ui("For notifications (optional)")}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="password" className="text-right">
-              Password (Optional)
+              {ui("Password (Optional)")}
             </Label>
             <Input
               id="password"
@@ -189,16 +191,16 @@ export const AddChildDialog = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="col-span-3"
-              placeholder="Leave empty for default password"
+              placeholder={ui("Leave empty for default password")}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="schoolLevel" className="text-right">
-              School Level *
+              {ui("School Level *")}
             </Label>
             <Select value={schoolLevel} onValueChange={setSchoolLevel}>
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select school level" />
+                <SelectValue placeholder={ui("Select school level")} />
               </SelectTrigger>
               <SelectContent>
                 {getSchoolLevelOptions('fr').map((level) => (
@@ -212,7 +214,7 @@ export const AddChildDialog = ({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Cancel
+            {ui("Cancel")}
           </Button>
           <Button onClick={handleAddChildAccount} disabled={isSubmitting}>
             {isSubmitting ? 'Creating...' : 'Create Account'}

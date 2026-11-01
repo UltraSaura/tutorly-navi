@@ -1,3 +1,5 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
 import { useAllBanks, useBankAttemptStatus } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 import { cn } from '@/lib/utils';
 import type { Topic, Category } from '@/types/learning';
@@ -53,6 +55,7 @@ interface TopicCardProps {
 }
 
 function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
   const banksQuery = useAllBanks(topic.id, '', [], userId, 'practice');
   const banks = banksQuery.data?.banks ?? [];
@@ -90,7 +93,7 @@ function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
             {t(masteryKey)}
           </span>
           {mastery === 'needs_practice' && (
-            <span className="text-xs text-muted-foreground">↩ à retravailler</span>
+            <span className="text-xs text-muted-foreground">{ui("↩ à retravailler")}</span>
           )}
         </div>
       </div>
@@ -111,11 +114,12 @@ function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function PracticeTopicsPage() {
+  const subjectLabel = useSubjectLabel();
   const navigate = useNavigate();
   const { subject } = useParams<{ subject: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
+  const { user } = useLearner();
 
   const subjectSlug = subject ?? '';
   const dashboardQuery = useSubjectDashboard(subjectSlug);
@@ -185,7 +189,7 @@ export default function PracticeTopicsPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{subjectName}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{subjectLabel(subjectName)}</h1>
             <p className="text-sm text-muted-foreground">{t('practice.subject.ai.subtitle')}</p>
           </div>
           <Button

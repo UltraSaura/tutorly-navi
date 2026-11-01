@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import React, { useEffect, useState } from 'react';
 import { Plus, Paperclip, Camera, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -14,11 +15,30 @@ interface AttachmentMenuProps {
 }
 
 const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: AttachmentMenuProps) => {
+  const ui = useInterfaceTranslation();
   const isMobile = useIsMobile();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
+  const [tourLocked, setTourLocked] = useState(false);
+
+  useEffect(() => {
+    const handleTourMenu = (event: Event) => {
+      const shouldOpen = (event as CustomEvent<{ open?: boolean }>).detail?.open;
+      setOpen(Boolean(shouldOpen));
+    };
+    window.addEventListener('stuwy:product-tour-attachment', handleTourMenu);
+    const handleTourLock = (event: Event) => {
+      setTourLocked(Boolean((event as CustomEvent<{ locked?: boolean }>).detail?.locked));
+    };
+    window.addEventListener('stuwy:product-tour-attachment-lock', handleTourLock);
+    return () => {
+      window.removeEventListener('stuwy:product-tour-attachment', handleTourMenu);
+      window.removeEventListener('stuwy:product-tour-attachment-lock', handleTourLock);
+    };
+  }, []);
 
   const handleItemClick = (originalOnClick: () => void) => {
+    if (tourLocked) return;
     originalOnClick();
     setTimeout(() => setOpen(false), 300);
   };
@@ -26,21 +46,21 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
   const menuItems = [
     {
       icon: Paperclip,
-      label: 'Upload Document (PDF)',
+      label: ui("Upload Document (PDF)"),
       description: 'Upload a PDF or document to extract exercises',
       onClick: () => handleItemClick(onFileUpload),
       color: 'bg-blue-500',
     },
     {
       icon: ImageIcon,
-      label: 'Upload Photo',
+      label: ui("Upload Photo"),
       description: 'Upload an image from your gallery',
       onClick: () => handleItemClick(onPhotoUpload),
       color: 'bg-green-500',
     },
     {
       icon: Camera,
-      label: 'Take Photo',
+      label: ui("Take Photo"),
       description: 'Capture a photo with your camera',
       onClick: () => handleItemClick(onCameraOpen),
       color: 'bg-orange-500',
@@ -64,6 +84,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
                 : "p-4 min-h-[60px]"
             )}
             onClick={item.onClick}
+            data-tour={index === 2 ? 'attachment-camera' : undefined}
           >
             {/* Background with color */}
             <div className={cn(
@@ -106,17 +127,26 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
   const TriggerButton = React.forwardRef<
     React.ElementRef<typeof Button>,
     React.ComponentPropsWithoutRef<typeof Button>
-  >((props, ref) => (
-    <Button
-      ref={ref}
-      variant="ghost"
-      size="icon"
-      className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted"
-      {...props}
-    >
-      <Plus className="h-5 w-5" />
-    </Button>
-  ));
+  >((props, ref) => {
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      props.onClick?.(event);
+      window.dispatchEvent(new Event('stuwy:product-tour-attachment-triggered'));
+    };
+
+    return (
+      <Button
+        ref={ref}
+        variant="ghost"
+        size="icon"
+        className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted"
+        {...props}
+        onClick={handleClick}
+        data-tour="chat-add"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
+    );
+  });
 
   TriggerButton.displayName = "AttachmentTrigger";
 
@@ -132,8 +162,8 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
         >
           <div className="mx-auto w-12 h-1.5 bg-neutral-border rounded-full mb-4" />
           <div className="text-center mb-6">
-            <h3 className="text-xl font-semibold text-neutral-text">Upload Content</h3>
-            <p className="text-neutral-muted">Choose how you'd like to add your homework</p>
+            <h3 className="text-xl font-semibold text-neutral-text">{ui("Upload Content")}</h3>
+            <p className="text-neutral-muted">{ui("Choose how you'd like to add your homework")}</p>
           </div>
           <MenuContent />
         </SheetContent>

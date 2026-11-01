@@ -1,3 +1,4 @@
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { ExerciseHistoryRecord, ExerciseHistoryWithAttempts } from '@/types/exercise-history';
@@ -12,6 +13,7 @@ interface UseExerciseHistoryOptions {
 }
 
 export const useExerciseHistory = (options: UseExerciseHistoryOptions = {}) => {
+  const { learnerId } = useLearner();
   const [history, setHistory] = useState<ExerciseHistoryWithAttempts[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,7 @@ export const useExerciseHistory = (options: UseExerciseHistoryOptions = {}) => {
             explanation:exercise_explanations_cache(*)
           )
         `)
+        .eq('user_id', learnerId ?? '00000000-0000-0000-0000-000000000000')
         .order('created_at', { ascending: false });
 
       if (options.limit) {
@@ -114,7 +117,7 @@ export const useExerciseHistory = (options: UseExerciseHistoryOptions = {}) => {
 
   useEffect(() => {
     fetchHistory();
-  }, [options.limit, options.subject, options.dateFrom, options.dateTo]);
+  }, [learnerId, options.limit, options.subject, options.dateFrom, options.dateTo]);
 
   return {
     history,

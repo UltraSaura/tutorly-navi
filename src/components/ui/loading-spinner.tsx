@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { cn } from '@/lib/utils';
 
 interface LoadingSpinnerProps {
@@ -34,9 +35,10 @@ export function LoadingSpinner({ size = 'md', message, className }: LoadingSpinn
 }
 
 export function FullPageLoader({ message }: { message?: string }) {
+  const ui = useInterfaceTranslation();
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <LoadingSpinner size="xl" message={message || 'Loading...'} />
+      <LoadingSpinner size="xl" message={message || ui("Loading...")} />
     </div>
   );
 }

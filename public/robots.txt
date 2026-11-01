@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://stuwy.com/sitemap.xml
+Sitemap: https://stuwy.lovable.app/sitemap.xml

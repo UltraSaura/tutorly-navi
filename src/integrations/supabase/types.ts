@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   public: {
     Tables: {
@@ -415,6 +415,7 @@ export type Database = {
           source_pdf_url: string | null
           status: Database["public"]["Enums"]["edition_status"]
           subject: Database["public"]["Enums"]["subject_code"]
+          subject_id: string | null
         }
         Insert: {
           bo_reference: string
@@ -428,6 +429,7 @@ export type Database = {
           source_pdf_url?: string | null
           status?: Database["public"]["Enums"]["edition_status"]
           subject: Database["public"]["Enums"]["subject_code"]
+          subject_id?: string | null
         }
         Update: {
           bo_reference?: string
@@ -441,8 +443,17 @@ export type Database = {
           source_pdf_url?: string | null
           status?: Database["public"]["Enums"]["edition_status"]
           subject?: Database["public"]["Enums"]["subject_code"]
+          subject_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_edition_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       curriculum_task_attempts: {
         Row: {
@@ -1304,6 +1315,100 @@ export type Database = {
           },
         ]
       }
+      hermes_jobs: {
+        Row: {
+          created_at: string
+          edition_id: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          started_at: string | null
+          stats: Json | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          edition_id: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string | null
+          stats?: Json | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          edition_id?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string | null
+          stats?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hermes_jobs_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_edition"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learner_explanations_cache: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          exercise_content: string
+          exercise_hash: string
+          explanation_data: Json
+          explanation_image_url: string | null
+          id: string
+          learner_user_id: string
+          quality_score: number | null
+          subject_id: string | null
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          exercise_content: string
+          exercise_hash: string
+          explanation_data: Json
+          explanation_image_url?: string | null
+          id?: string
+          learner_user_id?: string
+          quality_score?: number | null
+          subject_id?: string | null
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          exercise_content?: string
+          exercise_hash?: string
+          explanation_data?: Json
+          explanation_image_url?: string | null
+          id?: string
+          learner_user_id?: string
+          quality_score?: number | null
+          subject_id?: string | null
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_explanations_cache_learner_user_id_fkey"
+            columns: ["learner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_categories: {
         Row: {
           created_at: string
@@ -1796,6 +1901,7 @@ export type Database = {
         Row: {
           bank_id: string
           created_at: string
+          details: Json | null
           id: string
           max_score: number
           score: number
@@ -1805,6 +1911,7 @@ export type Database = {
         Insert: {
           bank_id: string
           created_at?: string
+          details?: Json | null
           id?: string
           max_score: number
           score: number
@@ -1814,6 +1921,7 @@ export type Database = {
         Update: {
           bank_id?: string
           created_at?: string
+          details?: Json | null
           id?: string
           max_score?: number
           score?: number
@@ -1868,15 +1976,61 @@ export type Database = {
           },
         ]
       }
+      quiz_bank_variants: {
+        Row: {
+          bank_id: string
+          created_at: string
+          description: string | null
+          id: string
+          language: string
+          questions: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bank_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          language: string
+          questions?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bank_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          language?: string
+          questions?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_bank_variants_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_banks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_banks: {
         Row: {
           created_at: string
           description: string | null
           id: string
+          primary_topic_id: string | null
+          school_levels: string[] | null
           shuffle: boolean | null
+          source_language: string | null
           source_text_snapshot: string | null
+          source_topic_ids: string[] | null
           source_type: string | null
           source_video_ids: string[] | null
+          subject_id: string | null
           time_limit_sec: number | null
           title: string
           updated_at: string
@@ -1885,10 +2039,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           id: string
+          primary_topic_id?: string | null
+          school_levels?: string[] | null
           shuffle?: boolean | null
+          source_language?: string | null
           source_text_snapshot?: string | null
+          source_topic_ids?: string[] | null
           source_type?: string | null
           source_video_ids?: string[] | null
+          subject_id?: string | null
           time_limit_sec?: number | null
           title: string
           updated_at?: string
@@ -1897,15 +2056,35 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          primary_topic_id?: string | null
+          school_levels?: string[] | null
           shuffle?: boolean | null
+          source_language?: string | null
           source_text_snapshot?: string | null
+          source_topic_ids?: string[] | null
           source_type?: string | null
           source_video_ids?: string[] | null
+          subject_id?: string | null
           time_limit_sec?: number | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quiz_banks_primary_topic_id_fkey"
+            columns: ["primary_topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_banks_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       school_levels: {
         Row: {
@@ -1975,6 +2154,48 @@ export type Database = {
           title?: string
           updated_at?: string | null
           user_type?: string
+        }
+        Relationships: []
+      }
+      spaced_review_states: {
+        Row: {
+          concept_id: string
+          created_at: string
+          id: string
+          last_result_correct: boolean | null
+          last_reviewed_at: string | null
+          next_review_at: string
+          objective_id: string | null
+          stage: number
+          student_id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          concept_id: string
+          created_at?: string
+          id?: string
+          last_result_correct?: boolean | null
+          last_reviewed_at?: string | null
+          next_review_at: string
+          objective_id?: string | null
+          stage?: number
+          student_id: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          concept_id?: string
+          created_at?: string
+          id?: string
+          last_result_correct?: boolean | null
+          last_reviewed_at?: string | null
+          next_review_at?: string
+          objective_id?: string | null
+          stage?: number
+          student_id?: string
+          subject_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2131,10 +2352,10 @@ export type Database = {
           country_code: string | null
           created_at: string
           display_context: string
-          font_size: number
           font_family: string
-          icon_image_url: string | null
+          font_size: number
           icon_color: string
+          icon_image_url: string | null
           icon_name: string
           id: string
           is_active: boolean
@@ -2156,10 +2377,10 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           display_context?: string
-          font_size?: number
           font_family?: string
-          icon_image_url?: string | null
+          font_size?: number
           icon_color?: string
+          icon_image_url?: string | null
           icon_name: string
           id?: string
           is_active?: boolean
@@ -2181,10 +2402,10 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           display_context?: string
-          font_size?: number
           font_family?: string
-          icon_image_url?: string | null
+          font_size?: number
           icon_color?: string
+          icon_image_url?: string | null
           icon_name?: string
           id?: string
           is_active?: boolean
@@ -2415,6 +2636,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      topic_lesson_versions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          lesson_content: Json
+          published_at: string | null
+          published_by: string | null
+          status: string
+          topic_id: string
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          lesson_content: Json
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          topic_id: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          lesson_content?: Json
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          topic_id?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_lesson_versions_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       topic_objective_links: {
         Row: {
@@ -2784,6 +3055,9 @@ export type Database = {
       }
       users: {
         Row: {
+          approval_reviewed_at: string | null
+          approval_reviewed_by: string | null
+          approval_status: string
           contact_email: string | null
           country: string | null
           created_at: string
@@ -2795,6 +3069,7 @@ export type Database = {
           last_name: string | null
           level: string | null
           phone_number: string | null
+          product_tour_completed_at: string | null
           style: string | null
           updated_at: string
           user_type: string
@@ -2802,6 +3077,9 @@ export type Database = {
           username_set_at: string | null
         }
         Insert: {
+          approval_reviewed_at?: string | null
+          approval_reviewed_by?: string | null
+          approval_status?: string
           contact_email?: string | null
           country?: string | null
           created_at?: string
@@ -2813,6 +3091,7 @@ export type Database = {
           last_name?: string | null
           level?: string | null
           phone_number?: string | null
+          product_tour_completed_at?: string | null
           style?: string | null
           updated_at?: string
           user_type: string
@@ -2820,6 +3099,9 @@ export type Database = {
           username_set_at?: string | null
         }
         Update: {
+          approval_reviewed_at?: string | null
+          approval_reviewed_by?: string | null
+          approval_status?: string
           contact_email?: string | null
           country?: string | null
           created_at?: string
@@ -2831,6 +3113,7 @@ export type Database = {
           last_name?: string | null
           level?: string | null
           phone_number?: string | null
+          product_tour_completed_at?: string | null
           style?: string | null
           updated_at?: string
           user_type?: string
@@ -3006,6 +3289,22 @@ export type Database = {
         Returns: undefined
       }
       current_school_year: { Args: { ref_date?: string }; Returns: string }
+      family_bootstrap: { Args: never; Returns: Json }
+      family_current_learner: { Args: never; Returns: string }
+      family_current_profile: { Args: never; Returns: Json }
+      family_lock: { Args: never; Returns: undefined }
+      family_parent_authorized: { Args: never; Returns: boolean }
+      family_pin_reauth_attempt: {
+        Args: { account: string; sid: string }
+        Returns: boolean
+      }
+      family_profiles: { Args: never; Returns: Json }
+      family_select_child: { Args: { child: string }; Returns: Json }
+      family_set_pin: {
+        Args: { account: string; new_pin: string; sid: string }
+        Returns: undefined
+      }
+      family_unlock_parent: { Args: { pin: string }; Returns: Json }
       get_model_with_fallback: {
         Args: never
         Returns: {
@@ -3025,6 +3324,28 @@ export type Database = {
         Args: { _child_user_id: string; _guardian_user_id: string }
         Returns: boolean
       }
+      publish_topic_lesson_version: {
+        Args: { p_confirm?: boolean; p_topic_id: string; p_version_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          lesson_content: Json
+          published_at: string | null
+          published_by: string | null
+          status: string
+          topic_id: string
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "topic_lesson_versions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       resolve_edition: {
         Args: {
           p_date?: string
@@ -3043,6 +3364,7 @@ export type Database = {
         | "parent"
         | "guardian"
         | "teacher"
+        | "tester"
       applicability_status: "en_vigueur" | "transitoire" | "planifie"
       class_level:
         | "CP"
@@ -3059,7 +3381,18 @@ export type Database = {
         | "terminale"
       content_source: "official" | "generated"
       edition_status: "projet" | "active" | "superseded"
-      subject_code: "francais" | "mathematiques"
+      subject_code:
+        | "francais"
+        | "mathematiques"
+        | "histoire"
+        | "geographie"
+        | "sciences"
+        | "emc"
+        | "arts_plastiques"
+        | "education_musicale"
+        | "eps"
+        | "langues_vivantes"
+        | "technologie"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3075,12 +3408,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3104,11 +3437,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3129,11 +3462,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3154,11 +3487,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3171,11 +3504,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3194,6 +3527,7 @@ export const Constants = {
         "parent",
         "guardian",
         "teacher",
+        "tester",
       ],
       applicability_status: ["en_vigueur", "transitoire", "planifie"],
       class_level: [
@@ -3212,7 +3546,19 @@ export const Constants = {
       ],
       content_source: ["official", "generated"],
       edition_status: ["projet", "active", "superseded"],
-      subject_code: ["francais", "mathematiques"],
+      subject_code: [
+        "francais",
+        "mathematiques",
+        "histoire",
+        "geographie",
+        "sciences",
+        "emc",
+        "arts_plastiques",
+        "education_musicale",
+        "eps",
+        "langues_vivantes",
+        "technologie",
+      ],
     },
   },
 } as const

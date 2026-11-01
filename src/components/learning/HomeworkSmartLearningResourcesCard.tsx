@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { SmartLearningResourcesCard } from "@/components/learning/SmartLearningResourcesCard";
-import { useAuth } from "@/context/AuthContext";
+import { useLearner } from "@/context/FamilyProfileContext";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { useUserContext } from "@/hooks/useUserContext";
 import { useHomeworkLearningResources } from "@/hooks/useHomeworkLearningResources";
@@ -23,7 +23,7 @@ export function HomeworkSmartLearningResourcesCard({
 }: HomeworkSmartLearningResourcesCardProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { language } = useLanguage();
   const { userContext } = useUserContext();
 

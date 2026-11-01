@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageSquare, BookOpen, BarChart3, CheckSquare, User, Settings, Globe, ChevronDown, LogOut } from 'lucide-react';
@@ -7,7 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { motion } from 'framer-motion';
 import SubjectSelector from './SubjectSelector';
 import { useLanguage } from '@/context/SimpleLanguageContext';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import MobileLanguageMenuItems from './MobileLanguageMenuItems';
@@ -51,10 +52,11 @@ const LanguageMenuItems = () => {
 };
 
 const Navbar = () => {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { toast } = useToast();
@@ -95,7 +97,7 @@ const Navbar = () => {
       <div className="stuwy-container">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Stuwy Logo" className="w-10 h-10" />
+            <img src="/logo.png" alt={ui("Stuwy Logo")} className="w-10 h-10" />
             <span className="text-lg font-semibold">{t('brand.name')}</span>
             <div className="hidden md:block">
               <SubjectSelector />

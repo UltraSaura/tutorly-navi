@@ -1,3 +1,5 @@
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useAuth } from '@/context/AuthContext';
@@ -10,9 +12,13 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { User, Bell, Lock, Globe, Shield } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { PasswordUpdateForm } from '@/components/auth/PasswordUpdateForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function GuardianSettings() {
-  const { user } = useAuth();
+  const ui = useInterfaceTranslation();
+  const { language, changeLanguage } = useLanguage();
+  const { user, updatePassword } = useAuth();
   const { guardianCountry } = useGuardianAuth();
   const { toast } = useToast();
 
@@ -22,29 +28,59 @@ export default function GuardianSettings() {
     lowPerformance: true,
     newAchievements: false,
   });
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   const handleSaveProfile = () => {
     toast({
-      title: 'Profile updated',
-      description: 'Your profile information has been saved.',
+      title: ui("Profile updated"),
+      description: ui("Your profile information has been saved."),
     });
   };
 
   const handleSaveNotifications = () => {
     toast({
-      title: 'Notifications updated',
-      description: 'Your notification preferences have been saved.',
+      title: ui("Notifications updated"),
+      description: ui("Your notification preferences have been saved."),
     });
+  };
+
+  const handleChangePassword = async (password: string) => {
+    setIsPasswordLoading(true);
+    try {
+      const { error } = await updatePassword(password);
+      if (error) {
+        toast({
+          title: ui("Password update failed"),
+          description: error.message || ui("Please try again."),
+          variant: 'destructive',
+        });
+        return;
+      }
+      setIsPasswordDialogOpen(false);
+      toast({
+        title: ui("Password updated"),
+        description: ui("Your password has been changed successfully."),
+      });
+    } catch (error) {
+      toast({
+        title: ui("Password update failed"),
+        description: error instanceof Error ? error.message : ui("Please try again."),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPasswordLoading(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Settings" description="Configure your guardian account preferences and notifications." />
+      <PageMeta title={ui("Settings")} description={ui("Configure your guardian account preferences and notifications.")} />
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Guardian Settings</h1>
+        <h1 className="text-3xl font-bold text-foreground">{ui("Guardian Settings")}</h1>
         <p className="text-muted-foreground mt-1">
-          Manage your account preferences and security
+          {ui("Manage your account preferences and security")}
         </p>
       </div>
 
@@ -53,16 +89,16 @@ export default function GuardianSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Profile Information
+            {ui("Profile Information")}
           </CardTitle>
           <CardDescription>
-            Update your personal information
+            {ui("Update your personal information")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName">{ui("First Name")}</Label>
               <Input
                 id="firstName"
                 defaultValue={user?.user_metadata?.first_name || ''}
@@ -70,7 +106,7 @@ export default function GuardianSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName">{ui("Last Name")}</Label>
               <Input
                 id="lastName"
                 defaultValue={user?.user_metadata?.last_name || ''}
@@ -80,7 +116,7 @@ export default function GuardianSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email">{ui("Email Address")}</Label>
             <Input
               id="email"
               type="email"
@@ -90,7 +126,7 @@ export default function GuardianSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">{ui("Phone Number")}</Label>
             <Input
               id="phone"
               type="tel"
@@ -100,15 +136,15 @@ export default function GuardianSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
+            <Label htmlFor="country">{ui("Country")}</Label>
             <Input
               id="country"
               defaultValue={guardianCountry || ''}
-              placeholder="United States"
+              placeholder={ui("United States")}
             />
           </div>
 
-          <Button onClick={handleSaveProfile}>Save Changes</Button>
+          <Button onClick={handleSaveProfile}>{ui("Save Changes")}</Button>
         </CardContent>
       </Card>
 
@@ -117,18 +153,18 @@ export default function GuardianSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            Notifications
+            {ui("Notifications")}
           </CardTitle>
           <CardDescription>
-            Choose what notifications you want to receive
+            {ui("Choose what notifications you want to receive")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="exerciseCompleted">Exercise Completed</Label>
+              <Label htmlFor="exerciseCompleted">{ui("Exercise Completed")}</Label>
               <p className="text-sm text-muted-foreground">
-                Get notified when your child completes an exercise
+                {ui("Get notified when your child completes an exercise")}
               </p>
             </div>
             <Switch
@@ -144,9 +180,9 @@ export default function GuardianSettings() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="weeklyReport">Weekly Report</Label>
+              <Label htmlFor="weeklyReport">{ui("Weekly Report")}</Label>
               <p className="text-sm text-muted-foreground">
-                Receive a weekly summary of your children's progress
+                {ui("Receive a weekly summary of your children's progress")}
               </p>
             </div>
             <Switch
@@ -162,9 +198,9 @@ export default function GuardianSettings() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="lowPerformance">Performance Alerts</Label>
+              <Label htmlFor="lowPerformance">{ui("Performance Alerts")}</Label>
               <p className="text-sm text-muted-foreground">
-                Get alerts when a child is struggling with a topic
+                {ui("Get alerts when a child is struggling with a topic")}
               </p>
             </div>
             <Switch
@@ -180,9 +216,9 @@ export default function GuardianSettings() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="newAchievements">Achievement Notifications</Label>
+              <Label htmlFor="newAchievements">{ui("Achievement Notifications")}</Label>
               <p className="text-sm text-muted-foreground">
-                Celebrate when your child earns an achievement
+                {ui("Celebrate when your child earns an achievement")}
               </p>
             </div>
             <Switch
@@ -194,7 +230,7 @@ export default function GuardianSettings() {
             />
           </div>
 
-          <Button onClick={handleSaveNotifications}>Save Preferences</Button>
+          <Button onClick={handleSaveNotifications}>{ui("Save Preferences")}</Button>
         </CardContent>
       </Card>
 
@@ -203,33 +239,49 @@ export default function GuardianSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Security
+            {ui("Security")}
           </CardTitle>
           <CardDescription>
-            Manage your account security settings
+            {ui("Manage your account security settings")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button variant="outline">Change Password</Button>
-          <Button variant="outline">Enable Two-Factor Authentication</Button>
+          <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(true)}>
+            {ui("Change Password")}
+          </Button>
+          <Button variant="outline">{ui("Enable Two-Factor Authentication")}</Button>
         </CardContent>
       </Card>
+
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{ui("Change Password")}</DialogTitle>
+            <DialogDescription>{ui("Choose a new password for your account.")}</DialogDescription>
+          </DialogHeader>
+          <PasswordUpdateForm onSubmit={handleChangePassword} loading={isPasswordLoading} />
+        </DialogContent>
+      </Dialog>
 
       {/* Language & Region */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
-            Language & Region
+            {ui("Language & Region")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="language">Language</Label>
-            <Input id="language" defaultValue="English" />
+            <Label htmlFor="language">{ui("Language")}</Label>
+            <select id="language" value={language} onChange={(event) => changeLanguage(event.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <option value="en">{ui("English")}</option>
+              <option value="fr">Français</option>
+            </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="timezone">Timezone</Label>
+            <Label htmlFor="timezone">{ui("Timezone")}</Label>
             <Input id="timezone" defaultValue="UTC-05:00 (EST)" />
           </div>
         </CardContent>
@@ -240,15 +292,14 @@ export default function GuardianSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <Shield className="h-5 w-5" />
-            Privacy & Data
+            {ui("Privacy & Data")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Button variant="outline">Download My Data</Button>
-          <Button variant="destructive">Delete Account</Button>
+          <Button variant="outline">{ui("Download My Data")}</Button>
+          <Button variant="destructive">{ui("Delete Account")}</Button>
         </CardContent>
       </Card>
     </div>
   );
 }
-

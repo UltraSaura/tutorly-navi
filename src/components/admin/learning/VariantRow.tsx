@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -27,6 +29,8 @@ const countWords = (text: string | null | undefined): number => {
 };
 
 export const VariantRow = ({ variant, usedLanguages, onChange, onRemove, canRemove }: VariantRowProps) => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const [isOpen, setIsOpen] = useState(false);
   
   const availableLanguages = LANGUAGE_OPTIONS.filter(
@@ -44,7 +48,7 @@ export const VariantRow = ({ variant, usedLanguages, onChange, onRemove, canRemo
           onValueChange={(value) => onChange({ ...variant, language: value })}
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="Language" />
+            <SelectValue placeholder={ui("Language")} />
           </SelectTrigger>
           <SelectContent>
             {availableLanguages.map(lang => (
@@ -58,7 +62,7 @@ export const VariantRow = ({ variant, usedLanguages, onChange, onRemove, canRemo
         <Input
           value={variant.video_url}
           onChange={(e) => onChange({ ...variant, video_url: e.target.value })}
-          placeholder="YouTube, Vimeo, or direct URL"
+          placeholder={ui("YouTube, Vimeo, or direct URL")}
           className="flex-1"
           required
         />
@@ -91,18 +95,18 @@ export const VariantRow = ({ variant, usedLanguages, onChange, onRemove, canRemo
           <div className="border-t border-border p-3 space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-muted-foreground">
-                Transcript (optional)
+                {ui("Transcript (optional)")}
               </label>
               {hasTranscript && (
                 <span className="text-xs text-muted-foreground">
-                  {wordCount.toLocaleString()} words
+                  {wordCount.toLocaleString(locale)} {ui("words")}
                 </span>
               )}
             </div>
             <Textarea
               value={variant.transcript || ''}
               onChange={(e) => onChange({ ...variant, transcript: e.target.value || null })}
-              placeholder="Paste or type the video transcript here..."
+              placeholder={ui("Paste or type the video transcript here...")}
               className="min-h-[120px] resize-y"
             />
           </div>

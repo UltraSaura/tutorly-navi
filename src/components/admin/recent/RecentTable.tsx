@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { evaluateRow, type AdminTable } from '@/lib/admin/rowHealth';
@@ -27,6 +28,7 @@ const truncate = (s: string | null | undefined, n = 80) => {
 export const fmtTruncate = truncate;
 
 export function RecentTable({ table, rows, columns, isLoading, issuesOnly, onRowClick }: Props) {
+  const ui = useInterfaceTranslation();
   const enriched = useMemo(() => {
     return (rows ?? []).map(r => ({ row: r, health: evaluateRow(table, r) }));
   }, [rows, table]);
@@ -39,7 +41,7 @@ export function RecentTable({ table, rows, columns, isLoading, issuesOnly, onRow
   if (isLoading) {
     return (
       <div className="py-12 text-center text-sm text-muted-foreground">
-        Loading…
+        {ui("Loading…")}
       </div>
     );
   }
@@ -57,7 +59,7 @@ export function RecentTable({ table, rows, columns, isLoading, issuesOnly, onRow
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px]">Status</TableHead>
+            <TableHead className="w-[120px]">{ui("Status")}</TableHead>
             {columns.map(c => (
               <TableHead key={c.key} className={c.className}>{c.label}</TableHead>
             ))}

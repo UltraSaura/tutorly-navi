@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useEffect, useRef } from 'react';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
   onAutoReadChange,
   className,
 }) => {
+  const ui = useInterfaceTranslation();
   const prevTextRef = useRef(text);
   const hasEndedRef = useRef(false);
 
@@ -88,7 +90,7 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
             size="icon"
             onClick={pause}
             className="h-7 w-7 rounded-full text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-950/30"
-            aria-label="Pause"
+            aria-label={ui("Pause")}
           >
             <Pause className="h-3 w-3" />
           </Button>
@@ -97,7 +99,7 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
             size="icon"
             onClick={stop}
             className="h-7 w-7 rounded-full text-destructive hover:bg-destructive/10"
-            aria-label="Stop"
+            aria-label={ui("Stop")}
           >
             <Square className="h-3 w-3" />
           </Button>
@@ -111,7 +113,7 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
             size="icon"
             onClick={resume}
             className="h-7 w-7 rounded-full text-green-600 hover:bg-green-100 dark:hover:bg-green-950/30"
-            aria-label="Resume"
+            aria-label={ui("Resume")}
           >
             <Play className="h-3 w-3" />
           </Button>
@@ -120,7 +122,7 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
             size="icon"
             onClick={stop}
             className="h-7 w-7 rounded-full text-destructive hover:bg-destructive/10"
-            aria-label="Stop"
+            aria-label={ui("Stop")}
           >
             <Square className="h-3 w-3" />
           </Button>

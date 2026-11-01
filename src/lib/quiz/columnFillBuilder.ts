@@ -30,8 +30,8 @@ function carryRow(carries: Array<string | null>, columns: number): ColumnFillRow
       ...Array.from({ length: columns }, (_, index) => {
         const carry = carries[index] ?? null;
         return carry
-          ? { kind: "blank", blankId: `carry-${index}`, className: "text-[13px] text-amber-600 font-semibold" }
-          : { kind: "spacer" };
+          ? { kind: "blank" as const, blankId: `carry-${index}`, className: "text-[13px] text-amber-600 font-semibold" }
+          : { kind: "spacer" as const };
       }),
     ],
   };

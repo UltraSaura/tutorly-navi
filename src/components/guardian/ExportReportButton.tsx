@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +11,7 @@ interface ExportReportButtonProps {
 }
 
 export const ExportReportButton = ({ childId, childName }: ExportReportButtonProps) => {
+  const ui = useInterfaceTranslation();
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
@@ -33,14 +35,14 @@ export const ExportReportButton = ({ childId, childName }: ExportReportButtonPro
       document.body.removeChild(a);
 
       toast({
-        title: 'Report exported',
-        description: 'Progress report downloaded successfully',
+        title: ui("Report exported"),
+        description: ui("Progress report downloaded successfully"),
       });
     } catch (error) {
       console.error('Export error:', error);
       toast({
-        title: 'Export failed',
-        description: 'Could not generate report',
+        title: ui("Export failed"),
+        description: ui("Could not generate report"),
         variant: 'destructive',
       });
     } finally {
@@ -56,7 +58,7 @@ export const ExportReportButton = ({ childId, childName }: ExportReportButtonPro
       disabled={isExporting}
     >
       <Download className="h-4 w-4 mr-2" />
-      {isExporting ? 'Exporting...' : 'Export CSV'}
+      {isExporting ? ui("Exporting...") : ui("Export CSV")}
     </Button>
   );
 };

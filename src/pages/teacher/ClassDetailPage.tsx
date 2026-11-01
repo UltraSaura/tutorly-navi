@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useClassStudents } from '@/hooks/useClassStudents';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function ClassDetailPage() {
+  const ui = useInterfaceTranslation();
   const { classId } = useParams();
   const navigate = useNavigate();
   const { data: students = [], isLoading } = useClassStudents(classId);
@@ -40,7 +42,7 @@ export default function ClassDetailPage() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Class Details" description="View class roster, progress, and activity." />
+      <PageMeta title={ui("Class Details")} description={ui("View class roster, progress, and activity.")} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -50,34 +52,34 @@ export default function ClassDetailPage() {
           <div>
             <h1 className="text-3xl font-bold">{classInfo?.name}</h1>
             <p className="text-muted-foreground">
-              {students.length} students | {classInfo?.level_code}
+              {students.length} {ui("students |")} {classInfo?.level_code}
             </p>
           </div>
         </div>
         <Button>
           <UserPlus className="w-4 h-4 mr-2" />
-          Add Student
+          {ui("Add Student")}
         </Button>
       </div>
 
       {/* Students Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Class Roster</CardTitle>
+          <CardTitle>{ui("Class Roster")}</CardTitle>
         </CardHeader>
         <CardContent>
           {students.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No students enrolled yet
+              {ui("No students enrolled yet")}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Student Name</TableHead>
-                    <TableHead>Level</TableHead>
-                    <TableHead>Overall Progress</TableHead>
+                    <TableHead>{ui("Student Name")}</TableHead>
+                    <TableHead>{ui("Level")}</TableHead>
+                    <TableHead>{ui("Overall Progress")}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -99,7 +101,7 @@ export default function ClassDetailPage() {
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm">
-                          View Details
+                          {ui("View Details")}
                         </Button>
                       </TableCell>
                     </TableRow>

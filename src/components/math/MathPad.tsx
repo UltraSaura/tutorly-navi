@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { BASE_KEYS, ADVANCED_KEYS, SNIPPET_LABELS } from '@/lib/mathConstants';
 
 type Props = {
@@ -16,6 +17,7 @@ const keepFocus = (e: React.SyntheticEvent) => {
 // This component uses the backspace prop function passed from parent
 
 export default function MathPad({ insert, next, backspace, showAdvanced, onToggleAdvanced }: Props) {
+  const ui = useInterfaceTranslation();
   return (
     <div className="math-pad">
       {/* Basic keys */}
@@ -43,7 +45,7 @@ export default function MathPad({ insert, next, backspace, showAdvanced, onToggl
           onClick={next}
           className="math-key"
         >
-          Next ▶
+          {ui("Next ▶")}
         </button>
         
         {/* Backspace button */}

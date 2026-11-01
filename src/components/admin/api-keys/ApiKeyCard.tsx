@@ -1,3 +1,5 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { useLocale } from '@/i18n/useLocale';
 
 import { useState } from 'react';
 import { Trash2, Eye, EyeOff, Key } from 'lucide-react';
@@ -13,6 +15,8 @@ interface ApiKeyCardProps {
 }
 
 const ApiKeyCard = ({ apiKey, onDelete, onTest }: ApiKeyCardProps) => {
+  const ui = useInterfaceTranslation();
+  const { locale, dateLocale } = useLocale();
   const [isVisible, setIsVisible] = useState(false);
   
   const toggleKeyVisibility = () => {
@@ -48,7 +52,7 @@ const ApiKeyCard = ({ apiKey, onDelete, onTest }: ApiKeyCardProps) => {
         <div className="space-y-4">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium">API Key</span>
+              <span className="text-sm font-medium">{ui("API Key")}</span>
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -69,12 +73,12 @@ const ApiKeyCard = ({ apiKey, onDelete, onTest }: ApiKeyCardProps) => {
           
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">Created</p>
-              <p>{apiKey.createdAt.toLocaleDateString()}</p>
+              <p className="text-muted-foreground">{ui("Created")}</p>
+              <p>{apiKey.createdAt.toLocaleDateString(locale)}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Last Used</p>
-              <p>{apiKey.lastUsed ? apiKey.lastUsed.toLocaleDateString() : 'Never'}</p>
+              <p className="text-muted-foreground">{ui("Last Used")}</p>
+              <p>{apiKey.lastUsed ? apiKey.lastUsed.toLocaleDateString(locale) : ui("Never")}</p>
             </div>
           </div>
           
@@ -84,7 +88,7 @@ const ApiKeyCard = ({ apiKey, onDelete, onTest }: ApiKeyCardProps) => {
               size="sm" 
               onClick={() => onTest(apiKey.id)}
             >
-              Test Connection
+              {ui("Test Connection")}
             </Button>
           </div>
         </div>

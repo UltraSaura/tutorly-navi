@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, type ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +73,7 @@ export function getParsedContent(value: unknown | null | undefined): ParsedExerc
 }
 
 function AnswerField({ question }: { question: ParsedExamQuestion }) {
+  const ui = useInterfaceTranslation();
   const [value, setValue] = useState(question.student_answer ?? '');
   const answerType = question.answer_type ?? 'free_text';
   const options = question.options ?? [];
@@ -102,7 +104,7 @@ function AnswerField({ question }: { question: ParsedExamQuestion }) {
         className="mt-3"
         value={value}
         onChange={(event) => setValue(event.currentTarget.value)}
-        placeholder="Ta réponse"
+        placeholder={ui("Ta réponse")}
       />
     );
   }
@@ -113,12 +115,13 @@ function AnswerField({ question }: { question: ParsedExamQuestion }) {
       inputMode={answerType === 'numeric' || answerType === 'math' ? 'decimal' : 'text'}
       value={value}
       onChange={(event) => setValue(event.currentTarget.value)}
-      placeholder="Ta réponse"
+      placeholder={ui("Ta réponse")}
     />
   );
 }
 
 function QuestionList({ questions, interactive }: { questions: ParsedExamQuestion[]; interactive: boolean }) {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
   if (questions.length === 0) return null;
   return (
@@ -149,10 +152,10 @@ function QuestionList({ questions, interactive }: { questions: ParsedExamQuestio
                 <AnswerField question={q} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" disabled>
-                    Valider ma réponse
+                    {ui("Valider ma réponse")}
                   </Button>
                   <Button size="sm" variant="outline" disabled>
-                    Demander un indice
+                    {ui("Demander un indice")}
                   </Button>
                 </div>
               </>
@@ -171,6 +174,7 @@ function VisualDocument({
   doc: NonNullable<ParsedExerciseContent['documents']>[number];
   idx: number;
 }) {
+  const ui = useInterfaceTranslation();
   const [open, setOpen] = useState(false);
   const src = doc.public_url ?? doc.local_path;
   if (!src) return null;
@@ -191,7 +195,7 @@ function VisualDocument({
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium">{doc.label}</p>
               <Button size="sm" variant="outline" onClick={() => setOpen(false)}>
-                Fermer
+                {ui("Fermer")}
               </Button>
             </div>
             <div className="min-h-0 flex-1 overflow-auto">
@@ -251,6 +255,7 @@ export function ParsedExerciseViewer({
   variant?: 'student' | 'admin';
   interactive?: boolean;
 }) {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
   const context = (parsed.context ?? '').trim();
   const questionsFlat = parsed.questions ?? [];
@@ -318,7 +323,7 @@ export function ParsedExerciseViewer({
                         <div className="mt-2"><VisualDocument doc={doc} idx={idx} /></div>
                         {doc.table && (
                           <details className="mt-2 rounded-md border border-dashed border-border/70 p-2">
-                            <summary className="cursor-pointer text-sm font-medium">Voir en tableau accessible</summary>
+                            <summary className="cursor-pointer text-sm font-medium">{ui("Voir en tableau accessible")}</summary>
                             <div className="mt-2">
                               <TableDocument doc={doc} />
                             </div>
@@ -340,7 +345,7 @@ export function ParsedExerciseViewer({
             </div>
             {fallbackImages.length > 0 ? (
               <details className="rounded-md border border-dashed border-border/70 bg-muted/10 p-3">
-                <summary className="cursor-pointer text-sm font-medium">Voir la capture originale</summary>
+                <summary className="cursor-pointer text-sm font-medium">{ui("Voir la capture originale")}</summary>
                 <div className="mt-3 space-y-3">
                   {fallbackImages.map((doc, idx) => (
                     <VisualDocument key={`${doc.label}-fallback-${idx}`} doc={doc} idx={idx} />

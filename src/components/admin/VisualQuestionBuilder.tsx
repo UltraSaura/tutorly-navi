@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -88,6 +89,7 @@ export interface VisualQuestionBuilderProps {
 }
 
 export default function VisualQuestionBuilder({ value, onChange }: VisualQuestionBuilderProps) {
+  const ui = useInterfaceTranslation();
   const [activeTab, setActiveTab] = useState<VisualUnion["subtype"]>(value?.subtype ?? "pie");
   const [pie, setPie] = useState<VisualPie>(value?.subtype === "pie" ? (value as VisualPie) : defaultPie());
 
@@ -196,11 +198,11 @@ export default function VisualQuestionBuilder({ value, onChange }: VisualQuestio
   return (
     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as VisualUnion["subtype"])}>
       <TabsList className="grid grid-cols-5 w-full">
-        <TabsTrigger value="pie">Pie</TabsTrigger>
-        <TabsTrigger value="grid">Grid</TabsTrigger>
-        <TabsTrigger value="shape_select">Shapes</TabsTrigger>
-        <TabsTrigger value="line_relation">Lines</TabsTrigger>
-        <TabsTrigger value="angle">Angle</TabsTrigger>
+        <TabsTrigger value="pie">{ui("Pie")}</TabsTrigger>
+        <TabsTrigger value="grid">{ui("Grid")}</TabsTrigger>
+        <TabsTrigger value="shape_select">{ui("Shapes")}</TabsTrigger>
+        <TabsTrigger value="line_relation">{ui("Lines")}</TabsTrigger>
+        <TabsTrigger value="angle">{ui("Angle")}</TabsTrigger>
       </TabsList>
       <TabsContent value="pie">
         <PieEditor state={pie} setState={handlePie} />

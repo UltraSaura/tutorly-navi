@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import type { 
   TopicMasteryProgress, 
   SubjectMasteryOverview 
@@ -10,7 +10,7 @@ import type {
  * Fetch mastery records for a specific topic
  */
 export function useTopicMastery(topicId: string | undefined) {
-  const { user } = useAuth();
+  const { user } = useLearner();
   
   return useQuery({
     queryKey: ['topic-mastery', topicId, user?.id],
@@ -99,7 +99,7 @@ export function useTopicMastery(topicId: string | undefined) {
  * Filtered by student's country and level
  */
 export function useStudentMasteryOverview() {
-  const { user } = useAuth();
+  const { user } = useLearner();
   
   return useQuery({
     queryKey: ['student-mastery-overview', user?.id],

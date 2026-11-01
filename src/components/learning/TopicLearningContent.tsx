@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +19,7 @@ interface TopicLearningContentProps {
 }
 
 export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
   const [lessonOpen, setLessonOpen] = useState(true);
   const { data: objectives = [], isLoading } = useTopicObjectives(topicId);
@@ -61,7 +63,7 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
               <ErrorBoundary
                 fallback={
                   <div className="p-4 text-center text-muted-foreground">
-                    Unable to load lesson content. Please try refreshing.
+                    {ui("Unable to load lesson content. Please try refreshing.")}
                   </div>
                 }
               >
@@ -108,7 +110,7 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
             <div className="space-y-2">
               {masteryProgress.objectives.map(obj => (
                 <div key={obj.objective_id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50">
-                  {obj.status === 'mastered' ? (
+                  {obj.status === "mastered" ? (
                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   ) : obj.status === 'in_progress' ? (
                     <Clock className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -127,7 +129,7 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
                         }
                         className="text-xs"
                       >
-                        {obj.status === 'mastered' ? t('topic.statusMastered') : 
+                        {obj.status === "mastered" ? t('topic.statusMastered') :
                          obj.status === 'in_progress' ? `${obj.score_percent}%` : 
                          t('roadmap.notStarted')}
                       </Badge>

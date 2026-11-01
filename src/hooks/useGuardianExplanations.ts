@@ -1,3 +1,4 @@
+import { getProfileRuntime, guardianExplanationCacheTable } from '@/features/family/profileRuntime';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,7 +28,7 @@ export const useGuardianExplanations = (guardianId?: string) => {
 
       // Fetch all explanations from cache
       const { data: allExplanations, error: explanationsError } = await supabase
-        .from('exercise_explanations_cache')
+        .from(guardianExplanationCacheTable())
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -37,7 +38,7 @@ export const useGuardianExplanations = (guardianId?: string) => {
       const guardianExplanationsMap = new Map();
       (guardianExercises || []).forEach((exercise: any) => {
         const matchingExplanation = (allExplanations || []).find(
-          (exp: any) => exp.exercise_content === exercise.exercise_content
+          (exp: any) => (getProfileRuntime()?.legacyGuardian || exp.learner_user_id === exercise.user_id) && exp.exercise_content === exercise.exercise_content
         );
         if (matchingExplanation) {
           guardianExplanationsMap.set(matchingExplanation.id, {
@@ -82,7 +83,7 @@ export const useGuardianExplanations = (guardianId?: string) => {
 
           (childExercises || []).forEach((exercise: any) => {
             const matchingExplanation = (allExplanations || []).find(
-              (exp: any) => exp.exercise_content === exercise.exercise_content
+              (exp: any) => (getProfileRuntime()?.legacyGuardian || exp.learner_user_id === exercise.user_id) && exp.exercise_content === exercise.exercise_content
             );
             if (matchingExplanation && !guardianExplanationsMap.has(matchingExplanation.id)) {
               childExplanations.push({

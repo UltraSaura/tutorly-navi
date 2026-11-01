@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,12 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Link } from 'react-router-dom';
+import { formatGenerationErrorDetails, formatProviderDiagnostics, generationErrorMessages, getGenerationErrorDetails, type GenerationErrorDetails } from './generationErrorMapping';
+import { geometryDraftLesson } from './geometryDraft';
+import { runBulkStagingGeneration, type BulkStagingProgress } from '@/services/bulkStagingLessonWorkflow';
+import { deriveBulkLessonStatus, type BulkLessonStatus } from './bulkLessonStatus';
 
 interface TopicRow {
   id: string;
   name: string;
   lesson_content: unknown | null;
   curriculum_subject_id: string | null;
+  curriculum_country_code: string | null;
   curriculum_level_code: string | null;
 }
 
@@ -22,58 +29,64 @@ type SubjectRow = {
   name: string;
 };
 
-type GenStatus = 'idle' | 'running' | 'done' | 'error';
+type GenStatus = 'idle' | 'generating' | 'validating' | 'saved' | 'failed';
 
 interface GenResult {
   topicId: string;
   name: string;
   status: GenStatus;
   error?: string;
+  technicalDetail?: string;
   currentStep?: string;
+  progress?: BulkStagingProgress;
+  providerCalls?: number;
+  failedLevel?: number;
+  failureStage?: string;
+  versionId?: string;
+  httpStatus?: number;
+  errorCode?: string;
+  requestId?: string;
+  providerDiagnostics?: GenerationErrorDetails['providerDiagnostics'];
 }
 
-const GENERATION_TIMEOUT_MS = 120000;
-
-async function getFunctionErrorMessage(err: unknown, response?: Response) {
-  let errorMessage =
-    err instanceof Error && err.message && err.message !== 'Unknown error'
-      ? err.message
-      : 'La génération a échoué.';
-
-  const candidateResponse =
-    response ||
-    (typeof err === 'object' && err !== null && 'context' in err && (err as { context?: Response }).context instanceof Response
-      ? (err as { context?: Response }).context
-      : undefined);
-
-  if (!candidateResponse) return errorMessage;
-
+async function getFunctionErrorDetails(err: unknown, response?: Response): Promise<GenerationErrorDetails> {
+  const candidateResponse = response || (typeof err === 'object' && err !== null && 'context' in err && (err as { context?: Response }).context instanceof Response
+    ? (err as { context?: Response }).context : undefined);
+  if (!candidateResponse) return getGenerationErrorDetails(err, 'The generation request could not start.');
   try {
     const payload = await candidateResponse.clone().json();
-    return payload?.error || payload?.details || payload?.message || errorMessage;
+    return {
+      ...getGenerationErrorDetails(payload, 'The Edge Function returned an error.'),
+      httpStatus: candidateResponse.status,
+      requestId: getGenerationErrorDetails(payload).requestId ?? candidateResponse.headers.get('x-request-id') ?? undefined,
+    };
   } catch {
     try {
       const text = await candidateResponse.clone().text();
-      return text || errorMessage;
+      return { ...getGenerationErrorDetails(text, 'The Edge Function returned an unreadable error.'), httpStatus: candidateResponse.status, requestId: candidateResponse.headers.get('x-request-id') ?? undefined };
     } catch {
-      return errorMessage;
+      return { ...getGenerationErrorDetails(err, 'The Edge Function returned an error.'), httpStatus: candidateResponse.status, requestId: candidateResponse.headers.get('x-request-id') ?? undefined };
     }
   }
 }
 
 export function BulkLessonGenerator() {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [filterCurriculum, setFilterCurriculum] = useState('all');
   const [filterSubject, setFilterSubject] = useState('all');
   const [filterLevel, setFilterLevel] = useState('all');
-  const [onlyMissing, setOnlyMissing] = useState(true);
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [results, setResults] = useState<GenResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [dryRun, setDryRun] = useState(false);
+  const [showLegacyControls, setShowLegacyControls] = useState(false);
+  const developerMode = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEVELOPER_MODE === 'true';
 
   useEffect(() => {
     if (!isRunning || runStartedAt === null) return;
@@ -90,7 +103,7 @@ export function BulkLessonGenerator() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
-        .select('id, name, lesson_content, curriculum_subject_id, curriculum_level_code')
+        .select('id, name, lesson_content, curriculum_subject_id, curriculum_country_code, curriculum_level_code')
         .eq('is_active', true)
         .order('name');
       if (error) throw error;
@@ -113,8 +126,44 @@ export function BulkLessonGenerator() {
     enabled: open,
   });
 
+  const topicIds = useMemo(() => topics.map((topic) => topic.id), [topics]);
+  const { data: stagingVersions = [], isLoading: isLoadingStagingVersions } = useQuery({
+    queryKey: ['topic-lesson-versions-bulk-lesson', topicIds],
+    queryFn: async () => {
+      if (!topicIds.length) return [] as Array<{ topic_id: string; status: string }>;
+      const { data, error } = await (supabase as any)
+        .from('topic_lesson_versions')
+        .select('topic_id, status')
+        .in('topic_id', topicIds)
+        .in('status', ['draft', 'validated']);
+      if (error) throw error;
+      return (data ?? []) as Array<{ topic_id: string; status: string }>;
+    },
+    enabled: open && topicIds.length > 0,
+  });
+
+  const stagingStatusesByTopic = useMemo(() => {
+    const statuses = new Map<string, string[]>();
+    stagingVersions.forEach((version) => {
+      const current = statuses.get(version.topic_id) ?? [];
+      current.push(version.status);
+      statuses.set(version.topic_id, current);
+    });
+    return statuses;
+  }, [stagingVersions]);
+
+  const statusForTopic = (topic: TopicRow): BulkLessonStatus => deriveBulkLessonStatus({
+    lessonContent: topic.lesson_content,
+    stagingStatuses: stagingStatusesByTopic.get(topic.id) ?? [],
+  });
+
   const levels = useMemo(
     () => [...new Set(topics.map((t) => t.curriculum_level_code).filter(Boolean))].sort() as string[],
+    [topics],
+  );
+
+  const curricula = useMemo(
+    () => [...new Set(topics.map((topic) => topic.curriculum_country_code).filter(Boolean))].sort() as string[],
     [topics],
   );
 
@@ -123,10 +172,11 @@ export function BulkLessonGenerator() {
       topics.filter((t) => {
         if (filterSubject !== 'all' && t.curriculum_subject_id !== filterSubject) return false;
         if (filterLevel !== 'all' && t.curriculum_level_code !== filterLevel) return false;
-        if (onlyMissing && t.lesson_content) return false;
+        if (filterCurriculum !== 'all' && t.curriculum_country_code !== filterCurriculum) return false;
+        if (statusForTopic(t) !== 'none') return false;
         return true;
       }),
-    [topics, filterSubject, filterLevel, onlyMissing],
+    [topics, filterCurriculum, filterSubject, filterLevel, stagingStatusesByTopic],
   );
 
   const toggle = (id: string) => {
@@ -173,28 +223,50 @@ export function BulkLessonGenerator() {
     setRunStartedAt(Date.now());
     setElapsedMs(0);
 
-    for (const topic of batch) {
-      setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'running' } : r));
-      try {
-        const invokePromise = supabase.functions.invoke('generate-lesson-content', {
-          body: { topicId: topic.id, language },
-        });
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error('La génération a dépassé 120 secondes.')), GENERATION_TIMEOUT_MS);
-        });
-        const result = await Promise.race([invokePromise, timeoutPromise]);
-        const { data: fnData, error: fnError, response: invokeResponse } = result;
-        if (fnError) throw new Error(fnError.message ?? 'Erreur réseau');
-        if (fnData?.error) throw new Error(fnData.error);
-        const stepCount = (fnData?.lesson_content?.steps?.length ?? 0);
-        setResults((p) => p.map((r) => r.topicId === topic.id
-          ? { ...r, status: 'done', currentStep: stepCount > 1 ? `${stepCount} étapes` : undefined }
-          : r));
-        void invokeResponse;
-      } catch (err) {
-        const errorMessage = await getFunctionErrorMessage(err);
-        setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'error', error: errorMessage } : r));
-      }
+    try {
+      const workflowResults = await runBulkStagingGeneration(
+        batch,
+        (progress) => setResults((previous) => previous.map((result) => result.topicId === progress.topicId ? {
+          ...result,
+          status: progress.status,
+          providerCalls: progress.providerCalls,
+          progress,
+        } : result)),
+        { dryRun: developerMode && dryRun, dryRunContent: developerMode ? geometryDraftLesson : undefined, language },
+      );
+      setResults((previous) => previous.map((result) => {
+        const workflowResult = workflowResults.find((candidate) => candidate.topicId === result.topicId);
+        if (!workflowResult) return result;
+        if (workflowResult.status === 'saved') return { ...result, status: 'saved', versionId: workflowResult.version?.id, providerCalls: result.providerCalls ?? (developerMode && dryRun ? 0 : 4) };
+        return {
+          ...result,
+          status: 'failed',
+          error: workflowResult.failure?.message ?? 'The staging generation failed.',
+          technicalDetail: workflowResult.failure?.technicalDiagnostic,
+          providerCalls: workflowResult.failure?.providerCalls ?? 0,
+          failedLevel: workflowResult.failure?.failedLevel,
+          failureStage: workflowResult.failure?.failureStage,
+          httpStatus: workflowResult.failure?.httpStatus,
+          errorCode: workflowResult.failure?.code,
+          requestId: workflowResult.failure?.requestId,
+          providerDiagnostics: workflowResult.failure?.providerDiagnostics,
+        };
+      }));
+    } catch (err) {
+      const details = await getFunctionErrorDetails(err);
+      setResults((previous) => previous.map((result) => selected.includes(result.topicId) ? {
+        ...result,
+        status: 'failed',
+        error: details.message,
+        technicalDetail: details.technicalDetail,
+        providerCalls: details.providerCalls ?? 0,
+        failedLevel: details.level,
+        failureStage: details.stage ?? 'pre_generation',
+        httpStatus: details.httpStatus,
+        errorCode: details.code,
+        requestId: details.requestId,
+        providerDiagnostics: details.providerDiagnostics,
+      } : result));
     }
 
     setIsRunning(false);
@@ -204,7 +276,46 @@ export function BulkLessonGenerator() {
     setSelected([]);
   };
 
-  const done = results.filter((r) => r.status === 'done').length;
+  const handleLegacyGenerate = async () => {
+    if (!selected.length) return;
+    const batch = topics.filter((topic) => selected.includes(topic.id));
+    setResults(batch.map((topic) => ({ topicId: topic.id, name: topic.name, status: 'idle' })));
+    setIsRunning(true);
+    setRunStartedAt(Date.now());
+    setElapsedMs(0);
+    for (const topic of batch) {
+      setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'generating' } : result));
+      try {
+        const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', { body: { topicId: topic.id, language } });
+        if (error) {
+          const details = await getFunctionErrorDetails(error, response);
+          throw Object.assign(new Error(details.message), details);
+        }
+        if (data?.error) throw Object.assign(new Error(getGenerationErrorDetails(data).message), getGenerationErrorDetails(data));
+        setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'saved' } : result));
+      } catch (error) {
+        const details = getGenerationErrorDetails(error);
+        setResults((previous) => previous.map((result) => result.topicId === topic.id ? {
+          ...result,
+          status: 'failed',
+          error: details.message,
+          technicalDetail: details.technicalDetail,
+          providerCalls: details.providerCalls ?? 0,
+          failedLevel: details.level,
+          failureStage: details.stage ?? 'pre_generation',
+          httpStatus: details.httpStatus,
+          errorCode: details.code,
+          requestId: details.requestId,
+          providerDiagnostics: details.providerDiagnostics,
+        } : result));
+      }
+    }
+    setIsRunning(false);
+    setRunStartedAt(null);
+    setSelected([]);
+  };
+
+  const done = results.filter((r) => r.status === 'saved').length;
   const showResults = results.length > 0;
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
@@ -225,7 +336,7 @@ export function BulkLessonGenerator() {
       <DialogTrigger asChild>
         <Button variant="outline">
           <BookOpen className="mr-2 h-4 w-4" />
-          Générer des leçons
+          {ui("Ouvrir le générateur")}
         </Button>
       </DialogTrigger>
 
@@ -233,7 +344,7 @@ export function BulkLessonGenerator() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="h-5 w-5" />
-            Générer des leçons en masse
+            {ui("Générer des leçons en masse")}
           </DialogTitle>
         </DialogHeader>
 
@@ -242,11 +353,11 @@ export function BulkLessonGenerator() {
             <div className="flex items-center justify-between text-sm">
               <div className="flex flex-col">
                 <span className="font-medium">
-                  {isRunning ? 'Génération en cours…' : `Terminé — ${done} / ${results.length}`}
+                {isRunning ? 'Génération staging en cours…' : `Terminé — ${done} / ${results.length}`}
                 </span>
                 {isRunning && (
                   <span className="text-xs text-muted-foreground">
-                    {elapsedSeconds}s écoulées
+                    {elapsedSeconds}{ui("s écoulées")}
                   </span>
                 )}
               </div>
@@ -254,24 +365,50 @@ export function BulkLessonGenerator() {
             </div>
             <Progress value={results.length ? (done / results.length) * 100 : 0} className="h-2" />
             <div className="mt-2 space-y-1">
-              {results.map((r) => (
+              {results.map((r) => {
+                const formattedErrorMessage = r.error ? formatGenerationErrorDetails({
+                  message: r.error,
+                  technicalDetail: r.technicalDetail,
+                  stage: r.failureStage,
+                }) : undefined;
+                const visibleErrorMessage = formattedErrorMessage &&
+                  typeof formattedErrorMessage === 'string' &&
+                  formattedErrorMessage.trim() &&
+                  !formattedErrorMessage.includes('[object Object]')
+                  ? formattedErrorMessage
+                  : r.error ? generationErrorMessages.unknown : undefined;
+                if (import.meta.env.DEV && r.error) {
+                  console.debug('[BulkLessonGenerator] visible row error payload', {
+                    topicName: r.name,
+                    rawError: r.error,
+                    formatted: visibleErrorMessage,
+                  });
+                }
+                return (
                 <div key={r.topicId} className="flex items-center gap-3 border-b py-2 text-sm last:border-0">
-                  {r.status === 'running' && (
+                  {(r.status === 'generating' || r.status === 'validating') && (
                     <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-primary" />
                   )}
-                  {r.status === 'done' && (
+                  {r.status === 'saved' && (
                     <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-500" />
                   )}
-                  {r.status === 'error' && <XCircle className="h-4 w-4 flex-shrink-0 text-red-500" />}
+                  {r.status === 'failed' && <XCircle className="h-4 w-4 flex-shrink-0 text-red-500" />}
                   {r.status === 'idle' && <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-muted" />}
                   <span className="flex-1 truncate">{r.name}</span>
-                  {r.status === 'done' && r.currentStep && (
-                    <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
-                  )}
-                  {r.error && <span className="max-w-[160px] truncate text-xs text-red-500">{r.error}</span>}
+                  {r.progress && <span className="text-xs text-muted-foreground">Topic {r.progress.topicIndex} of {r.progress.totalTopics} · Level {r.progress.level} of 4 · Provider calls: {r.providerCalls ?? 0} · Status: {r.progress.status}</span>}
+                  {developerMode && r.status === 'failed' && <span className="text-xs text-red-500">{r.topicId} · Level {r.failedLevel ?? '?'} · {r.failureStage ?? 'failed'}{r.httpStatus ? ` · HTTP ${r.httpStatus}` : ''}</span>}
+                  {r.status === 'saved' && r.versionId && <Button asChild size="sm" variant="outline"><Link to={`/admin/generated-lessons?version=${encodeURIComponent(r.versionId)}`}>Voir la leçon</Link></Button>}
+                  {visibleErrorMessage && <span title={developerMode ? (r.technicalDetail ?? visibleErrorMessage) : undefined} className="max-w-[360px] break-words text-right text-xs text-red-500">{visibleErrorMessage}</span>}
+                  {developerMode && r.status === 'failed' && <span className="max-w-[360px] break-words text-right text-[11px] text-muted-foreground">{[r.errorCode, r.requestId, `providerCalls=${r.providerCalls ?? 0}`, r.technicalDetail, formatProviderDiagnostics(r.providerDiagnostics)].filter(Boolean).join(' · ')}</span>}
                 </div>
-              ))}
+                );
+              })}
             </div>
+            {!isRunning && developerMode && (
+              <Button asChild variant="outline" className="mt-2 w-full">
+                <Link to="/admin/generated-lessons?workflow=staging">Voir les versions staging</Link>
+              </Button>
+            )}
             {!isRunning && (
               <Button
                 variant="outline"
@@ -281,19 +418,29 @@ export function BulkLessonGenerator() {
                   setSelected([]);
                 }}
               >
-                Retour à la sélection
+                {ui("Retour à la sélection")}
               </Button>
             )}
           </div>
         ) : (
           <>
             <div className="flex flex-wrap gap-2">
-              <Select value={filterSubject} onValueChange={setFilterSubject}>
-                <SelectTrigger className="h-8 w-40 text-sm">
-                  <SelectValue placeholder="Matière" />
+              <Select value={filterCurriculum} onValueChange={setFilterCurriculum}>
+                <SelectTrigger className="h-8 w-32 text-sm">
+                  <SelectValue placeholder={ui("Curriculum")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes les matières</SelectItem>
+                  <SelectItem value="all">{ui("Tous les curricula")}</SelectItem>
+                  {curricula.map((curriculum) => <SelectItem key={curriculum} value={curriculum}>{curriculum}</SelectItem>)}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterSubject} onValueChange={setFilterSubject}>
+                <SelectTrigger className="h-8 w-40 text-sm">
+                  <SelectValue placeholder={ui("Matière")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ui("Toutes les matières")}</SelectItem>
                   {subjects.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.name}
@@ -304,10 +451,10 @@ export function BulkLessonGenerator() {
 
               <Select value={filterLevel} onValueChange={setFilterLevel}>
                 <SelectTrigger className="h-8 w-28 text-sm">
-                  <SelectValue placeholder="Niveau" />
+                  <SelectValue placeholder={ui("Niveau")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="all">{ui("Tous")}</SelectItem>
                   {levels.map((l) => (
                     <SelectItem key={l} value={l}>
                       {l}
@@ -316,46 +463,42 @@ export function BulkLessonGenerator() {
                 </SelectContent>
               </Select>
 
-              <Select value={language} onValueChange={(v) => setLanguage(v as 'fr' | 'en')}>
-                <SelectTrigger className="h-8 w-28 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                  <SelectItem value="en">🇬🇧 English</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <label className="flex cursor-pointer items-center gap-1.5 text-sm">
-                <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(Boolean(v))} />
-                Sans leçon
-              </label>
+              {developerMode && <div data-testid="bulk-developer-controls" className="flex flex-wrap gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                <label className="flex cursor-pointer items-center gap-1.5">
+                  <Checkbox checked={dryRun} onCheckedChange={(v) => setDryRun(Boolean(v))} />
+                  Dry-run staging (0 appels, aucune écriture)
+                </label>
+                <Select value={language} onValueChange={(v) => setLanguage(v as 'fr' | 'en')}>
+                  <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="fr">Français</SelectItem><SelectItem value="en">English</SelectItem></SelectContent>
+                </Select>
+              </div>}
             </div>
 
             <div className="flex gap-3 text-xs">
               <button
-                onClick={() => setSelected(visible.filter((t) => !t.lesson_content).map((t) => t.id))}
+                onClick={() => setSelected(visible.filter((t) => statusForTopic(t) === 'none').map((t) => t.id))}
                 className="text-primary hover:underline"
               >
-                Sélectionner sans leçon
+                {ui("Sélectionner sans leçon")}
               </button>
               <span className="text-muted-foreground">·</span>
               <button onClick={() => setSelected(visible.map((t) => t.id))} className="text-primary hover:underline">
-                Tout sélectionner
+                {ui("Tout sélectionner")}
               </button>
               <span className="text-muted-foreground">·</span>
               <button onClick={() => setSelected([])} className="text-muted-foreground hover:underline">
-                Désélectionner
+                {ui("Désélectionner")}
               </button>
             </div>
 
             <div className="min-h-0 flex-1 divide-y overflow-y-auto rounded-lg border">
-              {isLoading ? (
+              {isLoading || isLoadingStagingVersions ? (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : visible.length === 0 ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">Aucun sujet trouvé</p>
+                <p className="py-10 text-center text-sm text-muted-foreground">{ui("Aucun sujet trouvé")}</p>
               ) : (
                 visible.map((topic) => (
                   <div
@@ -371,27 +514,15 @@ export function BulkLessonGenerator() {
                           {topic.curriculum_level_code}
                         </Badge>
                       )}
-                      {topic.lesson_content ? (
-                        <>
-                          <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
-                            Leçon ✓
-                          </Badge>
-                          <button
-                            onClick={(e) => handleDeleteOne(topic.id, e)}
-                            disabled={deletingIds.has(topic.id)}
-                            title="Supprimer la leçon"
-                            className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
-                          >
-                            {deletingIds.has(topic.id)
-                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              : <Trash2 className="h-3.5 w-3.5" />}
-                          </button>
-                        </>
-                      ) : (
-                        <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
-                          Pas de leçon
-                        </Badge>
-                      )}
+                      <Badge variant="outline" className="h-5 text-xs text-muted-foreground">{topic.curriculum_country_code ?? '—'}</Badge>
+                      {developerMode && showLegacyControls && topic.lesson_content && <button
+                        onClick={(e) => handleDeleteOne(topic.id, e)}
+                        disabled={deletingIds.has(topic.id)}
+                        title={ui("Supprimer la leçon")}
+                        className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
+                      >
+                        {deletingIds.has(topic.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      </button>}
                     </div>
                   </div>
                 ))
@@ -400,10 +531,10 @@ export function BulkLessonGenerator() {
 
             <div className="flex items-center justify-between border-t pt-2">
               <span className="text-sm text-muted-foreground">
-                {selected.length} sélectionné{selected.length !== 1 ? 's' : ''}
+                {selected.length} {ui("sélectionné")}{selected.length !== 1 ? 's' : ''}
               </span>
               <div className="flex gap-2">
-                {selected.some(id => topics.find(t => t.id === id)?.lesson_content) && (
+                {showLegacyControls && selected.some(id => topics.find(t => t.id === id)?.lesson_content) && (
                   <Button
                     variant="outline"
                     onClick={handleDeleteSelected}
@@ -411,15 +542,18 @@ export function BulkLessonGenerator() {
                     className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Supprimer les leçons
+                    {ui("Supprimer les leçons")}
                   </Button>
                 )}
-                <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
+                <Button data-testid="bulk-generate-button" onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
                   <Wand2 className="h-4 w-4" />
-                  {`Générer ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}`}
+                  Générer les leçons
                 </Button>
+                {developerMode && <Button variant="ghost" onClick={() => setShowLegacyControls((value) => !value)} aria-expanded={showLegacyControls}>{showLegacyControls ? 'Masquer les contrôles legacy' : 'Afficher les contrôles legacy'}</Button>}
+                {developerMode && showLegacyControls && <Button variant="ghost" onClick={handleLegacyGenerate} disabled={!selected.length || isRunning} title="Ancien générateur; utilise l'ancien contrat et peut modifier le contenu public.">Générateur legacy (modifie topics.lesson_content)</Button>}
               </div>
             </div>
+            {developerMode && showLegacyControls && <p className="text-xs text-amber-700">Legacy uniquement : ces contrôles peuvent modifier ou supprimer topics.lesson_content. Le bouton staging ci-dessus n’utilise jamais cette persistance.</p>}
           </>
         )}
       </DialogContent>

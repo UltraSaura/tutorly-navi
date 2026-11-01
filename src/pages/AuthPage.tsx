@@ -1,3 +1,5 @@
+import { useFamilyProfile } from '@/context/FamilyProfileContext';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +10,7 @@ import { StudentRegistrationForm } from '@/components/auth/StudentRegistrationFo
 import { ParentRegistrationForm } from '@/components/auth/ParentRegistrationForm';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { PasswordResetForm } from '@/components/auth/PasswordResetForm';
+import { PasswordUpdateForm } from '@/components/auth/PasswordUpdateForm';
 import { Button } from '@/components/ui/button';
 import { UserType, StudentRegistrationData, ParentRegistrationData } from '@/types/registration';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
@@ -19,7 +22,9 @@ import { PageMeta } from '@/components/seo/PageMeta';
 type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm' | 'resetPassword';
 
 const AuthPage: React.FC = () => {
-  const { user, loading: authLoading, signIn, signUp, signOut, resetPassword } = useAuth();
+  const ui = useInterfaceTranslation();
+  const { user, loading: authLoading, signIn, signUp, signOut, resetPassword, updatePassword, isPasswordRecovery } = useAuth();
+  const family = useFamilyProfile();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -34,7 +39,7 @@ const AuthPage: React.FC = () => {
   useEffect(() => {
     if (state?.message) {
       toast({
-        title: "Admin Access Required",
+        title: ui("Admin Access Required"),
         description: state.message,
         variant: "default",
       });
@@ -42,7 +47,7 @@ const AuthPage: React.FC = () => {
   }, [state?.message, toast]);
 
   // Redirect if already authenticated
-  if (authLoading || adminLoading) {
+  if (authLoading || family.loading || (!family.isFamily && adminLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -50,7 +55,13 @@ const AuthPage: React.FC = () => {
     );
   }
 
+  if (isPasswordRecovery) {
+    return <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4"><PasswordUpdateForm onSubmit={handleUpdatePassword} loading={loading} /></div>;
+  }
+
   if (user) {
+    if (family.isFamily) return <Navigate to="/family" replace />;
+    if (family.isLegacyGuardian) return <Navigate to="/guardian" replace />;
     const returnTo = state?.returnTo || "/";
     
     // Special handling for admin routes
@@ -104,7 +115,7 @@ const AuthPage: React.FC = () => {
       if (error) {
         toast({
           title: t('auth.loginError'),
-          description: error.message,
+          description: error.message === 'family.backendUnavailable' ? ui(error.message) : error.message,
           variant: 'destructive',
         });
       }
@@ -161,7 +172,7 @@ const AuthPage: React.FC = () => {
 
       toast({
         title: t('auth.registrationSuccess'),
-        description: t('auth.registrationSuccessStudent'),
+        description: `${t('auth.registrationSuccessStudent')} An administrator will review your account before you can sign in.`,
       });
       setStep('login');
     } catch (error) {
@@ -202,6 +213,20 @@ const AuthPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  async function handleUpdatePassword(password: string) {
+    setLoading(true);
+    try {
+      const { error } = await updatePassword(password);
+      if (error) {
+        toast({ title: t('auth.resetPasswordError'), description: error.message, variant: 'destructive' });
+        return;
+      }
+      toast({ title: t('auth.updatePassword'), description: t('auth.passwordUpdated') });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleParentRegistration = async (data: ParentRegistrationData) => {
     setLoading(true);
@@ -245,7 +270,7 @@ const AuthPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
-        <PageMeta title="Sign In" description="Sign in or create an account to access your Stuwy student, guardian, or teacher dashboard." />
+        <PageMeta title={ui("Sign In")} description={ui("Sign in or create an account to access your Stuwy student, guardian, or teacher dashboard.")} />
         <div className="w-full max-w-4xl">
         {step === 'login' && (
           <div className="space-y-6">

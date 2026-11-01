@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 "use client";
 
 import * as React from "react";
@@ -30,6 +31,7 @@ export default function ShapeEditor({
   state: VisualShapeSelect;
   setState: (s: VisualShapeSelect) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drag, setDrag] = useState<DragMode>(null);
@@ -276,7 +278,7 @@ export default function ShapeEditor({
             variant={mode === "edit" ? "default" : "outline"}
             onClick={() => setMode("edit")}
           >
-            Edit
+            {ui("Edit")}
           </Button>
           <Button
             type="button"
@@ -288,21 +290,21 @@ export default function ShapeEditor({
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-sm">Allow multiple</Label>
+          <Label className="text-sm">{ui("Allow multiple")}</Label>
           <input type="checkbox" checked={!!state.multi} onChange={(e) => setState({ ...state, multi: e.target.checked })} />
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => addShape("rect")}>
-            Add rectangle
+            {ui("Add rectangle")}
           </Button>
           <Button variant="outline" onClick={() => addShape("circle")}>
-            Add circle
+            {ui("Add circle")}
           </Button>
           <Button variant="outline" onClick={() => addShape("triangle")}>
-            Add triangle
+            {ui("Add triangle")}
           </Button>
           <Button variant="outline" onClick={() => addShape("polygon")}>
-            Add polygon
+            {ui("Add polygon")}
           </Button>
           <Button
             variant="outline"
@@ -312,7 +314,7 @@ export default function ShapeEditor({
               !state.shapes.some((s) => s.id === selectedId && s.type === "polygon" && s.polygon)
             }
           >
-            Add side
+            {ui("Add side")}
           </Button>
           <Button
             variant="outline"
@@ -324,7 +326,7 @@ export default function ShapeEditor({
               )
             }
           >
-            Remove last side
+            {ui("Remove last side")}
           </Button>
         </div>
         <div className="space-y-2">
@@ -339,7 +341,7 @@ export default function ShapeEditor({
                 {shape.label || shape.type}
               </button>
               <Button size="sm" variant="outline" onClick={() => removeShape(shape.id)}>
-                Remove
+                {ui("Remove")}
               </Button>
             </div>
           ))}
@@ -362,6 +364,7 @@ export default function ShapeEditor({
           onPointerLeave={handleSvgPointerUp}
         >
           {state.shapes.map((shape) => renderShape({
+            ui,
             shape,
             selected: selectedId === shape.id,
             onPointerDownShape: handlePointerDownShape,
@@ -376,6 +379,7 @@ export default function ShapeEditor({
 }
 
 function renderShape({
+  ui,
   shape,
   selected,
   onPointerDownShape,
@@ -383,6 +387,7 @@ function renderShape({
   onPointerDownCircleRadius,
   onPointerDownVertex,
 }: {
+  ui: (text: string) => string;
   shape: VisualShapeSelect["shapes"][number];
   selected: boolean;
   onPointerDownShape: (shape: VisualShapeSelect["shapes"][number], evt: React.PointerEvent<SVGElement>) => void;
@@ -455,7 +460,7 @@ function renderShape({
                 r={1.6}
                 className="fill-white stroke-blue-500 cursor-pointer"
                 strokeWidth={1.2}
-                aria-label="Circle center"
+                aria-label={ui("Circle center")}
                 onPointerDown={(evt) => onPointerDownShape(shape, evt)}
               />
               <circle
@@ -464,7 +469,7 @@ function renderShape({
                 r={1.6}
                 className="fill-white stroke-blue-500 cursor-pointer"
                 strokeWidth={1.2}
-                aria-label="Circle radius"
+                aria-label={ui("Circle radius")}
                 onPointerDown={onPointerDownCircleRadius(shape.id, shape.circle)}
               />
             </g>

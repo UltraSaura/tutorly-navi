@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { RecommendedNextSteps } from '@/components/dashboard/RecommendedNextStep
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function StudentDashboard() {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { data: subjectOverview, isLoading } = useStudentMasteryOverview();
   
@@ -31,12 +33,12 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="pt-6 text-center space-y-4">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto" />
-            <h2 className="text-xl font-bold">No Learning Data Yet</h2>
+            <h2 className="text-xl font-bold">{ui("No Learning Data Yet")}</h2>
             <p className="text-muted-foreground">
-              Start learning to see your progress here
+              {ui("Start learning to see your progress here")}
             </p>
             <Button onClick={() => navigate('/my-program')}>
-              Go to My Program
+              {ui("Go to My Program")}
             </Button>
           </CardContent>
         </Card>
@@ -50,16 +52,16 @@ export default function StudentDashboard() {
   
   return (
     <div className="container mx-auto p-4 space-y-6 max-w-6xl">
-      <PageMeta title="Dashboard" description="Your learning dashboard — track progress, resume lessons, and continue your math journey on Stuwy." />
+      <PageMeta title={ui("Dashboard")} description={ui("Your learning dashboard — track progress, resume lessons, and continue your math journey on Stuwy.")} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Learning Dashboard</h1>
-          <p className="text-muted-foreground">Track your mastery across all subjects</p>
+          <h1 className="text-3xl font-bold">{ui("My Learning Dashboard")}</h1>
+          <p className="text-muted-foreground">{ui("Track your mastery across all subjects")}</p>
         </div>
         <Button onClick={() => navigate('/my-program')}>
           <BookOpen className="mr-2 h-4 w-4" />
-          My Program
+          {ui("My Program")}
         </Button>
       </div>
       
@@ -68,7 +70,7 @@ export default function StudentDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="w-6 h-6 text-primary" />
-            Overall Progress
+            {ui("Overall Progress")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -79,7 +81,7 @@ export default function StudentDashboard() {
             <div className="flex-1">
               <Progress value={overallMastery} className="h-3" />
               <p className="text-sm text-muted-foreground mt-2">
-                {subjectOverview.reduce((sum, s) => sum + s.mastered_objectives, 0)} objectives mastered across {subjectOverview.length} subjects
+                {subjectOverview.reduce((sum, s) => sum + s.mastered_objectives, 0)} {ui("objectives mastered across")} {subjectOverview.length} {ui("subjects")}
               </p>
             </div>
           </div>
@@ -93,7 +95,7 @@ export default function StudentDashboard() {
       <div>
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
           <TrendingUp className="w-6 h-6" />
-          Progress by Subject
+          {ui("Progress by Subject")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {subjectOverview.map(subject => (
@@ -144,11 +146,11 @@ export default function StudentDashboard() {
                 {/* Stats */}
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Mastered:</span>
+                    <span className="text-muted-foreground">{ui("Mastered:")}</span>
                     <span className="font-medium">{subject.mastered_objectives} / {subject.total_objectives}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">In Progress:</span>
+                    <span className="text-muted-foreground">{ui("In Progress:")}</span>
                     <span className="font-medium">{subject.in_progress_objectives}</span>
                   </div>
                 </div>

@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,8 @@ export default function ExerciseResultCard({
   onViewExplanation,
   onRequestExplanation,
 }: ExerciseResultCardProps) {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const hasExplanation = Array.isArray(exercise.explanation)
     ? exercise.explanation.length > 0
     : !!exercise.explanation;
@@ -46,14 +50,14 @@ export default function ExerciseResultCard({
               </Badge>
             )}
             <Badge variant="secondary">
-              {exercise.attempts_count} {exercise.attempts_count === 1 ? 'attempt' : 'attempts'}
+              {exercise.attempts_count} {exercise.attempts_count === 1 ? ui("attempt") : 'attempts'}
             </Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-sm font-medium mb-2">Exercise:</p>
+          <p className="text-sm font-medium mb-2">{ui("Exercise:")}</p>
           <div className="p-3 bg-muted rounded-md">
             <MathRenderer latex={exercise.exercise_content} />
           </div>
@@ -62,7 +66,7 @@ export default function ExerciseResultCard({
         {exercise.user_answer ? (
           <div>
             <p className="text-sm font-medium mb-2">
-              {exercise.is_correct ? 'Correct Answer:' : 'Student Answer:'}
+              {exercise.is_correct ? ui("Correct Answer:") : ui("Student Answer:")}
             </p>
             <div className="p-3 bg-muted rounded-md">
               <MathRenderer latex={exercise.user_answer} />
@@ -71,7 +75,7 @@ export default function ExerciseResultCard({
         ) : (
           <div className="p-3 bg-muted/50 rounded-md border border-dashed">
             <p className="text-sm text-muted-foreground italic">
-              Question asked - Not answered yet
+              {ui("Question asked - Not answered yet")}
             </p>
           </div>
         )}
@@ -80,7 +84,7 @@ export default function ExerciseResultCard({
         {exercise.correct_answer && (
           <div>
             <p className="text-sm font-medium mb-2 text-green-700 dark:text-green-400">
-              Correct Answer:
+              {ui("Correct Answer:")}
             </p>
             <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
               <MathRenderer latex={exercise.correct_answer} />
@@ -91,7 +95,7 @@ export default function ExerciseResultCard({
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {format(new Date(exercise.created_at), 'PPp')}
+            {format(new Date(exercise.created_at), 'PPp', { locale: dateLocale })}
           </div>
           <div className="flex gap-2">
             {hasExplanation && onViewExplanation && (
@@ -101,7 +105,7 @@ export default function ExerciseResultCard({
                 onClick={() => onViewExplanation(exercise)}
               >
                 <Eye className="h-4 w-4 mr-2" />
-                View Explanation
+                {ui("View Explanation")}
               </Button>
             )}
             {!hasExplanation && exercise.user_answer && onRequestExplanation && (
@@ -111,7 +115,7 @@ export default function ExerciseResultCard({
                 onClick={() => onRequestExplanation(exercise)}
               >
                 <Lightbulb className="h-4 w-4 mr-2" />
-                Generate Explanation
+                {ui("Generate Explanation")}
               </Button>
             )}
           </div>
@@ -119,12 +123,12 @@ export default function ExerciseResultCard({
 
         {exercise.attempts && exercise.attempts.length > 1 && (
           <div className="pt-2 border-t">
-            <p className="text-xs font-medium mb-2">Attempt History:</p>
+            <p className="text-xs font-medium mb-2">{ui("Attempt History:")}</p>
             <div className="space-y-1">
               {exercise.attempts.map((attempt, idx) => (
                 <div key={attempt.id} className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">
-                    Attempt {idx + 1}: {format(new Date(attempt.created_at), 'PP')}
+                    {ui("Attempt")} {idx + 1}: {format(new Date(attempt.created_at), 'PP', { locale: dateLocale })}
                   </span>
                   {attempt.is_correct ? (
                     <CheckCircle2 className="h-3 w-3 text-green-600" />

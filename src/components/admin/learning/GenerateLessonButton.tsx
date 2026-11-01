@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Wand2, Loader2 } from 'lucide-react';
@@ -23,6 +24,7 @@ export function GenerateLessonButton({
   topicId, 
   hasExistingContent = false 
 }: GenerateLessonButtonProps) {
+  const ui = useInterfaceTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const generateLesson = useGenerateLessonContent();
 
@@ -42,7 +44,7 @@ export function GenerateLessonButton({
         ) : (
           <Wand2 className="w-4 h-4 mr-2" />
         )}
-        Generate Lesson Content
+        {ui("Generate Lesson Content")}
       </Button>
     );
   }
@@ -56,22 +58,21 @@ export function GenerateLessonButton({
           ) : (
             <Wand2 className="w-4 h-4 mr-2" />
           )}
-          Regenerate Lesson
+          {ui("Regenerate Lesson")}
         </Button>
       </AlertDialogTrigger>
       
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Regenerate Lesson Content?</AlertDialogTitle>
+          <AlertDialogTitle>{ui("Regenerate Lesson Content?")}</AlertDialogTitle>
           <AlertDialogDescription>
-            This will overwrite the existing lesson content with newly generated content.
-            This action cannot be undone.
+            {ui("This will overwrite the existing lesson content with newly generated content. This action cannot be undone.")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{ui("Cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={handleGenerate}>
-            Regenerate
+            {ui("Regenerate")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

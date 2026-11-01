@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -67,20 +68,21 @@ interface VariableHelperProps {
 }
 
 export const VariableHelper = ({ onInsertVariable }: VariableHelperProps) => {
+  const ui = useInterfaceTranslation();
   return (
     <Card className="glass border border-border/50">
       <CardHeader className="space-y-1 pb-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Info className="h-4 w-4" />
-          Available Variables
+          {ui("Available Variables")}
         </CardTitle>
         <CardDescription>
-          Click to insert variables into your prompt. Variables will be replaced with actual student data.
+          {ui("Click to insert variables into your prompt. Variables will be replaced with actual student data.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="text-sm text-muted-foreground mb-3">
-          <strong>Usage:</strong> Variables use the format <code className="bg-muted px-1 py-0.5 rounded">{'{{variable_name}}'}</code>
+          <strong>{ui("Usage:")}</strong> {ui("Variables use the format")} <code className="bg-muted px-1 py-0.5 rounded">{'{{variable_name}}'}</code>
         </div>
         
         <div className="space-y-2">
@@ -99,7 +101,7 @@ export const VariableHelper = ({ onInsertVariable }: VariableHelperProps) => {
                   {variable.description}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  <strong>Example:</strong> {variable.example}
+                  <strong>{ui("Example:")}</strong> {variable.example}
                 </p>
               </div>
               <Button
@@ -116,7 +118,7 @@ export const VariableHelper = ({ onInsertVariable }: VariableHelperProps) => {
 
         <div className="mt-4 p-3 bg-muted/30 rounded-md">
           <p className="text-sm text-muted-foreground">
-            <strong>Example usage:</strong>
+            <strong>{ui("Example usage:")}</strong>
           </p>
           <code className="text-xs block mt-1 text-foreground">
             {`"You are helping {{first_name}}, a {{grade_level}} student from {{country}}. For exercise: {{exercise_content}}, provide explanation in {{response_language}}."`}

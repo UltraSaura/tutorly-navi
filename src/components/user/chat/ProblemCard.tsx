@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { FileText } from 'lucide-react';
 import { ProblemSubmission } from '@/types/chat';
@@ -11,6 +12,7 @@ interface ProblemCardProps {
 }
 
 const ProblemCard = ({ problem }: ProblemCardProps) => {
+  const ui = useInterfaceTranslation();
   const { language } = useLanguage();
 
   return (
@@ -22,7 +24,7 @@ const ProblemCard = ({ problem }: ProblemCardProps) => {
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-semibold text-neutral-text break-words">
-              {problem.title || (language === 'fr' ? 'Problème' : 'Problem')}
+              {problem.title || (language === 'fr' ? 'Problème' : ui("Problem"))}
             </h2>
             <Badge variant="outline" className="mt-2">
               {problem.status === 'needs_more_information'
@@ -52,7 +54,7 @@ const ProblemCard = ({ problem }: ProblemCardProps) => {
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-neutral-text">
-            {language === 'fr' ? 'Ta réponse' : 'Your answer'}
+            {language === 'fr' ? ui("Ta réponse") : 'Your answer'}
           </label>
           <Textarea
             placeholder={language === 'fr' ? 'Écris ta réponse complète ici...' : 'Write your full answer here...'}

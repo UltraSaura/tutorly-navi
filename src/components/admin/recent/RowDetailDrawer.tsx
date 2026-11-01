@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function RowDetailDrawer({ open, onOpenChange, table, row }: Props) {
+  const ui = useInterfaceTranslation();
   if (!row || !table) return null;
   const health = evaluateRow(table, row);
 
@@ -35,7 +37,7 @@ export function RowDetailDrawer({ open, onOpenChange, table, row }: Props) {
           {health.checks.length > 0 && (
             <div className="mb-6">
               <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-                Validation
+                {ui("Validation")}
               </div>
               <ul className="space-y-1">
                 {health.checks.map((c, i) => (
@@ -66,7 +68,7 @@ export function RowDetailDrawer({ open, onOpenChange, table, row }: Props) {
 
           <div>
             <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-              Raw row
+              {ui("Raw row")}
             </div>
             <pre className="text-xs bg-muted/50 border rounded-md p-3 overflow-auto whitespace-pre-wrap break-all">
               {JSON.stringify(row, null, 2)}

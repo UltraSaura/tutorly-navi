@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,6 +19,8 @@ export const ViewTemplateDialog = ({
   onOpenChange,
   template,
 }: ViewTemplateDialogProps) => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   if (!template) return null;
 
   return (
@@ -34,22 +38,22 @@ export const ViewTemplateDialog = ({
             {/* Template Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-medium mb-2">Subject</h4>
+                <h4 className="text-sm font-medium mb-2">{ui("Subject")}</h4>
                 <p className="text-sm text-muted-foreground">{template.subject}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-2">Usage Type</h4>
+                <h4 className="text-sm font-medium mb-2">{ui("Usage Type")}</h4>
                 <Badge variant="secondary">{getPromptUsageLabel(template.usage_type)}</Badge>
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-2">Priority</h4>
+                <h4 className="text-sm font-medium mb-2">{ui("Priority")}</h4>
                 <p className="text-sm text-muted-foreground">{template.priority}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-2">Status</h4>
+                <h4 className="text-sm font-medium mb-2">{ui("Status")}</h4>
                 <div className="flex gap-2">
-                  {template.is_active && <Badge variant="default">Active</Badge>}
-                  {template.auto_activate && <Badge variant="outline">Auto-activate</Badge>}
+                  {template.is_active && <Badge variant="default">{ui("Active")}</Badge>}
+                  {template.auto_activate && <Badge variant="outline">{ui("Auto-activate")}</Badge>}
                 </div>
               </div>
             </div>
@@ -60,7 +64,7 @@ export const ViewTemplateDialog = ({
             {template.tags.length > 0 && (
               <>
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Tags</h4>
+                  <h4 className="text-sm font-medium mb-2">{ui("Tags")}</h4>
                   <div className="flex flex-wrap gap-2">
                     {template.tags.map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">
@@ -75,7 +79,7 @@ export const ViewTemplateDialog = ({
 
             {/* Prompt Content */}
             <div>
-              <h4 className="text-sm font-medium mb-2">Prompt Content</h4>
+              <h4 className="text-sm font-medium mb-2">{ui("Prompt Content")}</h4>
               <div className="bg-muted p-4 rounded-lg">
                 <pre className="text-sm whitespace-pre-wrap font-mono">
                   {template.prompt_content}
@@ -88,10 +92,10 @@ export const ViewTemplateDialog = ({
             {/* Metadata */}
             <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
               <div>
-                <span className="font-medium">Created:</span> {formatDistanceToNow(template.created_at, { addSuffix: true })}
+                <span className="font-medium">{ui("Created:")}</span> {formatDistanceToNow(template.created_at, { addSuffix: true , locale: dateLocale })}
               </div>
               <div>
-                <span className="font-medium">Updated:</span> {formatDistanceToNow(template.updated_at, { addSuffix: true })}
+                <span className="font-medium">{ui("Updated:")}</span> {formatDistanceToNow(template.updated_at, { addSuffix: true , locale: dateLocale })}
               </div>
             </div>
           </div>

@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +23,8 @@ export const PromptTemplateCard = ({
   onDelete,
   onSetActive,
 }: PromptTemplateCardProps) => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   return (
     <Card 
       className={`glass cursor-pointer transition-all ${
@@ -35,7 +39,7 @@ export const PromptTemplateCard = ({
               {getPromptTemplateDisplayName(template)}
               {template.is_active && (
                 <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-xs">
-                  Active
+                  {ui("Active")}
                 </Badge>
               )}
             </CardTitle>
@@ -61,7 +65,7 @@ export const PromptTemplateCard = ({
         <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
         
         <div className="mb-3">
-          <p className="text-sm font-medium mb-1">Prompt Preview:</p>
+          <p className="text-sm font-medium mb-1">{ui("Prompt Preview:")}</p>
           <p className="text-sm text-muted-foreground line-clamp-3">{template.prompt_content}</p>
         </div>
         
@@ -77,7 +81,7 @@ export const PromptTemplateCard = ({
       </CardContent>
       <CardFooter className="pt-0 flex justify-between items-center">
         <p className="text-xs text-muted-foreground">
-          Last updated: {new Date(template.updated_at).toLocaleDateString()}
+          {ui("Last updated:")} {new Date(template.updated_at).toLocaleDateString(locale)}
         </p>
         
         {!template.is_active && (
@@ -89,7 +93,7 @@ export const PromptTemplateCard = ({
               onSetActive(template.id);
             }}
           >
-            Set Active
+            {ui("Set Active")}
           </Button>
         )}
       </CardFooter>

@@ -1,3 +1,5 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianProgress } from '@/hooks/useGuardianProgress';
@@ -26,6 +28,8 @@ interface ChildProgress {
 }
 
 export default function GuardianProgress() {
+  const subjectLabel = useSubjectLabel();
+  const ui = useInterfaceTranslation();
   const { guardianId } = useGuardianAuth();
   const [selectedChild, setSelectedChild] = useState<string>('all');
 
@@ -77,23 +81,23 @@ export default function GuardianProgress() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Progress" description="Track long-term learning progress and topic mastery for each child." />
+      <PageMeta title={ui("Progress")} description={ui("Track long-term learning progress and topic mastery for each child.")} />
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Learning Progress</h1>
+          <h1 className="text-3xl font-bold text-foreground">{ui("Learning Progress")}</h1>
           <p className="text-muted-foreground mt-1">
-            Track your children's academic journey
+            {ui("Track your children's academic journey")}
           </p>
         </div>
         
         {children && children.length > 1 && (
           <Select value={selectedChild} onValueChange={setSelectedChild}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select child" />
+              <SelectValue placeholder={ui("Select child")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Children</SelectItem>
+              <SelectItem value="all">{ui("All Children")}</SelectItem>
               {children.map((child) => (
                 <SelectItem key={child.id} value={child.id}>
                   {child.name}
@@ -111,16 +115,16 @@ export default function GuardianProgress() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Overall Progress
+                {ui("Overall Progress")}
               </CardTitle>
               <CardDescription>
-                {currentData.name}'s learning journey
+                {currentData.name}{ui("'s learning journey")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Completion Rate</span>
+                  <span>{ui("Completion Rate")}</span>
                   <span className="font-medium">{currentData.overallProgress}%</span>
                 </div>
                 <Progress value={currentData.overallProgress} className="h-3" />
@@ -133,16 +137,16 @@ export default function GuardianProgress() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-primary" />
-                Subject Progress
+                {ui("Subject Progress")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {currentData.subjects.map((subject) => (
-                <div key={subject.name} className="space-y-2">
+                <div key={subjectLabel(subject.name)} className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">{subject.name}</span>
+                    <span className="font-medium">{subjectLabel(subject.name)}</span>
                     <span className="text-sm text-muted-foreground">
-                      {subject.exercisesCompleted} / {subject.totalExercises} exercises
+                      {subject.exercisesCompleted} / {subject.totalExercises} {ui("exercises")}
                     </span>
                   </div>
                   <Progress value={subject.progress} className="h-2" />
@@ -156,7 +160,7 @@ export default function GuardianProgress() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Award className="h-5 w-5 text-primary" />
-                Recent Achievements
+                {ui("Recent Achievements")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -181,7 +185,7 @@ export default function GuardianProgress() {
           <CardContent className="py-12 text-center">
             <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              No children added yet. Add children to track their progress.
+              {ui("No children added yet. Add children to track their progress.")}
             </p>
           </CardContent>
         </Card>

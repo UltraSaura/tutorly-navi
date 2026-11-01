@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { memo, useMemo, useState, useCallback } from 'react';
 import { Calculator, CheckCircle2, Send, Trash2, X, XCircle } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -22,6 +23,7 @@ import { generateGroupedRetryPractice } from '@/services/problemSubmissionServic
 import { useAdmin } from '@/context/AdminContext';
 import { buildSafeHomeworkLearningRows, type SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 import { motion } from 'framer-motion';
+import { PracticeFeedback } from '@/components/practice/PracticeFeedback';
 
 interface AIResponseProps {
   messages: Message[];
@@ -99,41 +101,12 @@ function ExerciseResultBanner({
   language: string;
 }) {
   if (!isCorrect && !isIncorrect) return null;
-
-  const fr = language === 'fr';
-  const label = isCorrect
-    ? (fr ? 'Bien joué' : 'Good job')
-    : (fr ? 'Pas encore' : 'Not yet');
-
-  return (
-    <motion.div
-      initial={{ scale: 0.92, opacity: 0 }}
-      animate={isCorrect
-        ? { scale: [0.92, 1.06, 1], opacity: 1 }
-        : { x: [0, -6, 6, -4, 4, 0], opacity: 1, scale: 1 }
-      }
-      transition={{ duration: isCorrect ? 0.35 : 0.42 }}
-      className={cn(
-        'mb-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold',
-        isCorrect
-          ? 'border-green-300 bg-green-100 text-green-800'
-          : 'border-red-300 bg-red-100 text-red-800'
-      )}
-      role="status"
-      aria-live="polite"
-    >
-      {isCorrect ? (
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-      ) : (
-        <XCircle className="h-3.5 w-3.5 shrink-0" />
-      )}
-      <span>{label}</span>
-    </motion.div>
-  );
+  return <PracticeFeedback status={isCorrect ? 'correct' : 'incorrect'} language={language} />;
 }
 
 // Memoized ExerciseCard component
 const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer, onShowExplanation }) => {
+  const ui = useInterfaceTranslation();
   const parsed = parseUserMessage(userMessage.content);
   const { question, answer, hasAnswer } = parsed;
   const choiceOptions = getExerciseChoices(userMessage);
@@ -213,13 +186,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const homeworkLearningRows = useMemo(() => {
     if (!question || (!isCorrect && !isIncorrect)) return [];
     return [{
-      label: language === 'fr' ? 'Exercice' : 'Exercise',
+      label: language === 'fr' ? 'Exercice' : ui("Exercise"),
       prompt: question,
       rowKind: 'calculation' as const,
       gradingExplanation: contentTrimmed,
       status: isCorrect ? 'correct' as const : 'incorrect' as const,
     }];
-  }, [contentTrimmed, isCorrect, isIncorrect, language, question]);
+  }, [contentTrimmed, isCorrect, isIncorrect, language, question, ui]);
 
   // JSON response path
   const jsonResponse = parseAIResponse(content);
@@ -448,6 +421,7 @@ const LoadingSkeleton = () => (
 );
 
 const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer, onSubmitGroupedAnswers, onClearAll, onDismissExercise }) => {
+  const ui = useInterfaceTranslation();
   const { t, language } = useLanguage();
   const teaching = useTwoCardTeaching();
   const { selectedModelId } = useAdmin();
@@ -481,9 +455,10 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         response_language: language === 'fr' ? 'French' : 'English',
         grade_level: userContext?.student_level || 'High School',
         learning_style: userContext?.learning_style,
+        country: userContext?.country,
       }
     );
-  }, [language, teaching, userContext?.learning_style, userContext?.student_level]);
+  }, [language, teaching, userContext?.learning_style, userContext?.student_level, userContext?.country]);
 
   const handleShowGroupedExplanation = useCallback(async (problem: ProblemSubmission, rowId?: string) => {
     setGroupedExplanationProblem(problem);
@@ -503,7 +478,9 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         language,
         schoolLevel: userContext?.student_level,
         country: userContext?.country,
-        curriculum: userContext?.country ? `${userContext.country} curriculum` : undefined,
+        curriculum: /^(france|fr)$/i.test(userContext?.country || '')
+          ? 'Programme national français'
+          : (userContext?.country ? `${userContext.country} curriculum` : undefined),
         learningStyle: userContext?.learning_style,
       });
       setGroupedRetryPractice(practice);
@@ -527,7 +504,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
     setGroupedRetryPracticeFeedbackLoading(true);
     try {
       const { data: current, error: currentError } = await supabase
-        .from('exercise_explanations_cache')
+        .from('learner_explanations_cache')
         .select('quality_score')
         .eq('id', cacheEntryId)
         .single();
@@ -545,7 +522,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
             : currentScore - 1;
 
       const { error: updateError } = await supabase
-        .from('exercise_explanations_cache')
+        .from('learner_explanations_cache')
         .update({ quality_score: nextScore })
         .eq('id', cacheEntryId);
 
@@ -608,7 +585,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
             <Button variant="outline" size="sm" onClick={onClearAll}
               className="text-muted-foreground hover:text-destructive hover:border-destructive">
               <Trash2 size={14} />
-              {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+              {language === 'fr' ? ui("Tout effacer") : 'Clear all'}
             </Button>
           </div>
         )}

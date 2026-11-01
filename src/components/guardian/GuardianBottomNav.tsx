@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Home, Users, Settings } from "lucide-react";
@@ -21,6 +22,7 @@ const bottomNavItems = [
 ];
 
 export function GuardianBottomNav() {
+  const ui = useInterfaceTranslation();
   const location = useLocation();
   const { t } = useTranslation();
   
@@ -36,7 +38,7 @@ export function GuardianBottomNav() {
           
           return (
             <NavLink
-              key={item.title}
+              key={ui(item.title)}
               to={item.url}
               className={`flex flex-col items-center justify-center h-12 w-20 rounded-xl transition-all ${
                 isActiveTab 
@@ -45,7 +47,7 @@ export function GuardianBottomNav() {
               }`}
             >
               <item.icon className="h-5 w-5 mb-1" />
-              <span className="text-xs font-medium">{item.title}</span>
+              <span className="text-xs font-medium">{ui(item.title)}</span>
             </NavLink>
           );
         })}

@@ -1,3 +1,6 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +49,9 @@ const getTrendIcon = (trend: "up" | "down" | "flat") => {
 };
 
 export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
+  const subjectLabel = useSubjectLabel();
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
 
   const handleOpenSubject = (subjectName: string) => {
@@ -55,7 +61,7 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
   if (!subjects || subjects.length === 0) {
     return (
       <Card className="p-6">
-        <p className="text-muted-foreground text-center">No subject data available yet.</p>
+        <p className="text-muted-foreground text-center">{ui("No subject data available yet.")}</p>
       </Card>
     );
   }
@@ -68,7 +74,7 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
             {/* Header: Badge and Gauge */}
             <div className="flex items-start justify-between">
               <Badge className={`${getSubjectColor(subject.name)} text-sm md:text-base px-3 md:px-4 py-1.5 md:py-2 rounded-full border-0`}>
-                {subject.name}
+                {subjectLabel(subject.name)}
               </Badge>
               <GaugeScore
                 value={subject.successRate}
@@ -77,7 +83,7 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
                 thickness={5}
                 centerIndicator="emoji"
                 className="shrink-0 -mt-0.5"
-                label={subject.name}
+                label={subjectLabel(subject.name)}
                 animate={true}
               />
             </div>
@@ -89,10 +95,10 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
             {subject.next && (
               <div className="flex items-center justify-between text-sm md:text-base">
                 <span className="text-muted-foreground">
-                  Next: <span className="font-medium text-foreground">{subject.next.type}</span>
+                  {ui("Next:")} <span className="font-medium text-foreground">{subject.next.type}</span>
                 </span>
                 <span className="text-xs md:text-sm text-muted-foreground">
-                  {new Date(subject.next.date).toLocaleDateString('en-US', { 
+                  {new Date(subject.next.date).toLocaleDateString(locale, {
                     month: 'short', 
                     day: 'numeric' 
                   })}
@@ -107,13 +113,13 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
                 className="rounded-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 px-10 md:px-14"
                 onClick={() => handleOpenSubject(subject.name)}
               >
-                Open
+                {ui("Open")}
               </Button>
               <Button 
                 size="sm"
                 className="rounded-full bg-white text-black border-2 border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:text-white dark:border-gray-600"
               >
-                Message
+                {ui("Message")}
               </Button>
             </div>
           </div>

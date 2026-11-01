@@ -1,3 +1,5 @@
+import { learnerOperation } from '@/features/family/profileRuntime';
+import { generateQuickExplanation, isSupportedDivision, validateQuickExplanation, type QuickExplanation } from "./quickExplanation";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/context/AdminContext";
@@ -15,7 +17,7 @@ import {
   validateExampleOperationType,
 } from "@/utils/operationTypeDetector";
 
-const ADAPTIVE_EXPLANATION_CACHE_VERSION = 6;
+const ADAPTIVE_EXPLANATION_CACHE_VERSION = 7;
 
 const ADAPTIVE_TWOCARD_PROMPT = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
@@ -88,6 +90,7 @@ Learning style: {{learning_style}}`;
 
 export interface TeachingSections {
   exercise: string;
+  quickExplanation?: QuickExplanation;
   steps?: Step[];
   concept: string;
   example: string;
@@ -216,7 +219,7 @@ async function checkExplanationCache(
 ): Promise<{ id: string; sections: TeachingSections } | null> {
   try {
     const { data: cacheEntry, error } = await supabase
-      .from("exercise_explanations_cache")
+      .from("learner_explanations_cache")
       .select("id, explanation_data, usage_count, quality_score")
       .eq("exercise_hash", hash)
       .gte("quality_score", 0)
@@ -235,7 +238,7 @@ async function checkExplanationCache(
     }
 
     void supabase
-      .from("exercise_explanations_cache")
+      .from("learner_explanations_cache")
       .update({
         usage_count: (cacheEntry.usage_count ?? 0) + 1,
       })
@@ -267,7 +270,7 @@ async function saveExplanationToCache(
 ): Promise<string | null> {
   try {
     const { data: cacheEntry, error } = await supabase
-      .from("exercise_explanations_cache")
+      .from("learner_explanations_cache")
       .upsert(
         {
           exercise_content: exerciseContent,
@@ -283,7 +286,7 @@ async function saveExplanationToCache(
           usage_count: 1,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "exercise_hash" },
+        { onConflict: "learner_user_id,exercise_hash" },
       )
       .select("id")
       .single();
@@ -445,12 +448,13 @@ export function useTwoCardTeaching() {
 
   async function openFor(
     row: any,
-    profile: { response_language?: string; grade_level?: string; learning_style?: string | LearningStyle | null },
+    profile: { response_language?: string; grade_level?: string; learning_style?: string | LearningStyle | null; country?: string; curriculum?: string },
   ) {
     console.log("[TwoCardTeaching] Opening explanation for:", { row, profile });
     setOpen(true);
     setError(null);
     setLoading(true);
+    setSections(null);
     resetFeedbackState();
 
     try {
@@ -482,7 +486,8 @@ export function useTwoCardTeaching() {
         gradeLevel: grade_level,
         first_name: "Student",
         grade_level,
-        country: "your country",
+        country: profile.country || "your country",
+        curriculum: profile.curriculum || "national curriculum",
         learning_style,
         learning_mode: learningMode,
         subject: promptSubject,
@@ -496,6 +501,31 @@ export function useTwoCardTeaching() {
       const reuseMeta = buildReuseMeta(exercise_content, response_language, subject.toLowerCase());
 
       const cachedResult = await checkExplanationCache(cacheHash);
+      // Integer divisions bypass all legacy synthesis, cross-exercise reuse and partial repairs.
+      if (isSupportedDivision(exercise_content)) {
+        const cached = cachedResult?.sections.quickExplanation;
+        const quickExplanation = cached && !validateQuickExplanation(exercise_content, cached, response_language, grade_level, profile.country).length
+          ? cached
+          : await generateQuickExplanation(exercise_content, response_language, async customPrompt => {
+              const { data, error } = await supabase.functions.invoke("ai-chat", {
+                body: { message: exerciseMessage, modelId: selectedModelId || "gpt-5", isUnified: false,
+                  requestExplanation: false, usageType: "explanation", customPrompt,
+                  language: /^fr/i.test(rawLang) ? "fr" : "en", userContext: explanationContext, maxTokens: 1800 },
+              });
+              if (error) throw error;
+              const raw = data?.tool_calls?.[0]?.function?.arguments || data?.content;
+              if (typeof raw !== "string") return data;
+              return JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "").trim());
+            }, { level: grade_level, country: profile.country });
+        const next: TeachingSections = { exercise: exercise_content, quickExplanation,
+          concept: quickExplanation.concept, example: "", method: "", currentExercise: "", pitfall: "",
+          check: "", practice: "", parentHelpHint: "" };
+        setSections(next);
+        if (cached && cached === quickExplanation) setCacheEntryId(cachedResult!.id);
+        else setCacheEntryId(await saveExplanationToCache(cacheHash, exercise_content, subject.toLowerCase(), next, reuseMeta));
+        setLoading(false);
+        return;
+      }
       if (cachedResult) {
         const normalizedCachedSections = {
           ...cachedResult.sections,
@@ -511,7 +541,7 @@ export function useTwoCardTeaching() {
       if (reuseMeta.operationType !== "unknown" && reuseMeta.digitBand !== "non_arithmetic") {
         try {
           const { data: similarExplanations, error: similarError } = await supabase
-            .from("exercise_explanations_cache")
+            .from("learner_explanations_cache")
             .select("id, exercise_content, explanation_data, usage_count, quality_score, updated_at")
             .eq("subject_id", subject.toLowerCase())
             .gte("quality_score", 0)
@@ -545,7 +575,7 @@ export function useTwoCardTeaching() {
               setLoading(false);
 
               void supabase
-                .from("exercise_explanations_cache")
+                .from("learner_explanations_cache")
                 .update({ usage_count: (reusableCandidate.usage_count ?? 0) + 1 })
                 .eq("id", reusableCandidate.id);
 
@@ -693,7 +723,7 @@ export function useTwoCardTeaching() {
     setFeedbackLoading(true);
     try {
       const { data: current, error: currentError } = await supabase
-        .from("exercise_explanations_cache")
+        .from("learner_explanations_cache")
         .select("quality_score")
         .eq("id", cacheEntryId)
         .single();
@@ -711,7 +741,7 @@ export function useTwoCardTeaching() {
             : currentScore - 1;
 
       const { error: updateError } = await supabase
-        .from("exercise_explanations_cache")
+        .from("learner_explanations_cache")
         .update({ quality_score: nextScore })
         .eq("id", cacheEntryId);
 
@@ -736,9 +766,9 @@ export function useTwoCardTeaching() {
     loading,
     sections,
     error,
-    openFor,
+    openFor: learnerOperation(openFor),
     setSections: debugSetSections,
-    submitFeedback,
+    submitFeedback: learnerOperation(submitFeedback),
     feedback,
     feedbackLoading,
     cacheEntryId,

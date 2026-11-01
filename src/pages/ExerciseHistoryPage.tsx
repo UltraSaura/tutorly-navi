@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { useExerciseHistory } from '@/hooks/useExerciseHistory';
 import { useLessonHistory } from '@/hooks/useLessonHistory';
@@ -7,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, CheckCircle, XCircle, TrendingUp, BookOpen } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
@@ -15,6 +16,8 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export const ExerciseHistoryPage = () => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('all');
   const { history, loading, error, stats } = useExerciseHistory({
@@ -66,7 +69,7 @@ export const ExerciseHistoryPage = () => {
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading exercise history...</p>
+            <p className="text-muted-foreground">{ui("Loading exercise history...")}</p>
           </div>
         </div>
       </div>
@@ -79,7 +82,7 @@ export const ExerciseHistoryPage = () => {
         <Card className="border-destructive">
           <CardContent className="pt-6">
             <div className="text-center text-destructive">
-              <p>Error loading exercise history: {error}</p>
+              <p>{ui("Error loading exercise history:")} {error}</p>
             </div>
           </CardContent>
         </Card>
@@ -89,13 +92,13 @@ export const ExerciseHistoryPage = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <PageMeta title="Exercise History" description="Review your past exercises, attempts, and AI explanations on Stuwy." />
+      <PageMeta title={ui("Exercise History")} description={ui("Review your past exercises, attempts, and AI explanations on Stuwy.")} />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Exercise History</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{ui("Exercise History")}</h1>
           <p className="text-muted-foreground">
-            Review your past exercises and track your learning progress
+            {ui("Review your past exercises and track your learning progress")}
           </p>
         </div>
         
@@ -103,25 +106,25 @@ export const ExerciseHistoryPage = () => {
         <div className="flex gap-2">
           <Select value={selectedSubject} onValueChange={setSelectedSubject}>
             <SelectTrigger className="w-32">
-              <SelectValue placeholder="Subject" />
+              <SelectValue placeholder={ui("Subject")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Subjects</SelectItem>
-              <SelectItem value="math">Math</SelectItem>
-              <SelectItem value="physics">Physics</SelectItem>
-              <SelectItem value="chemistry">Chemistry</SelectItem>
+              <SelectItem value="all">{ui("All Subjects")}</SelectItem>
+              <SelectItem value="math">{ui("Math")}</SelectItem>
+              <SelectItem value="physics">{ui("Physics")}</SelectItem>
+              <SelectItem value="chemistry">{ui("Chemistry")}</SelectItem>
             </SelectContent>
           </Select>
           
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-32">
-              <SelectValue placeholder="Period" />
+              <SelectValue placeholder={ui("Period")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="week">Last Week</SelectItem>
-              <SelectItem value="month">Last Month</SelectItem>
-              <SelectItem value="quarter">Last Quarter</SelectItem>
+              <SelectItem value="all">{ui("All Time")}</SelectItem>
+              <SelectItem value="week">{ui("Last Week")}</SelectItem>
+              <SelectItem value="month">{ui("Last Month")}</SelectItem>
+              <SelectItem value="quarter">{ui("Last Quarter")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -130,12 +133,12 @@ export const ExerciseHistoryPage = () => {
       {lessonHistory.length > 0 && (
         <div style={{ padding: '14px 16px 0' }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: '#667085', letterSpacing: '0.05em', margin: '0 0 10px', fontFamily: 'Poppins, sans-serif' }}>
-            LECONS RECENTES
+            {ui("LECONS RECENTES")}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {lessonHistory.map((entry) => {
               const minutes = Math.max(1, Math.round(entry.time_spent_seconds / 60));
-              const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true, locale: fr });
+              const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true, locale: dateLocale });
               return (
                 <div
                   key={entry.id}
@@ -170,7 +173,7 @@ export const ExerciseHistoryPage = () => {
             <BookOpen className="h-8 w-8 text-primary mr-3" />
             <div>
               <p className="text-2xl font-bold">{stats.totalExercises}</p>
-              <p className="text-sm text-muted-foreground">Total Exercises</p>
+              <p className="text-sm text-muted-foreground">{ui("Total Exercises")}</p>
             </div>
           </CardContent>
         </Card>
@@ -180,7 +183,7 @@ export const ExerciseHistoryPage = () => {
             <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">{stats.correctExercises}</p>
-              <p className="text-sm text-muted-foreground">Correct Answers</p>
+              <p className="text-sm text-muted-foreground">{ui("Correct Answers")}</p>
             </div>
           </CardContent>
         </Card>
@@ -190,7 +193,7 @@ export const ExerciseHistoryPage = () => {
             <TrendingUp className="h-8 w-8 text-blue-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">{stats.successRate}%</p>
-              <p className="text-sm text-muted-foreground">Success Rate</p>
+              <p className="text-sm text-muted-foreground">{ui("Success Rate")}</p>
             </div>
           </CardContent>
         </Card>
@@ -200,7 +203,7 @@ export const ExerciseHistoryPage = () => {
             <Clock className="h-8 w-8 text-orange-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">{stats.totalAttempts}</p>
-              <p className="text-sm text-muted-foreground">Total Attempts</p>
+              <p className="text-sm text-muted-foreground">{ui("Total Attempts")}</p>
             </div>
           </CardContent>
         </Card>
@@ -208,17 +211,17 @@ export const ExerciseHistoryPage = () => {
 
       {/* Exercise History List */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Exercise Timeline</h2>
+        <h2 className="text-xl font-semibold">{ui("Exercise Timeline")}</h2>
         
         {filteredHistory.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No exercises found</h3>
+              <h3 className="text-lg font-medium mb-2">{ui("No exercises found")}</h3>
               <p className="text-muted-foreground">
                 {selectedSubject !== 'all' || selectedPeriod !== 'all' 
-                  ? 'Try adjusting your filters to see more exercises.'
-                  : 'Start solving exercises to see your history here.'
+                  ? ui("Try adjusting your filters to see more exercises.")
+                  : ui("Start solving exercises to see your history here.")
                 }
               </p>
             </CardContent>
@@ -235,7 +238,7 @@ export const ExerciseHistoryPage = () => {
                       </CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-1">
                         <Calendar className="h-4 w-4" />
-                        {format(new Date(exercise.created_at), 'MMM d, yyyy HH:mm')}
+                        {format(new Date(exercise.created_at), 'MMM d, yyyy HH:mm', { locale: dateLocale })}
                         {exercise.subject_id && (
                           <>
                             <span>•</span>
@@ -262,7 +265,7 @@ export const ExerciseHistoryPage = () => {
                 <CardContent className="pt-0">
                   {exercise.user_answer && (
                     <div className="mb-3">
-                      <p className="text-sm text-muted-foreground mb-1">Your answer:</p>
+                      <p className="text-sm text-muted-foreground mb-1">{ui("Your answer:")}</p>
                       <div className="bg-muted p-2 rounded text-sm">
                         <MathRenderer latex={exercise.user_answer} />
                       </div>
@@ -271,10 +274,10 @@ export const ExerciseHistoryPage = () => {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{exercise.attempts_count} attempt{exercise.attempts_count !== 1 ? 's' : ''}</span>
+                      <span>{exercise.attempts_count} {ui("attempt")}{exercise.attempts_count !== 1 ? 's' : ''}</span>
                       {exercise.is_correct !== null && (
                         <Badge variant={exercise.is_correct ? 'default' : 'destructive'}>
-                          {exercise.is_correct ? 'Correct' : 'Incorrect'}
+                          {exercise.is_correct ? ui("Correct") : ui("Incorrect")}
                         </Badge>
                       )}
                     </div>
@@ -284,7 +287,7 @@ export const ExerciseHistoryPage = () => {
                       size="sm"
                       onClick={() => handleShowExplanation(exercise)}
                     >
-                      View Explanation
+                      {ui("View Explanation")}
                     </Button>
                   </div>
                 </CardContent>

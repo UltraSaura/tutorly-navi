@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -38,6 +39,7 @@ const fmtDate = (s: string | null | undefined) => {
 };
 
 export default function RecentUpdates() {
+  const ui = useInterfaceTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
@@ -109,28 +111,28 @@ export default function RecentUpdates() {
 
   const columns: Record<AdminTable, ColumnDef[]> = {
     subjects: [
-      { key: 'name', label: 'Name' },
-      { key: 'slug', label: 'Slug', render: r => <code className="text-xs">{r.slug}</code> },
-      { key: 'country_code', label: 'Country', render: r => <Badge variant="outline">{r.country_code ? String(r.country_code).toUpperCase() : '—'}</Badge> },
-      { key: 'level', label: 'Level', render: r => (
+      { key: 'name', label: ui("Name") },
+      { key: 'slug', label: ui("Slug"), render: r => <code className="text-xs">{r.slug}</code> },
+      { key: 'country_code', label: ui("Country"), render: r => <Badge variant="outline">{r.country_code ? String(r.country_code).toUpperCase() : '—'}</Badge> },
+      { key: 'level', label: ui("Level"), render: r => (
         <Badge variant="outline">{r.level ? String(r.level).toUpperCase() : '—'}</Badge>
       ) },
-      { key: 'language', label: 'Language', render: r => <Badge variant="outline">{r.language ? String(r.language).toUpperCase() : '—'}</Badge> },
+      { key: 'language', label: ui("Language"), render: r => <Badge variant="outline">{r.language ? String(r.language).toUpperCase() : '—'}</Badge> },
       { key: 'updated_at', label: 'Updated', render: r => <span className="text-xs text-muted-foreground">{fmtDate(r.updated_at)}</span> },
     ],
     domains: [
       { key: 'label', label: 'Label' },
       { key: 'code', label: 'Code', render: r => <code className="text-xs">{r.code ?? '—'}</code> },
-      { key: 'domain', label: 'Domain' },
+      { key: 'domain', label: ui("Domain") },
     ],
     subdomains: [
       { key: 'label', label: 'Label' },
       { key: 'code', label: 'Code', render: r => <code className="text-xs">{r.code ?? '—'}</code> },
-      { key: 'subdomain', label: 'Subdomain' },
+      { key: 'subdomain', label: ui("Subdomain") },
     ],
     objectives: [
       { key: 'id', label: 'ID', render: r => <code className="text-xs">{r.id}</code> },
-      { key: 'level', label: 'Level', render: r => <Badge variant="outline">{r.level}</Badge> },
+      { key: 'level', label: ui("Level"), render: r => <Badge variant="outline">{r.level}</Badge> },
       { key: 'text', label: 'Text', render: r => fmtTruncate(r.text, 100) },
     ],
     success_criteria: [
@@ -140,17 +142,17 @@ export default function RecentUpdates() {
     ],
     tasks: [
       { key: 'id', label: 'ID', render: r => <code className="text-xs">{r.id}</code> },
-      { key: 'type', label: 'Type', render: r => <Badge variant="secondary">{r.type}</Badge> },
+      { key: 'type', label: ui("Type"), render: r => <Badge variant="secondary">{r.type}</Badge> },
       { key: 'stem', label: 'Stem', render: r => fmtTruncate(r.stem, 80) },
     ],
     lessons: [
       { key: 'id', label: 'ID', render: r => <code className="text-xs">{r.id}</code> },
-      { key: 'title', label: 'Title' },
-      { key: 'topic_id', label: 'Topic', render: r => <code className="text-xs">{r.topic_id ?? '—'}</code> },
+      { key: 'title', label: ui("Title") },
+      { key: 'topic_id', label: ui("Topic"), render: r => <code className="text-xs">{r.topic_id ?? '—'}</code> },
     ],
     topics: [
-      { key: 'name', label: 'Name' },
-      { key: 'slug', label: 'Slug', render: r => <code className="text-xs">{r.slug}</code> },
+      { key: 'name', label: ui("Name") },
+      { key: 'slug', label: ui("Slug"), render: r => <code className="text-xs">{r.slug}</code> },
       { key: 'updated_at', label: 'Updated', render: r => <span className="text-xs text-muted-foreground">{fmtDate(r.updated_at)}</span> },
     ],
     videos: [],
@@ -158,20 +160,20 @@ export default function RecentUpdates() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <PageMeta title="Recent Updates" description="Recent imports, content updates, and system changes." />
+      <PageMeta title={ui("Recent Updates")} description={ui("Recent imports, content updates, and system changes.")} />
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <History className="h-7 w-7" />
-            Recent Updates
+            {ui("Recent Updates")}
           </h1>
           <p className="text-muted-foreground">
-            See what's been imported or changed recently, and spot rows with missing data.
+            {ui("See what's been imported or changed recently, and spot rows with missing data.")}
           </p>
         </div>
         <Button variant="outline" onClick={handleRefresh} className="gap-2">
           <RefreshCw className="h-4 w-4" />
-          Refresh
+          {ui("Refresh")}
         </Button>
       </div>
 
@@ -184,35 +186,34 @@ export default function RecentUpdates() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Browse changes</CardTitle>
+          <CardTitle>{ui("Browse changes")}</CardTitle>
           <CardDescription>
-            Each row is validated client-side: required fields, FK resolution, and link integrity.
-            Click a row to see its raw data and validation breakdown.
+            {ui("Each row is validated client-side: required fields, FK resolution, and link integrity. Click a row to see its raw data and validation breakdown.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="since">Show changes since</Label>
+              <Label htmlFor="since">{ui("Show changes since")}</Label>
               <Select value={since} onValueChange={(v) => setSince(v as SinceFilter)}>
                 <SelectTrigger id="since"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1h">Last hour</SelectItem>
-                  <SelectItem value="24h">Last 24 hours</SelectItem>
-                  <SelectItem value="7d">Last 7 days</SelectItem>
-                  <SelectItem value="30d">Last 30 days</SelectItem>
-                  <SelectItem value="all">All time</SelectItem>
+                  <SelectItem value="1h">{ui("Last hour")}</SelectItem>
+                  <SelectItem value="24h">{ui("Last 24 hours")}</SelectItem>
+                  <SelectItem value="7d">{ui("Last 7 days")}</SelectItem>
+                  <SelectItem value="30d">{ui("Last 30 days")}</SelectItem>
+                  <SelectItem value="all">{ui("All time")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="search">Search</Label>
+              <Label htmlFor="search">{ui("Search")}</Label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search"
-                  placeholder="Search by id, name, text, code…"
+                  placeholder={ui("Search by id, name, text, code…")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-8"
@@ -225,7 +226,7 @@ export default function RecentUpdates() {
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AdminTable)}>
             <TabsList className="flex flex-wrap h-auto">
               {TABS.map(t => (
-                <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>
+                <TabsTrigger key={t.value} value={t.value}>{ui(t.label)}</TabsTrigger>
               ))}
             </TabsList>
             {TABS.map(t => (

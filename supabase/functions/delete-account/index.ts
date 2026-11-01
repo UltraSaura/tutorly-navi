@@ -1,9 +1,10 @@
+import { familyClient, requireParent } from '../_shared/family-access.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 }
 
 serve(async (req) => {
@@ -13,6 +14,8 @@ serve(async (req) => {
   }
 
   try {
+    const familyAccess = await familyClient(req);
+    if (familyAccess.isFamily) await requireParent(req);
     // Get the authorization header
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 "use client";
 
 import * as React from "react";
@@ -21,6 +22,7 @@ export default function GridEditor({
   gridCount: number;
   setGridCount: (n: number) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const toggle = (id: string) => {
     if (gridMode === "count") return;
     const next = new Set(state.correctCells || []);
@@ -90,7 +92,7 @@ export default function GridEditor({
               checked={gridMode === "pattern"}
               onChange={() => setGridMode("pattern")}
             />
-            Pattern match
+            {ui("Pattern match")}
           </label>
           <label className="inline-flex items-center gap-2 text-sm">
             <input
@@ -98,12 +100,12 @@ export default function GridEditor({
               checked={gridMode === "count"}
               onChange={() => setGridMode("count")}
             />
-            Required count
+            {ui("Required count")}
           </label>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <Label>Rows</Label>
+            <Label>{ui("Rows")}</Label>
             <Input
               type="number"
               min={1}
@@ -113,7 +115,7 @@ export default function GridEditor({
             />
           </div>
           <div>
-            <Label>Cols</Label>
+            <Label>{ui("Cols")}</Label>
             <Input
               type="number"
               min={1}
@@ -124,7 +126,7 @@ export default function GridEditor({
           </div>
           {gridMode === "count" && (
             <div>
-              <Label>Required count</Label>
+              <Label>{ui("Required count")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -135,11 +137,11 @@ export default function GridEditor({
           )}
         </div>
         <div className="text-xs text-muted-foreground">
-          Pattern mode: toggle cells below to set the exact shape. Count mode ignores highlighted cells and only checks the total number of selections.
+          {ui("Pattern mode: toggle cells below to set the exact shape. Count mode ignores highlighted cells and only checks the total number of selections.")}
         </div>
         {gridMode === "pattern" && (
           <Button type="button" variant="outline" onClick={() => setState({ ...state, correctCells: [] })}>
-            Clear pattern
+            {ui("Clear pattern")}
           </Button>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
@@ -9,10 +10,11 @@ interface ProgressTabProps {
 }
 
 export const ProgressTab = ({ user }: ProgressTabProps) => {
+  const ui = useInterfaceTranslation();
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-sm font-medium mb-3">Subject Mastery</h3>
+        <h3 className="text-sm font-medium mb-3">{ui("Subject Mastery")}</h3>
         {user.subjects?.map((subject, idx) => (
           <div key={idx} className="mb-4">
             <div className="flex justify-between text-sm mb-1">
@@ -21,16 +23,16 @@ export const ProgressTab = ({ user }: ProgressTabProps) => {
             </div>
             <Progress value={subject.progress} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Beginner</span>
-              <span>Intermediate</span>
-              <span>Advanced</span>
+              <span>{ui("Beginner")}</span>
+              <span>{ui("Intermediate")}</span>
+              <span>{ui("Advanced")}</span>
             </div>
           </div>
         ))}
       </div>
       
       <div>
-        <h3 className="text-sm font-medium mb-3">Recent Grades</h3>
+        <h3 className="text-sm font-medium mb-3">{ui("Recent Grades")}</h3>
         <div className="space-y-2">
           {[
             { assignment: 'Math Quiz', grade: 92, date: '2023-06-10' },

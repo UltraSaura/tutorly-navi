@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useRecommendations } from '@/hooks/useRecommendations';
@@ -14,6 +15,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { LearningInsightsCard } from '@/components/learning/LearningInsightsCard';
 
 export default function TeacherStudentDetail() {
+  const ui = useInterfaceTranslation();
   const { studentId } = useParams();
   const navigate = useNavigate();
   
@@ -53,7 +55,7 @@ export default function TeacherStudentDetail() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Student Details" description="Detailed view of an individual student's progress and exercises." />
+      <PageMeta title={ui("Student Details")} description={ui("Detailed view of an individual student's progress and exercises.")} />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
@@ -64,7 +66,7 @@ export default function TeacherStudentDetail() {
             {student?.first_name} {student?.last_name}
           </h1>
           <p className="text-muted-foreground">
-            Level: {student?.curriculum_level_code} | Country: {student?.curriculum_country_code}
+            {ui("Level:")} {student?.curriculum_level_code} {ui("| Country:")} {student?.curriculum_country_code}
           </p>
         </div>
       </div>
@@ -72,12 +74,12 @@ export default function TeacherStudentDetail() {
       {/* Overall Progress */}
       <Card>
         <CardHeader>
-          <CardTitle>Overall Progress</CardTitle>
+          <CardTitle>{ui("Overall Progress")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Progress value={(progress?.overall_mastery_ratio || 0) * 100} className="mb-2" />
           <p className="text-sm text-muted-foreground">
-            {Math.round((progress?.overall_mastery_ratio || 0) * 100)}% of objectives mastered
+            {Math.round((progress?.overall_mastery_ratio || 0) * 100)}{ui("% of objectives mastered")}
           </p>
         </CardContent>
       </Card>
@@ -90,7 +92,7 @@ export default function TeacherStudentDetail() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="w-5 h-5" />
-              Areas Needing Attention
+              {ui("Areas Needing Attention")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -104,7 +106,7 @@ export default function TeacherStudentDetail() {
                   <div className="text-right">
                     <p className="text-sm font-medium">{Math.round(weakness.mastery_ratio * 100)}%</p>
                     <p className="text-xs text-muted-foreground">
-                      {weakness.mastered_objectives}/{weakness.total_objectives} mastered
+                      {weakness.mastered_objectives}/{weakness.total_objectives} {ui("mastered")}
                     </p>
                   </div>
                 </div>
@@ -126,7 +128,7 @@ export default function TeacherStudentDetail() {
             <div>
               <Progress value={subject.mastery_ratio * 100} />
               <p className="text-sm text-muted-foreground mt-1">
-                {subject.mastered_objectives} of {subject.total_objectives} objectives mastered
+                {subject.mastered_objectives} {ui("of")} {subject.total_objectives} {ui("objectives mastered")}
               </p>
             </div>
 
@@ -142,6 +144,7 @@ export default function TeacherStudentDetail() {
 }
 
 function RecommendedTopicsSection({ studentId, subjectId }: { studentId: string; subjectId: string }) {
+  const ui = useInterfaceTranslation();
   const { data: recommendations = [] } = useRecommendations({ 
     subjectId, 
     limit: 3 
@@ -153,7 +156,7 @@ function RecommendedTopicsSection({ studentId, subjectId }: { studentId: string;
 
   return (
     <div>
-      <h4 className="font-semibold mb-2">Recommended Next Topics</h4>
+      <h4 className="font-semibold mb-2">{ui("Recommended Next Topics")}</h4>
       <div className="space-y-2">
         {recommendations.map(topic => (
           <Card 
@@ -171,7 +174,7 @@ function RecommendedTopicsSection({ studentId, subjectId }: { studentId: string;
                     </Badge>
                   )}
                   <p className="text-sm text-muted-foreground mt-1">
-                    {topic.mastered_objectives}/{topic.total_objectives} objectives mastered
+                    {topic.mastered_objectives}/{topic.total_objectives} {ui("objectives mastered")}
                   </p>
                 </div>
                 <ArrowRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />

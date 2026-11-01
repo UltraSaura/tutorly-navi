@@ -1,3 +1,5 @@
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useNavigate } from 'react-router-dom';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
@@ -29,6 +31,8 @@ interface GroupedTopics {
 }
 
 export default function MyProgramPage() {
+  const ui = useInterfaceTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const { profile, isLoading: profileLoading } = useUserCurriculumProfile();
   const activeSchoolLevel = useActiveSchoolLevel();
@@ -83,7 +87,7 @@ export default function MyProgramPage() {
       
       if (!groupedTopics[subjectId]) {
         groupedTopics[subjectId] = {
-          subjectLabel: getLocalizedLabel(subject.labels, 'en'),
+          subjectLabel: getLocalizedLabel(subject.labels, language),
           subjectColor: subject.color,
           domains: {},
         };
@@ -91,14 +95,14 @@ export default function MyProgramPage() {
       
       if (!groupedTopics[subjectId].domains[domainId]) {
         groupedTopics[subjectId].domains[domainId] = {
-          domainLabel: getLocalizedLabel(domain.labels, 'en'),
+          domainLabel: getLocalizedLabel(domain.labels, language),
           subdomains: {},
         };
       }
       
       if (!groupedTopics[subjectId].domains[domainId].subdomains[subdomainId]) {
         groupedTopics[subjectId].domains[domainId].subdomains[subdomainId] = {
-          subdomainLabel: getLocalizedLabel(subdomain.labels, 'en'),
+          subdomainLabel: getLocalizedLabel(subdomain.labels, language),
           topics: [],
         };
       }
@@ -110,10 +114,10 @@ export default function MyProgramPage() {
   if (profileLoading || topicsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <PageMeta title="My Program" description="Your personalized Stuwy learning program based on your level and goals." />
+        <PageMeta title={ui("My Program")} description={ui("Your personalized Stuwy learning program based on your level and goals.")} />
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading your program...</p>
+          <p className="text-muted-foreground">{ui("Loading your program...")}</p>
         </div>
       </div>
     );
@@ -125,13 +129,13 @@ export default function MyProgramPage() {
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
-            <h2 className="text-xl font-bold">Setup Required</h2>
+            <h2 className="text-xl font-bold">{ui("Setup Required")}</h2>
             <p className="text-muted-foreground">
-              Please select your school country and level to see your personalized learning program.
+              {ui("Please select your school country and level to see your personalized learning program.")}
             </p>
             <Button onClick={() => navigate('/profile')} className="w-full">
               <Settings className="mr-2 h-4 w-4" />
-              Go to Profile Settings
+              {ui("Go to Profile Settings")}
             </Button>
           </CardContent>
         </Card>
@@ -144,7 +148,7 @@ export default function MyProgramPage() {
       <div className="min-h-screen p-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold">My Program</h1>
+            <h1 className="text-3xl font-bold">{ui("My Program")}</h1>
             <p className="text-muted-foreground">
               {profile?.countryName ?? 'France'} - {activeSchoolLevel.activeLevel ?? profile?.levelLabel}
             </p>
@@ -153,12 +157,12 @@ export default function MyProgramPage() {
           <Card>
             <CardContent className="pt-6 text-center space-y-4">
               <BookOpen className="w-12 h-12 text-muted-foreground mx-auto" />
-              <h2 className="text-xl font-bold">Program Coming Soon</h2>
+              <h2 className="text-xl font-bold">{ui("Program Coming Soon")}</h2>
               <p className="text-muted-foreground">
-                Your program is not fully available yet. New lessons are being added regularly.
+                {ui("Your program is not fully available yet. New lessons are being added regularly.")}
               </p>
               <Button onClick={() => navigate('/learning')} variant="outline">
-                Browse All Subjects
+                {ui("Browse All Subjects")}
               </Button>
             </CardContent>
           </Card>
@@ -171,7 +175,7 @@ export default function MyProgramPage() {
     <div className="min-h-screen p-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">My Program</h1>
+          <h1 className="text-3xl font-bold mb-2">{ui("My Program")}</h1>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary">{profile?.countryName ?? 'France'}</Badge>
             <Badge variant="secondary">{activeSchoolLevel.activeLevel ?? profile?.levelLabel}</Badge>
@@ -182,7 +186,7 @@ export default function MyProgramPage() {
               className="ml-auto"
             >
               <Settings className="mr-2 h-4 w-4" />
-              Change Program
+              {ui("Change Program")}
             </Button>
           </div>
         </div>
@@ -225,7 +229,7 @@ export default function MyProgramPage() {
                                 )}
                                 <div className="flex items-center justify-between text-sm">
                                   <span className="text-muted-foreground">
-                                    {topic.video_count} videos
+                                    {topic.video_count} {ui("videos")}
                                   </span>
                                   <ArrowRight className="h-4 w-4" />
                                 </div>

@@ -79,6 +79,7 @@ export function MobileBottomTabs() {
                 <NavLink
                   key={item.title}
                   to={item.url}
+                  data-tour={`nav-${item.title.replace('nav.', '')}`}
                   className={`mx-auto flex h-14 w-[66px] flex-col items-center justify-center rounded-2xl transition-colors ${
                     isActiveTab 
                       ? "text-[#12C6A0]" 
@@ -94,6 +95,7 @@ export function MobileBottomTabs() {
             return (
               <Button
                 key={item.title}
+                data-tour="nav-account"
                 variant="ghost"
                 size="sm"
                 onClick={() => handleTabClick(item)}

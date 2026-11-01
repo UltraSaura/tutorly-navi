@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -16,12 +17,13 @@ export const UserSearch = ({
   filterUserType,
   onFilterUserTypeChange
 }: UserSearchProps) => {
+  const ui = useInterfaceTranslation();
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div className="relative w-full sm:w-auto">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search by name, email, country..."
+          placeholder={ui("Search by name, email, country...")}
           className="pl-8 w-full sm:w-[300px]"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -31,12 +33,12 @@ export const UserSearch = ({
       <div className="flex flex-wrap gap-2">
         <Select value={filterUserType} onValueChange={onFilterUserTypeChange}>
           <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="User Type" />
+            <SelectValue placeholder={ui("User Type")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="student">Students</SelectItem>
-            <SelectItem value="parent">Parents</SelectItem>
+            <SelectItem value="all">{ui("All Types")}</SelectItem>
+            <SelectItem value="student">{ui("Students")}</SelectItem>
+            <SelectItem value="parent">{ui("Parents")}</SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -1,3 +1,5 @@
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +22,8 @@ import { toast } from '@/hooks/use-toast';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function CurriculumManager() {
+  const ui = useInterfaceTranslation();
+  const { language } = useLanguage();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [replaceMode, setReplaceMode] = useState(false);
@@ -132,7 +136,7 @@ export default function CurriculumManager() {
               diag.details ? `Details: ${diag.details}` : null,
               diag.hint ? `Hint: ${diag.hint}` : null,
             ].filter(Boolean).join('\n')
-          : (data.error ?? 'Unknown error');
+          : (data.error ?? ui("Unknown error"));
 
         setImportResult({
           success: false,
@@ -178,12 +182,12 @@ export default function CurriculumManager() {
           description: (
             <div className="space-y-2">
               <div>{summaryParts}</div>
-              {issues && <div className="text-xs">Unresolved: {issues}</div>}
+              {issues && <div className="text-xs">{ui("Unresolved:")} {issues}</div>}
               <Link
                 to="/admin/recent-updates?filter=issues"
                 className="inline-block text-xs underline font-medium"
               >
-                View details →
+                {ui("View details →")}
               </Link>
             </div>
           ) as any,
@@ -252,10 +256,10 @@ export default function CurriculumManager() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <PageMeta title="Curriculum" description="Import and manage curriculum bundles." />
+      <PageMeta title={ui("Curriculum")} description={ui("Import and manage curriculum bundles.")} />
       <div>
-        <h1 className="text-3xl font-bold">Curriculum Manager</h1>
-        <p className="text-muted-foreground">Import and manage curriculum data from JSON bundles</p>
+        <h1 className="text-3xl font-bold">{ui("Curriculum Manager")}</h1>
+        <p className="text-muted-foreground">{ui("Import and manage curriculum data from JSON bundles")}</p>
       </div>
 
       {/* Statistics Panel */}
@@ -264,7 +268,7 @@ export default function CurriculumManager() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Database Statistics
+              {ui("Database Statistics")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -285,14 +289,14 @@ export default function CurriculumManager() {
       {/* Import Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Import Curriculum Bundle</CardTitle>
+          <CardTitle>{ui("Import Curriculum Bundle")}</CardTitle>
           <CardDescription>
-            Upload a bundle.json file to import curriculum data into Supabase
+            {ui("Upload a bundle.json file to import curriculum data into Supabase")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="bundle-file">Select bundle.json file</Label>
+            <Label htmlFor="bundle-file">{ui("Select bundle.json file")}</Label>
             <div className="flex gap-2">
               <Input
                 id="bundle-file"
@@ -308,12 +312,12 @@ export default function CurriculumManager() {
                 {isImporting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Importing...
+                    {ui("Importing...")}
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4 mr-2" />
-                    Import to Supabase
+                    {ui("Import to Supabase")}
                   </>
                 )}
               </Button>
@@ -334,7 +338,7 @@ export default function CurriculumManager() {
                 className="h-4 w-4 mt-0.5 rounded border-border"
               />
               <span>
-                <strong>Replace</strong> existing data for the subject(s) in this bundle (deletes domains, subdomains, objectives, success criteria & tasks first — fixes leftover-row constraint clashes)
+                <strong>{ui("Replace")}</strong> {ui("existing data for the subject(s) in this bundle (deletes domains, subdomains, objectives, success criteria & tasks first — fixes leftover-row constraint clashes)")}
               </span>
             </label>
           </div>
@@ -364,14 +368,14 @@ export default function CurriculumManager() {
                     {importResult.verification && (
                       <div className="pt-2 border-t space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Phase 3 readiness:</span>
+                          <span className="text-sm font-medium">{ui("Phase 3 readiness:")}</span>
                           <Badge variant={importResult.verification.ready_for_phase_3 ? 'success' : 'destructive'}>
                             {importResult.verification.ready_for_phase_3 ? 'Ready' : 'Not ready'}
                           </Badge>
                         </div>
                         {importResult.verification.nullChecks && (
                           <div className="space-y-1">
-                            <div className="text-xs font-medium text-muted-foreground">NULL UUID FK counts:</div>
+                            <div className="text-xs font-medium text-muted-foreground">{ui("NULL UUID FK counts:")}</div>
                             {Object.entries(importResult.verification.nullChecks).map(([key, count]) => (
                               <div key={key} className="flex justify-between text-xs">
                                 <span className="font-mono">{key}:</span>
@@ -397,19 +401,19 @@ export default function CurriculumManager() {
       {/* Viewer Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Curriculum Viewer</CardTitle>
+          <CardTitle>{ui("Curriculum Viewer")}</CardTitle>
           <CardDescription>
-            Browse objectives and success criteria with filters
+            {ui("Browse objectives and success criteria with filters")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="country-filter">Country</Label>
+              <Label htmlFor="country-filter">{ui("Country")}</Label>
               <Select value={filterCountry} onValueChange={setFilterCountry}>
                 <SelectTrigger id="country-filter">
-                  <SelectValue placeholder="Select country" />
+                  <SelectValue placeholder={ui("Select country")} />
                 </SelectTrigger>
                 <SelectContent>
                   {countries.map((country) => (
@@ -422,7 +426,7 @@ export default function CurriculumManager() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="level-filter">Level</Label>
+              <Label htmlFor="level-filter">{ui("Level")}</Label>
               <Select value={level} onValueChange={(newLevel) => {
                 setLevel(newLevel);
                 setFilterSubject('');
@@ -430,7 +434,7 @@ export default function CurriculumManager() {
                 setSubdomain('');
               }}>
                 <SelectTrigger id="level-filter">
-                  <SelectValue placeholder="All levels" />
+                  <SelectValue placeholder={ui("All levels")} />
                 </SelectTrigger>
                 <SelectContent>
                   {levels.map((lvl) => (
@@ -443,14 +447,14 @@ export default function CurriculumManager() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="subject-filter">Subject</Label>
+              <Label htmlFor="subject-filter">{ui("Subject")}</Label>
               <Select value={filterSubject} onValueChange={(newSubject) => {
                 setFilterSubject(newSubject);
                 setDomain('');
                 setSubdomain('');
               }}>
                 <SelectTrigger id="subject-filter">
-                  <SelectValue placeholder="All subjects" />
+                  <SelectValue placeholder={ui("All subjects")} />
                 </SelectTrigger>
                 <SelectContent>
                   {dbSubjects.map((subject) => (
@@ -463,13 +467,13 @@ export default function CurriculumManager() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="domain-filter">Domain</Label>
+              <Label htmlFor="domain-filter">{ui("Domain")}</Label>
               <Select value={domain} onValueChange={(newDomain) => {
                 setDomain(newDomain);
                 setSubdomain('');
               }} disabled={!filterSubject}>
                 <SelectTrigger id="domain-filter">
-                  <SelectValue placeholder="All domains" />
+                  <SelectValue placeholder={ui("All domains")} />
                 </SelectTrigger>
                 <SelectContent>
                   {dbDomains.map((d) => (
@@ -482,10 +486,10 @@ export default function CurriculumManager() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="subdomain-filter">Subdomain</Label>
+              <Label htmlFor="subdomain-filter">{ui("Subdomain")}</Label>
               <Select value={subdomain} onValueChange={setSubdomain} disabled={!domain}>
                 <SelectTrigger id="subdomain-filter">
-                  <SelectValue placeholder="All subdomains" />
+                  <SelectValue placeholder={ui("All subdomains")} />
                 </SelectTrigger>
                 <SelectContent>
                   {dbSubdomains.map((sd) => (
@@ -498,12 +502,12 @@ export default function CurriculumManager() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="search-filter">Search</Label>
+              <Label htmlFor="search-filter">{ui("Search")}</Label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search-filter"
-                  placeholder="Search objectives..."
+                  placeholder={ui("Search objectives...")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-8"
@@ -514,7 +518,7 @@ export default function CurriculumManager() {
 
           <div className="flex justify-between items-center">
             <div className="text-sm text-muted-foreground">
-              {objectives?.length || 0} objective(s) found
+              {objectives?.length || 0} {ui("objective(s) found")}
             </div>
             <div className="flex gap-2">
               <Button
@@ -524,10 +528,10 @@ export default function CurriculumManager() {
                 disabled={!objectives || objectives.length === 0}
               >
                 <Download className="h-4 w-4 mr-2" />
-                Export CSV
+                {ui("Export CSV")}
               </Button>
               <Button variant="outline" size="sm" onClick={resetFilters}>
-                Reset Filters
+                {ui("Reset Filters")}
               </Button>
             </div>
           </div>
@@ -569,7 +573,7 @@ export default function CurriculumManager() {
                       {/* Curriculum Location Section */}
                       <div className="p-3 bg-muted/50 rounded-md border border-border">
                         <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase">
-                          Curriculum Location
+                          {ui("Curriculum Location")}
                         </div>
                         <CurriculumLocation
                           countryId={filterCountry || 'fr'}
@@ -577,14 +581,14 @@ export default function CurriculumManager() {
                           subjectId={objective.subject_id_uuid ?? objective.subject_id}
                           domainId={objective.domain_id_uuid ?? objective.domain_id}
                           subdomainId={objective.subdomain_id_uuid ?? objective.subdomain_id}
-                          locale="en"
+                          locale={language}
                           variant="full"
                         />
                       </div>
 
                       {/* Success Criteria Section */}
                       <div>
-                        <div className="text-sm font-medium mb-2">Success Criteria:</div>
+                        <div className="text-sm font-medium mb-2">{ui("Success Criteria:")}</div>
                         {objective.success_criteria && objective.success_criteria.length > 0 ? (
                           <ul className="space-y-4">
                             {objective.success_criteria.map((sc) => (
@@ -599,7 +603,7 @@ export default function CurriculumManager() {
                                     subjectId={sc.subject_id_uuid ?? sc.subject_id}
                                     domainId={sc.domain_id_uuid ?? sc.domain_id}
                                     subdomainId={sc.subdomain_id_uuid ?? sc.subdomain_id}
-                                    locale="en"
+                                    locale={language}
                                     variant="compact"
                                   />
                                 </div>
@@ -607,7 +611,7 @@ export default function CurriculumManager() {
                                 {/* Tasks for this success criterion */}
                                 <Collapsible>
                                   <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                                    View tasks for this criterion →
+                                    {ui("View tasks for this criterion →")}
                                   </CollapsibleTrigger>
                                   <CollapsibleContent>
                                     <TaskViewer 
@@ -620,14 +624,14 @@ export default function CurriculumManager() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-sm text-muted-foreground">No success criteria defined</p>
+                          <p className="text-sm text-muted-foreground">{ui("No success criteria defined")}</p>
                         )}
                       </div>
 
                       {/* Notes Section */}
                       {objective.notes_from_prog && (
                         <div className="p-3 bg-muted rounded-md">
-                          <div className="text-xs font-medium mb-1">Notes:</div>
+                          <div className="text-xs font-medium mb-1">{ui("Notes:")}</div>
                           <div className="text-sm">{objective.notes_from_prog}</div>
                         </div>
                       )}
@@ -645,11 +649,11 @@ export default function CurriculumManager() {
                   : 'No objectives found. Try adjusting your filters or import curriculum data.'}
               </div>
               <div className="mx-auto max-w-2xl rounded-md border border-border bg-muted/40 p-3 text-left text-xs font-mono text-muted-foreground">
-                <div>level: {level || 'all'}</div>
+                <div>{ui("level:")} {level || 'all'}</div>
                 <div>subject_id_uuid: {filterSubject || 'all'}</div>
                 <div>domain_id_uuid: {domain || 'all'}</div>
                 <div>subdomain_id_uuid: {subdomain || 'all'}</div>
-                {search && <div>search: {search}</div>}
+                {search && <div>{ui("search:")} {search}</div>}
                 {objectivesError && <div>error: {objectivesErrorDetails?.message ?? 'Unknown query error'}</div>}
               </div>
             </div>

@@ -1,3 +1,4 @@
+import { learnerStorageKey } from '@/features/family/profileRuntime';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Subject } from '@/types/admin';
@@ -35,9 +36,18 @@ export const useSubjectManagement = () => {
   const [subjects, setSubjects] = useState<Subject[]>(loadOrMigrateSubjects);
 
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(() => {
-    const savedSubject = localStorage.getItem('selectedSubject');
+    const savedSubject = localStorage.getItem(learnerStorageKey('selectedSubject'));
     return savedSubject ? JSON.parse(savedSubject) : null;
   });
+
+  useEffect(() => {
+    const reset = () => {
+      const saved = localStorage.getItem(learnerStorageKey('selectedSubject'));
+      try { setSelectedSubject(saved ? JSON.parse(saved) : null); } catch { setSelectedSubject(null); }
+    };
+    window.addEventListener('stuwy:profile-changed', reset);
+    return () => window.removeEventListener('stuwy:profile-changed', reset);
+  }, []);
 
   // Save subjects to localStorage when they change
   useEffect(() => {
@@ -47,7 +57,7 @@ export const useSubjectManagement = () => {
   // Save selected subject to localStorage when it changes
   useEffect(() => {
     if (selectedSubject) {
-      localStorage.setItem('selectedSubject', JSON.stringify(selectedSubject));
+      localStorage.setItem(learnerStorageKey('selectedSubject'), JSON.stringify(selectedSubject));
     }
   }, [selectedSubject]);
 

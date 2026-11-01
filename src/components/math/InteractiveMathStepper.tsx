@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 /**
  * InteractiveMathStepper Component
  * Main component that provides step-by-step math problem solving with visual animations
@@ -32,6 +33,7 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
   onStepChange,
   onComplete
 }) => {
+  const ui = useInterfaceTranslation();
   const [state, setState] = useState<StepperState>({
     currentStep: 0,
     totalSteps: 0,
@@ -158,14 +160,14 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Calculator className="h-5 w-5 text-blue-600" />
-            Interactive Math Stepper
+            {ui("Interactive Math Stepper")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Expression Input */}
           <form onSubmit={handleExpressionSubmit} className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Try your own math problem:
+              {ui("Try your own math problem:")}
             </label>
             <div className="flex gap-2">
               <Input
@@ -176,7 +178,7 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
                 disabled={isLoading}
               />
               <Button type="submit" disabled={isLoading || !userExpression.trim()}>
-                {isLoading ? 'Loading...' : 'Solve'}
+                {isLoading ? ui("Loading...") : 'Solve'}
               </Button>
             </div>
           </form>
@@ -193,11 +195,11 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
           {state.totalSteps > 0 && (
             <div className="flex items-center justify-between">
               <Badge variant="outline" className="text-sm">
-                Step {state.currentStep + 1} of {state.totalSteps}
+                {ui("Step")} {state.currentStep + 1} {ui("of")} {state.totalSteps}
               </Badge>
               {finalResult !== null && (
                 <Badge variant="secondary" className="text-sm">
-                  Answer: {finalResult.toFixed(2)}
+                  {ui("Answer:")} {finalResult.toFixed(2)}
                 </Badge>
               )}
             </div>
@@ -218,7 +220,7 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
                   disabled={state.currentStep === 0}
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Back
+                  {ui("Back")}
                 </Button>
                 
                 <Button
@@ -227,7 +229,7 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
                   onClick={handleNext}
                   disabled={state.currentStep >= state.totalSteps - 1}
                 >
-                  Next
+                  {ui("Next")}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -244,7 +246,7 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
                   ) : (
                     <Play className="h-4 w-4" />
                   )}
-                  {state.isPlaying ? 'Pause' : 'Play'}
+                  {state.isPlaying ? ui("Pause") : 'Play'}
                 </Button>
 
                 <Button
@@ -257,7 +259,7 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
                   ) : (
                     <Eye className="h-4 w-4" />
                   )}
-                  {state.showAnswer ? 'Hide' : 'Show'} Answer
+                  {state.showAnswer ? 'Hide' : 'Show'} {ui("Answer")}
                 </Button>
 
                 <Button
@@ -266,7 +268,7 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
                   onClick={handleReset}
                 >
                   <RotateCcw className="h-4 w-4" />
-                  Reset
+                  {ui("Reset")}
                 </Button>
               </div>
             </div>
@@ -288,7 +290,7 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
           <CardContent className="pt-4">
             <div className="text-center">
               <h3 className="text-lg font-bold text-green-800 dark:text-green-200 mb-2">
-                🎉 Final Answer
+                {ui("🎉 Final Answer")}
               </h3>
               <div className="text-2xl font-mono font-bold text-green-900 dark:text-green-100">
                 {finalResult.toFixed(2)}
@@ -302,13 +304,13 @@ export const InteractiveMathStepper: React.FC<InteractiveMathStepperProps> = ({
       <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
         <CardContent className="pt-4">
           <div className="text-sm text-blue-700 dark:text-blue-300">
-            <h4 className="font-semibold mb-2">💡 Tips:</h4>
+            <h4 className="font-semibold mb-2">{ui("💡 Tips:")}</h4>
             <ul className="space-y-1 list-disc list-inside">
-              <li>Use + for addition, - for subtraction, × or * for multiplication</li>
-              <li>Use ÷ or / for division, % for percentages</li>
-              <li>Use parentheses () for grouping: (12 + 3) × 4</li>
-              <li>Try the Play button to see steps automatically</li>
-              <li>Use Show Answer to see the final result</li>
+              <li>{ui("Use + for addition, - for subtraction, × or * for multiplication")}</li>
+              <li>{ui("Use ÷ or / for division, % for percentages")}</li>
+              <li>{ui("Use parentheses () for grouping: (12 + 3) × 4")}</li>
+              <li>{ui("Try the Play button to see steps automatically")}</li>
+              <li>{ui("Use Show Answer to see the final result")}</li>
             </ul>
           </div>
         </CardContent>

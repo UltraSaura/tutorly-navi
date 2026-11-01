@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
@@ -19,7 +21,6 @@ import { BookOpen, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 interface ChildDetailsUser {
   first_name?: string | null;
@@ -28,6 +29,8 @@ interface ChildDetailsUser {
 }
 
 export default function ChildDashboard() {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const { childId } = useParams<{ childId: string }>();
   const { guardianId, loading: authLoading } = useGuardianAuth();
   const isMobile = useIsMobile();
@@ -129,7 +132,7 @@ export default function ChildDashboard() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading child dashboard...</p>
+          <p className="text-muted-foreground">{ui("Loading child dashboard...")}</p>
         </div>
       </div>
     );
@@ -138,14 +141,14 @@ export default function ChildDashboard() {
   if (!child) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Child not found</p>
+        <p className="text-muted-foreground">{ui("Child not found")}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Child Dashboard" description="Detailed learning view for an individual child on Stuwy." />
+      <PageMeta title={ui("Child Dashboard")} description={ui("Detailed learning view for an individual child on Stuwy.")} />
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <ChildHeader
@@ -190,10 +193,10 @@ export default function ChildDashboard() {
               <div className="rounded-lg p-2" style={{ background: '#F2FBF8' }}>
                 <BookOpen className="h-4 w-4" style={{ color: '#12C6A0' }} />
               </div>
-              Leçons
+              {ui("Leçons")}
               <div className="ml-auto flex items-center gap-4 text-sm font-normal text-muted-foreground">
                 {lessonStats.currentStreak > 0 && (
-                  <span>🔥 {lessonStats.currentStreak} jours de suite</span>
+                  <span>🔥 {lessonStats.currentStreak} {ui("jours de suite")}</span>
                 )}
                 <span style={{ color: '#12C6A0', fontWeight: 700 }}>
                   {lessonStats.totalXp} XP
@@ -207,32 +210,32 @@ export default function ChildDashboard() {
                 <p className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                   {lessonStats.lessonsCompleted}
                 </p>
-                <p className="text-xs text-muted-foreground">Total leçons</p>
+                <p className="text-xs text-muted-foreground">{ui("Total leçons")}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold" style={{ color: '#0F172A' }}>
                   {lessonStats.lessonsThisWeek}
                 </p>
-                <p className="text-xs text-muted-foreground">Cette semaine</p>
+                <p className="text-xs text-muted-foreground">{ui("Cette semaine")}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold" style={{ color: lessonStats.currentStreak > 0 ? '#B45309' : '#9CA3AF' }}>
                   {lessonStats.currentStreak > 0 ? `🔥 ${lessonStats.currentStreak}j` : '—'}
                 </p>
-                <p className="text-xs text-muted-foreground">Série actuelle</p>
+                <p className="text-xs text-muted-foreground">{ui("Série actuelle")}</p>
               </div>
             </div>
 
             {lessonStats.recentLessons.length > 0 && (
               <div className="space-y-2">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Dernières leçons
+                  {ui("Dernières leçons")}
                 </p>
                 {lessonStats.recentLessons.map((lesson, i) => {
                   const minutes = Math.max(1, Math.round(lesson.timeSpentSeconds / 60));
                   const timeAgo = formatDistanceToNow(new Date(lesson.completedAt), {
                     addSuffix: true,
-                    locale: fr,
+                    locale: dateLocale,
                   });
                   return (
                     <div
@@ -267,7 +270,7 @@ export default function ChildDashboard() {
 
       {progressData?.[0]?.subjects && progressData[0].subjects.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold">Subjects</h2>
+          <h2 className="text-xl font-semibold">{ui("Subjects")}</h2>
           <SubjectsGrid subjects={progressData[0].subjects} childId={childId!} />
         </div>
       )}

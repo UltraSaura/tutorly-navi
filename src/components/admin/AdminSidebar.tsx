@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,21 +6,22 @@ import { cn } from '@/lib/utils';
 import { adminNavGroups, iconMap } from './adminNavGroups';
 
 const AdminSidebar = () => {
+  const ui = useInterfaceTranslation();
   const location = useLocation();
 
   return (
     <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 z-50 glass border-r">
       <div className="flex items-center justify-between h-16 px-6 border-b">
         <Link to="/" className="flex items-center">
-          <img src="/logo.png" alt="Stuwy Logo" className="w-8 h-8" />
-          <span className="ml-2 font-semibold">Admin Panel</span>
+          <img src="/logo.png" alt={ui("Stuwy Logo")} className="w-8 h-8" />
+          <span className="ml-2 font-semibold">{ui("Admin Panel")}</span>
         </Link>
       </div>
       <nav className="flex-1 overflow-y-auto py-6 px-4">
         {adminNavGroups.map(group => (
-          <div key={group.label} className="mb-6">
+          <div key={ui(group.label)} className="mb-6">
             <div className="text-xs font-semibold uppercase text-gray-400 tracking-wide px-1 mb-2">
-              {group.label}
+              {ui(group.label)}
             </div>
             <div className="space-y-1">
               {group.items.map(item => {
@@ -36,7 +38,7 @@ const AdminSidebar = () => {
                     )}
                   >
                     {Icon && <Icon className="mr-2 h-5 w-5" />}
-                    {item.title}
+                    {ui(item.title)}
                   </Link>
                 );
               })}
@@ -50,7 +52,7 @@ const AdminSidebar = () => {
             <span className="mr-2">
               <svg className="h-4 w-4" />
             </span>
-            Back to App
+            {ui("Back to App")}
           </Button>
         </Link>
       </div>

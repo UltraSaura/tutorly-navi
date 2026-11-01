@@ -1,3 +1,4 @@
+import { learnerStorageKey } from '@/features/family/profileRuntime';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,7 +22,7 @@ import { trackLearningInteraction } from '@/services/learningAnalytics';
  * Note: no unique constraint on (user_id, topic_id, progress_type), so we avoid
  * upsert/onConflict and keep the row id in a ref (update-by-id or insert).
  */
-const storageKey = (topicId: string) => `stuwy:lesson-levels:${topicId}`;
+const storageKey = (topicId: string, learnerId: string | undefined) => learnerStorageKey(`stuwy:lesson-levels:${topicId}`, learnerId);
 
 export function useLessonLevelProgress(
   topicId: string,
@@ -46,7 +47,7 @@ export function useLessonLevelProgress(
     (async () => {
       let count = 0;
       try {
-        const ls = localStorage.getItem(storageKey(topicId));
+        const ls = localStorage.getItem(storageKey(topicId, userId));
         if (ls != null) {
           const n = parseInt(ls, 10);
           if (!Number.isNaN(n)) count = n;
@@ -80,7 +81,7 @@ export function useLessonLevelProgress(
 
   const persistCount = useCallback((n: number) => {
     const pct = totalLevels > 0 ? Math.round((n / totalLevels) * 100) : 0;
-    try { localStorage.setItem(storageKey(topicId), String(n)); } catch { /* ignore */ }
+    try { localStorage.setItem(storageKey(topicId, userId), String(n)); } catch { /* ignore */ }
     if (!userId) return;
     void (async () => {
       try {

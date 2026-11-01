@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { processMathContentForDisplay } from '@/utils/mathDisplayProcessor';
@@ -161,6 +162,7 @@ export const ExplanationTwoCards: React.FC<ExplanationTwoCardsProps> = ({
   guidance,
   className
 }) => {
+  const ui = useInterfaceTranslation();
   const formattedProblem = formatConcatenatedText(problem);
   const problemParagraphs = formatTextIntoParagraphs(problem);
   const guidanceParagraphs = formatTextIntoParagraphs(guidance);
@@ -176,7 +178,7 @@ export const ExplanationTwoCards: React.FC<ExplanationTwoCardsProps> = ({
             </div>
             <div className="flex-1">
               <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3">
-                Problem
+                {ui("Problem")}
               </h4>
               <div className="text-sm text-blue-700 dark:text-blue-300 space-y-2">
                 {problemParagraphs.map((paragraph, index) => {
@@ -207,7 +209,7 @@ export const ExplanationTwoCards: React.FC<ExplanationTwoCardsProps> = ({
             </div>
             <div className="flex-1">
               <h4 className="text-sm font-semibold text-green-800 dark:text-green-200 mb-3">
-                Guidance
+                {ui("Guidance")}
               </h4>
               <div className="text-sm text-green-700 dark:text-green-300 space-y-2">
                 {guidanceParagraphs.map((paragraph, index) => {

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { useAiModelManagement } from "@/hooks/useAiModelManagement";
 import { Trash2, Plus, Key, Settings } from "lucide-react";
 
 const ModelManagementNew = () => {
+  const ui = useInterfaceTranslation();
   const {
     providers,
     models,
@@ -39,16 +41,16 @@ const ModelManagementNew = () => {
   };
 
   if (loading) {
-    return <div className="p-6">Loading AI model configuration...</div>;
+    return <div className="p-6">{ui("Loading AI model configuration...")}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">AI Model Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{ui("AI Model Management")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage AI providers, models, and API keys
+            {ui("Manage AI providers, models, and API keys")}
           </p>
         </div>
         
@@ -56,22 +58,22 @@ const ModelManagementNew = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add API Key
+              {ui("Add API Key")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add API Key</DialogTitle>
+              <DialogTitle>{ui("Add API Key")}</DialogTitle>
               <DialogDescription>
-                Add a new API key for an AI provider
+                {ui("Add a new API key for an AI provider")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="provider">Provider</Label>
+                <Label htmlFor="provider">{ui("Provider")}</Label>
                 <Select value={selectedProvider} onValueChange={setSelectedProvider}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a provider" />
+                    <SelectValue placeholder={ui("Select a provider")} />
                   </SelectTrigger>
                   <SelectContent>
                     {providers.map((provider) => (
@@ -83,28 +85,28 @@ const ModelManagementNew = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="keyName">Key Name</Label>
+                <Label htmlFor="keyName">{ui("Key Name")}</Label>
                 <Input
                   id="keyName"
                   value={keyName}
                   onChange={(e) => setKeyName(e.target.value)}
-                  placeholder="e.g., Production Key"
+                  placeholder={ui("e.g., Production Key")}
                 />
               </div>
               <div>
-                <Label htmlFor="keyValue">API Key</Label>
+                <Label htmlFor="keyValue">{ui("API Key")}</Label>
                 <Input
                   id="keyValue"
                   type="password"
                   value={keyValue}
                   onChange={(e) => setKeyValue(e.target.value)}
-                  placeholder="Enter API key"
+                  placeholder={ui("Enter API key")}
                 />
               </div>
             </div>
             <DialogFooter>
               <Button onClick={handleAddKey} disabled={!selectedProvider || !keyName || !keyValue}>
-                Add Key
+                {ui("Add Key")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -137,7 +139,7 @@ const ModelManagementNew = () => {
                 <div>
                   <h4 className="font-medium mb-2 flex items-center gap-2">
                     <Key className="h-4 w-4" />
-                    API Keys ({providerKeys.length})
+                    {ui("API Keys (")}{providerKeys.length})
                   </h4>
                   {providerKeys.length > 0 ? (
                     <div className="space-y-2">
@@ -160,13 +162,13 @@ const ModelManagementNew = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No API keys configured</p>
+                    <p className="text-sm text-muted-foreground">{ui("No API keys configured")}</p>
                   )}
                 </div>
 
                 {/* Available Models Section */}
                 <div>
-                  <h4 className="font-medium mb-2">Available Models ({providerModels.length})</h4>
+                  <h4 className="font-medium mb-2">{ui("Available Models (")}{providerModels.length})</h4>
                   {providerModels.length > 0 ? (
                     <div className="grid gap-2 sm:grid-cols-2">
                       {providerModels.map((model) => (
@@ -184,7 +186,7 @@ const ModelManagementNew = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No models available</p>
+                    <p className="text-sm text-muted-foreground">{ui("No models available")}</p>
                   )}
                 </div>
               </CardContent>

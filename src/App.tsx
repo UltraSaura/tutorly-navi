@@ -1,3 +1,6 @@
+import { FamilyProfileProvider } from './context/FamilyProfileContext';
+import { FamilyRouteBoundary } from './features/family/FamilyRouteBoundary';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,9 +42,11 @@ const LessonPage = lazy(() => import("./pages/learning/LessonPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
+const GraduatedNumberLinePage = lazy(() => import("./pages/practice/GraduatedNumberLinePage"));
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
+const LessonThemePage = lazy(() => import("./pages/practice/LessonThemePage"));
 const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPage"));
 const PracticeTopicsPage = lazy(() => import("./pages/practice/PracticeTopicsPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
@@ -55,9 +60,14 @@ import PromptManagement from "./components/admin/PromptManagement";
 import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
 import LearningContentManagement from "./components/admin/LearningContentManagement";
 import CurriculumManager from "./components/admin/CurriculumManager";
+import GeneratedLessonsPage from "./components/admin/learning/GeneratedLessonsPage";
+import StagingLessonWorkflowPage, { StagingLessonDraftPreviewPage } from "./pages/admin/StagingLessonWorkflowPage";
+import SolidVisualGalleryPage from "./pages/admin/SolidVisualGalleryPage";
 import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
+
+const FamilyPage = lazy(() => import("./pages/FamilyPage"));
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -82,48 +92,66 @@ const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDe
 const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
 
 const isDev = import.meta.env.DEV;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+const isLocalSupabase = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(supabaseUrl);
+const isStagingSupabase = supabaseUrl === 'https://sibprjxhbxahouejygeu.supabase.co';
+
+const EnvironmentIndicator = () => (isLocalSupabase || isStagingSupabase) ? (
+  <div
+    data-testid={isLocalSupabase ? 'local-environment-indicator' : 'staging-environment-indicator'}
+    className="fixed right-3 top-3 z-[10000] rounded-full border border-amber-700 bg-amber-300 px-3 py-1 text-xs font-bold tracking-wide text-amber-950 shadow-lg"
+  >
+    {isLocalSupabase ? 'LOCAL · Supabase isolé' : 'STAGING · Supabase'}
+  </div>
+) : null;
 
 // Loading Component
-const LoadingFallback = () => (
+const LoadingFallback = () => {
+  const ui = useInterfaceTranslation();
+  return (
   <div className="flex items-center justify-center min-h-screen bg-background">
     <div className="flex flex-col items-center">
       <div className="w-16 h-16 relative">
         <div className="absolute top-0 left-0 w-full h-full border-4 border-muted rounded-full"></div>
         <div className="absolute top-0 left-0 w-full h-full border-4 border-primary rounded-full animate-spin border-t-transparent"></div>
       </div>
-      <p className="mt-4 text-lg font-medium text-foreground">Loading...</p>
+      <p className="mt-4 text-lg font-medium text-foreground">{ui("Loading...")}</p>
     </div>
   </div>
 );
+};
 
 // Route-level error fallback
-const RouteErrorFallback = ({ section }: { section: string }) => (
+const RouteErrorFallback = ({ section }: { section: string }) => {
+  const ui = useInterfaceTranslation();
+  return (
   <div className="flex items-center justify-center min-h-screen bg-background p-6">
     <div className="max-w-md w-full bg-card border rounded-lg shadow-lg p-6 text-center space-y-4">
       <div className="w-12 h-12 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">
         <span className="text-destructive text-xl">!</span>
       </div>
-      <h2 className="text-xl font-semibold">Unable to load {section}</h2>
+      <h2 className="text-xl font-semibold">{ui("Unable to load")} {section}</h2>
       <p className="text-muted-foreground text-sm">
-        Something went wrong loading this section. Please try again.
+        {ui("Something went wrong loading this section. Please try again.")}
       </p>
       <div className="flex gap-3 justify-center pt-2">
         <button
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
         >
-          Refresh Page
+          {ui("Refresh Page")}
         </button>
         <button
           onClick={() => window.location.href = '/'}
           className="px-4 py-2 border rounded-md hover:bg-muted"
         >
-          Go Home
+          {ui("Go Home")}
         </button>
       </div>
     </div>
   </div>
 );
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,21 +168,25 @@ const queryClient = new QueryClient({
 
 // Simple App Component (no language detection for now)
 const App = () => {
+  const ui = useInterfaceTranslation();
   return <QueryClientProvider client={queryClient}>
       <HelmetProvider>
       <ErrorBoundary>
         <TooltipProvider>
+          <EnvironmentIndicator />
           <Toaster />
           <Sonner />
           <OverlayProvider>
             <AuthProvider>
+            <FamilyProfileProvider>
               <AdminPreviewProvider>
                 <SimpleLanguageProvider>
                   <AdminProvider>
                     <BrowserRouter>
-                    <AnimatePresence mode="wait">
+                    <FamilyRouteBoundary><AnimatePresence mode="wait">
                       <Suspense fallback={<LoadingFallback />}>
                       <Routes>
+                        <Route path="/family" element={<FamilyPage />} />
                         {/* Auth Routes */}
                         <Route path="/auth" element={<AuthPage />} />
                         
@@ -195,15 +227,18 @@ const App = () => {
                         </Route>
                         <Route path="/learning" element={<MainLayout />}>
                           <Route index element={<LearningPage />} />
+                          <Route path=":subjectSlug/theme/:themeId" element={<LessonThemePage />} />
                           <Route path=":subjectSlug" element={<SubjectDashboardPage />} />
                           <Route path=":subjectSlug/:topicSlug" element={<LessonPage />} />
                         </Route>
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         <Route path="/practice" element={<MainLayout />}>
                           <Route index element={<PracticePage />} />
+                          <Route path="number-line" element={<GraduatedNumberLinePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
+                          <Route path=":subject/theme/:themeId" element={<LessonThemePage />} />
                           <Route path=":subject/topics" element={<PracticeTopicsPage />} />
                           <Route path=":subject" element={<PracticeSubjectPage />} />
                         </Route>
@@ -217,6 +252,9 @@ const App = () => {
                         {/* Management Dashboard (dev-only until a proper admin guard is added) */}
                         {isDev && (
                           <Route path="/management" element={<ManagementDashboard />} />
+                        )}
+                        {isDev && (
+                          <Route path="/dev/solid-gallery" element={<SolidVisualGalleryPage />} />
                         )}
                         
                         {/* Admin Panel Routes */}
@@ -233,6 +271,9 @@ const App = () => {
                           <Route path="prompts" element={<PromptManagement />} />
                           <Route path="learning" element={<LearningContentManagement />} />
                           <Route path="curriculum" element={<CurriculumManager />} />
+                          <Route path="generated-lessons" element={<GeneratedLessonsPage />} />
+                          <Route path="staging-lessons" element={<StagingLessonWorkflowPage />} />
+                          <Route path="staging-lessons/preview/:versionId" element={<StagingLessonDraftPreviewPage />} />
                           <Route path="exams" element={<ExamAnnales />} />
                           <Route path="recent-updates" element={<RecentUpdates />} />
                           <Route path="settings" element={<AdminSettings />} />
@@ -267,9 +308,9 @@ const App = () => {
             <Route path="classes/:classId" element={<ClassDetailPage />} />
             <Route path="students/:studentId" element={<TeacherStudentDetail />} />
             <Route path="topics/:topicId" element={<TeacherTopicDetail />} />
-            <Route path="resources" element={<div className="p-8">Resources (Coming Soon)</div>} />
-            <Route path="analytics" element={<div className="p-8">Analytics (Coming Soon)</div>} />
-            <Route path="settings" element={<div className="p-8">Settings (Coming Soon)</div>} />
+            <Route path="resources" element={<div className="p-8">{ui("Resources (Coming Soon)")}</div>} />
+            <Route path="analytics" element={<div className="p-8">{ui("Analytics (Coming Soon)")}</div>} />
+            <Route path="settings" element={<div className="p-8">{ui("Settings (Coming Soon)")}</div>} />
           </Route>
                         
                         {/* Curriculum Debug */}
@@ -281,11 +322,12 @@ const App = () => {
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
-                  </AnimatePresence>
+                  </AnimatePresence></FamilyRouteBoundary>
                     </BrowserRouter>
                   </AdminProvider>
                 </SimpleLanguageProvider>
               </AdminPreviewProvider>
+            </FamilyProfileProvider>
             </AuthProvider>
         </OverlayProvider>
       </TooltipProvider>

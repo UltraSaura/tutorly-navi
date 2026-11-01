@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, BookOpen, Pencil, Trash2, Play, Layers } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +46,7 @@ interface BatchUnit {
   focusContext?: string;
   difficulty?: 'easy' | 'medium' | 'hard'; // per-level ramp (per-level batch only)
   questions: Question[];
+  error?: string;
 }
 
 // Map a level's position to a difficulty ramp: first third easy → last third hard.
@@ -74,6 +77,10 @@ const DIFFICULTIES = [
 
 // 'preview' and 'try' are overlays — not numbered steps in the indicator
 const STEP_ORDER: Step[] = ['topics', 'settings', 'review', 'save', 'assign'];
+const BATCH_GENERATION_ATTEMPTS = 2;
+const BATCH_RETRY_DELAY_MS = 2500;
+
+const wait = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
 function normalizeTopicDisplayKey(value: string | null | undefined) {
   return String(value || '')
@@ -98,6 +105,7 @@ function isSchemaMismatchError(error: unknown) {
 }
 
 export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGeneratorProps) {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const generateMutation = useGenerateQuizFromTopics();
   const { user } = useAuth();
@@ -108,6 +116,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string>('');
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [onlyWithoutQuiz, setOnlyWithoutQuiz] = useState(false);
 
   // Settings
   const [questionCount, setQuestionCount] = useState(5);
@@ -148,6 +157,13 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   }), [generatedQuestions, bankTitle]);
 
   const [isSaving, setIsSaving] = useState(false);
+
+  const invalidatePracticeContent = () => {
+    queryClient.invalidateQueries({ queryKey: ['learning-subjects'] });
+    queryClient.invalidateQueries({ queryKey: ['practice-bank-assignments'] });
+    queryClient.invalidateQueries({ queryKey: ['practice-topics-bank-assignments'] });
+    queryClient.invalidateQueries({ queryKey: ['topic-quiz-generator-assignments'] });
+  };
 
   // Fetch subjects
   const { data: subjects = [] } = useQuery({
@@ -253,7 +269,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     return subjects.filter((subject) => subjectIds.has(subject.id));
   }, [subjects, levelScopedTopics]);
 
-  const filteredTopics = useMemo(() => {
+  const matchingTopics = useMemo(() => {
     const subjectFiltered = selectedSubjectId
       ? levelScopedTopics.filter((topic) => {
           const subjectId = resolveTopicSubjectId(topic);
@@ -275,10 +291,10 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   }, [levelScopedTopics, searchQuery, selectedSubjectId]);
 
   const { data: topicAssignmentRows = [] } = useQuery({
-    queryKey: ['topic-quiz-generator-assignments', filteredTopics.map((topic) => topic.id).sort().join(',')],
+    queryKey: ['topic-quiz-generator-assignments', matchingTopics.map((topic) => topic.id).sort().join(',')],
     queryFn: async () => {
-      if (filteredTopics.length === 0) return [];
-      const topicIds = filteredTopics.map((topic) => topic.id);
+      if (matchingTopics.length === 0) return [];
+      const topicIds = matchingTopics.map((topic) => topic.id);
       const { data, error } = await supabase
         .from('quiz_bank_assignments')
         .select('bank_id, topic_id, display_context, is_active')
@@ -287,7 +303,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       if (error) throw error;
       return data || [];
     },
-    enabled: filteredTopics.length > 0,
+    enabled: matchingTopics.length > 0,
   });
 
   const topicQuizAvailability = useMemo(() => {
@@ -309,7 +325,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     }
 
     const availabilityByDisplayKey = new Map<string, { practice: Set<string>; lesson: Set<string> }>();
-    for (const topic of filteredTopics) {
+    for (const topic of matchingTopics) {
       const key = normalizeTopicDisplayKey(topic.name);
       const existing = availabilityByDisplayKey.get(key) || { practice: new Set<string>(), lesson: new Set<string>() };
       const topicAvailability = availabilityByTopicId.get(topic.id);
@@ -319,7 +335,29 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     }
 
     return availabilityByDisplayKey;
-  }, [filteredTopics, topicAssignmentRows]);
+  }, [matchingTopics, topicAssignmentRows]);
+
+  const filteredTopics = useMemo(() => {
+    if (!onlyWithoutQuiz) return matchingTopics;
+    return matchingTopics.filter((topic) => {
+      const availability = topicQuizAvailability.get(normalizeTopicDisplayKey(topic.name));
+      return (availability?.lesson.size ?? 0) + (availability?.practice.size ?? 0) === 0;
+    });
+  }, [matchingTopics, onlyWithoutQuiz, topicQuizAvailability]);
+
+  const allVisibleTopicsSelected = filteredTopics.length > 0
+    && filteredTopics.every((topic) => selectedTopicIds.includes(topic.id));
+
+  const toggleAllVisibleTopics = () => {
+    const visibleIds = filteredTopics.map((topic) => topic.id);
+    setSelectedTopicIds((current) => {
+      if (allVisibleTopicsSelected) {
+        const visibleIdSet = new Set(visibleIds);
+        return current.filter((id) => !visibleIdSet.has(id));
+      }
+      return Array.from(new Set([...current, ...visibleIds]));
+    });
+  };
 
   const selectedTopicLevel = useMemo(() => {
     const selectedTopics = topics.filter(topic => selectedTopicIds.includes(topic.id));
@@ -429,21 +467,45 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         const filled: BatchUnit[] = [];
         for (let i = 0; i < units.length; i++) {
           const u = units[i];
-          const result = await generateMutation.mutateAsync({
-            topicIds: [u.topicId],
-            ...commonGenArgs(),
-            difficulty: u.difficulty ?? difficulty, // per-level ramp overrides the global picker
-            focusLabel: u.focusLabel,
-            focusContext: u.focusContext,
-          });
-          filled.push({ ...u, questions: result.questions ?? [] });
+          let completedUnit: BatchUnit | null = null;
+          for (let attempt = 1; attempt <= BATCH_GENERATION_ATTEMPTS; attempt++) {
+            try {
+              const result = await generateMutation.mutateAsync({
+                topicIds: [u.topicId],
+                ...commonGenArgs(),
+                difficulty: u.difficulty ?? difficulty, // per-level ramp overrides the global picker
+                focusLabel: u.focusLabel,
+                focusContext: u.focusContext,
+              });
+              completedUnit = { ...u, questions: result.questions ?? [] };
+              break;
+            } catch (error) {
+              if (attempt < BATCH_GENERATION_ATTEMPTS) {
+                await wait(BATCH_RETRY_DELAY_MS);
+                continue;
+              }
+              completedUnit = {
+                ...u,
+                questions: [],
+                error: error instanceof Error ? error.message : 'Generation failed',
+              };
+            }
+          }
+          filled.push(completedUnit ?? { ...u, questions: [], error: 'Generation failed' });
           setBatchProgress({ done: i + 1, total: units.length });
         }
         setBatchUnits(filled);
         setBatchProgress(null);
         setStep('review');
         const totalQ = filled.reduce((n, u) => n + u.questions.length, 0);
-        toast.success(`Generated ${totalQ} questions across ${filled.length} bank(s)!`);
+        const failedCount = filled.filter((unit) => unit.error).length;
+        if (totalQ === 0) {
+          toast.error(`Generation failed for all ${failedCount} bank(s). Review the errors below.`);
+        } else if (failedCount > 0) {
+          toast.warning(`Generated ${totalQ} questions. ${failedCount} bank(s) failed and were kept for review.`);
+        } else {
+          toast.success(`Generated ${totalQ} questions across ${filled.length} bank(s)!`);
+        }
       } catch (error) {
         console.error('Batch generation failed:', error);
         toast.error(error instanceof Error ? error.message : 'Failed to generate questions');
@@ -604,6 +666,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       }
       queryClient.invalidateQueries({ queryKey: ['quiz-banks'] });
       queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+      invalidatePracticeContent();
       toast.success(`${created} banque(s) créée(s) et assignée(s) en entraînement.`);
       onSaved?.();
       handleReset();
@@ -646,6 +709,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         if (assignContext === 'lesson') break;
       }
       queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+      invalidatePracticeContent();
       toast.success('Quiz assigned successfully!');
       onSaved?.();
       handleReset();
@@ -675,6 +739,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           })
         ));
         queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+        invalidatePracticeContent();
         onSaved?.();
       } catch (error) {
         toast.error('Assignment failed — the quiz was saved but not assigned.');
@@ -720,6 +785,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     setSelectedSchoolLevel('');
     setSelectedTopicIds([]);
     setSearchQuery('');
+    setOnlyWithoutQuiz(false);
     setQuestionCount(5);
     setQuestionTypes(['single', 'multi']);
     setDifficulty('medium');
@@ -771,7 +837,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-primary" />
-            Generate Quiz from Topics
+            {ui("Generate Quiz from Topics")}
           </DialogTitle>
         </DialogHeader>
 
@@ -789,7 +855,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         </div>
 
         {/* Step: Topics */}
-        {step === 'topics' && (
+        {step === "topics" && (
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-4 flex gap-3">
               <Select value={selectedCountryCode} onValueChange={(value) => {
@@ -800,7 +866,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 setSearchQuery('');
               }}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select country" />
+                  <SelectValue placeholder={ui("Select country")} />
                 </SelectTrigger>
                 <SelectContent>
                   {countries.map((country) => (
@@ -814,7 +880,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 setSelectedTopicIds([]);
               }} disabled={!selectedCountryCode}>
                 <SelectTrigger className="w-40">
-                  <SelectValue placeholder="School level" />
+                  <SelectValue placeholder={ui("School level")} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableTopicLevels.map((level) => (
@@ -827,7 +893,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 setSelectedTopicIds([]);
               }} disabled={!selectedCountryCode || !selectedSchoolLevel}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select subject" />
+                  <SelectValue placeholder={ui("Select subject")} />
                 </SelectTrigger>
                 <SelectContent>
                   {visibleSubjects.map((subject) => (
@@ -836,7 +902,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 </SelectContent>
               </Select>
               <Input
-                placeholder="Search topics..."
+                placeholder={ui("Search topics...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1"
@@ -844,30 +910,80 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               />
             </div>
 
+            {selectedSubjectId && (
+              <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <Checkbox
+                    checked={onlyWithoutQuiz}
+                    onCheckedChange={(checked) => setOnlyWithoutQuiz(Boolean(checked))}
+                  />
+                  Without quiz
+                </label>
+                <div className="flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    className="text-primary hover:underline"
+                    onClick={toggleAllVisibleTopics}
+                  >
+                    {allVisibleTopicsSelected ? 'Deselect visible' : 'Select all visible'}
+                  </button>
+                  <span className="text-muted-foreground">·</span>
+                  <button
+                    type="button"
+                    className="text-primary hover:underline"
+                    onClick={() => setSelectedTopicIds(
+                      matchingTopics
+                        .filter((topic) => {
+                          const availability = topicQuizAvailability.get(normalizeTopicDisplayKey(topic.name));
+                          return (availability?.lesson.size ?? 0) + (availability?.practice.size ?? 0) === 0;
+                        })
+                        .map((topic) => topic.id),
+                    )}
+                  >
+                    Select without quiz
+                  </button>
+                  <span className="text-muted-foreground">·</span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:underline"
+                    onClick={() => setSelectedTopicIds([])}
+                  >
+                    Clear selection
+                  </button>
+                </div>
+              </div>
+            )}
+
             <ScrollArea className="border rounded-lg h-[50vh]">
               {!selectedCountryCode ? (
-                <div className="p-8 text-center text-muted-foreground">Select a country to start filtering topics</div>
+                <div className="p-8 text-center text-muted-foreground">{ui("Select a country to start filtering topics")}</div>
               ) : !selectedSchoolLevel ? (
-                <div className="p-8 text-center text-muted-foreground">Select a school level for this country</div>
+                <div className="p-8 text-center text-muted-foreground">{ui("Select a school level for this country")}</div>
               ) : !selectedSubjectId ? (
-                <div className="p-8 text-center text-muted-foreground">Select a subject to see matching topics</div>
+                <div className="p-8 text-center text-muted-foreground">{ui("Select a subject to see matching topics")}</div>
               ) : topicsLoading ? (
-                <div className="p-8 text-center text-muted-foreground">Loading topics...</div>
+                <div className="p-8 text-center text-muted-foreground">{ui("Loading topics...")}</div>
               ) : filteredTopics.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">No topics found</div>
+                <div className="p-8 text-center text-muted-foreground">{ui("No topics found")}</div>
               ) : (
                 <div className="p-2 space-y-1">
                   <div className="flex items-center gap-3 px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    <div className="w-4" />
-                    <div className="flex-1 min-w-0">Topic</div>
-                    <div className="w-16 text-center">Video</div>
-                    <div className="w-16 text-center">Practice</div>
+                    <Checkbox
+                      checked={allVisibleTopicsSelected}
+                      onCheckedChange={toggleAllVisibleTopics}
+                      aria-label="Select all visible topics"
+                    />
+                    <div className="flex-1 min-w-0">{ui('Topic')}</div>
+                    <div className="w-24 text-center">{ui('Status')}</div>
+                    <div className="w-16 text-center">{ui('Lesson')}</div>
+                    <div className="w-16 text-center">{ui('Practice')}</div>
                   </div>
                   {filteredTopics.map((topic) => {
                     const isSelected = selectedTopicIds.includes(topic.id);
                     const quizAvailability = topicQuizAvailability.get(normalizeTopicDisplayKey(topic.name));
                     const lessonCount = quizAvailability?.lesson.size ?? 0;
                     const practiceCount = quizAvailability?.practice.size ?? 0;
+                    const hasQuiz = lessonCount + practiceCount > 0;
                     return (
                       <div
                         key={topic.id}
@@ -888,6 +1004,17 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                             </div>
                           )}
                         </div>
+                        <div className="w-24 text-center">
+                          {hasQuiz ? (
+                            <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
+                              Quiz ✓
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
+                              No quiz
+                            </Badge>
+                          )}
+                        </div>
                         <div className="w-16 text-center text-sm font-medium tabular-nums text-muted-foreground">
                           {lessonCount > 0 ? lessonCount : '0'}
                         </div>
@@ -904,19 +1031,19 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
             {selectedTopicIds.length > 0 && (
               <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
                 <div className="text-sm">
-                  <div><strong>{selectedTopicIds.length}</strong> topic{selectedTopicIds.length !== 1 ? 's' : ''} selected</div>
+                  <div><strong>{selectedTopicIds.length}</strong> {ui("topic")}{selectedTopicIds.length !== 1 ? 's' : ''} {ui("selected")}</div>
                   {selectedTopicLevelLabel && (
-                    <div className="text-muted-foreground mt-1">School level: {selectedTopicLevelLabel}</div>
+                    <div className="text-muted-foreground mt-1">{ui("School level:")} {selectedTopicLevelLabel}</div>
                   )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedTopicIds([])}>Clear</Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedTopicIds([])}>{ui("Clear")}</Button>
               </div>
             )}
 
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{ui("Cancel")}</Button>
               <Button onClick={() => setStep('settings')} disabled={!canProceedFromTopics}>
-                Next <ArrowRight className="w-4 h-4 ml-2" />
+                {ui("Next")} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
@@ -930,7 +1057,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               {/* Row: count + difficulty side by side */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Questions</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">{ui("Questions")}</Label>
                   <Select value={questionCount.toString()} onValueChange={(v) => setQuestionCount(parseInt(v))}>
                     <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -941,7 +1068,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Difficulty</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">{ui("Difficulty")}</Label>
                   <div className={`flex gap-1 h-8 ${batchMode && batchBy === 'level' ? 'opacity-40 pointer-events-none' : ''}`}>
                     {DIFFICULTIES.map((d) => (
                       <button
@@ -955,34 +1082,34 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                             : 'border-border hover:bg-muted'
                         }`}
                       >
-                        {d.label}
+                        {ui(d.label)}
                       </button>
                     ))}
                   </div>
-                  {batchMode && batchBy === 'level' && (
-                    <p className="text-[11px] text-muted-foreground mt-1">Rampe automatique par niveau : facile → moyen → difficile.</p>
+                  {batchMode && batchBy === "level" && (
+                    <p className="text-[11px] text-muted-foreground mt-1">{ui("Rampe automatique par niveau : facile → moyen → difficile.")}</p>
                   )}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Language</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">{ui("Language")}</Label>
                   <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                     <SelectTrigger className="h-8 text-sm">
-                      <SelectValue placeholder="Select language" />
+                      <SelectValue placeholder={ui("Select language")} />
                     </SelectTrigger>
                     <SelectContent>
                       {SUPPORTED_LANGUAGES.map((language) => (
                         <SelectItem key={language} value={language}>
-                          {language === 'fr' ? 'Français' : 'English'}
+                          {language === 'fr' ? 'Français' : ui("English")}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">School level</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">{ui("School level")}</Label>
                   <div className="h-8 rounded-md border px-3 flex items-center text-sm text-muted-foreground">
                     {selectedTopicLevelLabel || 'Inherited from topic'}
                   </div>
@@ -996,9 +1123,9 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 }`}>
                   <Checkbox checked={batchMode} onCheckedChange={(checked) => setBatchMode(!!checked)} />
                   <div>
-                    <div className="text-xs font-medium">📚 Batch — une banque par {batchBy === 'level' ? 'niveau' : 'sujet'}</div>
+                    <div className="text-xs font-medium">{ui("📚 Batch — une banque par")} {batchBy === "level" ? 'niveau' : ui("sujet")}</div>
                     <div className="text-[11px] text-muted-foreground">
-                      Crée une banque distincte pour chaque {batchBy === 'level' ? 'niveau progressif' : 'sujet'} ({questionCount} questions chacune). Décoché = une banque mixte.
+                      {ui("Crée une banque distincte pour chaque")} {batchBy === "level" ? 'niveau progressif' : ui("sujet")} ({questionCount} {ui("questions chacune). Décoché = une banque mixte.")}
                     </div>
                   </div>
                 </label>
@@ -1014,8 +1141,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                         }`}
                       >
                         {label}
-                        {val === 'level' && <span className="block text-[11px] font-normal text-muted-foreground">1 banque par niveau (sujet sans niveaux → 1 banque)</span>}
-                        {val === 'topic' && <span className="block text-[11px] font-normal text-muted-foreground">1 banque par sujet sélectionné</span>}
+                        {val === "level" && <span className="block text-[11px] font-normal text-muted-foreground">{ui("1 banque par niveau (sujet sans niveaux → 1 banque)")}</span>}
+                        {val === "topic" && <span className="block text-[11px] font-normal text-muted-foreground">{ui("1 banque par sujet sélectionné")}</span>}
                       </button>
                     ))}
                   </div>
@@ -1024,7 +1151,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
               {/* Question types */}
               <div>
-                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 block">Question Types</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 block">{ui("Question Types")}</Label>
 
                 {/* Mix toggle */}
                 <label className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-colors mb-2 ${
@@ -1032,8 +1159,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 }`}>
                   <Checkbox checked={mixMode} onCheckedChange={(checked) => setMixMode(!!checked)} />
                   <div>
-                    <div className="text-xs font-medium">🎲 Mix (Auto)</div>
-                    <div className="text-[11px] text-muted-foreground">AI picks the best type for each question</div>
+                    <div className="text-xs font-medium">{ui("🎲 Mix (Auto)")}</div>
+                    <div className="text-[11px] text-muted-foreground">{ui("AI picks the best type for each question")}</div>
                   </div>
                 </label>
 
@@ -1057,8 +1184,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                           className="h-3.5 w-3.5 mt-0.5 shrink-0"
                         />
                         <div className="min-w-0">
-                          <div className="text-xs font-medium leading-tight">{type.label}</div>
-                          <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{type.description}</div>
+                          <div className="text-xs font-medium leading-tight">{ui(type.label)}</div>
+                          <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{ui(type.description)}</div>
                         </div>
                       </label>
                     );
@@ -1069,10 +1196,10 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
             <div className="flex justify-between pt-3 border-t mt-3">
               <Button variant="outline" size="sm" onClick={() => setStep('topics')}>
-                <ArrowLeft className="w-4 h-4 mr-1" /> Back
+                <ArrowLeft className="w-4 h-4 mr-1" /> {ui("Back")}
               </Button>
               <Button size="sm" onClick={handleGenerate} disabled={!canProceedFromSettings}>
-                <Sparkles className="w-4 h-4 mr-1" /> Generate Questions
+                <Sparkles className="w-4 h-4 mr-1" /> {ui("Generate Questions")}
               </Button>
             </div>
           </div>
@@ -1082,12 +1209,12 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         {step === 'generating' && (
           <div className="flex-1 flex flex-col items-center justify-center py-12">
             <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-            <h3 className="text-lg font-medium mb-2">Generating Questions</h3>
+            <h3 className="text-lg font-medium mb-2">{ui("Generating Questions")}</h3>
             <p className="text-muted-foreground text-center">
               {batchProgress ? (
-                <>Banque {batchProgress.done}/{batchProgress.total} en cours…<br />Génération de chaque banque séparément.</>
+                <>{ui("Banque")} {batchProgress.done}/{batchProgress.total} {ui("en cours…")}<br />{ui("Génération de chaque banque séparément.")}</>
               ) : (
-                <>Analyzing {selectedTopicIds.length} topic{selectedTopicIds.length !== 1 ? 's' : ''}...<br />This may take 10-30 seconds.</>
+                <>{ui("Analyzing")} {selectedTopicIds.length} {ui("topic")}{selectedTopicIds.length !== 1 ? 's' : ''}...<br />{ui("This may take 10-30 seconds.")}</>
               )}
             </p>
           </div>
@@ -1098,8 +1225,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-3">
               <p className="text-muted-foreground">
-                {batchUnits.length} banque(s) à créer · {batchUnits.reduce((n, u) => n + u.questions.length, 0)} questions au total.
-                Vérifie et supprime les questions à problème, puis crée tout.
+                {batchUnits.length} {ui("banque(s) à créer ·")} {batchUnits.reduce((n, u) => n + u.questions.length, 0)} {ui("questions au total. Vérifie et supprime les questions à problème, puis crée tout.")}
               </p>
             </div>
             <ScrollArea className="border rounded-lg h-[50vh]">
@@ -1109,12 +1235,14 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     <div className="px-3 py-2 bg-muted/60 rounded-t-lg border-b flex items-center justify-between">
                       <div className="font-semibold text-sm truncate">{unit.title}</div>
                       <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                        {unit.difficulty ? `${unit.difficulty} · ` : ''}{unit.questions.length} q · 1 banque
+                        {unit.difficulty ? `${unit.difficulty} · ` : ''}{unit.questions.length} {ui("q · 1 banque")}
                       </span>
                     </div>
                     <div className="p-3 space-y-2">
                       {unit.questions.length === 0 && (
-                        <p className="text-xs text-muted-foreground italic">Aucune question — cette banque sera ignorée.</p>
+                        <p className={`text-xs italic ${unit.error ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {unit.error ? `Échec : ${unit.error}` : ui("Aucune question — cette banque sera ignorée.")}
+                        </p>
                       )}
                       {unit.questions.map((question, index) => (
                         <div key={question.id ?? index} className="border rounded-lg p-3 flex items-start justify-between gap-3">
@@ -1137,11 +1265,11 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
             </ScrollArea>
             <div className="flex justify-between mt-4">
               <Button variant="outline" onClick={() => setStep('settings')}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                <ArrowLeft className="w-4 h-4 mr-2" /> {ui("Back")}
               </Button>
               <Button onClick={handleSaveBatch} disabled={isSaving || batchUnits.every((u) => u.questions.length === 0)}>
                 {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
-                Créer {batchUnits.filter((u) => u.questions.length > 0).length} banque(s)
+                {ui("Créer")} {batchUnits.filter((u) => u.questions.length > 0).length} {ui("banque(s)")}
               </Button>
             </div>
           </div>
@@ -1152,7 +1280,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-4">
               <p className="text-muted-foreground">
-                {generatedQuestions.length} question{generatedQuestions.length !== 1 ? 's' : ''} generated. Review and edit before saving.
+                {generatedQuestions.length} {ui("question")}{generatedQuestions.length !== 1 ? 's' : ''} {ui("generated. Review and edit before saving.")}
               </p>
             </div>
 
@@ -1167,7 +1295,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                           <span className="text-xs px-2 py-0.5 bg-muted rounded">{question.kind}</span>
                         </div>
                         <p className="font-medium">{question.prompt}</p>
-                        {question.hint && <p className="text-sm text-muted-foreground mt-1">Hint: {question.hint}</p>}
+                        {question.hint && <p className="text-sm text-muted-foreground mt-1">{ui("Hint:")} {question.hint}</p>}
                       </div>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" onClick={() => setEditingQuestionIndex(index)}>
@@ -1185,26 +1313,26 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
             <div className="flex justify-between mt-4">
               <Button variant="outline" onClick={() => setStep('settings')}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                <ArrowLeft className="w-4 h-4 mr-2" /> {ui("Back")}
               </Button>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setStep('save')} disabled={generatedQuestions.length === 0}>
-                  Skip to Save <ArrowRight className="w-4 h-4 ml-2" />
+                  {ui("Skip to Save")} <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleStartPreview}
                   disabled={generatedQuestions.length === 0}
-                  title="See correct answers without interacting"
+                  title={ui("See correct answers without interacting")}
                 >
-                  <Check className="w-4 h-4 mr-2" /> Verify answers
+                  <Check className="w-4 h-4 mr-2" /> {ui("Verify answers")}
                 </Button>
                 <Button
                   onClick={() => setStep('try')}
                   disabled={generatedQuestions.length === 0}
-                  title="Try the exercises interactively — test sliders, match, fill-expr etc."
+                  title={ui("Try the exercises interactively — test sliders, match, fill-expr etc.")}
                 >
-                  <Play className="w-4 h-4 mr-2" /> Try it
+                  <Play className="w-4 h-4 mr-2" /> {ui("Try it")}
                 </Button>
               </div>
             </div>
@@ -1229,29 +1357,29 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           <div className="flex-1 flex flex-col">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="bank-title">Quiz Bank Title *</Label>
-                <Input id="bank-title" value={bankTitle} onChange={(e) => setBankTitle(e.target.value)} placeholder="e.g., Fractions Quiz - Generated" />
+                <Label htmlFor="bank-title">{ui("Quiz Bank Title *")}</Label>
+                <Input id="bank-title" value={bankTitle} onChange={(e) => setBankTitle(e.target.value)} placeholder={ui("e.g., Fractions Quiz - Generated")} />
               </div>
               <div>
-                <Label htmlFor="bank-description">Description (optional)</Label>
-                <Textarea id="bank-description" value={bankDescription} onChange={(e) => setBankDescription(e.target.value)} placeholder="Optional description" rows={3} />
+                <Label htmlFor="bank-description">{ui("Description (optional)")}</Label>
+                <Textarea id="bank-description" value={bankDescription} onChange={(e) => setBankDescription(e.target.value)} placeholder={ui("Optional description")} rows={3} />
               </div>
               <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Summary</h4>
+                <h4 className="font-medium mb-2">{ui("Summary")}</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• {generatedQuestions.length} questions</li>
-                  <li>• Generated from {selectedTopicIds.length} topic{selectedTopicIds.length !== 1 ? 's' : ''}</li>
-                  <li>• Difficulty: {difficulty}</li>
+                  <li>• {generatedQuestions.length} {ui("questions")}</li>
+                  <li>{ui("• Generated from")} {selectedTopicIds.length} {ui("topic")}{selectedTopicIds.length !== 1 ? 's' : ''}</li>
+                  <li>{ui("• Difficulty:")} {difficulty}</li>
                 </ul>
               </div>
             </div>
 
             <div className="flex justify-between mt-auto pt-6">
               <Button variant="outline" onClick={() => setStep('preview')}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                <ArrowLeft className="w-4 h-4 mr-2" /> {ui("Back")}
               </Button>
               <Button onClick={handleSave} disabled={!bankTitle.trim() || isSaving}>
-                {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Check className="w-4 h-4 mr-2" /> Save Quiz Bank</>}
+                {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {ui("Saving...")}</> : <><Check className="w-4 h-4 mr-2" /> {ui("Save Quiz Bank")}</>}
               </Button>
             </div>
           </div>
@@ -1262,17 +1390,17 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           <div className="flex-1 flex flex-col min-h-0">
             <div className="space-y-4 overflow-y-auto pr-1">
               <div className="rounded-lg border bg-muted/40 p-3">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Topic</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{ui("Topic")}</Label>
                 <div className="mt-1 font-medium">{assignTopicName}</div>
                 {selectedTopicIds.length > 1 && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Practice assignment will be created for all {selectedTopicIds.length} selected topics. Video placement uses the first selected topic.
+                    {ui("Practice assignment will be created for all")} {selectedTopicIds.length} {ui("selected topics. Video placement uses the first selected topic.")}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label className="mb-2 block">Show this quiz in</Label>
+                <Label className="mb-2 block">{ui("Show this quiz in")}</Label>
                 <RadioGroup
                   value={assignContext}
                   onValueChange={(value) => {
@@ -1287,8 +1415,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     <RadioGroupItem value="practice" className="mt-0.5" />
                     <BookOpen className="h-4 w-4 text-violet-500 mt-0.5" />
                     <div className="min-w-0">
-                      <div className="font-medium text-sm">Practice page only</div>
-                      <p className="text-xs text-muted-foreground">Always available in "S'entraîner par thème", no video required.</p>
+                      <div className="font-medium text-sm">{ui("Practice page only")}</div>
+                      <p className="text-xs text-muted-foreground">{ui("Always available in \"S'entraîner par thème\", no video required.")}</p>
                     </div>
                   </label>
 
@@ -1298,8 +1426,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     <RadioGroupItem value="lesson" className="mt-0.5" />
                     <Play className="h-4 w-4 text-blue-500 mt-0.5" />
                     <div className="min-w-0">
-                      <div className="font-medium text-sm">After a specific video</div>
-                      <p className="text-xs text-muted-foreground">Appears in the lesson player after the selected video is completed.</p>
+                      <div className="font-medium text-sm">{ui("After a specific video")}</div>
+                      <p className="text-xs text-muted-foreground">{ui("Appears in the lesson player after the selected video is completed.")}</p>
                     </div>
                   </label>
 
@@ -1309,8 +1437,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     <RadioGroupItem value="both" className="mt-0.5" />
                     <Layers className="h-4 w-4 text-green-500 mt-0.5" />
                     <div className="min-w-0">
-                      <div className="font-medium text-sm">Both</div>
-                      <p className="text-xs text-muted-foreground">Available on the practice page and after the selected video.</p>
+                      <div className="font-medium text-sm">{ui("Both")}</div>
+                      <p className="text-xs text-muted-foreground">{ui("Available on the practice page and after the selected video.")}</p>
                     </div>
                   </label>
                 </RadioGroup>
@@ -1318,10 +1446,10 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
               {(assignContext === 'lesson' || assignContext === 'both') && (
                 <div>
-                  <Label className="mb-1.5 block">Trigger video</Label>
+                  <Label className="mb-1.5 block">{ui("Trigger video")}</Label>
                   {sortedAssignVideos.length === 0 ? (
                     <p className="text-sm text-muted-foreground border rounded-lg p-3">
-                      No videos found for {assignTopicName}.
+                      {ui("No videos found for")} {assignTopicName}.
                     </p>
                   ) : (
                     <div className="border rounded-lg overflow-hidden">
@@ -1353,14 +1481,14 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
             <div className="flex justify-between mt-auto pt-4 border-t">
               <Button variant="outline" onClick={() => setStep('save')}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                <ArrowLeft className="w-4 h-4 mr-2" /> {ui("Back")}
               </Button>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={handleSkipAssign} disabled={isSaving}>
-                  Use practice only
+                  {ui("Use practice only")}
                 </Button>
                 <Button onClick={handleAssign} disabled={isSaving}>
-                  {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Assigning...</> : 'Finish'}
+                  {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {ui("Assigning...")}</> : 'Finish'}
                 </Button>
               </div>
             </div>

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { motion } from "framer-motion";
 
 interface SessionProgressProps {
@@ -6,13 +7,14 @@ interface SessionProgressProps {
 }
 
 export function SessionProgress({ current, total }: SessionProgressProps) {
+  const ui = useInterfaceTranslation();
   const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className="font-medium text-foreground">
-          Exercise {Math.min(current, total)} / {total}
+          {ui("Exercise")} {Math.min(current, total)} / {total}
         </span>
         <span className="hidden sm:inline">{percentage}%</span>
       </div>

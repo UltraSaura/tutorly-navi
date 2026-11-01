@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, X, RotateCcw, Check, AlertCircle, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ interface CameraCaptureProps {
 }
 
 const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
+  const ui = useInterfaceTranslation();
   const { toast } = useToast();
   const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -314,7 +316,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
             <>
               <img
                 src={capturedImage}
-                alt="Captured"
+                alt={ui("Captured")}
                 className="w-full h-full object-cover"
               />
               
@@ -345,7 +347,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                 {cameraState === 'error' ? (
                   <>
                     <AlertCircle className="h-12 w-12 mx-auto mb-2 text-red-400" />
-                    <p className="text-red-400 font-medium mb-2">Camera Error</p>
+                    <p className="text-red-400 font-medium mb-2">{ui("Camera Error")}</p>
                     <p className="text-sm text-gray-300 mb-4">{cameraError}</p>
                     <Button 
                       variant="outline" 
@@ -353,13 +355,13 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                       onClick={retryCamera}
                       className="text-white border-white hover:bg-white hover:text-black"
                     >
-                      Try Again
+                      {ui("Try Again")}
                     </Button>
                   </>
                 ) : cameraState === 'starting' ? (
                   <>
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-2"></div>
-                    <p>Starting camera...</p>
+                    <p>{ui("Starting camera...")}</p>
                   </>
                 ) : (
                   <>

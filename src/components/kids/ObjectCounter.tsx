@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 /**
  * ObjectCounter — visual arithmetic widget for kids
  *
@@ -41,6 +42,7 @@ export function ObjectCounter({
   autoPlay = true,
   replayLabel = "🔁 Rejouer",
 }: ObjectCounterProps) {
+  const ui = useInterfaceTranslation();
   const safeA = clamp(Math.abs(a));
   const safeB = clamp(Math.abs(b));
 
@@ -74,7 +76,7 @@ export function ObjectCounter({
       {/* Group A */}
       <div className="space-y-1">
         <p className="text-xs font-semibold text-sky-700 uppercase tracking-wide">
-          Groupe A — {safeA}
+          {ui("Groupe A —")} {safeA}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {Array.from({ length: safeA }).map((_, i) => (
@@ -97,7 +99,7 @@ export function ObjectCounter({
         <span className="text-2xl font-black text-sky-600">{operation}</span>
         <div className="space-y-1 flex-1">
           <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">
-            Groupe B — {safeB}
+            {ui("Groupe B —")} {safeB}
           </p>
           <div className="flex flex-wrap gap-1.5">
             <AnimatePresence>

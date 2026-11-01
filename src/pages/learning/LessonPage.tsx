@@ -1,25 +1,30 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { ArrowLeft } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useCoursePlaylist } from '@/hooks/useCoursePlaylist';
 import { useAllBanks } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
 import { LessonCardPlayer } from '@/components/learning/LessonCardPlayer';
 import { LessonLevelPath } from '@/components/learning/LessonLevelPath';
+import { LessonV2Player } from '@/components/learning/LessonV2Player';
+import { LessonV21Path } from '@/components/learning/LessonV21Path';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonContent } from '@/types/learning';
+import { parseLessonContent, parseLessonV21 } from '@/types/lesson-generator';
 
 export default function LessonPage() {
+  const ui = useInterfaceTranslation();
   const { subjectSlug, topicSlug } = useParams<{
     subjectSlug: string;
     topicSlug: string;
   }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useLearner();
 
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [completedVideoIds, setCompletedVideoIds] = useState<string[]>([]);
@@ -84,6 +89,16 @@ export default function LessonPage() {
   const hasVideos = videos.length > 0;
   const hasMultipleVideos = videos.length > 1;
   const lessonContent = topic?.lesson_content as LessonContent | null;
+  const lessonV2 = parseLessonContent(topic?.lesson_content);
+  const lessonV21 = parseLessonV21(topic?.lesson_content);
+  const hasLegacyLesson = Boolean(
+    lessonContent
+      && typeof lessonContent === 'object'
+      && typeof lessonContent.explanation === 'string'
+      && typeof lessonContent.example === 'string'
+      && !('version' in lessonContent)
+  );
+  const hasInvalidLesson = Boolean(topic?.lesson_content && !lessonV2 && !lessonV21 && !hasLegacyLesson);
   const inlineBank = allBanks.find(
     (bank) => bank.topicId === topic?.id && !bank.triggerVideoId && bank.isUnlocked
   );
@@ -111,7 +126,7 @@ export default function LessonPage() {
   return (
     <div className="min-h-screen pb-24" style={{ background: '#F3F6FA' }}>
       <PageMeta
-        title={topic?.name ?? 'Leçon'}
+        title={topic?.name ?? ui("Leçon")}
         description={topic?.description ?? ''}
       />
 
@@ -120,7 +135,7 @@ export default function LessonPage() {
         <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={() => navigate(-1)}
-            aria-label="Retour"
+            aria-label={ui("Retour")}
             style={{
               width: 28, height: 28, borderRadius: '50%',
               border: '0.5px solid #EAECEF', background: 'white',
@@ -134,12 +149,12 @@ export default function LessonPage() {
               {topic?.name ?? '…'}
             </p>
             <p style={{ fontSize: 10, color: '#667085', margin: 0 }}>
-              Leçons · {subject?.name ?? '…'}
+              {ui("Leçons ·")} {subject?.name ?? '…'}
             </p>
           </div>
           {hasVideos && (
             <span style={{ background: '#FAEEDA', color: '#633806', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, flexShrink: 0 }}>
-              {videos.length} vidéo{videos.length > 1 ? 's' : ''}
+              {ui("videoCount", { count: videos.length })}
             </span>
           )}
         </div>
@@ -150,16 +165,16 @@ export default function LessonPage() {
         {/* ── Content badges (show what's available) ─────── */}
         <div style={{ display: 'flex', gap: 6, padding: '10px 16px 0', flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600 }}>
-            ✓ Leçon
+            {ui("✓ Leçon")}
           </span>
           {hasVideos && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600 }}>
-              ✓ {videos.length} vidéo{videos.length > 1 ? 's' : ''}
+              ✓ {ui("videoCount", { count: videos.length })}
             </span>
           )}
           {!hasVideos && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F3F6FA', color: '#9CA3AF', border: '0.5px solid #EAECEF', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600 }}>
-              Pas encore de vidéo
+              {ui("Pas encore de vidéo")}
             </span>
           )}
         </div>
@@ -222,13 +237,29 @@ export default function LessonPage() {
         {hasVideos && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px 4px' }}>
             <div style={{ flex: 1, height: 0.5, background: '#EAECEF' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#667085', letterSpacing: '0.05em' }}>LEÇON</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#667085', letterSpacing: '0.05em' }}>{ui("LEÇON")}</span>
             <div style={{ flex: 1, height: 0.5, background: '#EAECEF' }} />
           </div>
         )}
 
         {/* ── LESSON — multi-level → bubble path; single-level → flow ─── */}
-        {topic && (
+        {topic && hasInvalidLesson ? (
+          <div className="mx-4 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+            <h2 className="text-lg font-bold text-amber-950">Cette leçon n'a pas pu être chargée.</h2>
+            <p className="mt-2 text-sm text-amber-800">Le contenu généré est incomplet. Demande une nouvelle génération depuis l'administration.</p>
+          </div>
+        ) : topic && lessonV21 ? (
+          <LessonV21Path topicId={topic.id} topicName={topic.name} subjectId={(topic as any).curriculum_subject_id ?? subject?.id ?? null} lesson={lessonV21} />
+        ) : topic && lessonV2 ? (
+          <div style={{ height: 'calc(100dvh - 132px)', minHeight: 460 }}>
+            <LessonV2Player
+              topicId={topic.id}
+              topicName={topic.name}
+              subjectId={(topic as any).curriculum_subject_id ?? subject?.id ?? null}
+              lesson={lessonV2}
+            />
+          </div>
+        ) : topic && (
           (lessonContent?.steps?.length ?? 0) > 1 ? (
             <LessonLevelPath
               topicId={topic.id}

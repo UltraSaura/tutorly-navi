@@ -1,9 +1,10 @@
+import { requireParent } from '../_shared/family-access.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
 serve(async (req) => {
@@ -12,6 +13,7 @@ serve(async (req) => {
   }
 
   try {
+    await requireParent(req);
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -20,7 +22,7 @@ serve(async (req) => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader, 'x-family-grant': req.headers.get('x-family-grant') ?? '' } } }
     );
 
     const { data: { user } } = await supabase.auth.getUser();

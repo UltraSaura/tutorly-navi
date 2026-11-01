@@ -1,9 +1,10 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 // src/components/user/chat/WelcomeFox.tsx
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { useAuth } from "@/context/AuthContext";
+import { useLearner } from "@/context/FamilyProfileContext";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { TutorWelcomeBubble } from "./TutorWelcomeBubble";
 
@@ -32,8 +33,9 @@ const resolveFirstName = (
 };
 
 export function WelcomeFox({ userName }: WelcomeFoxProps) {
+  const ui = useInterfaceTranslation();
   const { profile } = useUserProfile();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { language } = useLanguage();
   const [showBubble, setShowBubble] = useState(false);
 
@@ -60,14 +62,17 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
   const messages = BUBBLE_MESSAGES[language] ?? BUBBLE_MESSAGES.en;
 
   return (
-    <div className="w-full h-full bg-white">
+    <div
+      data-testid="welcome-composition"
+      className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-white px-4 py-3 sm:px-6 sm:py-5"
+    >
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="flex items-center justify-center h-full px-4"
+        className="relative flex h-full min-h-0 w-full max-w-[980px] items-center justify-center"
       >
-        <div className="relative inline-block">
+        <div className="relative h-full min-h-0 w-auto max-w-full aspect-[9/16]">
           {/* ── Fox video ── */}
           <video
             src="/Baby_Fox.mp4"
@@ -76,14 +81,17 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             muted
             playsInline
             preload="auto"
-            aria-label="Baby fox mascot animation"
-            className="w-full max-w-xl sm:max-w-3xl translate-y-[2cm] object-contain pointer-events-none select-none mix-blend-multiply"
-            style={{ maxHeight: "100%" }}
+            aria-label={ui("Baby fox mascot animation")}
+            data-testid="welcome-character"
+            className="absolute inset-0 h-full w-full object-contain pointer-events-none select-none mix-blend-multiply"
           />
 
           {/* ── Speech bubble (above-right of fox) ── */}
           {showBubble && (
-            <div className="absolute top-2 right-2 z-10 translate-y-[1.5cm] sm:top-4 sm:right-6">
+            <div
+              data-testid="welcome-bubble"
+              className="absolute right-[-8px] top-[5%] z-10 origin-top-right scale-[0.72] sm:right-[-18px] sm:scale-[0.8]"
+            >
               <TutorWelcomeBubble
                 firstName={firstName}
                 greeting={messages.hi}

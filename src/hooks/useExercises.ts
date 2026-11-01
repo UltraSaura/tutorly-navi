@@ -1,3 +1,4 @@
+import { learnerOperation } from '@/features/family/profileRuntime';
 
 import { useState, useEffect } from 'react';
 import { Exercise, Message } from '@/types/chat';
@@ -302,11 +303,14 @@ export const useExercises = () => {
     grade,
     toggleExerciseExpansion,
     createExerciseFromAI,
-    processHomeworkFromChat,
+    processHomeworkFromChat: learnerOperation(processHomeworkFromChat),
+
     linkAIResponseToExercise,
-    addExercises,
-    submitAnswer,
+    addExercises: learnerOperation(addExercises),
+
+    submitAnswer: learnerOperation(submitAnswer),
+
     clearExercises,
-    fetchExplanation
+    fetchExplanation: learnerOperation(fetchExplanation),
   };
 };

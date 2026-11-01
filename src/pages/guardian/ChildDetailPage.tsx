@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useRecommendations } from '@/hooks/useRecommendations';
@@ -12,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function ChildDetailPage() {
+  const ui = useInterfaceTranslation();
   const { childId } = useParams();
   const navigate = useNavigate();
   
@@ -42,7 +44,7 @@ export default function ChildDetailPage() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Child Details" description="Full profile, curriculum, and activity for your child." />
+      <PageMeta title={ui("Child Details")} description={ui("Full profile, curriculum, and activity for your child.")} />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/guardian')}>
@@ -53,7 +55,7 @@ export default function ChildDetailPage() {
             {child?.users.first_name} {child?.users.last_name}
           </h1>
           <p className="text-muted-foreground">
-            Level: {child?.curriculum_level_code} | Country: {child?.curriculum_country_code}
+            {ui("Level:")} {child?.curriculum_level_code} {ui("| Country:")} {child?.curriculum_country_code}
           </p>
         </div>
       </div>
@@ -61,12 +63,12 @@ export default function ChildDetailPage() {
       {/* Overall Progress */}
       <Card>
         <CardHeader>
-          <CardTitle>Overall Progress</CardTitle>
+          <CardTitle>{ui("Overall Progress")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Progress value={(progress?.overall_mastery_ratio || 0) * 100} />
           <p className="text-sm text-muted-foreground mt-2">
-            {Math.round((progress?.overall_mastery_ratio || 0) * 100)}% mastered
+            {Math.round((progress?.overall_mastery_ratio || 0) * 100)}{ui("% mastered")}
           </p>
         </CardContent>
       </Card>
@@ -83,7 +85,7 @@ export default function ChildDetailPage() {
             <div>
               <Progress value={subject.mastery_ratio * 100} />
               <p className="text-sm text-muted-foreground mt-1">
-                {subject.mastered_objectives} of {subject.total_objectives} objectives mastered
+                {subject.mastered_objectives} {ui("of")} {subject.total_objectives} {ui("objectives mastered")}
               </p>
             </div>
 
@@ -99,6 +101,7 @@ export default function ChildDetailPage() {
 }
 
 function RecommendedTopicsSection({ studentId, subjectId }: { studentId: string; subjectId: string }) {
+  const ui = useInterfaceTranslation();
   const { data: recommendations = [] } = useRecommendations({ 
     subjectId, 
     limit: 3 
@@ -110,7 +113,7 @@ function RecommendedTopicsSection({ studentId, subjectId }: { studentId: string;
 
   return (
     <div>
-      <h4 className="font-semibold mb-2">Recommended Next Topics</h4>
+      <h4 className="font-semibold mb-2">{ui("Recommended Next Topics")}</h4>
       <div className="space-y-2">
         {recommendations.map(topic => (
           <Card 
@@ -133,7 +136,7 @@ function RecommendedTopicsSection({ studentId, subjectId }: { studentId: string;
                       {topic.estimated_duration_minutes} min
                     </span>
                     <span>
-                      {topic.mastered_objectives}/{topic.total_objectives} mastered
+                      {topic.mastered_objectives}/{topic.total_objectives} {ui("mastered")}
                     </span>
                   </div>
                 </div>

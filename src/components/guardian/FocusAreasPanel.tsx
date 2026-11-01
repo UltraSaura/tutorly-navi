@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ interface FocusAreasPanelProps {
 }
 
 export function FocusAreasPanel({ subjects }: FocusAreasPanelProps) {
+  const ui = useInterfaceTranslation();
   const focusAreas: FocusArea[] = subjects
     .filter(s => s.successRate < 70)
     .map(s => ({
@@ -38,7 +40,7 @@ export function FocusAreasPanel({ subjects }: FocusAreasPanelProps) {
     <Card className="p-4">
       <div className="flex items-center gap-2 mb-4">
         <AlertCircle className="h-5 w-5 text-orange-600" />
-        <h3 className="font-semibold">Where to Focus</h3>
+        <h3 className="font-semibold">{ui("Where to Focus")}</h3>
       </div>
       <div className="space-y-3">
         {focusAreas.map((area, index) => (
@@ -46,17 +48,17 @@ export function FocusAreasPanel({ subjects }: FocusAreasPanelProps) {
             <div className="flex-1">
               <div className="font-medium">{area.topic}</div>
               <div className="text-sm text-muted-foreground">
-                {area.exercisesNeedingWork} exercises need improvement • {area.successRate}% success rate
+                {area.exercisesNeedingWork} {ui("exercises need improvement •")} {area.successRate}{ui("% success rate")}
               </div>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm">
                 <Play className="h-4 w-4 mr-1" />
-                Practice
+                {ui("Practice")}
               </Button>
               <Button variant="ghost" size="sm">
                 <Video className="h-4 w-4 mr-1" />
-                Video
+                {ui("Video")}
               </Button>
             </div>
           </div>

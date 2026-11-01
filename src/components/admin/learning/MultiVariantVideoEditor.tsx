@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ export const MultiVariantVideoEditor = ({
   defaultTopicId = '',
   defaultSubjectId = '',
 }: MultiVariantVideoEditorProps) => {
+  const ui = useInterfaceTranslation();
   const createVariants = useCreateVideoVariants();
   const updateVariants = useUpdateVideoVariants();
 
@@ -203,7 +205,7 @@ export const MultiVariantVideoEditor = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Video className="h-5 w-5" />
-            {editingGroup ? 'Edit Video' : 'Add Video'}
+            {editingGroup ? 'Edit Video' : ui("Add Video")}
           </DialogTitle>
         </DialogHeader>
 
@@ -211,24 +213,24 @@ export const MultiVariantVideoEditor = ({
           {/* Content Section */}
           <div className="space-y-4">
             <div>
-              <Label>Title *</Label>
+              <Label>{ui("Title *")}</Label>
               <Input
                 value={sharedContent.title}
                 onChange={(e) => setSharedContent({ ...sharedContent, title: e.target.value })}
-                placeholder="Video title"
+                placeholder={ui("Video title")}
                 required
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Subject</Label>
+                <Label>{ui("Subject")}</Label>
                 <Select 
                   value={sharedSettings.subject_id || ''} 
                   onValueChange={(value) => setSharedSettings({ ...sharedSettings, subject_id: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select subject (optional)" />
+                    <SelectValue placeholder={ui("Select subject (optional)")} />
                   </SelectTrigger>
                   <SelectContent>
                     {subjects.map((subject) => (
@@ -238,13 +240,13 @@ export const MultiVariantVideoEditor = ({
                 </Select>
               </div>
               <div>
-                <Label>Topic *</Label>
+                <Label>{ui("Topic *")}</Label>
                 <Select 
                   value={sharedSettings.topic_id} 
                   onValueChange={(value) => setSharedSettings({ ...sharedSettings, topic_id: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select topic" />
+                    <SelectValue placeholder={ui("Select topic")} />
                   </SelectTrigger>
                   <SelectContent>
                     {topics.map((topic) => (
@@ -256,21 +258,21 @@ export const MultiVariantVideoEditor = ({
             </div>
 
             <div>
-              <Label>Description</Label>
+              <Label>{ui("Description")}</Label>
               <Textarea
                 value={sharedContent.description}
                 onChange={(e) => setSharedContent({ ...sharedContent, description: e.target.value })}
-                placeholder="Video description"
+                placeholder={ui("Video description")}
                 rows={2}
               />
             </div>
 
             <div>
-              <Label>Tags</Label>
+              <Label>{ui("Tags")}</Label>
               <Input
                 value={sharedContent.tags}
                 onChange={(e) => setSharedContent({ ...sharedContent, tags: e.target.value })}
-                placeholder="fractions, algebra, equations (comma-separated)"
+                placeholder={ui("fractions, algebra, equations (comma-separated)")}
               />
             </div>
           </div>
@@ -278,7 +280,7 @@ export const MultiVariantVideoEditor = ({
           {/* Video URLs by Language */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <Label>Video URLs by Language *</Label>
+              <Label>{ui("Video URLs by Language *")}</Label>
               <Button 
                 type="button" 
                 variant="outline" 
@@ -287,7 +289,7 @@ export const MultiVariantVideoEditor = ({
                 disabled={usedLanguages.length >= 3}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Add Language
+                {ui("Add Language")}
               </Button>
             </div>
 
@@ -307,11 +309,11 @@ export const MultiVariantVideoEditor = ({
 
           {/* Settings Section */}
           <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-            <h3 className="font-medium text-sm">Settings</h3>
+            <h3 className="font-medium text-sm">{ui("Settings")}</h3>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <Label className="text-xs">Duration (min)</Label>
+                <Label className="text-xs">{ui("Duration (min)")}</Label>
                 <Input
                   type="number"
                   value={sharedSettings.duration_minutes}
@@ -319,7 +321,7 @@ export const MultiVariantVideoEditor = ({
                 />
               </div>
               <div>
-                <Label className="text-xs">XP Reward</Label>
+                <Label className="text-xs">{ui("XP Reward")}</Label>
                 <Input
                   type="number"
                   value={sharedSettings.xp_reward}
@@ -327,7 +329,7 @@ export const MultiVariantVideoEditor = ({
                 />
               </div>
               <div>
-                <Label className="text-xs">Order</Label>
+                <Label className="text-xs">{ui("Order")}</Label>
                 <Input
                   type="number"
                   value={sharedSettings.order_index}
@@ -339,13 +341,13 @@ export const MultiVariantVideoEditor = ({
                   checked={sharedSettings.is_active}
                   onCheckedChange={(checked) => setSharedSettings({ ...sharedSettings, is_active: checked })}
                 />
-                <Label className="text-xs">Active</Label>
+                <Label className="text-xs">{ui("Active")}</Label>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs">Min Age</Label>
+                <Label className="text-xs">{ui("Min Age")}</Label>
                 <Input
                   type="number"
                   min="0"
@@ -355,11 +357,11 @@ export const MultiVariantVideoEditor = ({
                     ...sharedSettings,
                     min_age: e.target.value ? parseInt(e.target.value) : null
                   })}
-                  placeholder="Optional"
+                  placeholder={ui("Optional")}
                 />
               </div>
               <div>
-                <Label className="text-xs">Max Age</Label>
+                <Label className="text-xs">{ui("Max Age")}</Label>
                 <Input
                   type="number"
                   min="0"
@@ -369,13 +371,13 @@ export const MultiVariantVideoEditor = ({
                     ...sharedSettings,
                     max_age: e.target.value ? parseInt(e.target.value) : null
                   })}
-                  placeholder="Optional"
+                  placeholder={ui("Optional")}
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs">School Levels</Label>
+              <Label className="text-xs">{ui("School Levels")}</Label>
               <AgeBasedSchoolLevelSelector
                 selectedLevels={sharedSettings.school_levels}
                 onLevelsChange={(levels) => setSharedSettings({ ...sharedSettings, school_levels: levels })}
@@ -386,10 +388,10 @@ export const MultiVariantVideoEditor = ({
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {ui("Cancel")}
             </Button>
             <Button type="submit" disabled={createVariants.isPending || updateVariants.isPending}>
-              {editingGroup ? 'Update Video' : 'Add Video'}
+              {editingGroup ? 'Update Video' : ui("Add Video")}
             </Button>
           </div>
         </form>

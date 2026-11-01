@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import { Play, Clock, Zap } from 'lucide-react';
 
@@ -14,6 +15,7 @@ interface VideoPlayerBoxProps {
 }
 
 export const VideoPlayerBox = memo(({ videoId, onVideoEnd, autoPlay = true }: VideoPlayerBoxProps) => {
+  const ui = useInterfaceTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -141,7 +143,7 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd, autoPlay = true }: Vi
           </div>
         </div>
         <div className="p-4 bg-card">
-          <p className="text-sm text-muted-foreground">Select a video to begin learning</p>
+          <p className="text-sm text-muted-foreground">{ui("Select a video to begin learning")}</p>
         </div>
       </div>
     );

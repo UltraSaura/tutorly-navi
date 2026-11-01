@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, X, ChevronRight, Trophy, Zap } from 'lucide-react';
@@ -11,7 +12,7 @@ import {
   type QuizQuestionGradeDetail,
 } from '@/utils/quizEvaluation';
 import { useSubmitBankAttempt } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { useUserContext } from '@/hooks/useUserContext';
@@ -28,6 +29,7 @@ interface QuizOverlayProps {
 }
 
 function XpPill({ onDone }: { onDone: () => void }) {
+  const ui = useInterfaceTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: 0, scale: 0.7 }}
@@ -51,7 +53,7 @@ function XpPill({ onDone }: { onDone: () => void }) {
         whiteSpace: "nowrap",
       }}
     >
-      ✦ Bonne réponse !
+      {ui("✦ Bonne réponse !")}
     </motion.div>
   );
 }
@@ -122,6 +124,7 @@ function formatScoreValue(value: number): string {
 }
 
 export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embedded = false }: QuizOverlayProps) {
+  const ui = useInterfaceTranslation();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [questionGrades, setQuestionGrades] = useState<Record<string, QuizQuestionGradeDetail>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -131,7 +134,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
   const [questionResult, setQuestionResult] = useState<boolean | null>(null);
   const [showXpPill, setShowXpPill] = useState(false);
   const submitAttempt = useSubmitBankAttempt();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { userContext } = useUserContext();
   const { language } = useLanguage();
   const teaching = useTwoCardTeaching();
@@ -453,7 +456,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
           className="mb-1 text-2xl font-bold"
           style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
         >
-          {pct >= 80 ? 'Bonne séance !' : pct >= 50 ? 'Pas mal !' : "Continue d'essayer !"}
+          {pct >= 80 ? ui("Bonne séance !") : pct >= 50 ? ui("Pas mal !") : ui("Continue d'essayer !")}
         </h2>
         <p className="mb-6 text-sm" style={{ color: '#667085' }}>{bank.title}</p>
 
@@ -465,7 +468,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
             <p className="text-xl font-bold" style={{ color: '#085041', fontFamily: 'Poppins, sans-serif' }}>
               {formatScoreValue(gradedQuiz.score)}/{formatScoreValue(gradedQuiz.maxScore)}
             </p>
-            <p className="text-xs" style={{ color: '#0F6E56' }}>Reponses</p>
+            <p className="text-xs" style={{ color: '#0F6E56' }}>{ui("Reponses")}</p>
           </div>
           <div
             className="rounded-xl p-3 text-center"
@@ -474,7 +477,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
             <p className="text-xl font-bold" style={{ color: '#633806', fontFamily: 'Poppins, sans-serif' }}>
               +{formatScoreValue(xpEarned)}
             </p>
-            <p className="text-xs" style={{ color: '#854F0B' }}>XP gagne</p>
+            <p className="text-xs" style={{ color: '#854F0B' }}>{ui("XP gagne")}</p>
           </div>
           <div
             className="rounded-xl p-3 text-center"
@@ -483,7 +486,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
             <p className="text-xl font-bold" style={{ color: '#633806', fontFamily: 'Poppins, sans-serif' }}>
               {pct}%
             </p>
-            <p className="text-xs" style={{ color: '#854F0B' }}>Score</p>
+            <p className="text-xs" style={{ color: '#854F0B' }}>{ui("Score")}</p>
           </div>
         </div>
 
@@ -494,7 +497,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
           >
             <Zap className="h-4 w-4 flex-shrink-0" style={{ color: '#0A8C72' }} />
             <p className="text-left text-sm" style={{ color: '#085041' }}>
-              <span className="font-semibold">Notion maitrisee : </span>{bank.title}
+              <span className="font-semibold">{ui("Notion maitrisee :")} </span>{bank.title}
             </p>
           </div>
         )}
@@ -511,7 +514,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
               cursor: 'pointer',
             }}
           >
-            Refaire
+            {ui("Refaire")}
           </button>
           <button
             onClick={onClose}
@@ -524,7 +527,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
               cursor: 'pointer',
             }}
           >
-            Continuer
+            {ui("Continuer")}
           </button>
         </div>
       </div>
@@ -541,7 +544,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={ui("Fermer")}
             className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
             style={{ border: '0.5px solid #EAECEF', background: 'white', cursor: 'pointer' }}
           >
@@ -568,7 +571,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
 
       <div className="flex-1 overflow-y-auto px-4 py-5">
         {questions.length === 0 ? (
-          <p className="text-sm" style={{ color: '#667085' }}>Aucune question disponible pour le moment.</p>
+          <p className="text-sm" style={{ color: '#667085' }}>{ui("Aucune question disponible pour le moment.")}</p>
         ) : currentQuestion ? (
           <div
             className="rounded-2xl bg-white p-4"
@@ -610,7 +613,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
               fontSize: '15px',
             }}
           >
-            Valider
+            {ui("Valider")}
           </button>
         ) : (
           <div
@@ -630,7 +633,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold" style={{ color: questionResult ? '#27500A' : '#633806', fontFamily: 'Poppins, sans-serif' }}>
-                {questionResult ? 'Exacte !' : 'Pas cette fois...'}
+                {questionResult ? ui("Exacte !") : ui("Pas cette fois...")}
               </p>
               {questionResult === false && (
                 <button
@@ -639,7 +642,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
                   disabled={teaching.loading}
                   style={{ color: '#854F0B', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', textDecoration: 'underline' }}
                 >
-                  {teaching.loading ? 'Préparation...' : "Voir l'explication"}
+                  {teaching.loading ? ui("Préparation...") : ui("Voir l'explication")}
                 </button>
               )}
             </div>
@@ -657,7 +660,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
                 className="flex-shrink-0 rounded-xl px-4 py-2 text-sm font-bold"
                 style={{ background: '#12C6A0', border: 'none', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
               >
-                {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
+                {currentIndex < questions.length - 1 ? ui("Suivant") : ui("Résultats")}
               </button>
             ) : (
               <div className="flex flex-shrink-0 gap-2">
@@ -666,14 +669,14 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
                   className="rounded-xl px-3 py-2 text-sm font-bold"
                   style={{ background: 'white', border: '1.5px solid #EAECEF', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
                 >
-                  Réessayer
+                  {ui("Réessayer")}
                 </button>
                 <button
                   onClick={handleNext}
                   className="rounded-xl px-4 py-2 text-sm font-bold"
                   style={{ background: '#12C6A0', border: 'none', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
                 >
-                  {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
+                  {currentIndex < questions.length - 1 ? ui("Suivant") : ui("Résultats")}
                 </button>
               </div>
             )}

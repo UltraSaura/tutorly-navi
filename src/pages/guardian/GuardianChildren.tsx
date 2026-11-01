@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,13 +19,30 @@ import EditChildDialog from '@/components/guardian/EditChildDialog';
 import { useCountriesAndLevels } from '@/hooks/useCountriesAndLevels';
 import { PageMeta } from '@/components/seo/PageMeta';
 
+const getFunctionErrorMessage = async (error: unknown) => {
+  const context = (error as { context?: Response })?.context;
+  if (context) {
+    try {
+      const payload = await context.clone().json();
+      if (typeof payload?.error === 'string' && payload.error.trim()) {
+        return payload.error;
+      }
+    } catch {
+      // Fall back to the Supabase client error below.
+    }
+  }
+
+  return error instanceof Error ? error.message : 'Failed to create child account';
+};
+
 export default function GuardianChildren() {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { guardianId, guardianCountry } = useGuardianAuth();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [relation, setRelation] = useState('parent');
-  const [editChild, setEditChild] = useState<any>(null);
+  const [editChild, setEditChild] = useState<ChildWithUser | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const { countries, getSchoolLevelsByCountry } = useCountriesAndLevels();
@@ -42,7 +60,7 @@ export default function GuardianChildren() {
   };
 
   // Fetch children
-  const { data: children, isLoading } = useQuery({
+  const { data: children, isLoading, error: childrenError } = useQuery({
     queryKey: ['guardian-children', guardianId],
     queryFn: async () => {
       if (!guardianId) return null;
@@ -81,6 +99,13 @@ export default function GuardianChildren() {
     enabled: !!guardianId,
   });
 
+  useEffect(() => {
+    const message = childrenError instanceof Error ? childrenError.message : String(childrenError ?? '');
+    if (/parent authorization|required|profile access|family\.expired|signal is aborted/i.test(message)) {
+      navigate('/family', { replace: true, state: { returnTo: '/guardian/children' } });
+    }
+  }, [childrenError, navigate]);
+
   // Add child mutation
   const addChildMutation = useMutation({
     mutationFn: async (data: ChildRegistrationData & { relation: string }) => {
@@ -100,8 +125,8 @@ export default function GuardianChildren() {
         },
       });
 
-      if (error) throw error;
-      if (!result.success) throw new Error(result.error || 'Failed to create child account');
+      if (error) throw new Error(await getFunctionErrorMessage(error));
+      if (!result.success) throw new Error(result.error || ui("Failed to create child account"));
 
       return result;
     },
@@ -110,10 +135,13 @@ export default function GuardianChildren() {
       setIsAddDialogOpen(false);
       toast({
         title: 'Success',
-        description: 'Child account created successfully',
+        description: ui("Child account created successfully"),
       });
     },
     onError: (error: Error) => {
+      if (/parent authorization|required|profile access|family\.expired|signal is aborted/i.test(error.message)) {
+        navigate('/family', { replace: true, state: { returnTo: '/guardian/children' } });
+      }
       toast({
         title: 'Error',
         description: error.message,
@@ -126,7 +154,7 @@ export default function GuardianChildren() {
     addChildMutation.mutate({ ...formData, relation });
   };
 
-  const handleEditClick = (child: any) => {
+  const handleEditClick = (child: ChildWithUser) => {
     setEditChild(child);
     setIsEditOpen(true);
   };
@@ -136,7 +164,7 @@ export default function GuardianChildren() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading children...</p>
+          <p className="text-muted-foreground">{ui("Loading children...")}</p>
         </div>
       </div>
     );
@@ -144,14 +172,14 @@ export default function GuardianChildren() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Children" description="Add and manage your children's Stuwy profiles and learning settings." />
+      <PageMeta title={ui("Children")} description={ui("Add and manage your children's Stuwy profiles and learning settings.")} />
       <ManualChildCreationTrigger />
       
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Children</h1>
+          <h1 className="text-3xl font-bold text-foreground">{ui("Children")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage and monitor your children's accounts
+            {ui("Manage and monitor your children's accounts")}
           </p>
         </div>
         
@@ -159,27 +187,27 @@ export default function GuardianChildren() {
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Add Child
+              {ui("Add Child")}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create Child Account</DialogTitle>
+              <DialogTitle>{ui("Create Child Account")}</DialogTitle>
               <DialogDescription>
-                Create a new student account for your child
+                {ui("Create a new student account for your child")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="relation">Relation</Label>
+                <Label htmlFor="relation">{ui("Relation")}</Label>
                 <Select value={relation} onValueChange={setRelation}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="parent">Parent</SelectItem>
-                    <SelectItem value="guardian">Guardian</SelectItem>
-                    <SelectItem value="tutor">Tutor</SelectItem>
+                    <SelectItem value="parent">{ui("Parent")}</SelectItem>
+                    <SelectItem value="guardian">{ui("Guardian")}</SelectItem>
+                    <SelectItem value="tutor">{ui("Tutor")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -199,11 +227,11 @@ export default function GuardianChildren() {
           <CardContent className="pt-6">
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
-                You haven't added any children yet
+                {ui("You haven't added any children yet")}
               </p>
               <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Your First Child
+                {ui("Add Your First Child")}
               </Button>
             </div>
           </CardContent>
@@ -261,7 +289,7 @@ export default function GuardianChildren() {
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground capitalize">
-                      Status: {child?.status}
+                      {ui("Status:")} {child?.status}
                     </span>
                   </div>
                   
@@ -272,7 +300,7 @@ export default function GuardianChildren() {
                       className="flex-1"
                       onClick={() => navigate(`/guardian/child/${child.id}`)}
                     >
-                      Open Dashboard
+                      {ui("Open Dashboard")}
                     </Button>
                   </div>
                 </CardContent>

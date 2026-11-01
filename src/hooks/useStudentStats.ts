@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 
 const XP_PER_LESSON = 5;
 const XP_PER_LEVEL = 50;
@@ -109,7 +109,7 @@ function calculateStreaks(rows: Array<{ created_at: string | null }>) {
 }
 
 export function useStudentStats() {
-  const { user } = useAuth();
+  const { user } = useLearner();
 
   return useQuery({
     queryKey: ['student-stats', user?.id],

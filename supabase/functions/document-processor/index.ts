@@ -1,3 +1,4 @@
+import { requireLearner } from '../_shared/family-access.ts';
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -22,6 +23,7 @@ serve(async (req) => {
   }
 
   try {
+    await requireLearner(req);
     const { fileData, fileType, fileName, subjectId, mode, rowPrompt, problemContext } = await req.json();
     
     if (!fileData) {

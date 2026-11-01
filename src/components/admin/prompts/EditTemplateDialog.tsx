@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { PROMPT_USAGE_TYPES, getPromptUsageLabel, type PromptUsageType } from './promptUsageLabels';
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -24,6 +25,7 @@ export const EditTemplateDialog = ({
   template,
   onSave,
 }: EditTemplateDialogProps) => {
+  const ui = useInterfaceTranslation();
   const [editedTemplate, setEditedTemplate] = useState<Partial<PromptTemplate>>({});
   const [newTag, setNewTag] = useState('');
 
@@ -73,16 +75,16 @@ export const EditTemplateDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Template: {template.name}</DialogTitle>
+          <DialogTitle>{ui("Edit Template:")} {template.name}</DialogTitle>
           <DialogDescription>
-            Modify the prompt template settings and content.
+            {ui("Modify the prompt template settings and content.")}
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="templateName" className="text-right text-sm font-medium">
-              Name
+              {ui("Name")}
             </Label>
             <Input
               id="templateName"
@@ -94,30 +96,30 @@ export const EditTemplateDialog = ({
           
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="templateSubject" className="text-right text-sm font-medium">
-              Subject
+              {ui("Subject")}
             </Label>
             <Select 
               value={editedTemplate.subject || ''} 
               onValueChange={(value) => setEditedTemplate({ ...editedTemplate, subject: value })}
             >
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select subject" />
+                <SelectValue placeholder={ui("Select subject")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="General">General</SelectItem>
-                <SelectItem value="Mathematics">Mathematics</SelectItem>
-                <SelectItem value="Science">Science</SelectItem>
-                <SelectItem value="Language Arts">Language Arts</SelectItem>
-                <SelectItem value="History">History</SelectItem>
-                <SelectItem value="Arts">Arts</SelectItem>
-                <SelectItem value="Programming">Programming</SelectItem>
+                <SelectItem value="General">{ui("General")}</SelectItem>
+                <SelectItem value="Mathematics">{ui("Mathematics")}</SelectItem>
+                <SelectItem value="Science">{ui("Science")}</SelectItem>
+                <SelectItem value="Language Arts">{ui("Language Arts")}</SelectItem>
+                <SelectItem value="History">{ui("History")}</SelectItem>
+                <SelectItem value="Arts">{ui("Arts")}</SelectItem>
+                <SelectItem value="Programming">{ui("Programming")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="templateDescription" className="text-right text-sm font-medium">
-              Description
+              {ui("Description")}
             </Label>
             <Input
               id="templateDescription"
@@ -129,7 +131,7 @@ export const EditTemplateDialog = ({
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="templateType" className="text-right text-sm font-medium">
-              Type
+              {ui("Type")}
             </Label>
             <Select 
               value={editedTemplate.usage_type || ''} 
@@ -138,11 +140,11 @@ export const EditTemplateDialog = ({
               }
             >
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select template type" />
+                <SelectValue placeholder={ui("Select template type")} />
               </SelectTrigger>
               <SelectContent>
                 {PROMPT_USAGE_TYPES.map(type => (
-                  <SelectItem key={type} value={type}>{getPromptUsageLabel(type)}</SelectItem>
+                  <SelectItem key={type} value={type}>{ui(getPromptUsageLabel(type))}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -150,7 +152,7 @@ export const EditTemplateDialog = ({
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="templatePriority" className="text-right text-sm font-medium">
-              Priority
+              {ui("Priority")}
             </Label>
             <Input
               id="templatePriority"
@@ -163,7 +165,7 @@ export const EditTemplateDialog = ({
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right text-sm font-medium">
-              Auto-activate
+              {ui("Auto-activate")}
             </Label>
             <div className="col-span-3">
               <Switch
@@ -175,7 +177,7 @@ export const EditTemplateDialog = ({
           
           <div className="grid grid-cols-4 items-start gap-4">
             <Label htmlFor="templatePrompt" className="text-right text-sm font-medium pt-2">
-              Prompt
+              {ui("Prompt")}
             </Label>
             <Textarea
               id="templatePrompt"
@@ -187,14 +189,14 @@ export const EditTemplateDialog = ({
           
           <div className="grid grid-cols-4 items-start gap-4">
             <Label className="text-right text-sm font-medium pt-2">
-              Tags
+              {ui("Tags")}
             </Label>
             <div className="col-span-3 space-y-3">
               <div className="flex gap-2">
                 <Input
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Add a tag"
+                  placeholder={ui("Add a tag")}
                   className="flex-1"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -208,7 +210,7 @@ export const EditTemplateDialog = ({
                   variant="secondary" 
                   onClick={addTag}
                 >
-                  Add
+                  {ui("Add")}
                 </Button>
               </div>
               
@@ -238,10 +240,10 @@ export const EditTemplateDialog = ({
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {ui("Cancel")}
           </Button>
           <Button onClick={handleSave}>
-            Save Changes
+            {ui("Save Changes")}
           </Button>
         </DialogFooter>
       </DialogContent>

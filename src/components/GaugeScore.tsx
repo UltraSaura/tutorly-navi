@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -85,6 +86,7 @@ export function GaugeScore({
   needleColor = "#111827",
   centerIndicator = "emoji"
 }: GaugeScoreProps) {
+  const ui = useInterfaceTranslation();
   const clampedValue = clampValue(value);
   const currentLevel = getLevel(clampedValue);
   const needleAngle = scoreToAngle(clampedValue);
@@ -122,16 +124,15 @@ export function GaugeScore({
         height={viewBoxHeight}
         viewBox={`0 0 ${actualSize} ${viewBoxHeight}`}
         role="img"
-        aria-label={`${label || 'Score'}: ${clampedValue}% (${currentLevel.label})`}
+        aria-label={`${label || ui("Score")}: ${clampedValue}% (${ui(currentLevel.label)})`}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={clampedValue}
         className="overflow-visible"
       >
-        <title>{label || 'Score'} Performance Gauge</title>
+        <title>{label || ui("Score")} {ui("Performance Gauge")}</title>
         <desc>
-          Shows {clampedValue}% success rate, rated as {currentLevel.label}.
-          Gauge displays from 0% (left) to 100% (right) with color-coded performance bands.
+          {ui("Shows")} {clampedValue}{ui("% success rate, rated as")} {ui(currentLevel.label)}{ui(". Gauge displays from 0% (left) to 100% (right) with color-coded performance bands.")}
         </desc>
         
         {/* Track (background) */}

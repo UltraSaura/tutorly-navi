@@ -1,3 +1,6 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,6 +27,7 @@ interface RecentActivityFeedProps {
 }
 
 export function RecentActivityFeed({ activities, loading }: RecentActivityFeedProps) {
+  const ui = useInterfaceTranslation();
   const [showAll, setShowAll] = useState(false);
   const ITEMS_TO_SHOW = 8;
   
@@ -31,7 +35,7 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>{ui("Recent Activity")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -51,10 +55,10 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>{ui("Recent Activity")}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link to="/guardian/results">
-            View All
+            {ui("View All")}
             <ExternalLink className="ml-2 h-4 w-4" />
           </Link>
         </Button>
@@ -62,16 +66,16 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
       <CardContent>
         {activities.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>No recent activity.</p>
-            <p className="text-sm mt-1">Encourage your children to practice!</p>
+            <p>{ui("No recent activity.")}</p>
+            <p className="text-sm mt-1">{ui("Encourage your children to practice!")}</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-6">
               {Object.entries(groupedActivities).map(([dateLabel, items]) => (
-                <div key={dateLabel}>
+                <div key={ui(dateLabel)}>
                   <h4 className="text-sm font-semibold mb-3 text-muted-foreground">
-                    {dateLabel}
+                    {ui(dateLabel)}
                   </h4>
                   <div className="space-y-3">
                     {items.map((activity) => (
@@ -88,7 +92,7 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
                   size="sm"
                   onClick={() => setShowAll(true)}
                 >
-                  Show More Activities
+                  {ui("Show More Activities")}
                 </Button>
               </div>
             )}
@@ -100,6 +104,8 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
 }
 
 function ActivityCard({ activity }: { activity: ActivityItem }) {
+  const subjectLabel = useSubjectLabel();
+  const { locale, dateLocale } = useLocale();
   return (
     <div className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
       <div className={cn(
@@ -116,13 +122,13 @@ function ActivityCard({ activity }: { activity: ActivityItem }) {
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-baseline gap-2">
           <span className="font-medium text-sm">{activity.childName}</span>
-          <span className="text-xs text-muted-foreground">{activity.subject}</span>
+          <span className="text-xs text-muted-foreground">{subjectLabel(activity.subject)}</span>
         </div>
         <p className="text-sm text-muted-foreground line-clamp-1">
           {activity.exerciseContent}
         </p>
         <p className="text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+          {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true , locale: dateLocale })}
         </p>
       </div>
     </div>

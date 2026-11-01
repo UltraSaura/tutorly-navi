@@ -1,3 +1,4 @@
+import { profileFetch } from '@/features/family/profileRuntime';
 
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from '@/types/chat';
@@ -141,13 +142,11 @@ const attemptDirectFallback = async (requestBody: any) => {
   try {
     console.log('🌐 Making direct HTTP request...');
     
-    const response = await fetch('https://sibprjxhbxahouejygeu.supabase.co/functions/v1/ai-chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpYnByanhoYnhhaG91ZWp5Z2V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1Njk3NzcsImV4cCI6MjA1ODE0NTc3N30.EeWA7wiqiSsZF_WXO_GDELanejenEeqg6MRZpToNnWM`
-      },
-      body: JSON.stringify(requestBody)
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+    const response = await profileFetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://sibprjxhbxahouejygeu.supabase.co'}/functions/v1/ai-chat`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify(requestBody),
     });
 
     console.log('📡 Direct HTTP response:', {

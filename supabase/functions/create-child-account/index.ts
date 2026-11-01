@@ -1,8 +1,9 @@
+import { requireParent } from '../_shared/family-access.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
 interface CreateChildRequest {
@@ -23,6 +24,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    await requireParent(req);
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -35,7 +37,7 @@ Deno.serve(async (req) => {
     // Client for authenticated user
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
-        headers: { Authorization: authHeader },
+        headers: { Authorization: authHeader, 'x-family-grant': req.headers.get('x-family-grant') ?? '' },
       },
     });
 
@@ -74,21 +76,25 @@ Deno.serve(async (req) => {
       throw new Error('Missing required fields: username, password, firstName, schoolLevel, and relation are required');
     }
 
+    const normalizedUsername = username.toLowerCase().trim();
+
     // Always use username@child.local as auth email for consistent username login
-    const authEmail = `${username}@child.local`;
+    const authEmail = `${normalizedUsername}@child.local`;
 
     // Create auth user with username
     const userMetadata = {
       first_name: firstName,
       last_name: lastName || '',
       user_type: 'student',
-      username: username,
+      username: normalizedUsername,
       country: country || null,
       phone_number: phoneNumber || null,
       actual_email: email || null,
     };
 
     let childUserId: string;
+    let createdAuthUser = false;
+    let createdChildProfile = false;
 
     const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
       email: authEmail,
@@ -155,6 +161,7 @@ Deno.serve(async (req) => {
       throw new Error('Failed to create auth account: no user returned');
     } else {
       childUserId = authData.user.id;
+      createdAuthUser = true;
     }
 
     // The users table will be populated by the trigger (handle_new_user)
@@ -214,26 +221,34 @@ Deno.serve(async (req) => {
 
       if (childError || !newChildData) {
         console.error('Child creation error:', childError);
-        await supabaseAdmin.auth.admin.deleteUser(childUserId);
+        if (createdAuthUser) {
+          await supabaseAdmin.auth.admin.deleteUser(childUserId);
+        }
         throw new Error(`Failed to create child profile: ${childError?.message}`);
       }
       childData = newChildData;
+      createdChildProfile = true;
     }
 
     // Create guardian-child link
     const { error: linkError } = await supabaseAdmin
       .from('guardian_child_links')
-      .insert({
+      .upsert({
         guardian_id: guardianId,
         child_id: childData.id,
         relation,
+      }, {
+        onConflict: 'guardian_id,child_id',
       });
 
     if (linkError) {
       console.error('Link creation error:', linkError);
-      // Cleanup: delete auth user and child profile
-      await supabaseAdmin.auth.admin.deleteUser(childUserId);
-      await supabaseAdmin.from('children').delete().eq('id', childData.id);
+      if (createdChildProfile) {
+        await supabaseAdmin.from('children').delete().eq('id', childData.id);
+      }
+      if (createdAuthUser) {
+        await supabaseAdmin.auth.admin.deleteUser(childUserId);
+      }
       throw new Error(`Failed to link child to guardian: ${linkError.message}`);
     }
 

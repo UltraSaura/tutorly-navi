@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useState, useEffect } from 'react';
 import { User as UserIcon } from 'lucide-react';
@@ -28,6 +29,7 @@ const defaultSubjects = [
 ];
 
 const UserManagement = () => {
+  const ui = useInterfaceTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,6 +170,40 @@ const UserManagement = () => {
     setSelectedUser(user);
   };
 
+  const handleApprovalChange = async (user: User, status: 'approved' | 'rejected') => {
+    const { data: { user: adminUser } } = await supabase.auth.getUser();
+    if (!adminUser) {
+      toast.error('Your admin session has expired');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('users')
+      .update({
+        approval_status: status,
+        approval_reviewed_at: new Date().toISOString(),
+        approval_reviewed_by: adminUser.id,
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error updating account approval:', error);
+      toast.error('Failed to update account approval');
+      return;
+    }
+
+    setUsers(previous => previous.map(existing =>
+      existing.id === user.id
+        ? { ...existing, approval_status: status, approval_reviewed_at: new Date().toISOString(), approval_reviewed_by: adminUser.id }
+        : existing
+    ));
+    setSelectedUser(previous => previous?.id === user.id
+      ? { ...previous, approval_status: status, approval_reviewed_at: new Date().toISOString(), approval_reviewed_by: adminUser.id }
+      : previous
+    );
+    toast.success(status === 'approved' ? 'Account approved' : 'Account rejected');
+  };
+
   const handleAddChildAccount = async (email: string, firstName: string, lastName: string) => {
     if (!selectedUser || selectedUser.user_type !== 'parent') {
       toast.error('You must select a parent to add a child');
@@ -201,6 +237,7 @@ const UserManagement = () => {
       }
       
       // Create the child account in auth
+      const { data: currentSession } = await supabase.auth.getSession();
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: email,
         password: Math.random().toString(36).slice(-8), // Generate a random password
@@ -224,8 +261,30 @@ const UserManagement = () => {
         toast.error('Failed to create user account');
         return;
       }
-      
+
+      // signUp can replace the browser session when email confirmation is off.
+      // Restore the administrator session before writing the child profile.
+      if (signUpData.session && currentSession.session) {
+        await supabase.auth.setSession({
+          access_token: currentSession.session.access_token,
+          refresh_token: currentSession.session.refresh_token,
+        });
+      }
+
       const childUserId = signUpData.user.id;
+
+      // Child accounts created by an administrator are trusted immediately.
+      const { error: approvalError } = await supabase
+        .from('users')
+        .update({
+          approval_status: 'approved',
+          approval_reviewed_at: new Date().toISOString(),
+          approval_reviewed_by: currentSession.session?.user.id,
+        })
+        .eq('id', childUserId);
+      if (approvalError) {
+        console.error('Error approving child account:', approvalError);
+      }
       
       // Wait for the trigger to create the user record
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -300,12 +359,17 @@ const UserManagement = () => {
   
   return (
     <div className="space-y-6">
-      <PageMeta title="Users" description="Administer user accounts, roles, and permissions." />
+      <PageMeta title={ui("Users")} description={ui("Administer user accounts, roles, and permissions.")} />
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{ui("User Management")}</h1>
         <p className="text-muted-foreground mt-1">
-          View and manage student and parent accounts
+          {ui("View and manage student and parent accounts")}
         </p>
+        {users.some(user => user.approval_status === 'pending') && (
+          <p className="mt-2 text-sm font-medium text-amber-700">
+            {users.filter(user => user.approval_status === 'pending').length} account(s) waiting for approval
+          </p>
+        )}
       </div>
       
       <div className="flex flex-col md:flex-row gap-4">
@@ -326,7 +390,7 @@ const UserManagement = () => {
                       <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
                       <div className="absolute top-0 left-0 w-full h-full border-4 border-stuwy-600 rounded-full animate-spin border-t-transparent"></div>
                     </div>
-                    <p className="mt-4 text-lg font-medium">Loading users...</p>
+                    <p className="mt-4 text-lg font-medium">{ui("Loading users...")}</p>
                   </div>
                 </div>
               ) : error ? (
@@ -337,7 +401,7 @@ const UserManagement = () => {
                       className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" 
                       onClick={() => window.location.reload()}
                     >
-                      Retry
+                      {ui("Retry")}
                     </button>
                   </div>
                 </div>
@@ -348,6 +412,7 @@ const UserManagement = () => {
                     selectedUser={selectedUser}
                     onUserSelect={handleUserSelect}
                     onAddChildClick={() => setIsAddChildDialogOpen(true)}
+                    onApprovalChange={handleApprovalChange}
                   />
                 </div>
               )}
@@ -361,6 +426,7 @@ const UserManagement = () => {
               user={selectedUser}
               onAddChildClick={() => setIsAddChildDialogOpen(true)}
               onUserSelect={handleUserSelect}
+              onApprovalChange={handleApprovalChange}
             />
           ) : (
             <Card className="glass">
@@ -369,7 +435,7 @@ const UserManagement = () => {
                   <UserIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <p className="text-center text-muted-foreground">
-                  Select a user to view detailed information and statistics
+                  {ui("Select a user to view detailed information and statistics")}
                 </p>
               </CardContent>
             </Card>

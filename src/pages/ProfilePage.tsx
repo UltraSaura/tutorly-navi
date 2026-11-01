@@ -1,6 +1,7 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useFamilyProfile, useLearner } from '@/context/FamilyProfileContext';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,9 @@ import { LearningPreferenceSelector } from '@/components/profile/LearningPrefere
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const ui = useInterfaceTranslation();
+  const { user } = useLearner();
+  const family = useFamilyProfile();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -25,14 +28,19 @@ const ProfilePage = () => {
     setIsSigningOut(true);
     try {
       await supabase.auth.signOut();
-      toast({ title: t('profile.signedOut') || 'Signed out successfully' });
+      toast({ title: t('profile.signedOut') || ui("Signed out successfully") });
       navigate('/auth');
     } catch (error) {
       console.error('Sign out error:', error);
-      toast({ title: 'Error signing out', variant: 'destructive' });
+      toast({ title: ui("Error signing out"), variant: 'destructive' });
     } finally {
       setIsSigningOut(false);
     }
+  };
+
+  const handleReplayTour = () => {
+    window.dispatchEvent(new Event('stuwy:replay-product-tour'));
+    navigate('/chat');
   };
 
   // Mock user data - in real app, fetch from users table
@@ -48,7 +56,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-900">
-      <PageMeta title="Profile" description="Manage your Stuwy profile, preferences, and account details." />
+      <PageMeta title={ui("Profile")} description={ui("Manage your Stuwy profile, preferences, and account details.")} />
       <div className="stuwy-container py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Header */}
@@ -155,8 +163,12 @@ const ProfilePage = () => {
 
           <LearningPreferenceSelector />
 
+          <Button variant="outline" className="w-full h-12" onClick={handleReplayTour}>
+            {t('productTour.actions.replay')}
+          </Button>
+
           {/* Account Deletion */}
-          <AccountDeletion />
+          {!family.isFamily && <AccountDeletion />}
 
           {/* Sign Out */}
           <Button
@@ -166,7 +178,7 @@ const ProfilePage = () => {
             className="w-full h-12"
           >
             <LogOut className="mr-2 h-5 w-5" />
-            {isSigningOut ? 'Signing out...' : (t('nav.signOut') || 'Sign Out')}
+            {isSigningOut ? ui("Signing out...") : (t('nav.signOut') || ui("Sign Out"))}
           </Button>
 
           {/* Extra bottom spacing for mobile bottom tabs */}

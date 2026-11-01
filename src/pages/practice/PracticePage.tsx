@@ -1,3 +1,5 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -88,6 +90,8 @@ const defaultPracticeSubjects = [
 ] as const;
 
 export default function PracticePage() {
+  const subjectLabel = useSubjectLabel();
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const subjectsQuery = useLearningSubjects();
@@ -140,10 +144,12 @@ export default function PracticePage() {
         masteredTopics: 0,
         totalTopics: 0,
         examPapers: counts.papers,
-        exercises: trainingItems,
+        exercises: trainingItems + row.quizzes_ready,
         sourceExercises: counts.exercises,
+        practiceReady: counts.papers > 0 || trainingItems > 0 || row.videos_ready > 0 || row.quizzes_ready > 0,
+        displayContext: row.subject.display_context,
       };
-      return [card];
+      return card.practiceReady && (row.subject.display_context === 'practice' || row.subject.display_context === 'both') ? [card] : [];
     });
 
     const fallbackCards = [];
@@ -185,6 +191,8 @@ export default function PracticePage() {
         examPapers: counts.papers,
         exercises: trainingItems,
         sourceExercises: counts.exercises,
+        practiceReady: true,
+        displayContext: 'practice' as const,
       });
     }
 
@@ -215,11 +223,16 @@ export default function PracticePage() {
       }
     }
 
-    return defaultPracticeSubjects.map((fallback) => {
+    return defaultPracticeSubjects.flatMap((fallback) => {
       const normalizedSlug = normalizeSubjectKey(fallback.slug);
       const adminSubject = adminSubjectsBySlug.get(normalizedSlug) || adminSubjectsByAlias.get(normalizedSlug);
 
-      return {
+      const sourceSubject = [normalizedSlug, ...getSubjectSlugAliases(fallback.slug).map(normalizeSubjectKey)]
+        .map((key) => subjectsByKey.get(key))
+        .find(Boolean);
+      if (!sourceSubject?.practiceReady) return [];
+
+      return [{
         ...fallback,
         id: adminSubject?.id ?? fallback.slug,
         slug: adminSubject?.slug ?? fallback.slug,
@@ -231,9 +244,9 @@ export default function PracticePage() {
         practice_text_color: adminSubject?.practice_text_color ?? adminSubject?.text_color ?? null,
         practice_font_size: adminSubject?.practice_font_size ?? adminSubject?.font_size ?? null,
         practice_font_family: adminSubject?.practice_font_family ?? adminSubject?.font_family ?? null,
-      };
+      }];
     });
-  }, [practiceButtonsQuery.data, i18n.language]);
+  }, [practiceButtonsQuery.data, subjectsByKey, i18n.language]);
 
   return (
     <div className="min-h-screen bg-[#F7FAFE] pb-28">
@@ -259,6 +272,18 @@ export default function PracticePage() {
             }}
             className="pointer-events-none absolute -right-14 top-0 h-48 w-48 object-contain object-left sm:-right-8 sm:h-52 sm:w-52"
           />
+        </section>
+
+        <section className="rounded-[28px] border border-[#BCEFE3] bg-[#E8F8F3] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#087F68]">Maths</p>
+              <h2 className="mt-1 text-xl font-extrabold text-[#050B34]">Demi-droite graduée</h2>
+              <p className="mt-1 text-sm font-medium text-[#436B65]">Lis, place et range des fractions et des décimaux.</p>
+            </div>
+            <ArrowRight className="mt-1 h-6 w-6 shrink-0 text-[#087F68]" aria-hidden="true" />
+          </div>
+          <button type="button" onClick={() => navigate('/practice/number-line')} className="mt-4 min-h-11 w-full rounded-xl bg-[#12C6A0] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0EAD8B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68] focus-visible:ring-offset-2">Commencer</button>
         </section>
 
         <section>
@@ -318,7 +343,7 @@ export default function PracticePage() {
                         className="font-extrabold leading-tight tracking-normal"
                         style={{ color: subject.practice_text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
                       >
-                        {subject.name}
+                        {subjectLabel(subject.name)}
                       </h2>
                       <p className="text-base font-semibold leading-snug text-[#667085]">
                         {exerciseLabel}

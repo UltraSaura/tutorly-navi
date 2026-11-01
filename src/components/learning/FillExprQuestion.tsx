@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FillExprQuestion } from "@/types/quiz-bank";
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function FillExprQuestionView({ question, value, onChange }: Props) {
+  const ui = useInterfaceTranslation();
   const filled = value ?? {};
   const { draggedValue, getDragSourceProps, getDropTargetProps } = useLearningDragDrop();
 
@@ -118,7 +120,7 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
               whileTap={{ scale: 0.9 }}
-              {...getDragSourceProps(chip)}
+              {...(getDragSourceProps(chip) as any)}
               onClick={() => {
                 if (isUsed) {
                   clearSlot(usedInBlank!);
@@ -142,7 +144,7 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
       </div>
 
       <p className="text-xs text-center text-muted-foreground">
-        Glisse un nombre dans une case, ou tapote pour le placer.
+        {ui("Glisse un nombre dans une case, ou tapote pour le placer.")}
       </p>
     </div>
   );
