@@ -18,6 +18,14 @@ describe('resolveActiveSchoolLevel', () => {
     });
   });
 
+  it('permits a tester to change the active level without changing the profile', () => {
+    expect(resolveActiveSchoolLevel({ isAdmin: false, isTester: true, previewLevel: '6eme', profileLevel: 'cm2' })).toEqual({
+      activeLevel: '6eme',
+      source: 'admin_preview',
+      isPreviewing: true,
+    });
+  });
+
   it('ignores local preview values for non-admin users', () => {
     expect(resolveActiveSchoolLevel({ isAdmin: false, previewLevel: '3eme', profileLevel: '4eme' })).toEqual({
       activeLevel: '4eme',

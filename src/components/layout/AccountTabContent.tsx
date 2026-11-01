@@ -25,7 +25,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
   const { t } = useTranslation();
   const { user } = useLearner();
   const { toast } = useToast();
-  const { isAdmin } = useAdminAuth();
+  const { isAdmin, canPreviewSchoolLevels } = useAdminAuth();
   const { data: stats } = useStudentStats();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -182,7 +182,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         <span>{t('productTour.actions.replay')}</span>
       </Button>
 
-      {isAdmin ? (
+      {canPreviewSchoolLevels ? (
         <>
           <div className="space-y-2 px-1">
             <AdminPreviewSelector compact />

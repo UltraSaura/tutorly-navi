@@ -10,6 +10,7 @@ import { ProgressTab } from './tabs/ProgressTab';
 import { ChildrenTab } from './tabs/ChildrenTab';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
+import { TesterAccessControl } from './TesterAccessControl';
 
 interface UserDetailsProps {
   user: UserType;
@@ -26,6 +27,7 @@ export const UserDetails = ({ user, onAddChildClick, onUserSelect, onApprovalCha
         <UserHeader user={user} />
       </CardHeader>
       <CardContent>
+        <TesterAccessControl userId={user.id} />
         {user.approval_status === 'pending' && (
           <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <p className="mb-3 text-sm font-medium text-amber-900">
