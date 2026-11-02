@@ -2,6 +2,7 @@ import type { QuickExplanation } from "./quickExplanation";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
 import { isUnder11YearsOld } from "@/utils/gradeLevelMapping";
+import { formatFraction, parseFractions } from "@/utils/fractionBounds";
 
 export type MiniPracticeQuestionType = "multiple_choice" | "short_answer" | "ordering";
 
@@ -638,6 +639,70 @@ export function buildDeterministicArithmeticMiniPractice(
   };
 }
 
+function isFractionBoundsTask(exercise: string): boolean {
+  return /\bencadr\w*\b|\bencadrement\b/i.test(exercise) && parseFractions(exercise).length > 0;
+}
+
+/**
+ * Fraction bounds are a closed local exercise. Keeping this check deterministic
+ * prevents a temporary provider/network failure from removing the self-check
+ * from an otherwise usable explanation.
+ */
+export function buildDeterministicFractionBoundsMiniPractice(
+  exercise: string,
+  learningStyle: LearningStyle,
+  language: "fr" | "en",
+): RuntimeMiniPractice | null {
+  if (!isFractionBoundsTask(exercise)) return null;
+
+  const originalTarget = parseFractions(exercise)[0];
+  if (!originalTarget) return null;
+
+  const targets = [
+    { numerator: 5, denominator: 2 },
+    { numerator: 7, denominator: 3 },
+    { numerator: 3, denominator: 2 },
+    { numerator: 9, denominator: 4 },
+  ];
+  const target = targets.find(candidate =>
+    candidate.numerator * originalTarget.denominator !== originalTarget.numerator * candidate.denominator
+  ) || targets[0];
+  const targetText = formatFraction(target);
+  const correctBounds = target.numerator / target.denominator === 2.5
+    ? ["2/1", "3/1"]
+    : target.numerator / target.denominator > 2
+      ? ["2/1", "3/1"]
+      : ["1/1", "2/1"];
+  const choices = [
+    { id: "A", label: `${correctBounds[0]} et ${correctBounds[1]}` },
+    { id: "B", label: `${targetText} et ${correctBounds[1]}` },
+    { id: "C", label: `${correctBounds[0]} et ${targetText}` },
+  ];
+  const french = language === "fr";
+  return {
+    id: `runtime-fraction-bounds-${targetText.replace("/", "-")}`,
+    concept: french ? "encadrement de fractions" : "fraction bounds",
+    learningStyleUsed: learningStyle,
+    questionType: "multiple_choice",
+    prompt: french
+      ? `Teste-toi : encadre ${targetText} entre deux fractions.`
+      : `Test yourself: bound ${targetText} between two fractions.`,
+    choices,
+    correctAnswer: "A",
+    hint: french
+      ? `La première fraction doit être plus petite que ${targetText} et la seconde plus grande.`
+      : `The first fraction must be smaller than ${targetText} and the second larger.`,
+    feedback: {
+      correct: french
+        ? `Oui : ${correctBounds[0]} < ${targetText} < ${correctBounds[1]}.`
+        : `Yes: ${correctBounds[0]} < ${targetText} < ${correctBounds[1]}.`,
+      incorrect: french
+        ? `Compare chaque borne avec ${targetText}, sans utiliser une borne égale.`
+        : `Compare each bound with ${targetText}; do not use an equal bound.`,
+    },
+  };
+}
+
 export function validateRuntimeMiniPractice(raw: unknown): RuntimeMiniPractice | null {
   if (!raw || typeof raw !== "object") return null;
   const record = raw as Record<string, unknown>;
@@ -708,6 +773,12 @@ export async function generateRuntimeMiniPractice(
   const learning_style = normalizeLearningStyle(context.learningStyle);
   const languageCode = /^fr/i.test(context.language || "") ? "fr" : "en";
   const language = languageCode === "fr" ? "French" : "English";
+  const fractionBoundsPractice = buildDeterministicFractionBoundsMiniPractice(
+    context.exercise,
+    learning_style,
+    languageCode,
+  );
+  if (fractionBoundsPractice) return fractionBoundsPractice;
   const parsedExercise = parseSimpleArithmeticExercise(context.exercise);
   const isKidTemplateCandidate = Boolean(
     parsedExercise &&

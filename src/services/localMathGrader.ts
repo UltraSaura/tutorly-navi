@@ -3,6 +3,8 @@
  */
 
 import { areMathematicallyEquivalent } from '@/utils/mathValidation';
+import { detectMathTaskIntent } from '@/utils/mathTaskIntent';
+import { evaluateFractionBounds, formatFraction, parseExplicitFractionTokens, parseFractions, parseRationalValues } from '@/utils/fractionBounds';
 import { gradeGeometry } from './geometryGrader';
 
 export interface LocalGradeResult {
@@ -10,6 +12,12 @@ export interface LocalGradeResult {
   correctAnswer: string;
   confidence: 'high' | 'low';
   method: 'local';
+  evaluation?: {
+    numericValid: boolean;
+    formatValid: boolean;
+    reason: 'correct' | 'format' | 'bounds';
+    feedback: string;
+  };
 }
 
 /**
@@ -20,6 +28,71 @@ export function localGrade(question: string, userAnswer: string): LocalGradeResu
   const a = userAnswer.trim();
 
   if (!q || !a) return null;
+
+  // Fraction bounds are a distinct task. Do not let the slash fall through
+  // to arithmetic equivalence or the long-division explanation.
+  if (detectMathTaskIntent(q) === 'fraction_encadrement') {
+    const fractionBounds = evaluateFractionBounds(q, a);
+    const rationalAnswer = parseRationalValues(a);
+    const requiresConsecutiveIntegers = /\bentre\s+deux\s+entiers(?:\s+consécutifs)?\b/i.test(q);
+    const requiresFractionFormat = /\bentre\s+(?:deux|2)\s+fractions?\b/i.test(q);
+    const explicitAnswerFractions = parseExplicitFractionTokens(a);
+    const formatIsValid = !requiresFractionFormat || (
+      explicitAnswerFractions.length === 2
+      && explicitAnswerFractions.every(({ denominator }) => denominator !== 0)
+    );
+    if (fractionBounds && rationalAnswer.length === 2) {
+      const expectedLower = Math.floor(fractionBounds.target.numerator / fractionBounds.target.denominator);
+      const expectedUpper = expectedLower + 1;
+      const isConsecutiveIntegerAnswer = rationalAnswer.every(value => value.denominator === 1)
+        && rationalAnswer.some(value => value.numerator === expectedLower)
+        && rationalAnswer.some(value => value.numerator === expectedUpper);
+      const numericIsCorrect = requiresConsecutiveIntegers
+        ? fractionBounds.isCorrect && isConsecutiveIntegerAnswer
+        : fractionBounds.isCorrect;
+      const isCorrect = numericIsCorrect && formatIsValid;
+      const reason = isCorrect ? 'correct' : !numericIsCorrect ? 'bounds' : 'format';
+      return {
+        isCorrect,
+        correctAnswer: requiresConsecutiveIntegers
+          ? `${expectedLower} et ${expectedUpper}`
+          : fractionBounds.lower && fractionBounds.upper
+            ? `${formatFraction(fractionBounds.lower)} et ${formatFraction(fractionBounds.upper)}`
+          : 'une fraction inférieure et une fraction supérieure',
+        confidence: 'high',
+        method: 'local',
+        evaluation: {
+          numericValid: numericIsCorrect,
+          formatValid: formatIsValid,
+          reason,
+          feedback: isCorrect
+            ? 'Encadrement correct.'
+            : !numericIsCorrect
+              ? 'Les deux bornes doivent être dans le bon ordre et encadrer strictement la fraction centrale.'
+              : 'Ton encadrement est numériquement correct. Écris les deux bornes sous forme de fractions, par exemple 2/1 et 5/1.',
+        },
+      };
+    }
+
+    const fraction = q.match(/(-?\d+)\s*\/\s*(-?\d+)/);
+    if (!fraction || Number(fraction[2]) === 0) return null;
+    const numerator = Number(fraction[1]);
+    const denominator = Number(fraction[2]);
+    const value = numerator / denominator;
+    const lower = Math.floor(value);
+    const upper = Math.ceil(value);
+    const bounds = a.match(/(-?\d+)\s*(?:et|,|;|à|a|<)\s*(-?\d+)/i);
+    if (!bounds) return null;
+    const first = Number(bounds[1]);
+    const second = Number(bounds[2]);
+    const isCorrect = first === lower && second === upper && lower < value && value < upper;
+    return {
+      isCorrect,
+      correctAnswer: `${lower} et ${upper}`,
+      confidence: 'high',
+      method: 'local',
+    };
+  }
 
   // 1. Try geometry first
   const geoResult = gradeGeometry(q, a);
