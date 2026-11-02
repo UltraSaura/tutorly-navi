@@ -105,10 +105,10 @@ export function ExplanationModal({
         </div>
 
         <div className={generatedPractice ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-y-auto p-5"}>
-          {generatedPractice && user ? (
+          {generatedPractice ? (
             <QuizOverlay
               bank={generatedPractice}
-              userId={user.id}
+              userId={user?.id ?? 'local-practice'}
               onClose={() => setGeneratedPractice(null)}
               recordAttempt={false}
               embedded

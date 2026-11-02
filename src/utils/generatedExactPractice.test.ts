@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildSimilarArithmeticExercises, buildSimilarArithmeticQuiz, buildSimilarFractionBoundsQuiz } from './generatedExactPractice';
+import { evaluateQuestion } from './quizEvaluation';
 
 describe('generated exact practice', () => {
   it('keeps the trailing-zero multiplication structure', () => {
@@ -48,6 +49,14 @@ describe('generated exact practice', () => {
     expect(quiz?.questions.every(question =>
       question.kind === 'single' && question.choices.some(choice => choice.correct),
     )).toBe(true);
+    expect(quiz?.questions.every(question => {
+      if (question.kind !== 'single') return false;
+      const correct = question.choices.find(choice => choice.correct);
+      const wrong = question.choices.find(choice => !choice.correct);
+      return Boolean(correct && wrong)
+        && evaluateQuestion(question, correct?.id)
+        && !evaluateQuestion(question, wrong?.id);
+    })).toBe(true);
   });
 
   it('does not claim arithmetic practice support for a non-encadrement fraction task', () => {
