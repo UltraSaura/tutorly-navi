@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { buildFractionFeedbackChallenge, FractionBoundsFeedbackCard, fractionChallengeCheckButtonClass, resolveExerciseEvaluation } from './AIResponse';
+import { buildFractionFeedbackChallenge, FractionBoundsFeedbackCard, fractionChallengeCheckButtonClass, getFractionChallengeChoiceClass, resolveExerciseEvaluation } from './AIResponse';
 import { Button } from '@/components/ui/button';
 import { localGrade } from '@/services/localMathGrader';
 
@@ -87,5 +87,12 @@ describe('AIResponse local exercise evaluation', () => {
     expect(disabledHtml).toContain('disabled:opacity-100');
     expect(activeHtml).toContain('bg-[#7452C4]');
     expect(activeHtml).toContain('text-white');
+  });
+
+  it('changes the selected choice to green only after a correct validation', () => {
+    expect(getFractionChallengeChoiceClass('A', 'A', 'idle')).toContain('border-amber-500');
+    expect(getFractionChallengeChoiceClass('A', 'A', 'correct')).toContain('border-[#22C55E]');
+    expect(getFractionChallengeChoiceClass('A', 'A', 'correct')).toContain('bg-[#E8F8EC]');
+    expect(getFractionChallengeChoiceClass('A', 'A', 'incorrect')).toContain('bg-rose-100');
   });
 });

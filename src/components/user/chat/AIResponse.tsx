@@ -122,6 +122,18 @@ type FractionFeedbackChallenge = {
   choices: Array<{ id: 'A' | 'B' | 'C'; label: string }>;
   correctChoice: 'A' | 'B' | 'C';
 };
+export type FractionChallengeState = 'idle' | 'correct' | 'incorrect' | 'hidden';
+
+export function getFractionChallengeChoiceClass(
+  choiceId: string,
+  selectedChoice: string,
+  state: FractionChallengeState,
+): string {
+  if (state === 'correct' && selectedChoice === choiceId) return 'border-[#22C55E] bg-[#E8F8EC] text-green-900';
+  if (state === 'incorrect' && selectedChoice === choiceId) return 'border-rose-400 bg-rose-100 text-rose-900';
+  if (selectedChoice === choiceId) return 'border-amber-500 bg-white text-amber-950';
+  return 'border-amber-200 bg-amber-100/50 text-amber-900 hover:bg-white';
+}
 
 export function buildFractionFeedbackChallenge(question: string, answer: string): FractionFeedbackChallenge | null {
   const target = parseFractions(question)[0];
@@ -170,7 +182,7 @@ export function FractionBoundsFeedbackCard({
 }) {
   const french = language === 'fr';
   const [selectedChoice, setSelectedChoice] = useState<string>('');
-  const [challengeState, setChallengeState] = useState<'idle' | 'correct' | 'incorrect' | 'hidden'>('idle');
+  const [challengeState, setChallengeState] = useState<FractionChallengeState>('idle');
   const challenge = buildFractionFeedbackChallenge(question, answer);
   const inequality = formatBoundsInequality(question, answer);
   const isFormatError = result.evaluation?.reason === 'format';
@@ -178,8 +190,13 @@ export function FractionBoundsFeedbackCard({
   const isImprovement = result.isCorrect && Boolean(challenge);
 
   const checkChallenge = () => {
-    if (!selectedChoice || !challenge) return;
+    if (!selectedChoice || !challenge || challengeState !== 'idle') return;
     setChallengeState(selectedChoice === challenge.correctChoice ? 'correct' : 'incorrect');
+  };
+
+  const retryChallenge = () => {
+    setSelectedChoice('');
+    setChallengeState('idle');
   };
 
   return (
@@ -244,12 +261,14 @@ export function FractionBoundsFeedbackCard({
                 type="button"
                 role="radio"
                 aria-checked={selectedChoice === choice.id}
+                disabled={challengeState === 'correct'}
                 onClick={() => { setSelectedChoice(choice.id); setChallengeState('idle'); }}
                 className={cn(
                   'rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors',
-                  selectedChoice === choice.id ? 'border-amber-500 bg-white text-amber-950' : 'border-amber-200 bg-amber-100/50 text-amber-900 hover:bg-white',
+                  getFractionChallengeChoiceClass(choice.id, selectedChoice, challengeState),
                 )}
               >
+                {challengeState === 'correct' && selectedChoice === choice.id && <CheckCircle2 className="mr-1 inline-block h-4 w-4 text-[#22C55E]" aria-hidden="true" />}
                 {choice.id}. {choice.label}
               </button>
             ))}
@@ -257,14 +276,21 @@ export function FractionBoundsFeedbackCard({
           {challengeState !== 'idle' && (
             <p className="mt-2 text-sm font-semibold text-amber-900" role="status">
               {challengeState === 'correct'
-                ? (french ? `Exact ! ${closerFraction} est plus proche.` : `Exactly! ${closerFraction} is closer.`)
+                ? (french ? `Exact ! ${closerFraction} est plus proche : tu as trouvé un encadrement plus précis.` : `Exactly! ${closerFraction} is closer: you found a more precise bound.`)
                 : (french ? 'Regarde les numérateurs : nous cherchons une fraction juste au-dessus de la fraction centrale.' : 'Compare the numerators: we need a fraction just above the central fraction.')}
             </p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button type="button" size="sm" className={fractionChallengeCheckButtonClass} onClick={checkChallenge} disabled={!selectedChoice}>
-              {french ? 'Vérifier ma réponse' : 'Check my answer'}
-            </Button>
+            {challengeState === 'idle' && (
+              <Button type="button" size="sm" className={fractionChallengeCheckButtonClass} onClick={checkChallenge} disabled={!selectedChoice}>
+                {french ? 'Vérifier ma réponse' : 'Check my answer'}
+              </Button>
+            )}
+            {challengeState === 'incorrect' && (
+              <Button type="button" size="sm" className="bg-[#7452C4] text-white hover:bg-[#6344B0]" onClick={retryChallenge}>
+                {french ? 'Réessayer' : 'Try again'}
+              </Button>
+            )}
             <Button type="button" size="sm" variant="ghost" onClick={() => setChallengeState('hidden')}>
               {french ? 'Ignorer' : 'Skip'}
             </Button>
