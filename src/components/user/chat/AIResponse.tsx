@@ -24,6 +24,7 @@ import { useAdmin } from '@/context/AdminContext';
 import { buildSafeHomeworkLearningRows, type SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 import { motion } from 'framer-motion';
 import { PracticeFeedback } from '@/components/practice/PracticeFeedback';
+import { localGrade, type LocalGradeResult } from '@/services/localMathGrader';
 
 interface AIResponseProps {
   messages: Message[];
@@ -97,6 +98,23 @@ const parseAIResponse = (content: string) => {
   }
 };
 
+export function resolveExerciseEvaluation(
+  question: string,
+  answer: string,
+  providerIsCorrect: boolean,
+  providerIsIncorrect: boolean,
+): { isCorrect: boolean; isIncorrect: boolean; localResult: LocalGradeResult | null } {
+  const localResult = question.trim() && answer.trim() ? localGrade(question, answer) : null;
+  if (localResult) {
+    return {
+      isCorrect: localResult.isCorrect,
+      isIncorrect: !localResult.isCorrect,
+      localResult,
+    };
+  }
+  return { isCorrect: providerIsCorrect, isIncorrect: providerIsIncorrect, localResult: null };
+}
+
 function ExerciseResultBanner({
   isCorrect,
   isIncorrect,
@@ -151,8 +169,16 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   
   const contentTrimmed = content.trim();
   const firstLine = contentTrimmed.split('\n')[0];
-  const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
-  const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
+  const providerIsCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
+  const providerIsIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
+  const evaluation = resolveExerciseEvaluation(
+    question,
+    answer,
+    !isRetrying && hasAnswer ? providerIsCorrect : false,
+    !isRetrying && hasAnswer ? providerIsIncorrect : false,
+  );
+  const isCorrect = evaluation.isCorrect;
+  const isIncorrect = evaluation.isIncorrect;
 
   const handleSubmitAnswer = async () => {
     if (!userAnswerInput.trim() || !onSubmitAnswer) return;
@@ -212,8 +238,16 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   // JSON response path
   const jsonResponse = parseAIResponse(content);
   if (jsonResponse && jsonResponse.isMath && jsonResponse.sections) {
-    const jsonIsCorrect = jsonResponse.isCorrect === true;
-    const jsonIsIncorrect = jsonResponse.isCorrect === false;
+    const jsonProviderIsCorrect = jsonResponse.isCorrect === true;
+    const jsonProviderIsIncorrect = jsonResponse.isCorrect === false;
+    const jsonEvaluation = resolveExerciseEvaluation(
+      question || jsonResponse.exercise || '',
+      answer,
+      !isRetrying && hasAnswer ? jsonProviderIsCorrect : false,
+      !isRetrying && hasAnswer ? jsonProviderIsIncorrect : false,
+    );
+    const jsonIsCorrect = jsonEvaluation.isCorrect;
+    const jsonIsIncorrect = jsonEvaluation.isIncorrect;
     
     return (
       <div className="w-full overflow-hidden">
