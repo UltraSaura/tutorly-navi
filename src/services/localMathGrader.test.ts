@@ -12,6 +12,7 @@ describe("localMathGrader", () => {
 
   it("rejects non-consecutive or incorrect fraction bounds", () => {
     expect(localGrade("Encadrer 7/3 entre deux entiers", "2 et 4")).toMatchObject({ isCorrect: false });
+    expect(localGrade("Encadrer 7/3 entre deux entiers consécutifs", "2 et 5")).toMatchObject({ isCorrect: false });
   });
 
   it("rejects an equal fraction in a strict fraction bound without AI fallback", () => {
@@ -21,10 +22,36 @@ describe("localMathGrader", () => {
     });
   });
 
-  it("accepts integer bounds for a fraction task when they are strict", () => {
+  it("rejects integer-only bounds when fractions are explicitly requested", () => {
     expect(localGrade("Encadrer 7/3 entre 2 fractions", "2 et 3")).toMatchObject({
-      isCorrect: true,
+      isCorrect: false,
+      evaluation: {
+        numericValid: true,
+        formatValid: false,
+        reason: "format",
+      },
       confidence: "high",
+    });
+  });
+
+  it("rejects integer-only bounds even when their numeric values are strict", () => {
+    expect(localGrade("Encadrer 7/3 entre deux fractions", "2 et 5")).toMatchObject({
+      isCorrect: false,
+      evaluation: { numericValid: true, formatValid: false, reason: "format" },
+    });
+  });
+
+  it("accepts explicit fraction bounds with denominator one", () => {
+    expect(localGrade("Encadrer 7/3 entre deux fractions", "2/1 et 5/1")).toMatchObject({
+      isCorrect: true,
+      evaluation: { numericValid: true, formatValid: true, reason: "correct" },
+    });
+  });
+
+  it("rejects bounds that are both above the target", () => {
+    expect(localGrade("Encadrer 7/3 entre deux fractions", "3/1 et 4/1")).toMatchObject({
+      isCorrect: false,
+      evaluation: { numericValid: false, reason: "bounds" },
     });
   });
 

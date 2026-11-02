@@ -119,11 +119,13 @@ function ExerciseResultBanner({
   isCorrect,
   isIncorrect,
   hasAnswer,
+  feedback,
   language,
 }: {
   isCorrect: boolean;
   isIncorrect: boolean;
   hasAnswer: boolean;
+  feedback?: string;
   language: string;
 }) {
   if (!isCorrect && !isIncorrect) {
@@ -134,7 +136,14 @@ function ExerciseResultBanner({
       </div>
     );
   }
-  return <PracticeFeedback status={isCorrect ? 'correct' : 'incorrect'} language={language} />;
+  return (
+    <div className="mb-3 space-y-2">
+      <PracticeFeedback status={isCorrect ? 'correct' : 'incorrect'} language={language} />
+      {feedback && (
+        <p className="text-sm text-slate-700" role="status">{feedback}</p>
+      )}
+    </div>
+  );
 }
 
 // Memoized ExerciseCard component
@@ -179,6 +188,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   );
   const isCorrect = evaluation.isCorrect;
   const isIncorrect = evaluation.isIncorrect;
+  const evaluationFeedback = evaluation.localResult?.evaluation?.feedback;
 
   const handleSubmitAnswer = async () => {
     if (!userAnswerInput.trim() || !onSubmitAnswer) return;
@@ -288,6 +298,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 isCorrect={jsonIsCorrect}
                 isIncorrect={jsonIsIncorrect}
                 hasAnswer={!hasNoAnswer}
+                feedback={jsonEvaluation.localResult?.evaluation?.feedback}
                 language={language}
               />
               
@@ -385,6 +396,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               isCorrect={isCorrect}
               isIncorrect={isIncorrect}
               hasAnswer={!hasNoAnswer}
+              feedback={evaluationFeedback}
               language={language}
             />
             

@@ -4,7 +4,7 @@
 
 import { areMathematicallyEquivalent } from '@/utils/mathValidation';
 import { detectMathTaskIntent } from '@/utils/mathTaskIntent';
-import { evaluateFractionBounds, formatFraction, parseFractions, parseRationalValues } from '@/utils/fractionBounds';
+import { evaluateFractionBounds, formatFraction, parseExplicitFractionTokens, parseFractions, parseRationalValues } from '@/utils/fractionBounds';
 import { gradeGeometry } from './geometryGrader';
 
 export interface LocalGradeResult {
@@ -12,6 +12,12 @@ export interface LocalGradeResult {
   correctAnswer: string;
   confidence: 'high' | 'low';
   method: 'local';
+  evaluation?: {
+    numericValid: boolean;
+    formatValid: boolean;
+    reason: 'correct' | 'format' | 'bounds';
+    feedback: string;
+  };
 }
 
 /**
@@ -29,15 +35,23 @@ export function localGrade(question: string, userAnswer: string): LocalGradeResu
     const fractionBounds = evaluateFractionBounds(q, a);
     const rationalAnswer = parseRationalValues(a);
     const requiresConsecutiveIntegers = /\bentre\s+deux\s+entiers(?:\s+consécutifs)?\b/i.test(q);
+    const requiresFractionFormat = /\bentre\s+(?:deux|2)\s+fractions?\b/i.test(q);
+    const explicitAnswerFractions = parseExplicitFractionTokens(a);
+    const formatIsValid = !requiresFractionFormat || (
+      explicitAnswerFractions.length === 2
+      && explicitAnswerFractions.every(({ denominator }) => denominator !== 0)
+    );
     if (fractionBounds && rationalAnswer.length === 2) {
       const expectedLower = Math.floor(fractionBounds.target.numerator / fractionBounds.target.denominator);
       const expectedUpper = expectedLower + 1;
       const isConsecutiveIntegerAnswer = rationalAnswer.every(value => value.denominator === 1)
         && rationalAnswer.some(value => value.numerator === expectedLower)
         && rationalAnswer.some(value => value.numerator === expectedUpper);
-      const isCorrect = requiresConsecutiveIntegers
+      const numericIsCorrect = requiresConsecutiveIntegers
         ? fractionBounds.isCorrect && isConsecutiveIntegerAnswer
         : fractionBounds.isCorrect;
+      const isCorrect = numericIsCorrect && formatIsValid;
+      const reason = isCorrect ? 'correct' : !numericIsCorrect ? 'bounds' : 'format';
       return {
         isCorrect,
         correctAnswer: requiresConsecutiveIntegers
@@ -47,6 +61,16 @@ export function localGrade(question: string, userAnswer: string): LocalGradeResu
           : 'une fraction inférieure et une fraction supérieure',
         confidence: 'high',
         method: 'local',
+        evaluation: {
+          numericValid: numericIsCorrect,
+          formatValid: formatIsValid,
+          reason,
+          feedback: isCorrect
+            ? 'Encadrement correct.'
+            : !numericIsCorrect
+              ? 'Les deux bornes doivent être dans le bon ordre et encadrer strictement la fraction centrale.'
+              : 'Ton encadrement est numériquement correct. Écris les deux bornes sous forme de fractions, par exemple 2/1 et 5/1.',
+        },
       };
     }
 

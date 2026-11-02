@@ -30,6 +30,14 @@ export function parseFractions(source: string): FractionValue[] {
   return fractions;
 }
 
+/** Returns the explicitly written fraction tokens, including invalid zero denominators. */
+export function parseExplicitFractionTokens(source: string): Array<{ numerator: number; denominator: number }> {
+  return [...source.matchAll(FRACTION_PATTERN)].map(match => ({
+    numerator: Number(match[1]),
+    denominator: Number(match[2]),
+  }));
+}
+
 /** Parses fraction or integer tokens used as bounds. Integers are valid rational bounds. */
 export function parseRationalValues(source: string): FractionValue[] {
   const values: FractionValue[] = [];

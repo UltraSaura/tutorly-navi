@@ -4,7 +4,8 @@ import { resolveExerciseEvaluation } from './AIResponse';
 describe('AIResponse local exercise evaluation', () => {
   it.each([
     ['Encadrer 7/3 entre deux entiers consécutifs', '2 et 3', true],
-    ['Encadrer 7/3 entre deux fractions', '2 et 5', true],
+    ['Encadrer 7/3 entre deux fractions', '2 et 5', false],
+    ['Encadrer 7/3 entre deux fractions', '2/1 et 5/1', true],
     ['Encadrer 7/3 entre deux fractions', '6/3 et 8/3', true],
     ['Encadrer 7/3 entre deux fractions', '7/2 et 7/3', false],
   ])('resolves %s / %s without provider status', (question, answer, isCorrect) => {
