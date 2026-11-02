@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSimilarArithmeticExercises, buildSimilarArithmeticQuiz } from './generatedExactPractice';
+import { buildSimilarArithmeticExercises, buildSimilarArithmeticQuiz, buildSimilarFractionBoundsQuiz } from './generatedExactPractice';
 
 describe('generated exact practice', () => {
   it('keeps the trailing-zero multiplication structure', () => {
@@ -34,5 +34,23 @@ describe('generated exact practice', () => {
     expect(quiz?.questions.every(question =>
       question.kind === 'single' && question.choices.some(choice => choice.correct && choice.label.includes('remainder')),
     )).toBe(true);
+  });
+
+  it('creates three fraction-bounds exercises without a provider call', () => {
+    const quiz = buildSimilarFractionBoundsQuiz('Encadrer 7/3 entre 2 fractions', 'fr');
+
+    expect(quiz?.quizBankId).toBe('__generated_fraction_bounds_practice__');
+    expect(quiz?.questions.map(question => question.prompt)).toEqual([
+      'Encadrer 7/3 entre deux fractions.',
+      'Encadrer 8/3 entre deux fractions.',
+      'Encadrer 9/3 entre deux fractions.',
+    ]);
+    expect(quiz?.questions.every(question =>
+      question.kind === 'single' && question.choices.some(choice => choice.correct),
+    )).toBe(true);
+  });
+
+  it('does not claim arithmetic practice support for a non-encadrement fraction task', () => {
+    expect(buildSimilarFractionBoundsQuiz('Simplifier 7/3', 'fr')).toBeNull();
   });
 });

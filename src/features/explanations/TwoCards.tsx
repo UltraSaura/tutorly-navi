@@ -22,7 +22,7 @@ import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 import { ExplanationRenderer } from "./ExplanationRenderer";
 import { getLearningMode } from "@/domain/learningMode";
-import { buildSimilarArithmeticQuiz } from '@/utils/generatedExactPractice';
+import { buildSimilarArithmeticQuiz, buildSimilarFractionBoundsQuiz } from '@/utils/generatedExactPractice';
 import { toast } from '@/hooks/use-toast';
 import type { QuizBank } from '@/types/quiz-bank';
 import { detectMathTaskIntent } from '@/utils/mathTaskIntent';
@@ -161,7 +161,9 @@ export function TwoCards({
       return;
     }
 
-    const practice = buildSimilarArithmeticQuiz(s.exercise, language === 'fr' ? 'fr' : 'en');
+    const responseLanguage = language === 'fr' ? 'fr' : 'en';
+    const practice = buildSimilarFractionBoundsQuiz(s.exercise, responseLanguage)
+      || buildSimilarArithmeticQuiz(s.exercise, responseLanguage);
     if (!practice) {
       toast({
         title: language === 'fr' ? 'Exercices ciblés indisponibles' : 'Targeted practice unavailable',

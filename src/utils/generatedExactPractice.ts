@@ -1,5 +1,6 @@
 import { analyzeExerciseProfile } from './operationTypeDetector';
 import type { Choice, QuizBank, Question } from '@/types/quiz-bank';
+import { formatFraction, parseFractions, type FractionValue } from './fractionBounds';
 
 function operand(length: number, first: number, fill: number, trailingZeros = 0): bigint {
   const zeroCount = Math.min(trailingZeros, Math.max(0, length - 1));
@@ -49,6 +50,61 @@ function choices(correct: string, alternatives: string[]): Choice[] {
     [labels[index], labels[swapIndex]] = [labels[swapIndex], labels[index]];
   }
   return labels.map((label, index) => ({ id: String.fromCharCode(65 + index), label, correct: label === correct }));
+}
+
+function fractionValue(numerator: number, denominator: number): FractionValue {
+  return denominator < 0
+    ? { numerator: -numerator, denominator: -denominator }
+    : { numerator, denominator };
+}
+
+function fractionBoundsForPractice(target: FractionValue): { lower: FractionValue; upper: FractionValue } {
+  const quotient = Math.floor(target.numerator / target.denominator);
+  const isInteger = target.numerator % target.denominator === 0;
+  return isInteger
+    ? {
+        lower: fractionValue(target.numerator - target.denominator, target.denominator),
+        upper: fractionValue(target.numerator + target.denominator, target.denominator),
+      }
+    : {
+        lower: fractionValue(quotient, 1),
+        upper: fractionValue(quotient + 1, 1),
+      };
+}
+
+/** Builds provider-free practice for strict fraction encadrement. */
+export function buildSimilarFractionBoundsQuiz(exercise: string, language: 'fr' | 'en'): QuizBank | null {
+  if (!/\b(?:encadr\w*|encadrement)\b/i.test(exercise)) return null;
+  const [sourceTarget] = parseFractions(exercise);
+  if (!sourceTarget || sourceTarget.denominator === 0) return null;
+
+  const questions: Question[] = Array.from({ length: 3 }, (_, index) => {
+    const target = fractionValue(sourceTarget.numerator + index, sourceTarget.denominator);
+    const bounds = fractionBoundsForPractice(target);
+    const correct = `${formatFraction(bounds.lower)} et ${formatFraction(bounds.upper)}`;
+    const alternatives = [
+      `${formatFraction(target)} et ${formatFraction(bounds.upper)}`,
+      `${formatFraction(bounds.lower)} et ${formatFraction(target)}`,
+    ];
+    return {
+      id: `similar-fraction-bounds-${index + 1}`,
+      kind: 'single',
+      prompt: language === 'fr'
+        ? `Encadrer ${formatFraction(target)} entre deux fractions.`
+        : `Bound ${formatFraction(target)} between two fractions.`,
+      choices: choices(correct, alternatives),
+    };
+  });
+
+  return {
+    quizBankId: '__generated_fraction_bounds_practice__',
+    title: language === 'fr' ? '3 exercices du même type' : '3 exercises like this',
+    description: language === 'fr'
+      ? 'Encadre chaque fraction avec deux bornes strictes.'
+      : 'Bound each fraction with two strict bounds.',
+    shuffle: false,
+    questions,
+  };
 }
 
 /** Builds a temporary quiz in the same UI used by authored quiz-bank quizzes. */
