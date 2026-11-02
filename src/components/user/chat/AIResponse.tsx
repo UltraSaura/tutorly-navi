@@ -172,6 +172,7 @@ export function FractionBoundsFeedbackCard({
   const inequality = formatBoundsInequality(question, answer);
   const isFormatError = result.evaluation?.reason === 'format';
   const closerFraction = challenge?.choices[0].label;
+  const isImprovement = result.isCorrect && Boolean(challenge);
 
   const checkChallenge = () => {
     if (!selectedChoice || !challenge) return;
@@ -181,23 +182,27 @@ export function FractionBoundsFeedbackCard({
   return (
     <div className={cn(
       'mb-4 rounded-2xl border p-4 shadow-sm',
-      result.isCorrect ? 'border-emerald-200 bg-emerald-50/70' : 'border-rose-200 bg-rose-50/70',
+      isImprovement ? 'border-amber-200 bg-amber-50/70' : result.isCorrect ? 'border-emerald-200 bg-emerald-50/70' : 'border-rose-200 bg-rose-50/70',
     )} data-feedback-card="fraction-bounds">
       <div className="flex items-start gap-3">
         <div className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-          result.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700',
+          isImprovement ? 'bg-amber-100 text-amber-700' : result.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700',
         )} aria-hidden="true">
-          {result.isCorrect ? <Trophy className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
+          {result.isCorrect && !isImprovement ? <Trophy className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-bold text-slate-900">
-            {result.isCorrect
+            {isImprovement
+              ? (french ? 'Pas mal, tu es sur la bonne voie !' : 'Nice work, you are on the right track!')
+              : result.isCorrect
               ? (french ? "Bravo, c'est correct !" : "Great, that's correct!")
               : (french ? 'Pas encore, continue !' : 'Not yet, keep going!')}
           </h3>
           <p className="mt-1 text-sm text-slate-700">
-            {result.isCorrect
+            {isImprovement
+              ? (french ? 'Ton encadrement est juste, mais tu peux trouver des fractions plus proches.' : 'Your bounds are correct, but you can find closer fractions.')
+              : result.isCorrect
               ? (french ? 'Tu as trouvé deux fractions qui encadrent correctement la fraction centrale.' : 'You found two fractions that correctly bound the central fraction.')
               : isFormatError
                 ? (french
@@ -247,7 +252,7 @@ export function FractionBoundsFeedbackCard({
             ))}
           </div>
           {challengeState !== 'idle' && (
-            <p className={cn('mt-2 text-sm font-semibold', challengeState === 'correct' ? 'text-emerald-800' : 'text-amber-800')} role="status">
+            <p className="mt-2 text-sm font-semibold text-amber-900" role="status">
               {challengeState === 'correct'
                 ? (french ? `Exact ! ${closerFraction} est plus proche.` : `Exactly! ${closerFraction} is closer.`)
                 : (french ? 'Regarde les numérateurs : nous cherchons une fraction juste au-dessus de la fraction centrale.' : 'Compare the numerators: we need a fraction just above the central fraction.')}
@@ -409,17 +414,21 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     );
     const jsonIsCorrect = jsonEvaluation.isCorrect;
     const jsonIsIncorrect = jsonEvaluation.isIncorrect;
+    const jsonHasImprovement = jsonIsCorrect && Boolean(jsonEvaluation.localResult?.evaluation);
     
     return (
       <div className="w-full overflow-hidden">
         <div className={cn(
           'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
-          jsonIsCorrect ? 'bg-green-50 border border-green-200'
+          jsonHasImprovement ? 'bg-amber-50 border border-amber-200'
+            : jsonIsCorrect ? 'bg-green-50 border border-green-200'
             : jsonIsIncorrect ? 'bg-red-50 border border-red-200'
             : 'bg-neutral-surface border border-neutral-border'
         )}>
           <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
-            {jsonIsCorrect ? (
+            {jsonHasImprovement ? (
+              <Lightbulb className="h-5 w-5 text-amber-700" aria-label={t('exercise.correct')} />
+            ) : jsonIsCorrect ? (
               <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
             ) : jsonIsIncorrect ? (
               <img src="/images/Sad Face wrong Answer.png" alt={t('exercise.incorrect')} className="w-6 h-6 object-contain" />
@@ -433,7 +442,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
           <div className="flex items-start gap-3 pr-8">
             <div className={cn(
               'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
-              jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-600'
+              jsonHasImprovement ? 'bg-amber-100 border border-amber-300 text-amber-700'
+                : jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-600'
                 : jsonIsIncorrect ? 'bg-blue-100 border border-blue-200 text-blue-600'
                 : 'bg-neutral-surface border border-neutral-border text-blue-600'
             )}>
@@ -490,7 +500,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 ) : (
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className={cn('px-3 py-1',
-                      jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-800'
+                      jsonHasImprovement ? 'bg-amber-100 border border-amber-300 text-amber-900'
+                        : jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-800'
                         : jsonIsIncorrect ? 'bg-white border border-border text-muted-foreground'
                         : 'bg-neutral-bg text-neutral-muted'
                     )}>
@@ -520,11 +531,14 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   }
 
   // Fallback for non-JSON responses
+  const hasImprovement = isCorrect && Boolean(evaluation.localResult?.evaluation);
   return (
     <div className="w-full">
-      <div className={cn('p-4 rounded-card transition-all duration-200 hover:shadow-md relative', getStatusStyles(content))}>
+      <div className={cn('p-4 rounded-card transition-all duration-200 hover:shadow-md relative', hasImprovement ? 'bg-amber-50 border border-amber-200' : getStatusStyles(content))}>
         <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
-          {isCorrect ? (
+          {hasImprovement ? (
+            <Lightbulb className="h-5 w-5 text-amber-700" aria-label={t('exercise.correct')} />
+          ) : isCorrect ? (
             <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
           ) : isIncorrect ? (
             <img src="/images/Sad Face wrong Answer.png" alt={t('exercise.incorrect')} className="w-6 h-6 object-contain" />
@@ -591,7 +605,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               ) : (
                 <Badge variant="secondary" className={cn(
                   'px-3 py-1',
-                  isCorrect
+                  hasImprovement
+                    ? 'bg-amber-100 border border-amber-300 text-amber-900'
+                    : isCorrect
                     ? 'bg-green-100 border border-green-300 text-green-800'
                     : isIncorrect
                       ? 'bg-white border border-border text-muted-foreground'

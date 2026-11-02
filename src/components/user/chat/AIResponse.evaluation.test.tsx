@@ -52,7 +52,8 @@ describe('AIResponse local exercise evaluation', () => {
       />,
     );
     expect(html).toContain('data-feedback-card="fraction-bounds"');
-    expect(html).toContain('Bravo, c&#x27;est correct !');
+    expect(html).toContain('Pas mal, tu es sur la bonne voie !');
+    expect(html).not.toContain("Bravo, c'est correct !");
     expect(html).toContain('data-feedback-challenge="fraction-bounds"');
     expect(html).toContain('Tu peux aller plus loin !');
     expect(html).toContain('que 9/3');
