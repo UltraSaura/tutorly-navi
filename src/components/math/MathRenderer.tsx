@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { latexToPlainText, normalizeLatexForDisplay } from '@/utils/latexUtils';
+import { convertLatexToMarkup } from 'mathlive';
 
 interface MathRendererProps {
   latex: string;
@@ -16,10 +17,8 @@ export const MathRenderer = ({
   const renderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const renderMath = async () => {
+    const renderMath = () => {
       try {
-        const mathlive = await import('mathlive');
-        
         if (renderRef.current) {
           // Normalize LaTeX for proper rendering
           const normalizedLatex = normalizeLatexForDisplay(latex);
@@ -39,21 +38,13 @@ export const MathRenderer = ({
           // Prefer direct conversion to markup so symbols like √ render correctly
           let markup = '';
           try {
-            const anyMathlive = mathlive as any;
-            if (anyMathlive.convertLatexToMarkup) {
-              markup = anyMathlive.convertLatexToMarkup(baseLatex);
-            }
+            markup = convertLatexToMarkup(baseLatex);
           } catch (e) {
             // ignore, will fallback below
           }
 
           if (markup) {
             renderRef.current.innerHTML = markup;
-          } else if ((mathlive as any).renderMathInElement) {
-            // Fallback: use delimiter scanning
-            const content = inline ? `$${baseLatex}$` : `$$${baseLatex}$$`;
-            renderRef.current.innerHTML = content;
-            (mathlive as any).renderMathInElement(renderRef.current);
           } else {
             // Ultimate fallback: keep the math readable instead of exposing raw LaTeX.
             renderRef.current.textContent = latexToPlainText(latex);
