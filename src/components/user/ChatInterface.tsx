@@ -240,7 +240,7 @@ const ChatInterface = () => {
 
   return (
     <div
-      className={`relative flex min-h-0 h-[calc(100vh-4rem)] h-[calc(100dvh-4rem)] overflow-hidden overflow-x-hidden max-w-full ${
+      className={`relative flex min-h-0 h-[calc(100vh-4rem)] h-[calc(100dvh-4rem)] w-full max-w-full min-w-0 overflow-hidden overflow-x-hidden ${
         showWelcomeState ? 'bg-white' : 'bg-neutral-bg'
       }`}
     >
@@ -258,8 +258,8 @@ const ChatInterface = () => {
               ? `${keyboardHeight + 88}px`
               : `calc(${isMobile ? 148 : 88}px + env(safe-area-inset-bottom, 0px))`
             : keyboardVisible && keyboardHeight > 0
-              ? `${keyboardHeight + 80}px`  // Keyboard height + input height
-              : `${isMobile ? 128 : 80}px`  // Normal bottom padding
+              ? `${keyboardHeight + 96}px`  // Keyboard height + input height
+              : `${isMobile ? 176 : 80}px`  // Composer, bottom tabs and safe scrolling space
         }}
       >
         {/* AI Response - Display the latest AI explanation/response */}

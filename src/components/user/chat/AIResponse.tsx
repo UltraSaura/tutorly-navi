@@ -166,6 +166,13 @@ function formatBoundsInequality(question: string, answer: string): string | null
   return `${formatFraction(bounds[0])} < ${formatFraction(target)} < ${formatFraction(bounds[1])}`;
 }
 
+function inequalityToLatex(inequality: string): string {
+  return inequality.split(' < ').map((part) => {
+    const [numerator, denominator] = part.split('/');
+    return `\\frac{${numerator}}{${denominator}}`;
+  }).join(' < ');
+}
+
 export const fractionChallengeCheckButtonClass =
   'bg-[#7452C4] text-white hover:bg-[#6344B0] disabled:cursor-not-allowed disabled:bg-[#EDE5FA] disabled:text-[#6B4BA5] disabled:opacity-100';
 
@@ -191,6 +198,10 @@ export function FractionBoundsFeedbackCard({
   const closerFraction = challenge?.choices[0].label;
   const isImprovement = result.isCorrect && Boolean(challenge);
   const isFinalChallengeSuccess = challengeState === 'correct';
+  const answerBounds = parseRationalValues(answer);
+  const improvedInequality = challenge && closerFraction && answerBounds[0]
+    ? `${formatFraction(answerBounds[0])} < ${formatFraction(challenge.target)} < ${closerFraction}`
+    : null;
 
   const updateChallengeState = (state: FractionChallengeState) => {
     setChallengeState(state);
@@ -209,7 +220,7 @@ export function FractionBoundsFeedbackCard({
 
   return (
     <div className={cn(
-      'mb-4 rounded-2xl border p-4 shadow-sm',
+      'mb-3 rounded-2xl border p-3 shadow-sm sm:mb-4 sm:p-4',
       isFinalChallengeSuccess || (result.isCorrect && !isImprovement)
         ? 'border-emerald-200 bg-emerald-50/70'
         : isImprovement ? 'border-amber-200 bg-amber-50/70' : 'border-rose-200 bg-rose-50/70',
@@ -248,10 +259,7 @@ export function FractionBoundsFeedbackCard({
           </p>
           {inequality && (
             <div className="mt-3 overflow-x-auto rounded-xl border border-white/80 bg-white/80 px-3 py-2" aria-label={french ? 'Encadrement mathématique' : 'Mathematical bounds'}>
-              <MathRenderer latex={inequality.split(' < ').map((part) => {
-                const [numerator, denominator] = part.split('/');
-                return `\\frac{${numerator}}{${denominator}}`;
-              }).join(' < ')} inline className="text-base" />
+              <MathRenderer latex={inequalityToLatex(inequality)} inline className="text-base" />
             </div>
           )}
           {!result.isCorrect && answer && (
@@ -262,23 +270,35 @@ export function FractionBoundsFeedbackCard({
         </div>
       </div>
 
-      {result.isCorrect && challenge && challengeState !== 'hidden' && (
-        <div className={cn(
-          'mt-4 rounded-xl border p-3',
-          isFinalChallengeSuccess ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50',
-        )} data-feedback-challenge="fraction-bounds">
-          <p className={cn('font-semibold', isFinalChallengeSuccess ? 'text-emerald-950' : 'text-amber-950')}>
-            {isFinalChallengeSuccess
-              ? (french ? 'Défi réussi !' : 'Challenge complete!')
-              : (french ? 'Tu peux aller plus loin !' : 'You can go further!')}
+      {result.isCorrect && challenge && challengeState === 'correct' && (
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3" data-feedback-challenge="fraction-bounds">
+          <p className="font-semibold text-emerald-950">{french ? 'Défi réussi !' : 'Challenge complete!'}</p>
+          {improvedInequality && (
+            <div className="mt-2 overflow-x-auto rounded-lg border border-emerald-100 bg-white/80 px-3 py-2" aria-label={french ? 'Encadrement amélioré' : 'Improved bounds'}>
+              <MathRenderer latex={inequalityToLatex(improvedInequality)} inline className="text-base" />
+            </div>
+          )}
+          <p className="mt-2 text-sm text-emerald-900" role="status">
+            {french ? 'Tu as trouvé un encadrement plus précis.' : 'You found a more precise bound.'}
           </p>
-          <p className={cn('mt-1 text-sm', isFinalChallengeSuccess ? 'text-emerald-900' : 'text-amber-900')}>
-            {isFinalChallengeSuccess
-              ? (french ? 'Tu as trouvé un encadrement plus précis.' : 'You found a more precise bound.')
-              : french
+        </div>
+      )}
+      {result.isCorrect && challenge && challengeState !== 'correct' && challengeState !== 'hidden' && (
+        <div className={cn(
+          'mt-3 rounded-xl border p-3 sm:mt-4',
+          'border-amber-200 bg-amber-50',
+        )} data-feedback-challenge="fraction-bounds">
+          <p className="font-semibold text-amber-950">{french ? 'Tu peux aller plus loin !' : 'You can go further!'}</p>
+          <p className="mt-1 text-sm text-amber-900">
+            {french
               ? `Ton encadrement est correct. Peux-tu trouver une borne supérieure plus proche de ${formatFraction(challenge.target)} que ${formatFraction(challenge.referenceUpper)}, en gardant le même dénominateur ?`
               : `Your bounds are correct. Can you find an upper bound closer to ${formatFraction(challenge.target)} than ${formatFraction(challenge.referenceUpper)}, with the same denominator?`}
           </p>
+          {challengeState === 'incorrect' && (
+            <p className="mt-2 text-sm font-semibold text-amber-900" role="status">
+              {french ? 'Regarde les numérateurs : nous cherchons une fraction juste au-dessus de la fraction centrale.' : 'Compare the numerators: we need a fraction just above the central fraction.'}
+            </p>
+          )}
           <div className="mt-3 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={french ? 'Choix du défi' : 'Challenge choices'}>
             {challenge.choices.map((choice) => (
               <button
@@ -286,25 +306,16 @@ export function FractionBoundsFeedbackCard({
                 type="button"
                 role="radio"
                 aria-checked={selectedChoice === choice.id}
-                disabled={challengeState === 'correct'}
                 onClick={() => { setSelectedChoice(choice.id); updateChallengeState('idle'); }}
                 className={cn(
-                  'rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors',
+                  'min-h-10 rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors',
                   getFractionChallengeChoiceClass(choice.id, selectedChoice, challengeState),
                 )}
               >
-                {challengeState === 'correct' && selectedChoice === choice.id && <CheckCircle2 className="mr-1 inline-block h-4 w-4 text-[#22C55E]" aria-hidden="true" />}
                 {choice.id}. {choice.label}
               </button>
             ))}
           </div>
-          {challengeState !== 'idle' && (
-            <p className={cn('mt-2 text-sm font-semibold', challengeState === 'correct' ? 'text-emerald-900' : 'text-amber-900')} role="status">
-              {challengeState === 'correct'
-                ? (french ? `Exact ! ${closerFraction} est plus proche : tu as trouvé un encadrement plus précis.` : `Exactly! ${closerFraction} is closer: you found a more precise bound.`)
-                : (french ? 'Regarde les numérateurs : nous cherchons une fraction juste au-dessus de la fraction centrale.' : 'Compare the numerators: we need a fraction just above the central fraction.')}
-            </p>
-          )}
           <div className="mt-3 flex flex-wrap gap-2">
             {challengeState === 'idle' && (
               <Button type="button" size="sm" className={fractionChallengeCheckButtonClass} onClick={checkChallenge} disabled={!selectedChoice}>
@@ -478,9 +489,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     const jsonHasImprovement = jsonIsCorrect && Boolean(fractionChallenge) && !jsonHasFinalChallengeSuccess;
     
     return (
-      <div className="w-full overflow-hidden">
+      <div className="w-full min-w-0 overflow-hidden">
         <div className={cn(
-          'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
+          'p-3 rounded-card transition-all duration-200 hover:shadow-md relative min-w-0 break-words overflow-hidden sm:p-4',
           jsonHasFinalChallengeSuccess ? 'bg-green-50 border border-green-200'
             : jsonHasImprovement ? 'bg-amber-50 border border-amber-200'
             : jsonIsCorrect ? 'bg-green-50 border border-green-200'
@@ -604,8 +615,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
 
   // Fallback for non-JSON responses
   return (
-    <div className="w-full">
-      <div className={cn('p-4 rounded-card transition-all duration-200 hover:shadow-md relative', hasFinalChallengeSuccess ? 'bg-green-50 border border-green-200' : hasImprovement ? 'bg-amber-50 border border-amber-200' : getStatusStyles(content))}>
+    <div className="w-full min-w-0">
+      <div className={cn('p-3 rounded-card transition-all duration-200 hover:shadow-md relative min-w-0 sm:p-4', hasFinalChallengeSuccess ? 'bg-green-50 border border-green-200' : hasImprovement ? 'bg-amber-50 border border-amber-200' : getStatusStyles(content))}>
         <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
           {hasFinalChallengeSuccess ? (
             <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
@@ -895,8 +906,8 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   if (exercisePairs.length === 0 && problemMessages.length === 0 && !isLoading) return null;
 
   return (
-    <div className="p-6">
-      <div className="max-w-6xl mx-auto space-y-4">
+    <div className="min-w-0 px-2 py-3 sm:p-6">
+      <div className="mx-auto min-w-0 max-w-6xl space-y-3 sm:space-y-4">
         {(exercisePairs.length > 0 || problemMessages.length > 0) && onClearAll && (
           <div className="flex justify-end">
             <Button variant="outline" size="sm" onClick={onClearAll}
