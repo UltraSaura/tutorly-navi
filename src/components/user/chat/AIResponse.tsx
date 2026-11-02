@@ -100,13 +100,22 @@ const parseAIResponse = (content: string) => {
 function ExerciseResultBanner({
   isCorrect,
   isIncorrect,
+  hasAnswer,
   language,
 }: {
   isCorrect: boolean;
   isIncorrect: boolean;
+  hasAnswer: boolean;
   language: string;
 }) {
-  if (!isCorrect && !isIncorrect) return null;
+  if (!isCorrect && !isIncorrect) {
+    if (!hasAnswer) return null;
+    return (
+      <div className="mb-3 inline-flex rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700" role="status">
+        {language === 'fr' ? 'Réponse non évaluée' : 'Answer not evaluated'}
+      </div>
+    );
+  }
   return <PracticeFeedback status={isCorrect ? 'correct' : 'incorrect'} language={language} />;
 }
 
@@ -244,6 +253,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               <ExerciseResultBanner
                 isCorrect={jsonIsCorrect}
                 isIncorrect={jsonIsIncorrect}
+                hasAnswer={!hasNoAnswer}
                 language={language}
               />
               
@@ -340,6 +350,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             <ExerciseResultBanner
               isCorrect={isCorrect}
               isIncorrect={isIncorrect}
+              hasAnswer={!hasNoAnswer}
               language={language}
             />
             
