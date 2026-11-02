@@ -46,6 +46,7 @@ describe('generated exact practice', () => {
       'Encadrer 8/3 entre deux fractions.',
       'Encadrer 9/3 entre deux fractions.',
     ]);
+    expect(quiz?.questions[0]?.kind === 'single' && quiz.questions[0].choices.some(choice => choice.label === '6/3 et 8/3' && choice.correct)).toBe(true);
     expect(quiz?.questions.every(question =>
       question.kind === 'single' && question.choices.some(choice => choice.correct),
     )).toBe(true);

@@ -21,6 +21,20 @@ describe("localMathGrader", () => {
     });
   });
 
+  it("accepts integer bounds for a fraction task when they are strict", () => {
+    expect(localGrade("Encadrer 7/3 entre 2 fractions", "2 et 3")).toMatchObject({
+      isCorrect: true,
+      confidence: "high",
+    });
+  });
+
+  it("accepts equivalent strict fraction bounds", () => {
+    expect(localGrade("Encadrer 7/3 entre 2 fractions", "6/3 et 8/3")).toMatchObject({
+      isCorrect: true,
+      confidence: "high",
+    });
+  });
+
   it("keeps explicit division on the arithmetic path", () => {
     expect(localGrade("Pose la division 748 ÷ 4", "187")).toMatchObject({
       isCorrect: true,

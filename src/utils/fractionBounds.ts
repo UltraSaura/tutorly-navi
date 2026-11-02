@@ -8,6 +8,7 @@ export type FractionBoundsResult = {
 };
 
 const FRACTION_PATTERN = /(-?\d+)\s*\/\s*(-?\d+)/g;
+const RATIONAL_PATTERN = /-?\d+\s*\/\s*-?\d+|-?\d+/g;
 
 function compareFractions(left: FractionValue, right: FractionValue): number {
   const difference = left.numerator * right.denominator - right.numerator * left.denominator;
@@ -29,6 +30,18 @@ export function parseFractions(source: string): FractionValue[] {
   return fractions;
 }
 
+/** Parses fraction or integer tokens used as bounds. Integers are valid rational bounds. */
+export function parseRationalValues(source: string): FractionValue[] {
+  const values: FractionValue[] = [];
+  for (const match of source.matchAll(RATIONAL_PATTERN)) {
+    const token = match[0].replace(/\s+/g, '');
+    const [numerator, denominator = '1'] = token.split('/');
+    const value = normalizeFraction(Number(numerator), Number(denominator));
+    if (value) values.push(value);
+  }
+  return values;
+}
+
 export function formatFraction(fraction: FractionValue): string {
   return `${fraction.numerator}/${fraction.denominator}`;
 }
@@ -37,7 +50,7 @@ export function evaluateFractionBounds(question: string, answer: string): Fracti
   const [target] = parseFractions(question);
   if (!target) return null;
 
-  const answerFractions = parseFractions(answer);
+  const answerFractions = parseRationalValues(answer);
   const lower = answerFractions
     .filter(fraction => compareFractions(fraction, target) < 0)
     .sort((a, b) => compareFractions(b, a))[0] ?? null;
@@ -49,6 +62,6 @@ export function evaluateFractionBounds(question: string, answer: string): Fracti
     target,
     lower,
     upper,
-    isCorrect: answerFractions.length >= 2 && Boolean(lower && upper),
+    isCorrect: answerFractions.length === 2 && Boolean(lower && upper),
   };
 }

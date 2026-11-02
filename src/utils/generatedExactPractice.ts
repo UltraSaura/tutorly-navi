@@ -1,6 +1,6 @@
 import { analyzeExerciseProfile } from './operationTypeDetector';
 import type { Choice, QuizBank, Question } from '@/types/quiz-bank';
-import { formatFraction, parseFractions, type FractionValue } from './fractionBounds';
+import { evaluateFractionBounds, formatFraction, parseFractions, type FractionValue } from './fractionBounds';
 
 function operand(length: number, first: number, fill: number, trailingZeros = 0): bigint {
   const zeroCount = Math.min(trailingZeros, Math.max(0, length - 1));
@@ -59,17 +59,10 @@ function fractionValue(numerator: number, denominator: number): FractionValue {
 }
 
 function fractionBoundsForPractice(target: FractionValue): { lower: FractionValue; upper: FractionValue } {
-  const quotient = Math.floor(target.numerator / target.denominator);
-  const isInteger = target.numerator % target.denominator === 0;
-  return isInteger
-    ? {
-        lower: fractionValue(target.numerator - target.denominator, target.denominator),
-        upper: fractionValue(target.numerator + target.denominator, target.denominator),
-      }
-    : {
-        lower: fractionValue(quotient, 1),
-        upper: fractionValue(quotient + 1, 1),
-      };
+  return {
+    lower: fractionValue(target.numerator - 1, target.denominator),
+    upper: fractionValue(target.numerator + 1, target.denominator),
+  };
 }
 
 /** Builds provider-free practice for strict fraction encadrement. */
@@ -86,6 +79,14 @@ export function buildSimilarFractionBoundsQuiz(exercise: string, language: 'fr' 
       `${formatFraction(target)} et ${formatFraction(bounds.upper)}`,
       `${formatFraction(bounds.lower)} et ${formatFraction(target)}`,
     ];
+    const labels = [correct, ...alternatives];
+    const validLabels = labels.filter(label => evaluateFractionBounds(
+      `Encadrer ${formatFraction(target)} entre deux fractions`,
+      label,
+    )?.isCorrect);
+    if (validLabels.length !== 1 || validLabels[0] !== correct) {
+      throw new Error(`Invalid generated fraction-bound choices for ${formatFraction(target)}`);
+    }
     return {
       id: `similar-fraction-bounds-${index + 1}`,
       kind: 'single',

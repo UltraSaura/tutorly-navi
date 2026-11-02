@@ -4,7 +4,7 @@
 
 import { areMathematicallyEquivalent } from '@/utils/mathValidation';
 import { detectMathTaskIntent } from '@/utils/mathTaskIntent';
-import { evaluateFractionBounds, formatFraction, parseFractions } from '@/utils/fractionBounds';
+import { evaluateFractionBounds, formatFraction, parseFractions, parseRationalValues } from '@/utils/fractionBounds';
 import { gradeGeometry } from './geometryGrader';
 
 export interface LocalGradeResult {
@@ -27,11 +27,23 @@ export function localGrade(question: string, userAnswer: string): LocalGradeResu
   // to arithmetic equivalence or the long-division explanation.
   if (detectMathTaskIntent(q) === 'fraction_encadrement') {
     const fractionBounds = evaluateFractionBounds(q, a);
-    if (fractionBounds && parseFractions(a).length >= 2) {
+    const rationalAnswer = parseRationalValues(a);
+    const requiresConsecutiveIntegers = /\bentre\s+deux\s+entiers(?:\s+consécutifs)?\b/i.test(q);
+    if (fractionBounds && rationalAnswer.length === 2) {
+      const expectedLower = Math.floor(fractionBounds.target.numerator / fractionBounds.target.denominator);
+      const expectedUpper = expectedLower + 1;
+      const isConsecutiveIntegerAnswer = rationalAnswer.every(value => value.denominator === 1)
+        && rationalAnswer.some(value => value.numerator === expectedLower)
+        && rationalAnswer.some(value => value.numerator === expectedUpper);
+      const isCorrect = requiresConsecutiveIntegers
+        ? fractionBounds.isCorrect && isConsecutiveIntegerAnswer
+        : fractionBounds.isCorrect;
       return {
-        isCorrect: fractionBounds.isCorrect,
-        correctAnswer: fractionBounds.lower && fractionBounds.upper
-          ? `${formatFraction(fractionBounds.lower)} et ${formatFraction(fractionBounds.upper)}`
+        isCorrect,
+        correctAnswer: requiresConsecutiveIntegers
+          ? `${expectedLower} et ${expectedUpper}`
+          : fractionBounds.lower && fractionBounds.upper
+            ? `${formatFraction(fractionBounds.lower)} et ${formatFraction(fractionBounds.upper)}`
           : 'une fraction inférieure et une fraction supérieure',
         confidence: 'high',
         method: 'local',
