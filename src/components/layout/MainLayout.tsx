@@ -17,8 +17,8 @@ const MainLayout = () => {
   const isFocusSession = searchParams.get('focus') === '1';
 
   const mainClasses = isChatRoute
-    ? 'flex-1 px-0'
-    : `flex-1 px-[5px] ${isFocusSession ? 'py-0' : 'py-6'} ${isMobile && !isFocusSession ? 'pb-20' : ''}`;
+    ? 'min-w-0 flex-1 px-0'
+    : `min-w-0 flex-1 px-[5px] ${isFocusSession ? 'py-0' : 'py-6'} ${isMobile && !isFocusSession ? 'pb-20' : ''}`;
 
   return (
     <div className="flex min-h-screen w-full bg-white dark:bg-gray-950">
@@ -37,7 +37,7 @@ const MainLayout = () => {
         
         {/* Main Content */}
         <main className={mainClasses}>
-          <div className="animate-fade-in">
+          <div className="min-w-0 animate-fade-in">
             <Outlet />
           </div>
         </main>
