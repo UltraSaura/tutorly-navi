@@ -112,15 +112,18 @@ const ChatInterface = () => {
     
     console.log('[ChatInterface] Sending message and processing for grading:', messageToSend);
     
+    // Try local grading whenever the message contains an explicit answer,
+    // including French forms such as "ma réponse 2 et 3".
+    const parsedMessage = parseUserMessage(messageToSend);
+    const hasExplicitFractionAnswer = parsedMessage.hasAnswer &&
+      /\d+\s*\/\s*\d+/.test(messageToSend) &&
+      /\b(?:encadr\w*|encadrement|fraction|réponse|reponse|answer)\b/i.test(messageToSend);
     const classification = classifyProblemSubmission(messageToSend);
-    if (classification.type !== 'simple_exercise') {
+    if (classification.type !== 'simple_exercise' && !hasExplicitFractionAnswer) {
       await handleSendMessage(overrideMessage);
       return;
     }
 
-    // Try local grading whenever the message contains an explicit answer,
-    // including French forms such as "ma réponse 2 et 3".
-    const parsedMessage = parseUserMessage(messageToSend);
     const looksLikeMathExercise = parsedMessage.hasAnswer || /\d.*=.*\d/.test(messageToSend.trim());
     
     if (looksLikeMathExercise) {
