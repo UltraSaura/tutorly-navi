@@ -514,7 +514,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             )}
           </div>
 
-          <div className="flex items-start gap-3 pr-8">
+          <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:pr-8">
             <div className={cn(
               'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
               jsonHasFinalChallengeSuccess ? 'bg-green-100 border border-green-300 text-green-600'
@@ -526,7 +526,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               <Calculator size={20} />
             </div>
             
-            <div className="flex-1 min-w-0">
+            <div className="w-full min-w-0 sm:flex-1">
               <div className="text-body font-semibold text-neutral-text mb-3 break-words whitespace-pre-wrap">
                 <MathText text={question || jsonResponse.exercise} />
               </div>
@@ -633,13 +633,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
           )}
         </div>
 
-        <div className="flex items-start gap-3 pr-8">
+        <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:pr-8">
           <div className={cn('flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
             hasFinalChallengeSuccess ? 'bg-green-100 border border-green-300 text-green-600' : 'bg-neutral-surface border border-neutral-border text-blue-600')}>
             <Calculator size={20} />
           </div>
           
-          <div className="flex-1 min-w-0">
+          <div className="w-full min-w-0 sm:flex-1">
             <div className="text-body font-semibold text-neutral-text mb-3">
               <MathText text={question} />
             </div>
