@@ -3,6 +3,7 @@
  */
 
 import { areMathematicallyEquivalent } from '@/utils/mathValidation';
+import { detectMathTaskIntent } from '@/utils/mathTaskIntent';
 import { gradeGeometry } from './geometryGrader';
 
 export interface LocalGradeResult {
@@ -20,6 +21,29 @@ export function localGrade(question: string, userAnswer: string): LocalGradeResu
   const a = userAnswer.trim();
 
   if (!q || !a) return null;
+
+  // Fraction bounds are a distinct task. Do not let the slash fall through
+  // to arithmetic equivalence or the long-division explanation.
+  if (detectMathTaskIntent(q) === 'fraction_encadrement') {
+    const fraction = q.match(/(-?\d+)\s*\/\s*(-?\d+)/);
+    if (!fraction || Number(fraction[2]) === 0) return null;
+    const numerator = Number(fraction[1]);
+    const denominator = Number(fraction[2]);
+    const value = numerator / denominator;
+    const lower = Math.floor(value);
+    const upper = Math.ceil(value);
+    const bounds = a.match(/(-?\d+)\s*(?:et|,|;|à|a|<)\s*(-?\d+)/i);
+    if (!bounds) return null;
+    const first = Number(bounds[1]);
+    const second = Number(bounds[2]);
+    const isCorrect = first === lower && second === upper && lower < value && value < upper;
+    return {
+      isCorrect,
+      correctAnswer: `${lower} et ${upper}`,
+      confidence: 'high',
+      method: 'local',
+    };
+  }
 
   // 1. Try geometry first
   const geoResult = gradeGeometry(q, a);

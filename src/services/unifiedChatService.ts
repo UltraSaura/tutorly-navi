@@ -2,6 +2,7 @@ import { beginLearnerJob } from '@/features/family/profileRuntime';
 import { Message } from '@/types/chat';
 import { supabase } from "@/integrations/supabase/client";
 import { saveGradedWorkToHistory } from './gradedWorkHistory';
+import { parseUserMessage } from '@/utils/messageParser';
 
 /**
  * Extract answer from user input (e.g., "2+2=4" -> "4")
@@ -207,7 +208,7 @@ export async function sendUnifiedMessage(
       isMath: data.isMath ?? !data.content.includes('NOT_MATH'),
       isCorrect: data.isCorrect ?? undefined,
       needsRetry: data.isCorrect === false,
-      hasAnswer: /=\s*[^=]*$/.test(inputMessage),
+      hasAnswer: parseUserMessage(inputMessage).hasAnswer,
       confidence: data.content.includes('NOT_MATH') ? 95 : 85
     };
     
@@ -220,8 +221,9 @@ export async function sendUnifiedMessage(
 
     // Auto-save math exercises to history for guardian tracking
     if (response.isMath && response.hasAnswer) {
-      const question = extractQuestion(inputMessage);
-      const answer = extractAnswer(inputMessage);
+      const parsedInput = parseUserMessage(inputMessage);
+      const question = parsedInput.question || extractQuestion(inputMessage);
+      const answer = parsedInput.answer || extractAnswer(inputMessage);
       const subject = detectSubject(question);
       
       // Save asynchronously without blocking response

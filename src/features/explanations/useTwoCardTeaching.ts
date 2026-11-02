@@ -194,9 +194,13 @@ function normalizeStepsForExercise(exerciseContent: string, steps?: Step[] | nul
     const safeExample = normalizeExampleForExercise(exerciseContent, currentExpression) || expectedExample;
     if (!safeExample || safeExample === currentExpression) return step;
 
+    const labeledBody = /\b(exemple|example)\b/i.test(body)
+      ? body
+      : `${/^[\s\-•]*(?:exemple guidé|guided example)\s*:/i.test(body) ? "" : "Exemple guidé : "}${body}`;
+
     return {
       ...step,
-      body: body.replace(currentExpression, safeExample),
+      body: labeledBody.replace(currentExpression, safeExample),
     };
   });
 }
@@ -425,6 +429,7 @@ export function useTwoCardTeaching() {
   const [cacheEntryId, setCacheEntryId] = React.useState<string | null>(null);
   const [feedback, setFeedback] = React.useState<ExplanationFeedback>(null);
   const [feedbackLoading, setFeedbackLoading] = React.useState(false);
+  const requestIdRef = React.useRef(0);
 
   const { selectedModelId } = useAdmin();
 
@@ -450,6 +455,8 @@ export function useTwoCardTeaching() {
     row: any,
     profile: { response_language?: string; grade_level?: string; learning_style?: string | LearningStyle | null; country?: string; curriculum?: string },
   ) {
+    const requestId = ++requestIdRef.current;
+    const isCurrentRequest = () => requestId === requestIdRef.current;
     console.log("[TwoCardTeaching] Opening explanation for:", { row, profile });
     setOpen(true);
     setError(null);
@@ -674,7 +681,9 @@ export function useTwoCardTeaching() {
       }
 
       const explanationSections: TeachingSections = {
-        exercise: result.exercise || exercise_content,
+        // The student's exercise is canonical. AI output may contain a
+        // guided example, but it must never replace the problem being taught.
+        exercise: exercise_content,
         steps,
         concept: sections.concept || "No concept provided",
         example: sections.example || "No example provided",
@@ -689,7 +698,11 @@ export function useTwoCardTeaching() {
 
       console.log("[TwoCardTeaching] ✓ Explanation sections generated:", explanationSections);
       console.log("[TwoCardTeaching] ✓ Method field length:", explanationSections.method.length);
+      if (!isCurrentRequest()) return;
       debugSetSections(explanationSections);
+      // Render usable steps immediately. Cache persistence must not keep the
+      // explanation modal in its skeleton state.
+      setLoading(false);
 
       const savedCacheEntryId = await saveExplanationToCache(
         cacheHash,
@@ -699,12 +712,11 @@ export function useTwoCardTeaching() {
         reuseMeta,
         correctAnswer,
       );
-      if (savedCacheEntryId) {
+      if (savedCacheEntryId && isCurrentRequest()) {
         setCacheEntryId(savedCacheEntryId);
       }
-
-      setLoading(false);
     } catch (err) {
+      if (!isCurrentRequest()) return;
       console.error("[TwoCardTeaching] Error generating explanation:", err);
       setError(err instanceof Error ? err.message : "Unknown error");
       setLoading(false);

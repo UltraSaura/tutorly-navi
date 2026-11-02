@@ -19,6 +19,19 @@ export interface ParsedMessage {
 export const parseUserMessage = (message: string): ParsedMessage => {
   const trimmed = message.trim();
 
+  // French learners often append their proposed answer without a colon or
+  // "est". Keep this before broad classification so the answer is not sent
+  // back to the AI as part of the exercise text.
+  const frenchAnswerMatch = trimmed.match(/^(.+?)\s+(?:ma\s+r[ée]ponse|ma\s+solution|j['’]ai\s+trouv[ée])\s*(?::|est|=)?\s*(.+)$/i);
+  if (frenchAnswerMatch && frenchAnswerMatch[2].trim()) {
+    return {
+      question: frenchAnswerMatch[1].trim().replace(/[\s,;:]+$/, ''),
+      answer: frenchAnswerMatch[2].trim(),
+      hasAnswer: true,
+      confidence: 'high',
+    };
+  }
+
   const classification = classifyProblemSubmission(trimmed);
   if (classification.type !== 'simple_exercise') {
     return {
