@@ -34,7 +34,7 @@ export const parseUserMessage = (message: string): ParsedMessage => {
 
   // This must run before problem classification because fraction-bound
   // requests are intentionally classified as non-arithmetic exercises.
-  const frenchResponseMatch = trimmed.match(/^(.+?)\s+r[ée]ponse\s*:\s*(.+)$/i);
+  const frenchResponseMatch = trimmed.match(/^(.+?)[\s,;]+r[ée]ponse\s*(?::|：|=)?\s*(.+)$/i);
   if (frenchResponseMatch && frenchResponseMatch[2].trim()) {
     return {
       question: frenchResponseMatch[1].trim().replace(/[\s,;:]+$/, ''),

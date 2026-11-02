@@ -78,6 +78,13 @@ Affirmation D : La probabilité est 7/15.
     expect(parsed.confidence).toBe("high");
   });
 
+  it("separates a French response after a comma without a colon", () => {
+    const parsed = parseUserMessage("Encadrer 7/3 entre 2 fractions, reponse 7/2 et 7/3");
+    expect(parsed.question).toBe("Encadrer 7/3 entre 2 fractions");
+    expect(parsed.answer).toBe("7/2 et 7/3");
+    expect(parsed.hasAnswer).toBe(true);
+  });
+
   it("separates a French equation answer", () => {
     const parsed = parseUserMessage("Résoudre x + 3 = 8. J'ai trouvé x = 5");
     expect(parsed.question).toBe("Résoudre x + 3 = 8.");
