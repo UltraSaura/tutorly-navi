@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { buildFractionFeedbackChallenge, FractionBoundsFeedbackCard, resolveExerciseEvaluation } from './AIResponse';
+import { buildFractionFeedbackChallenge, FractionBoundsFeedbackCard, fractionChallengeCheckButtonClass, resolveExerciseEvaluation } from './AIResponse';
+import { Button } from '@/components/ui/button';
 import { localGrade } from '@/services/localMathGrader';
 
 describe('AIResponse local exercise evaluation', () => {
@@ -72,5 +73,19 @@ describe('AIResponse local exercise evaluation', () => {
     );
     expect(html).toContain('Pas encore, continue !');
     expect(html).toContain('la consigne demande des fractions');
+  });
+
+  it('keeps the challenge check button lavender when disabled and violet when active', () => {
+    const disabledHtml = renderToStaticMarkup(
+      <Button className={fractionChallengeCheckButtonClass} disabled>Vérifier ma réponse</Button>,
+    );
+    const activeHtml = renderToStaticMarkup(
+      <Button className={fractionChallengeCheckButtonClass}>Vérifier ma réponse</Button>,
+    );
+    expect(disabledHtml).toContain('disabled:bg-[#EDE5FA]');
+    expect(disabledHtml).toContain('disabled:text-[#6B4BA5]');
+    expect(disabledHtml).toContain('disabled:opacity-100');
+    expect(activeHtml).toContain('bg-[#7452C4]');
+    expect(activeHtml).toContain('text-white');
   });
 });

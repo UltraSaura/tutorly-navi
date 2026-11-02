@@ -154,6 +154,9 @@ function formatBoundsInequality(question: string, answer: string): string | null
   return `${formatFraction(bounds[0])} < ${formatFraction(target)} < ${formatFraction(bounds[1])}`;
 }
 
+export const fractionChallengeCheckButtonClass =
+  'bg-[#7452C4] text-white hover:bg-[#6344B0] disabled:cursor-not-allowed disabled:bg-[#EDE5FA] disabled:text-[#6B4BA5] disabled:opacity-100';
+
 export function FractionBoundsFeedbackCard({
   question,
   answer,
@@ -259,7 +262,7 @@ export function FractionBoundsFeedbackCard({
             </p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button type="button" size="sm" onClick={checkChallenge} disabled={!selectedChoice}>
+            <Button type="button" size="sm" className={fractionChallengeCheckButtonClass} onClick={checkChallenge} disabled={!selectedChoice}>
               {french ? 'Vérifier ma réponse' : 'Check my answer'}
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setChallengeState('hidden')}>
