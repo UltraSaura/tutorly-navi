@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   generateRuntimeMiniPractice,
   buildDeterministicArithmeticMiniPractice,
+  buildDeterministicFractionBoundsMiniPractice,
   isVerticalOperationVisualText,
   isMiniPracticeAnswerCorrect,
   parseSimpleArithmeticExercise,
@@ -135,5 +136,27 @@ describe("runtimeMiniPractice", () => {
     expect(practice?.visualText).not.toContain("barres");
     expect(practice?.choices?.map((choice) => choice.label)).toContain("64");
     expect(isMiniPracticeAnswerCorrect(practice!, "B")).toBe(true);
+  });
+
+  it("builds a local self-check for fraction bounds without provider generation", async () => {
+    const practice = await generateRuntimeMiniPractice({
+      exercise: "Encadrer 7/3 entre 2 fractions.",
+      language: "fr",
+      learningStyle: "visual",
+      enabled: true,
+    });
+
+    expect(practice).toEqual(expect.objectContaining({
+      questionType: "multiple_choice",
+      prompt: expect.stringContaining("Teste-toi"),
+      correctAnswer: "A",
+    }));
+    expect(practice?.choices?.[0].label).toBe("2/1 et 3/1");
+    expect(isMiniPracticeAnswerCorrect(practice!, "A")).toBe(true);
+    expect(isMiniPracticeAnswerCorrect(practice!, "B")).toBe(false);
+  });
+
+  it("does not create a fraction self-check for unrelated text", () => {
+    expect(buildDeterministicFractionBoundsMiniPractice("Calcule 7/3", "visual", "fr")).toBeNull();
   });
 });
