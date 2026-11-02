@@ -25,7 +25,8 @@ describe('AIResponse local exercise evaluation', () => {
   });
 
   it('builds the optional fraction challenge from the actual target', () => {
-    expect(buildFractionFeedbackChallenge('Encadrer 7/3 entre deux fractions')).toMatchObject({
+    expect(buildFractionFeedbackChallenge('Encadrer 7/3 entre deux fractions', '6/3 et 9/3')).toMatchObject({
+      referenceUpper: { numerator: 9, denominator: 3 },
       choices: [
         { id: 'A', label: '8/3' },
         { id: 'B', label: '10/3' },
@@ -36,7 +37,7 @@ describe('AIResponse local exercise evaluation', () => {
   });
 
   it('does not offer the challenge for another task type', () => {
-    expect(buildFractionFeedbackChallenge('Pose la division 748 ÷ 4')).toBeNull();
+    expect(buildFractionFeedbackChallenge('Pose la division 748 ÷ 4', '')).toBeNull();
   });
 
   it('renders the correct fraction feedback card and its optional challenge', () => {
@@ -53,6 +54,8 @@ describe('AIResponse local exercise evaluation', () => {
     expect(html).toContain('data-feedback-card="fraction-bounds"');
     expect(html).toContain('Bravo, c&#x27;est correct !');
     expect(html).toContain('data-feedback-challenge="fraction-bounds"');
+    expect(html).toContain('Tu peux aller plus loin !');
+    expect(html).toContain('que 9/3');
     expect(html).toContain('8/3');
   });
 

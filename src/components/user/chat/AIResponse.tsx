@@ -118,18 +118,26 @@ export function resolveExerciseEvaluation(
 
 type FractionFeedbackChallenge = {
   target: FractionValue;
+  referenceUpper: FractionValue;
   choices: Array<{ id: 'A' | 'B' | 'C'; label: string }>;
   correctChoice: 'A' | 'B' | 'C';
 };
 
-export function buildFractionFeedbackChallenge(question: string): FractionFeedbackChallenge | null {
+export function buildFractionFeedbackChallenge(question: string, answer: string): FractionFeedbackChallenge | null {
   const target = parseFractions(question)[0];
   if (!target || !/\bentre\s+(?:deux|2)\s+fractions?\b/i.test(question)) return null;
 
   const above = { numerator: target.numerator + 1, denominator: target.denominator };
-  const fartherAbove = { numerator: target.numerator + 3, denominator: target.denominator };
+  const answerBounds = parseRationalValues(answer);
+  const referenceUpper = answerBounds.length === 2 ? answerBounds[1] : null;
+  if (!referenceUpper || referenceUpper.numerator * target.denominator <= target.numerator * referenceUpper.denominator) return null;
+  const fartherAbove = {
+    numerator: referenceUpper.numerator + 1,
+    denominator: referenceUpper.denominator,
+  };
   return {
     target,
+    referenceUpper,
     choices: [
       { id: 'A', label: formatFraction(above) },
       { id: 'B', label: formatFraction(fartherAbove) },
@@ -160,7 +168,7 @@ export function FractionBoundsFeedbackCard({
   const french = language === 'fr';
   const [selectedChoice, setSelectedChoice] = useState<string>('');
   const [challengeState, setChallengeState] = useState<'idle' | 'correct' | 'incorrect' | 'hidden'>('idle');
-  const challenge = buildFractionFeedbackChallenge(question);
+  const challenge = buildFractionFeedbackChallenge(question, answer);
   const inequality = formatBoundsInequality(question, answer);
   const isFormatError = result.evaluation?.reason === 'format';
   const closerFraction = challenge?.choices[0].label;
@@ -173,12 +181,12 @@ export function FractionBoundsFeedbackCard({
   return (
     <div className={cn(
       'mb-4 rounded-2xl border p-4 shadow-sm',
-      result.isCorrect ? 'border-emerald-200 bg-emerald-50/70' : 'border-amber-200 bg-amber-50/70',
+      result.isCorrect ? 'border-emerald-200 bg-emerald-50/70' : 'border-rose-200 bg-rose-50/70',
     )} data-feedback-card="fraction-bounds">
       <div className="flex items-start gap-3">
         <div className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-          result.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
+          result.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700',
         )} aria-hidden="true">
           {result.isCorrect ? <Trophy className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
         </div>
@@ -214,12 +222,12 @@ export function FractionBoundsFeedbackCard({
       </div>
 
       {result.isCorrect && challenge && challengeState !== 'hidden' && (
-        <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3" data-feedback-challenge="fraction-bounds">
-          <p className="font-semibold text-sky-950">{french ? 'Petit défi pour aller plus loin' : 'A small challenge'}</p>
-          <p className="mt-1 text-sm text-sky-900">
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3" data-feedback-challenge="fraction-bounds">
+          <p className="font-semibold text-amber-950">{french ? 'Tu peux aller plus loin !' : 'You can go further!'}</p>
+          <p className="mt-1 text-sm text-amber-900">
             {french
-              ? `Peux-tu trouver une fraction plus proche de ${formatFraction(challenge.target)} que ${formatFraction({ numerator: challenge.target.numerator + 3, denominator: challenge.target.denominator })}, tout en gardant le même dénominateur ?`
-              : `Can you find a fraction closer to ${formatFraction(challenge.target)} than ${formatFraction({ numerator: challenge.target.numerator + 3, denominator: challenge.target.denominator })}, with the same denominator?`}
+              ? `Ton encadrement est correct. Peux-tu trouver une borne supérieure plus proche de ${formatFraction(challenge.target)} que ${formatFraction(challenge.referenceUpper)}, en gardant le même dénominateur ?`
+              : `Your bounds are correct. Can you find an upper bound closer to ${formatFraction(challenge.target)} than ${formatFraction(challenge.referenceUpper)}, with the same denominator?`}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={french ? 'Choix du défi' : 'Challenge choices'}>
             {challenge.choices.map((choice) => (
@@ -231,7 +239,7 @@ export function FractionBoundsFeedbackCard({
                 onClick={() => { setSelectedChoice(choice.id); setChallengeState('idle'); }}
                 className={cn(
                   'rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors',
-                  selectedChoice === choice.id ? 'border-sky-500 bg-white text-sky-950' : 'border-sky-200 bg-sky-100/50 text-sky-900 hover:bg-white',
+                  selectedChoice === choice.id ? 'border-amber-500 bg-white text-amber-950' : 'border-amber-200 bg-amber-100/50 text-amber-900 hover:bg-white',
                 )}
               >
                 {choice.id}. {choice.label}
