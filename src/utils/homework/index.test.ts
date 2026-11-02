@@ -9,6 +9,13 @@ describe("homework extraction", () => {
     });
   });
 
+  it("extracts a French response label with punctuation", () => {
+    expect(extractHomeworkFromMessage("Encadrer 7/3 entre 2 fractions. Réponse : 7/2 et 7/3.")).toEqual({
+      question: "Encadrer 7/3 entre 2 fractions.",
+      answer: "7/2 et 7/3.",
+    });
+  });
+
   it("does not invent a simplification answer for an ambiguous fraction", () => {
     expect(extractHomeworkFromMessage("Que vaut 7/3 ?")).toEqual({
       question: "Que vaut 7/3 ?",

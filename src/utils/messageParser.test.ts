@@ -70,6 +70,14 @@ Affirmation D : La probabilité est 7/15.
     expect(parsed.confidence).toBe("high");
   });
 
+  it("separates a labeled French fraction bounds response", () => {
+    const parsed = parseUserMessage("Encadrer 7/3 entre 2 fractions. Réponse : 7/2 et 7/3.");
+    expect(parsed.question).toBe("Encadrer 7/3 entre 2 fractions.");
+    expect(parsed.answer).toBe("7/2 et 7/3.");
+    expect(parsed.hasAnswer).toBe(true);
+    expect(parsed.confidence).toBe("high");
+  });
+
   it("separates a French equation answer", () => {
     const parsed = parseUserMessage("Résoudre x + 3 = 8. J'ai trouvé x = 5");
     expect(parsed.question).toBe("Résoudre x + 3 = 8.");
