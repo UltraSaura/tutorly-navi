@@ -76,15 +76,9 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
       }
     }
     
-    // If still no match, split the message more intelligently around a fraction
-    const fractionOnly = processedMessage.match(/(\d+)\s*\/\s*(\d+)/);
-    if (fractionOnly) {
-      const frac = `${fractionOnly[1]}/${fractionOnly[2]}`;
-      return {
-        question: `Simplify the fraction ${frac}`,
-        answer: frac
-      };
-    }
+    // A fraction by itself is ambiguous: it may be a division, a fraction to
+    // compare, or a fraction to simplify. Preserve it as an unanswered task
+    // until the surrounding instruction determines the operation.
 
     // For simple math expressions without clear answers, return as unanswered question
     if (/\d+\s*[\+\-\*\/•]\s*\d+/.test(processedMessage) || /^\d+$/.test(processedMessage.trim())) {

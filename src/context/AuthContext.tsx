@@ -93,8 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Check for existing session. Native WebViews can leave this request
+    // pending when the configured backend is unavailable; bound the initial
+    // wait so the public shell can still render and the user can retry.
+    const restoreSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
       if (session?.user) {
         const approvalError = await ensureAccountApproved(session.user);
         if (approvalError) {
@@ -111,7 +115,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         detectLanguageFromUser(session.user);
       }
-      
+      return session;
+    };
+    const restoreTimeout = new Promise<never>((_, reject) => {
+      window.setTimeout(() => reject(new Error('Session restore timed out.')), 5000);
+    });
+    void Promise.race([restoreSession(), restoreTimeout]).then(() => {
+      setLoading(false);
+    }).catch((error: unknown) => {
+      // A temporary auth/network failure must not leave the public shell on an
+      // infinite loading screen. No session is accepted when restoration
+      // fails; the user can retry authentication once connectivity returns.
+      console.warn('Session restore unavailable; continuing signed out.', error);
+      setSession(null);
+      setUser(null);
       setLoading(false);
     });
 

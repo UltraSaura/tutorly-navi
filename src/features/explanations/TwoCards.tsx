@@ -22,9 +22,10 @@ import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 import { ExplanationRenderer } from "./ExplanationRenderer";
 import { getLearningMode } from "@/domain/learningMode";
-import { buildSimilarArithmeticQuiz } from '@/utils/generatedExactPractice';
+import { buildSimilarArithmeticQuiz, buildSimilarFractionBoundsQuiz } from '@/utils/generatedExactPractice';
 import { toast } from '@/hooks/use-toast';
 import type { QuizBank } from '@/types/quiz-bank';
+import { detectMathTaskIntent } from '@/utils/mathTaskIntent';
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -160,7 +161,9 @@ export function TwoCards({
       return;
     }
 
-    const practice = buildSimilarArithmeticQuiz(s.exercise, language === 'fr' ? 'fr' : 'en');
+    const responseLanguage = language === 'fr' ? 'fr' : 'en';
+    const practice = buildSimilarFractionBoundsQuiz(s.exercise, responseLanguage)
+      || buildSimilarArithmeticQuiz(s.exercise, responseLanguage);
     if (!practice) {
       toast({
         title: language === 'fr' ? 'Exercices ciblés indisponibles' : 'Targeted practice unavailable',
@@ -194,6 +197,10 @@ export function TwoCards({
   // Check if exercise is pure arithmetic (not a word problem)
   const isPureArithmeticProblem = (text: string): boolean => {
     const lower = text.toLowerCase();
+    const taskIntent = detectMathTaskIntent(text);
+    if (taskIntent === 'fraction_encadrement' || taskIntent === 'fraction_comparison' || taskIntent === 'fraction_simplification' || taskIntent === 'ambiguous_fraction') {
+      return false;
+    }
     const conceptualKeywords = [
       'heure', 'minute', 'départ', 'arrivée', 'durée', 'temps',
       'hour', 'time', 'clock', 'am', 'pm',

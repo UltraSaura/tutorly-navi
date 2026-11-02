@@ -1,6 +1,7 @@
 /** One payload owns the example, frames and check. No expression-by-expression repairs. */
 import { resolveCanonicalSkill, type CanonicalSkill } from './canonicalSkill';
 import type { Step } from './types';
+import { isExplicitDivisionTask } from '@/utils/mathTaskIntent';
 export type DivisionSkill = 'exact_integer_division' | 'integer_division_with_remainder' | 'decimal_division' | 'fraction_division' | 'unknown';
 export type VisualPhase = 'show_total' | 'introduce_group_size' | 'form_groups' | 'count_groups' | 'show_remainder' | 'verify';
 export type Division = { dividend: number; divisor: number };
@@ -32,9 +33,15 @@ export function buildRestoredDivisionSteps(lesson: QuickExplanation, language: s
   ];
 }
 export function parseSourceDivision(source: string): Division | null {
-  // Ignore the student's equality RHS. Multiple operations/fractions are not simple integer division.
+  // Ignore the student's equality RHS. A bare slash is an ambiguous fraction;
+  // it becomes division only when the surrounding instruction is explicit.
   const lhs = source.split('=')[0].trim();
-  const match = lhs.match(/^(-?\d+(?:[.,]\d+)?)\s*[÷/:]\s*(-?\d+(?:[.,]\d+)?)$/);
+  const exactMatch = lhs.match(/^(-?\d+(?:[.,]\d+)?)\s*(?:÷|:)\s*(-?\d+(?:[.,]\d+)?)$/);
+  const explicitMatch = isExplicitDivisionTask(source)
+    ? lhs.match(/(-?\d+(?:[.,]\d+)?)\s*(?:÷|\/|:)\s*(-?\d+(?:[.,]\d+)?)/)
+      || lhs.match(/\b(?:diviser|divise|division|quotient|effectuer|effectue|calculer|calcule|poser|pose)\b[^\d-]*(-?\d+(?:[.,]\d+)?)[^\d-]+(?:par|sur)[^\d-]*(-?\d+(?:[.,]\d+)?)/i)
+    : null;
+  const match = exactMatch || explicitMatch;
   return match ? { dividend: Number(match[1].replace(',', '.')), divisor: Number(match[2].replace(',', '.')) } : null;
 }
 export function classifyDivision(source: string): DivisionSkill {
