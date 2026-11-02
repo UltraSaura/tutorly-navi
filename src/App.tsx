@@ -46,6 +46,7 @@ const GraduatedNumberLinePage = lazy(() => import("./pages/practice/GraduatedNum
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
+const LessonThemePage = lazy(() => import("./pages/practice/LessonThemePage"));
 const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPage"));
 const PracticeTopicsPage = lazy(() => import("./pages/practice/PracticeTopicsPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
@@ -61,6 +62,7 @@ import LearningContentManagement from "./components/admin/LearningContentManagem
 import CurriculumManager from "./components/admin/CurriculumManager";
 import GeneratedLessonsPage from "./components/admin/learning/GeneratedLessonsPage";
 import StagingLessonWorkflowPage, { StagingLessonDraftPreviewPage } from "./pages/admin/StagingLessonWorkflowPage";
+import SolidVisualGalleryPage from "./pages/admin/SolidVisualGalleryPage";
 import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
@@ -225,6 +227,7 @@ const App = () => {
                         </Route>
                         <Route path="/learning" element={<MainLayout />}>
                           <Route index element={<LearningPage />} />
+                          <Route path=":subjectSlug/theme/:themeId" element={<LessonThemePage />} />
                           <Route path=":subjectSlug" element={<SubjectDashboardPage />} />
                           <Route path=":subjectSlug/:topicSlug" element={<LessonPage />} />
                         </Route>
@@ -235,6 +238,7 @@ const App = () => {
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
+                          <Route path=":subject/theme/:themeId" element={<LessonThemePage />} />
                           <Route path=":subject/topics" element={<PracticeTopicsPage />} />
                           <Route path=":subject" element={<PracticeSubjectPage />} />
                         </Route>
@@ -248,6 +252,9 @@ const App = () => {
                         {/* Management Dashboard (dev-only until a proper admin guard is added) */}
                         {isDev && (
                           <Route path="/management" element={<ManagementDashboard />} />
+                        )}
+                        {isDev && (
+                          <Route path="/dev/solid-gallery" element={<SolidVisualGalleryPage />} />
                         )}
                         
                         {/* Admin Panel Routes */}

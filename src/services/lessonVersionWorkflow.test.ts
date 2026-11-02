@@ -14,12 +14,18 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import {
   buildDraftInsertPayload,
+  getStoredStagingTopicKind,
+  getStoredStagingMetadata,
   generateStagingDraft,
   publishValidatedDraft,
   saveDraftVersion,
   validateDrawableGeometry,
   validateLessonVersion,
+  validateStagingGenerationEnvelope,
+  withStagingTopicKind,
+  withStagingMetadata,
 } from './lessonVersionWorkflow';
+import { previewReviewWarnings } from '@/pages/admin/StagingLessonWorkflowPage';
 
 describe('lesson version workflow', () => {
   beforeEach(() => {
@@ -43,6 +49,42 @@ describe('lesson version workflow', () => {
     expect(insert).toHaveBeenCalledWith(expect.objectContaining({ topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', status: 'draft', created_by: 'admin-1' }));
   });
 
+  it('persists and recovers the server-selected staging topic kind', async () => {
+    const insert = vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: { id: 'version-decimal', ...buildDraftInsertPayload('07fe506e-71f4-44c9-bf7f-98c51a2ca68a', withStagingTopicKind(geometryDraftLesson, 'decimal'), 'admin-1') }, error: null }) })) }));
+    from.mockReturnValue({ insert });
+    await saveDraftVersion('07fe506e-71f4-44c9-bf7f-98c51a2ca68a', geometryDraftLesson, '07fe506e-71f4-44c9-bf7f-98c51a2ca68a', null, 'decimal');
+    const payload = insert.mock.calls[0][0] as { lesson_content: unknown };
+    expect(getStoredStagingTopicKind(payload.lesson_content)).toBe('decimal');
+  });
+
+  it('round-trips Edge review warnings through draft save, reread, and preview metadata', async () => {
+    const warning = { path: 'sequence[1].takeaway', message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.' };
+    const metadata = { pedagogicalWarnings: [warning], pedagogicalReviewRequired: true };
+    invoke.mockResolvedValue({ data: {
+      success: true,
+      providerCalls: 4,
+      lesson_content: geometryDraftLesson,
+      topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81',
+      validation: metadata,
+      levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })),
+    }, error: null, response: null });
+    const generated = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+    let insertedPayload: Record<string, unknown> | undefined;
+    const single = vi.fn().mockImplementation(() => ({ data: { id: 'version-warning', ...insertedPayload }, error: null }));
+    const insert = vi.fn((payload: Record<string, unknown>) => {
+      insertedPayload = payload;
+      return { select: vi.fn(() => ({ single })) };
+    });
+    from.mockReturnValue({ insert });
+
+    const saved = await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', generated.lesson_content, generated.topic_id, null, 'geometry', generated.validation as any);
+    const reread = saved.lesson_content;
+    expect(insertedPayload?.lesson_content).toEqual(withStagingMetadata(withStagingTopicKind(generated.lesson_content, 'geometry'), metadata));
+    expect(getStoredStagingMetadata(reread)).toEqual(metadata);
+    expect(previewReviewWarnings(reread)).toEqual([warning]);
+    expect((reread as Record<string, unknown>).levels).toEqual((geometryDraftLesson as Record<string, unknown>).levels);
+  });
+
   it('surfaces the RLS rejection returned for a non-admin authenticated user', async () => {
     const single = vi.fn().mockResolvedValue({ data: null, error: { code: '42501', message: 'new row violates row-level security policy' } });
     from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });
@@ -58,18 +100,47 @@ describe('lesson version workflow', () => {
   });
 
   it('makes exactly one staging edge request and does not retry', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81", levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })) }, error: null, response: null });
     await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(invoke).toHaveBeenCalledTimes(1);
-    expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({ body: expect.objectContaining({ mode: 'staging_draft', allowPaidRepair: false }) }));
+    expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({
+      body: {
+        mode: 'staging_draft',
+        topicId: 'e5003f68-f3aa-404b-85a9-847cdb103a81',
+        modelId: undefined,
+        language: 'fr',
+        allowPaidRepair: false,
+        rejectionInBody: true,
+      },
+    }));
   });
 
   it('accepts a successful four-level staging result (one provider call per level)', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81", levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })) }, error: null, response: null });
     const result = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(result.lesson_content).toBe(geometryDraftLesson);
     expect(result.providerCalls).toBe(4);
     expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts a provider-free response delayed by 38 seconds and performs one simulated save', async () => {
+    vi.useFakeTimers();
+    try {
+      invoke.mockImplementation(() => new Promise((resolve) => {
+        globalThis.setTimeout(() => resolve({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })) }, error: null, response: null }), 38_000);
+      }));
+      const pending = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+      await vi.advanceTimersByTimeAsync(38_000);
+      const generated = await pending;
+      expect(generated.clientDurationMs).toBe(38_000);
+
+      const single = vi.fn().mockResolvedValue({ data: { id: 'delayed-version' }, error: null });
+      from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });
+      await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', generated.lesson_content);
+      expect(single).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('rejects a success response that reports no provider calls', async () => {
@@ -108,10 +179,11 @@ describe('lesson version workflow', () => {
     expect(from).not.toHaveBeenCalled();
   });
 
-  it('preserves transport failures as pre-generation diagnostics with zero provider calls', async () => {
+  it('preserves transport failures with unknown provider calls when no response exists', async () => {
     invoke.mockResolvedValue({ data: null, error: Object.assign(new Error('Failed to send a request to the Edge Function'), { code: 'FunctionsFetchError' }), response: null });
     const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
-    expect(error).toMatchObject({ stage: 'pre_generation', failureStage: 'pre_generation', providerCalls: 0 });
+    expect(error).toMatchObject({ stage: 'pre_generation', failureStage: 'pre_generation', providerCallsKnown: false, databaseWrite: false, responseBodyAvailable: false });
+    expect(error).not.toHaveProperty('providerCalls', 0);
     expect(error.message).toContain('Failed to send');
   });
 
@@ -122,8 +194,52 @@ describe('lesson version workflow', () => {
       const pending = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
       await vi.advanceTimersByTimeAsync(120_000);
       const error = await pending;
-      expect(error).toMatchObject({ code: 'staging_browser_timeout', stage: 'provider_failure', providerCalls: 0, databaseWrite: false, responseBodyAvailable: false });
+      expect(error).toMatchObject({ code: 'staging_browser_timeout', stage: 'provider_failure', providerCallsKnown: false, databaseWrite: false, responseBodyAvailable: false, clientDurationMs: 120_000 });
+      expect(error).not.toHaveProperty('providerCalls', 0);
       expect(invoke).toHaveBeenCalledTimes(1);
+      expect(from).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not leak a timed-out run into a successive run or save late', async () => {
+    vi.useFakeTimers();
+    try {
+      let resolveLate!: (value: unknown) => void;
+      const lateResponse = new Promise((resolve) => { resolveLate = resolve; });
+      invoke
+        .mockReturnValueOnce(lateResponse)
+        .mockResolvedValueOnce({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })) }, error: null, response: null });
+
+      const first = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+      await vi.advanceTimersByTimeAsync(120_000);
+      await expect(first).resolves.toMatchObject({ code: 'staging_browser_timeout', clientDurationMs: 120_000 });
+      expect(vi.getTimerCount()).toBe(0);
+
+      const second = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+      const single = vi.fn().mockResolvedValue({ data: { id: 'successive-version' }, error: null });
+      from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });
+      await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', second.lesson_content);
+      resolveLate({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81' }, error: null, response: null });
+      await Promise.resolve();
+      expect(single).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears the timer when the invocation rejects before the deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      invoke.mockRejectedValue(new Error('network failure'));
+      const pending = generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+      const error = await pending;
+      expect(error).toMatchObject({ code: 'staging_browser_request_failed', databaseWrite: false });
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(vi.getTimerCount()).toBe(0);
       expect(from).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
@@ -160,17 +276,49 @@ describe('lesson version workflow', () => {
   });
 
   it('rejects a success response that reports fewer than four provider calls and saves nothing', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 3, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81' }, error: null, response: null });
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 3, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })) }, error: null, response: null });
     const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
     expect(error).toMatchObject({ code: 'staging_provider_call_count_invalid', stage: 'response_parsing', providerCalls: 3 });
-    expect(error.message).toContain('exactly 4');
+    expect(error.message).toContain('providerCalls=3');
     expect(from).not.toHaveBeenCalled();
   });
 
   it('rejects a success response that reports more than four provider calls and saves nothing', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 5, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81' }, error: null, response: null });
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 5, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: level === 3 ? 2 : 1 })) }, error: null, response: null });
+    await expect(generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81')).resolves.toMatchObject({ providerCalls: 5 });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('rejects an incomplete level envelope before any draft insertion', async () => {
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', levelResults: [1, 2, 3, 4].map((level) => ({ level, status: level === 3 ? 'failed' : 'complete', providerCalls: 1 })) }, error: null, response: null });
     const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
-    expect(error).toMatchObject({ code: 'staging_provider_call_count_invalid', providerCalls: 5 });
+    expect(error).toMatchObject({ code: 'staging_level_results_invalid', stage: 'response_parsing', providerCalls: 4 });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('single staging preserves an unapproved server preflight failure and never saves', async () => {
+    invoke.mockResolvedValue({
+      data: {
+        success: false,
+        httpStatus: 422,
+        requestId: 'preflight-single',
+        providerCalls: 0,
+        databaseWrite: false,
+        error: {
+          code: 'staging_preflight_failed',
+          stage: 'pre_generation',
+          message: 'La spécification pédagogique doit être approuvée.',
+          technicalDetail: 'review.status: specification_not_approved',
+          providerCalls: 0,
+        },
+      },
+      error: null,
+      response: null,
+    });
+    await expect(generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81')).rejects.toMatchObject({
+      code: 'staging_preflight_failed',
+      providerCalls: 0,
+    });
     expect(from).not.toHaveBeenCalled();
   });
 

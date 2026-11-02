@@ -18,14 +18,16 @@ export interface ActiveSchoolLevel {
 
 export function resolveActiveSchoolLevel({
   isAdmin,
+  isTester = false,
   previewLevel,
   profileLevel,
 }: {
   isAdmin: boolean;
+  isTester?: boolean;
   previewLevel: string | null | undefined;
   profileLevel: string | null | undefined;
 }): Pick<ActiveSchoolLevel, 'activeLevel' | 'source' | 'isPreviewing'> {
-  if (isAdmin && previewLevel) {
+  if ((isAdmin || isTester) && previewLevel) {
     return { activeLevel: previewLevel, source: 'admin_preview', isPreviewing: true };
   }
   if (profileLevel) {
@@ -35,13 +37,14 @@ export function resolveActiveSchoolLevel({
 }
 
 export function useActiveSchoolLevel(): ActiveSchoolLevel {
-  const { isAdmin, isLoading: adminLoading } = useAdminAuth();
+  const { isAdmin, isTester, isLoading: adminLoading } = useAdminAuth();
   const { previewLevel } = useAdminPreview();
   const userLevelQuery = useUserSchoolLevel();
 
   return useMemo(() => {
     const resolved = resolveActiveSchoolLevel({
       isAdmin,
+      isTester,
       previewLevel,
       profileLevel: userLevelQuery.data?.level,
     });
@@ -53,5 +56,5 @@ export function useActiveSchoolLevel(): ActiveSchoolLevel {
       age,
       isLoading: adminLoading || userLevelQuery.isLoading,
     };
-  }, [adminLoading, isAdmin, previewLevel, userLevelQuery.data?.level, userLevelQuery.isLoading]);
+  }, [adminLoading, isAdmin, isTester, previewLevel, userLevelQuery.data?.level, userLevelQuery.isLoading]);
 }

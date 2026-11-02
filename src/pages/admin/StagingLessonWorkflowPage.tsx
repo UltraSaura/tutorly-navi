@@ -10,8 +10,9 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
 import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 import { discoverLessonVisuals } from '@/components/admin/learning/GeneratedLessonsPage';
-import { assertExplicitStagingTopicId, classifyStagingTopic, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
+import { assertExplicitStagingTopicId, classifyStagingTopic, getStoredStagingMetadata, getStoredStagingTopicKind, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
 import { runBulkStagingGeneration, type BulkStagingProgress, type BulkStagingResult } from '@/services/bulkStagingLessonWorkflow';
+import { runStagingHealthcheck, type StagingHealthcheckResult } from '@/services/stagingHealthcheck';
 import type { LessonV2, LessonV21 } from '@/types/lesson-generator';
 
 type Topic = { id: string; name: string; curriculum_level_code: string | null };
@@ -32,6 +33,10 @@ export function previewVisualKinds(lesson: unknown): string[] {
   return discoverLessonVisuals(lesson).map(({ visual }) => String(visual.kind));
 }
 
+export function previewReviewWarnings(lesson: unknown) {
+  return getStoredStagingMetadata(lesson)?.pedagogicalWarnings ?? [];
+}
+
 export const providerFreeFourLevelLesson = {
   ...geometryDraftLesson,
   levels: [1, 2, 3, 4].map((levelNumber) => ({ ...geometryDraftLesson.levels[0], id: `provider-free-level-${levelNumber}`, level_number: levelNumber })),
@@ -44,7 +49,9 @@ export function topicIds(topics: Topic[], selected: Set<string>): string[] {
 function diagnostics(result: BulkStagingResult): string {
   if (result.status === 'saved') return `Saved draft ${result.version?.id ?? 'unknown'} · providerCalls=${result.providerCalls ?? 0} · requestId=${result.requestId ?? 'not returned'}${result.build ? ` · build=${result.build}` : ''}${result.promptVersion ? ` · promptVersion=${result.promptVersion}` : ''}`;
   const failure = result.failure;
-  return `${failure?.failureStage ?? 'unknown'} · ${failure?.technicalDiagnostic ?? 'No diagnostic'} · providerCalls=${failure?.providerCalls ?? 0}${failure?.requestId ? ` · requestId=${failure.requestId}` : ''}${failure?.build ? ` · build=${failure.build}` : ''}${failure?.promptVersion ? ` · promptVersion=${failure.promptVersion}` : ''}`;
+  const calls = failure?.providerCallsKnown === false || failure?.providerCalls === undefined ? 'inconnu' : String(failure.providerCalls);
+  const progress = failure?.lastKnownProgress && !failure.lastKnownProgress.confirmed ? ' · aucun niveau ni appel confirmé par Edge' : '';
+  return `${failure?.failureStage ?? 'unknown'} · ${failure?.technicalDiagnostic ?? 'No diagnostic'} · providerCalls=${calls}${progress}${failure?.requestId ? ` · requestId=${failure.requestId}` : ''}${failure?.build ? ` · build=${failure.build}` : ''}${failure?.promptVersion ? ` · promptVersion=${failure.promptVersion}` : ''}`;
 }
 
 function validationSummary(result: BulkStagingResult): string {
@@ -67,6 +74,8 @@ export function StagingLessonWorkflowPage() {
   const [results, setResults] = useState<BulkStagingResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [healthcheckLoading, setHealthcheckLoading] = useState(false);
+  const [healthcheck, setHealthcheck] = useState<StagingHealthcheckResult | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dryRun = searchParams.get('dryRun') === '1';
@@ -103,6 +112,13 @@ export function StagingLessonWorkflowPage() {
     }
   };
 
+  const checkFunction = async () => {
+    setHealthcheckLoading(true);
+    try { setHealthcheck(await runStagingHealthcheck()); }
+    catch { setHealthcheck({ httpStatus: null, requestId: null, headerRequestId: null, requestIdMatches: null, build: null, promptVersion: null, providerCalls: null, databaseWrite: null, errorCode: 'healthcheck_failed', errorMessage: 'Healthcheck request failed.' }); }
+    finally { setHealthcheckLoading(false); }
+  };
+
   return <div className="space-y-6">
     <PageMeta title="Staging lesson versions" description="Generate isolated validated lesson-version drafts" />
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -115,9 +131,11 @@ export function StagingLessonWorkflowPage() {
       <p className="text-xs text-muted-foreground">Explicit topic UUIDs are required. Fixture topics are rejected before any provider call.</p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button onClick={run} disabled={loading || progress?.status === 'generating' || progress?.status === 'validating'}>{dryRun ? 'Run provider-free dry-run' : mode === 'single' ? 'Generate one draft' : 'Generate selected drafts'}</Button>
+      <Button variant="outline" onClick={checkFunction} disabled={healthcheckLoading} data-testid="staging-healthcheck">{healthcheckLoading ? 'Vérification…' : 'Vérifier la fonction'}</Button>
+      {healthcheck && <div className="rounded border p-3 text-sm" data-testid="staging-healthcheck-result"><p>HTTP status: {healthcheck.httpStatus ?? 'inconnu'}</p><p>requestId: {healthcheck.requestId ?? 'non retourné'}</p><p>x-request-id concordant: {healthcheck.requestIdMatches === null ? 'non vérifiable' : healthcheck.requestIdMatches ? 'oui' : 'non'}</p><p>build: {healthcheck.build ?? 'non retourné'}</p><p>promptVersion: {healthcheck.promptVersion ?? 'non retourné'}</p><p>providerCalls: {healthcheck.providerCalls ?? 'non retourné'}</p><p>databaseWrite: {healthcheck.databaseWrite === null ? 'non retourné' : String(healthcheck.databaseWrite)}</p>{healthcheck.errorCode && <p role="alert">{healthcheck.errorCode}: {healthcheck.errorMessage}</p>}</div>}
     </CardContent></Card>
     <Card><CardHeader><CardTitle>2. Progress and diagnostics</CardTitle></CardHeader><CardContent className="space-y-3">
-      {progress && <div data-testid="staging-progress" className="rounded border p-3 text-sm"><p>Topic {progress.topicIndex} of {progress.totalTopics}</p><p>Level {progress.level} of {progress.totalLevels}</p><p>Provider calls: {progress.providerCalls}</p><p>Status: {progress.status}</p><p className="text-xs text-muted-foreground">{progress.topicId} · {progress.topicTitle}</p></div>}
+      {progress && <div data-testid="staging-progress" className="rounded border p-3 text-sm"><p>Topic {progress.topicIndex} of {progress.totalTopics}</p><p>{progress.confirmed || progress.status === 'saved' ? `Level ${progress.level} of ${progress.totalLevels}` : 'Level: awaiting Edge response'}</p><p>Provider calls: {progress.confirmed || progress.status === 'saved' ? progress.providerCalls : 'unknown until Edge responds'}</p><p>Status: {progress.status}</p><p className="text-xs text-muted-foreground">{progress.topicId} · {progress.topicTitle}</p></div>}
       {results.map((result) => <div key={result.topicId} className="rounded border p-3 text-sm"><p className="font-medium">{result.topicTitle} · {result.topicId}</p><p>Status: {result.status}</p><p>{diagnostics(result)}</p>{result.status === 'saved' && <p className="text-xs text-muted-foreground">{validationSummary(result)}</p>}{result.levelResults && <div className="mt-2 space-y-1 text-xs" data-testid={`level-results-${result.topicId}`}><p className="font-medium">Per-level results</p>{result.levelResults.map((level) => <p key={String(level.level)}>Level {String(level.level)}: {String(level.status)} · calls={String(level.providerCalls)} · canonical={String(level.canonicalValid ?? 'n/a')} · pedagogical={String(level.pedagogicalValid ?? 'n/a')} · prerequisite={String(level.prerequisiteValid ?? 'n/a')} · geometry={String(level.geometryValid ?? 'n/a')} · interaction={String(level.interactionValid ?? 'n/a')}{Array.isArray(level.diagnostics) && level.diagnostics.length > 0 ? ` · ${level.diagnostics.join(' | ')}` : ''}</p>)}</div>}{result.version && <Button size="sm" variant="outline" className="mt-2" onClick={() => navigate(`/admin/staging-lessons/preview/${result.version?.id}`)}>Open draft preview</Button>}</div>)}
       {!progress && results.length === 0 && <p className="text-sm text-muted-foreground">No run started.</p>}
     </CardContent></Card>
@@ -158,13 +176,15 @@ export function StagingLessonDraftPreviewPage() {
   if (!lesson) return <p role="alert">Draft lesson content is not valid JSON.</p>;
   const levels = Array.isArray(lesson.levels) ? lesson.levels : [];
   const current = levels[levelIndex];
-  const validation = validateLessonVersion(row.lesson_content, { topicKind: classifyStagingTopic(topic.name) });
+  const validation = validateLessonVersion(row.lesson_content, { topicKind: getStoredStagingTopicKind(row.lesson_content) ?? classifyStagingTopic(topic.name) });
+  const reviewWarnings = previewReviewWarnings(row.lesson_content);
   const kinds = levels.flatMap((level) => previewVisualKinds(level.lesson));
   if (!current) return <p role="alert">Draft has no lesson levels.</p>;
   return <div className="space-y-6">
     <PageMeta title={`Draft preview · ${topic.name}`} description="Protected admin preview using the student lesson player" />
     <div className="flex flex-wrap items-center justify-between gap-3"><div><Badge variant="outline">PROTECTED ADMIN DRAFT</Badge><h1 className="mt-2 text-3xl font-bold">{topic.name}</h1><p className="text-xs text-muted-foreground">{row.id} · topic {row.topic_id} · status={row.status}</p></div><Button asChild variant="outline"><Link to="/admin/staging-lessons">Back to staging workflow</Link></Button></div>
     <Card><CardHeader><CardTitle>Validation and visual inventory</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><p>Canonical: {String(validation.canonicalValid)} · pedagogical: {String(validation.pedagogicalValid)} · prerequisite: {String(validation.prerequisiteValid ?? validation.canonicalValid)} · geometry: {String(validation.geometryValid)} · interaction: {String(validation.interactionValid ?? validation.canonicalValid)}</p><p>All levels: {levels.length} · visuals: {kinds.length}</p><p data-testid="draft-visual-kinds">{kinds.join(', ')}</p></CardContent></Card>
+    {reviewWarnings.length > 0 && <Card data-testid="staging-review-warnings"><CardHeader><CardTitle>Pedagogical review warnings</CardTitle></CardHeader><CardContent className="space-y-1 text-sm"><p>Review required: lexical similarity was detected; blocking validation still passed.</p>{reviewWarnings.map((warning) => <p key={`${warning.path}:${warning.message}`}>{warning.path}: {warning.message}</p>)}</CardContent></Card>}
     <div className="flex flex-wrap gap-2">{levels.map((level, index) => <Button key={level.id ?? index} size="sm" variant={index === levelIndex ? 'default' : 'outline'} onClick={() => setLevelIndex(index)}>Niveau {level.level_number ?? index + 1}: {level.title}</Button>)}</div>
     <Card><CardHeader><CardTitle>{current.title}</CardTitle></CardHeader><CardContent><div className="min-h-[600px]"><LessonV2Player topicId={row.topic_id} subjectId={topic.curriculum_subject_id} topicName={topic.name} lesson={playerLesson(current)} readOnly /></div></CardContent></Card>
   </div>;

@@ -66,7 +66,7 @@ describe('key-point overlap for time topics', () => {
     expect(diags.some((d) => d.fieldA === 'key_points[0]' && d.fieldB === 'key_points[1]')).toBe(true);
   });
 
-  it('keeps geometry key-point overlap strict (geometry words are not ignored)', () => {
+  it('accepts a geometry summary that is not a textual copy (geometry words remain diagnostic)', () => {
     const block = {
       type: 'concept',
       content: 'Le rectangle possède quatre angles droits et ses côtés opposés sont parallèles et de même longueur.',
@@ -74,6 +74,6 @@ describe('key-point overlap for time topics', () => {
       takeaway: 'Astuce : pense à une porte.',
     };
     expect(keyPointContentOverlap(block.content, block.key_points[0].text).overlap).toBeGreaterThanOrEqual(2);
-    expect(semanticDuplicationDiagnostics(block).some((d) => d.fieldB === 'key_points[0]')).toBe(true);
+    expect(semanticDuplicationDiagnostics(block)).toEqual([]);
   });
 });

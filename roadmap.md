@@ -1,4 +1,22 @@
+# Server-side key-point false positives
+
+- [x] Reject only complete textual explanation copies, genuinely duplicate points and meaningless points; preserve geometry/time contracts and generation limits.
+- [x] 815 Vitest and 18 mocked handler tests passed, automatic build OK and whitespace checks clean; deployed only generate-lesson-content to staging sibprjxhbxahouejygeu (source SHA-256 52c8227d25e6897a2dc9086527b71da091ca4c3b126525fdcbaa6e6357059a19). No generation or data writes.
+
+# Level 1 triangle instructions
+
+- [x] Make rectangle and triangle coverage explicit in the initial geometry response, without changing validators or time-topic requirements.
+- [x] Test complete/missing/incomplete triangle output and no-write rejection using fake providers; 808 Vitest tests and 16 mocked handler tests passed, automatic build OK, whitespace checks clean.
+
+# Level 4 JSON boundary
+
+- [x] Reproduce valid JSON corruption from French quotation marks and parse verbatim before legacy cleanup; the historical raw provider response remains unavailable.
+- [x] Add level-four malformed-output/no-write and valid-output regressions; 805 Vitest tests and 15 mocked handler tests passed, automatic build OK, whitespace checks clean.
+
 # Geometry key-point duplicate refinement
+
+- [x] Reproduce bulk angle false positive without providers and remove remaining content/key-point ratio-only rejection.
+- [x] Run provider-free regression suite for the remaining bulk overlap fix.
 
 - [x] Use normalized statement/copy detection for key-point pairs; preserve geometry and time contracts.
 - [x] Add provider-free geometry, duplicate, no-save, and exact five-topic Batch 2 regressions.

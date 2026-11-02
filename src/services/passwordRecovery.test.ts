@@ -11,6 +11,10 @@ describe('password recovery flow', () => {
     expect(getPasswordRecoveryRedirectUrl('https://staging.example/')).toBe('https://staging.example/auth');
     expect(getPasswordRecoveryRedirectUrl('http://localhost:8080')).toBe('http://localhost:8080/auth');
   });
+  it('honors the native reset callback and parses mixed query/fragment URLs', () => {
+    expect(getPasswordRecoveryRedirectUrl('https://localhost', 'stuwy-staging://auth/callback')).toBe('stuwy-staging://auth/callback');
+    expect(isPasswordRecoveryUrl('stuwy-staging://auth/callback?source=email#type=recovery')).toBe(true);
+  });
 
   it('recognizes Supabase recovery links in the hash and rejects ordinary links', () => {
     expect(isPasswordRecoveryUrl('https://staging.example/auth#access_token=token&type=recovery')).toBe(true);

@@ -16,7 +16,7 @@ export function lessonPlayerSessionKey(topicId: string, lesson: LessonV2): strin
     topicId,
     lessonGoal: lesson.lesson_goal,
     prerequisites: lesson.prerequisites.map((item) => {
-      const prerequisite = item as unknown as Record<string, unknown>;
+      const prerequisite = (item ?? {}) as unknown as Record<string, unknown>;
       return {
         id: String(prerequisite.id),
         prompt: String(prerequisite.prompt ?? prerequisite.check_question ?? ''),
@@ -224,18 +224,18 @@ function LessonV2PlayerSession({ topicId, subjectId, topicName, lesson, onMaster
   };
 
   const prerequisite = lesson.prerequisites[prerequisiteIndex];
-  const prerequisiteRecord = prerequisite as Record<string, unknown>;
+  const prerequisiteRecord = (prerequisite ?? {}) as Record<string, unknown>;
   const prerequisitePrompt = String(prerequisiteRecord.prompt ?? prerequisiteRecord.check_question ?? '');
   const prerequisiteAnswerType = String(prerequisiteRecord.type ?? prerequisiteRecord.answer_type ?? 'short_text');
-  const prerequisiteChoices = Array.isArray((prerequisite as Record<string, unknown>).choices) ? (prerequisite as Record<string, unknown>).choices as string[] : [];
-  const prerequisitePracticeQuestion = practiceQuestion({
+  const prerequisiteChoices = Array.isArray(prerequisiteRecord.choices) ? prerequisiteRecord.choices as string[] : [];
+  const prerequisitePracticeQuestion = prerequisite ? practiceQuestion({
     id: prerequisite.id,
     question: prerequisitePrompt,
     answer_type: prerequisiteAnswerType,
     choices: prerequisiteChoices,
     correct_answer: prerequisite.expected_answer,
-  });
-  const prerequisiteVisual = (prerequisite as Record<string, unknown>).visual && typeof (prerequisite as Record<string, unknown>).visual === 'object'
+  }) : null;
+  const prerequisiteVisual = prerequisite && prerequisiteRecord.visual && typeof prerequisiteRecord.visual === 'object'
     ? { id: `${prerequisite.id}-visual`, type: 'visual' as const, title: 'Observe', content: prerequisite.description, visual: (prerequisite as Record<string, unknown>).visual as { kind: string; data: unknown; alt_text?: string; purpose?: string } }
     : null;
   const prerequisiteFormat = responseGuidance(prerequisitePrompt, prerequisiteAnswerType);
@@ -246,6 +246,7 @@ function LessonV2PlayerSession({ topicId, subjectId, topicName, lesson, onMaster
     setPrerequisiteResult(null);
   };
   const submitPrerequisite = () => {
+    if (!prerequisite) return;
     const passed = sameAnswer(prerequisite.expected_answer, prerequisiteAnswer);
     setPrerequisiteResult(passed);
     record('lesson_prerequisite_checked', { wasCorrect: passed, prerequisiteId: prerequisite.id });
@@ -255,7 +256,8 @@ function LessonV2PlayerSession({ topicId, subjectId, topicName, lesson, onMaster
 
   if (completed) return <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center"><CheckCircle2 className="h-16 w-16 text-teal-500" /><h2 className="text-2xl font-bold">Leçon terminée</h2><p className="text-muted-foreground">{topicName}</p></div>;
 
-  if (!prerequisitesPassed) {
+  if (!prerequisitesPassed && lesson.prerequisites.length > 0) {
+    if (!prerequisite) return <div role="alert" className="p-6">Les données du prérequis sont indisponibles. Revenez à la liste des leçons.</div>;
     return (
       <div className="flex h-full flex-col bg-background">
         <div className="flex-1 overflow-y-auto p-4">

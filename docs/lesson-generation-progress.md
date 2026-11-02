@@ -6,8 +6,8 @@ This document describes the isolated `staging_draft` workflow used by the admin 
 
 1. The caller supplies one or more explicit topic UUIDs. Topic titles are display context only; generation never searches by title.
 2. The protected `generate-lesson-content` Edge Function receives `mode: "staging_draft"` and one topic UUID.
-3. The function calls the provider exactly four times: once for each level, in order from level 1 through level 4.
-4. Each level is parsed and validated before the next level is requested. The workflow has no planning call, retry call, repair call, or paid fallback call.
+3. The function requests exactly one level at a time, in order from level 1 through level 4. A level may make one bounded second request only when the first response is empty, truncated, malformed, or ambiguous JSON; schema and pedagogical failures are never retried.
+4. Each level is parsed and validated before the next level is requested. The provider receives one compact object with five required named properties (`concept_1`, `concept_2`, `guided_example`, `student_try`, `mastery_check`). The application then builds `sequence` deterministically in that order and validates the four levels; it never invents missing educational fields.
 5. The four validated levels are assembled and validated again as one lesson.
 6. Only after all four levels pass does the admin client or terminal runner insert one `draft` row in `topic_lesson_versions`.
 
@@ -17,7 +17,7 @@ The staging function never updates `topics.lesson_content`. A successful run the
 
 Every response carries the same `requestId` in JSON and the `x-request-id` response header. CORS exposes that header. Successful staging responses also carry:
 
-- `providerCalls: 4`;
+- `providerCalls` is at least 4 and equals the sum of the per-level calls; bounded JSON retries are reported separately as `retryCount` and `retryCategory`.
 - `build` and `promptVersion` markers;
 - aggregate `validation`;
 - `progress` and `levelResults`, each ordered from level 1 to level 4;
@@ -44,6 +44,10 @@ The explicit prerequisite result is separate from canonical validation. A valid 
 
 Provider output with legacy `check_question` or `answer_type` fields is rejected. The normalizer does not rename fields, infer answers, or rewrite invalid educational content.
 
+DeepSeek's current staging integration uses Chat Completions at `/v1/chat/completions`. Its `response_format: { "type": "json_object" }` guarantees JSON output mode, not application-level schema enforcement for this nested lesson contract. The provider's strict JSON Schema format belongs to the Responses API, and the current `ai-chat` adapter has no strict-schema/tool-call transport for these five named properties. Therefore strict provider schema mode is deliberately not activated or simulated here. The application remains the authority: it parses exactly one object, requires all five named properties, builds `sequence` in the fixed order, validates every field and visual, and only then performs deterministic four-level assembly. A malformed response is rejected or receives the single bounded JSON retry; no content is guessed.
+
+The default maximum remains 8 provider calls per topic: four initial level calls plus at most one JSON retry per level. A future five-output-per-level design would require 20 initial calls per topic and up to 40 with one retry per output; it is not enabled because it would increase paid calls and has not been costed against a configured model price.
+
 ## Persistence and safety
 
 - A topic failure does not cancel other topics in a bundle.
@@ -63,8 +67,10 @@ The staging workflow must not:
 - publish or validate a draft automatically;
 - update, overwrite, or delete `topics.lesson_content`;
 - save partial levels;
-- perform automatic provider retries, repair calls, or paid retries;
+- perform retries for validation failures, repair calls, planning calls, or paid retries;
 - silently select a topic by title;
 - expose provider credentials, access tokens, or raw secrets in diagnostics.
 
 Provider-free fixtures and dry-run mode may exercise the UI and validation path, but they must report `providerCalls: 0` and `databaseWrite: false`.
+
+Provider diagnostics contain only HTTP/status metadata, finish reason, lengths, choice count, parse category, SHA-256, and syntax-error message/position. They never contain provider content, excerpts, tokens, or syntax context.

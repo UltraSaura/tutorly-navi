@@ -1,20 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft.ts';
-import { PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
+import { pedagogicalWarnings, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { ANSWER_TYPE_VALUES } from './lesson-v21-contract.ts';
+import { determineVisualRequirement } from './visual-policy.ts';
+import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import {
   assembleStagingLesson,
   parseStagingLevelResponse,
   requiredGeometryIssues,
   requiredGeometryKindsIssues,
   stagingLevelMetadata,
+  stagingTopicKind,
   stagingLevelPrompt,
   stagingFullLevelExample,
   STAGING_PROMPT_VERSION,
   STAGING_VISUAL_EXAMPLES,
   stagingSequenceContractIssues,
   stagingTokenUsage,
+  STAGING_LEVEL_MAX_TOKENS,
+  SPATIAL_MOVEMENT_RENDERER_LIMITATION,
+  SPATIAL_MOVEMENT_TOPIC_ID,
+  SPATIAL_MOVEMENT_TOPIC_NAME,
   stagingValidationFailure,
+  runWithBoundedJsonRetry,
+  StagingLevelJsonParseError,
   validateStagingLevel,
 } from './staging-level-workflow.ts';
 
@@ -56,6 +65,66 @@ const level2Candidate = () => {
 };
 
 describe('staging level workflow', () => {
+  it('keeps the staging completion budget bounded but above the compact contract size', () => {
+    expect(STAGING_LEVEL_MAX_TOKENS).toBe(4096);
+  });
+  it('retries one malformed JSON response and then succeeds without repair content', async () => {
+    const attempts: number[] = [];
+    const result = await runWithBoundedJsonRetry(async (attempt) => {
+      attempts.push(attempt);
+      if (attempt === 0) throw new StagingLevelJsonParseError('malformed_json');
+      return 'valid';
+    });
+    expect(result).toEqual({ value: 'valid', retryCount: 1, retryCategory: 'malformed_json' });
+    expect(attempts).toEqual([0, 1]);
+  });
+
+  it('retries a level-3 malformed response once and records the parse category', async () => {
+    const attempts: number[] = [];
+    const result = await runWithBoundedJsonRetry(async (attempt) => {
+      attempts.push(attempt);
+      if (attempt === 0) throw new StagingLevelJsonParseError('malformed_json');
+      return { level: 3, valid: true };
+    });
+    expect(result).toMatchObject({ value: { level: 3, valid: true }, retryCount: 1, retryCategory: 'malformed_json' });
+    expect(attempts).toEqual([0, 1]);
+  });
+
+  it('retries a level-3 truncated response that ends before correct_answer, then accepts the complete retry', async () => {
+    const level = metadata[2];
+    const complete = stagingFullLevelExample(level);
+    const malformed = JSON.stringify(complete).replace(/"correct_answer":3/, '"correct_answer"');
+    const attempts: number[] = [];
+    const result = await runWithBoundedJsonRetry(async (attempt) => {
+      attempts.push(attempt);
+      const parsed = parseStagingLevelResponse(attempt === 0 ? malformed : JSON.stringify(complete), level);
+      return parsed.value;
+    });
+    expect(result.retryCount).toBe(1);
+    expect(result.retryCategory).toBe('malformed_json');
+    expect(attempts).toEqual([0, 1]);
+    expect(result.value).toEqual(complete);
+  });
+
+  it('stops after two malformed JSON responses and does not retry validation errors', async () => {
+    const malformed = async () => runWithBoundedJsonRetry(async () => { throw new StagingLevelJsonParseError('ambiguous_json'); });
+    await expect(malformed()).rejects.toMatchObject({ category: 'ambiguous_json', retryCount: 1, parseStage: 'ambiguous_json' });
+    let calls = 0;
+    await expect(runWithBoundedJsonRetry(async () => { calls += 1; throw new Error('schema rejected'); })).rejects.toThrow('schema rejected');
+    expect(calls).toBe(1);
+  });
+
+  it('rejects a valid level-3 JSON response missing mastery correct_answer without retry or completion', async () => {
+    const level = metadata[2];
+    const incomplete = structuredClone(stagingFullLevelExample(level)) as any;
+    delete incomplete.sequence[4].questions[0].correct_answer;
+    const calls: number[] = [];
+    await expect(runWithBoundedJsonRetry(async (attempt) => {
+      calls.push(attempt);
+      return parseStagingLevelResponse(JSON.stringify(incomplete), level).value;
+    })).rejects.toMatchObject({ name: 'StagingLevelContractError' });
+    expect(calls).toEqual([0]);
+  });
   it('assembles four independently valid level responses into one canonical lesson', () => {
     const levels = metadata.map((item) => ({ metadata: item, lesson: structuredClone(validLevel1) }));
     const assembled = assembleStagingLesson(topicName, levels);
@@ -73,11 +142,53 @@ describe('staging level workflow', () => {
     expect(() => parseStagingLevelResponse('not json')).toThrow('staging_level_json_parse_failed');
   });
 
+  it('parses level 4 without rewriting valid quoted lesson text', () => {
+    const level = metadata[3];
+    const example = stagingFullLevelExample(level);
+    example.lesson_goal = 'Comparer les “aires” d’une figure.';
+    expect(parseStagingLevelResponse(JSON.stringify(example), level)).toEqual({ value: example, attemptedRepair: false });
+  });
+
   it('rejects incomplete geometry in one level', () => {
     const incomplete = structuredClone(validLevel1) as any;
     incomplete.sequence[0].visual.data.vertices = [{ x: 1, y: 1 }];
     const result = validateStagingLevel(incomplete, metadata[0], topicName, 'CM2');
     expect(result.geometryIssues.some((issue) => issue.path.includes('vertices'))).toBe(true);
+  });
+
+  it('reports the exact student_try and mastery question paths when correct_answer is missing', () => {
+    const level = metadata[2];
+    const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+    delete candidate.sequence[3].correct_answer;
+    delete candidate.sequence[4].questions[0].correct_answer;
+    const issues = stagingSequenceContractIssues(candidate, level);
+    expect(issues).toEqual(expect.arrayContaining([
+      { path: 'sequence[3].correct_answer', message: 'Required non-null value' },
+      { path: 'sequence[4].questions[0].correct_answer', message: 'Required non-null value for every mastery question' },
+    ]));
+  });
+
+  it('accepts the complete level-one rectangle and polygon-triangle prompt example', () => {
+    const level = metadata[0];
+    const example = stagingFullLevelExample(level);
+    expect(requiredGeometryKindsIssues(example, level.required_geometry_kinds)).toEqual([]);
+    expect(validateStagingLevel(example, level, topicName, 'CM2')).toEqual({ canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
+  });
+
+  it('rejects two rectangle visuals even when the lesson text mentions a triangle', () => {
+    const level = metadata[0];
+    const example = stagingFullLevelExample(level) as any;
+    example.sequence[1].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+    expect(requiredGeometryKindsIssues(example, level.required_geometry_kinds)).toEqual([
+      { path: 'lesson.sequence', message: 'Missing required drawable visual for this level: triangle.' },
+    ]);
+  });
+
+  it('rejects a named triangle with incomplete drawable data', () => {
+    const level = metadata[0];
+    const example = structuredClone(stagingFullLevelExample(level)) as any;
+    example.sequence[1].visual.data.vertices.pop();
+    expect(validateStagingLevel(example, level, topicName, 'CM2').geometryIssues.some((issue) => issue.path === 'sequence[1].visual.data.vertices')).toBe(true);
   });
 
   it('accepts valid prerequisite and misconception objects with the staging field names', () => {
@@ -93,6 +204,38 @@ describe('staging level workflow', () => {
     expect(result.canonicalIssues).toEqual([]);
     expect(result.pedagogicalIssues).toEqual([]);
     expect(result.geometryIssues).toEqual([]);
+  });
+
+  it('requires choices for multiple_choice and selection questions', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    const masteryQuestion = candidate.sequence[4].questions[0];
+    masteryQuestion.answer_type = 'multiple_choice';
+    masteryQuestion.correct_answer = '3';
+    delete masteryQuestion.choices;
+    candidate.sequence[3].answer_type = 'selection';
+    candidate.sequence[3].correct_answer = '4';
+    delete candidate.sequence[3].choices;
+    const issues = stagingSequenceContractIssues(candidate, metadata[0]);
+    expect(issues).toEqual(expect.arrayContaining([
+      { path: 'sequence[3].choices', message: 'Choice question requires at least two non-empty choices' },
+      { path: 'sequence[4].questions[0].choices', message: 'Choice question requires at least two non-empty choices' },
+    ]));
+  });
+
+  it('accepts choice questions with choices and numeric/text questions without choices', () => {
+    const choiceCandidate = structuredClone(validLevel1) as any;
+    const masteryQuestion = choiceCandidate.sequence[4].questions[0];
+    masteryQuestion.answer_type = 'multiple_choice';
+    masteryQuestion.choices = ['3', '4'];
+    masteryQuestion.correct_answer = '3';
+    choiceCandidate.sequence[3].answer_type = 'short_text';
+    delete choiceCandidate.sequence[3].choices;
+    expect(stagingSequenceContractIssues(choiceCandidate, metadata[0])).toEqual([]);
+
+    const numericCandidate = structuredClone(validLevel1) as any;
+    delete numericCandidate.sequence[3].choices;
+    delete numericCandidate.sequence[4].questions[0].choices;
+    expect(stagingSequenceContractIssues(numericCandidate, metadata[0])).toEqual([]);
   });
 
   it('keeps modern prerequisite fields intact before canonical validation', () => {
@@ -163,9 +306,7 @@ describe('staging level workflow', () => {
       expect.objectContaining({ path: 'prerequisites[1].expected_answer', message: 'Required value' }),
       expect.objectContaining({ path: 'prerequisites[1].expected_answer', message: 'Numeric prerequisite requires a numeric expected answer' }),
     ]));
-    expect(result.pedagogicalIssues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ path: 'sequence[1].key_points', message: expect.stringContaining('partagent trop de tokens') }),
-    ]));
+    expect(result.pedagogicalIssues.filter((issue) => issue.path === 'sequence[1].key_points')).toEqual([]);
     expect(candidate.prerequisites[1].expected_answer).toBeUndefined();
     expect(candidate.sequence[1].key_points[0].text).toContain('deux demi-droites');
   });
@@ -370,12 +511,13 @@ describe('staging level workflow', () => {
     expect(failure.technicalDetail).not.toContain('levels[0].lesson');
   });
 
-  it('rejects the exact version-158 level-1 response with field-specific takeaway paths', () => {
+  it('keeps the version-158 lexical overlap as review warnings without rejecting the level', () => {
     const rejected = structuredClone(validLevel1) as any;
     rejected.sequence[0].takeaway = 'Pour reconnaitre un rectangle, vérifie ses quatre angles droits et ses côtés opposés égaux.';
     rejected.sequence[1].takeaway = 'Pour reconnaitre un triangle, compte ses trois sommets et ses côtés.';
     const result = validateStagingLevel(rejected, metadata[0], topicName, 'CM2');
-    expect(result.pedagogicalIssues.filter((issue) => issue.path.endsWith('.takeaway')).map((issue) => issue.path)).toEqual(expect.arrayContaining([
+    expect(result.pedagogicalIssues.filter((issue) => issue.path.endsWith('.takeaway'))).toEqual([]);
+    expect(pedagogicalWarnings(rejected, 'CM2', topicName).filter((issue) => issue.path.endsWith('.takeaway')).map((issue) => issue.path)).toEqual(expect.arrayContaining([
       'sequence[0].takeaway',
       'sequence[1].takeaway',
     ]));
@@ -406,9 +548,9 @@ describe('staging level workflow', () => {
 
   it('rejects copied or repetitive key_points without rewriting them', () => {
     const candidate = structuredClone(validLevel1) as any;
-    candidate.sequence[0].key_points = [{ label: 'Résumé', text: 'Un rectangle est un quadrilatère dont les quatre angles sont droits' }];
+    candidate.sequence[0].key_points = [{ label: 'Résumé', text: candidate.sequence[0].content.split('.')[0] }];
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
-    expect(result.pedagogicalIssues.some((issue) => issue.path === 'sequence[0].key_points' && issue.message.includes('partagent trop de tokens'))).toBe(true);
+    expect(result.pedagogicalIssues.some((issue) => issue.path === 'sequence[0].key_points' && issue.message.includes('copié textuellement'))).toBe(true);
     expect(candidate.sequence[0].key_points[0].text).toContain('quadrilatère');
   });
 
@@ -489,7 +631,7 @@ describe('staging level workflow', () => {
     expect(() => assembleStagingLesson(topicName, metadata.slice(0, 3).map((item) => ({ metadata: item, lesson })))).toThrow('expected 4 levels');
   });
 
-  it('keeps provider-free orchestration at one response per level with no retry helper', () => {
+  it('keeps provider-free orchestration at one level slot; bounded retry is an Edge handler concern', () => {
     const prompts = metadata.map((item) => item.level_number);
     expect(prompts).toEqual([1, 2, 3, 4]);
     expect(metadata).toHaveLength(4);
@@ -535,5 +677,201 @@ describe('time-topic visual contract (providerCalls=0)', () => {
       expect.objectContaining({ message: expect.stringContaining('timeline') }),
     ]));
     expect([...validation.geometryIssues, ...required]).not.toEqual([]);
+  });
+});
+
+describe('decimal-number visual contract (providerCalls=0)', () => {
+  const decimalTopicId = '07fe506e-71f4-44c9-bf7f-98c51a2ca68a';
+  const decimalTopic = 'Les nombres décimaux';
+  const decimalObjectives = [
+    'Interpréter, représenter, écrire et lire des fractions décimales',
+    'Connaître et utiliser les relations entre unités simples, dixièmes, centièmes et millièmes',
+    'Placer une fraction décimale sur une demi-droite graduée et repérer un point d’une demi-droite graduée par une fraction décimale',
+    'Écrire une fraction décimale supérieure à 1 comme la somme d’un nombre entier et d’une fraction décimale inférieure à 1',
+    'Écrire une fraction décimale supérieure à 1 comme la somme d’un nombre entier et de fractions décimales ayant un numérateur inférieur à 10',
+    'Comparer, encadrer, intercaler des fractions décimales en utilisant les symboles =, < et >',
+    'Ordonner des fractions décimales dans l’ordre croissant ou décroissant',
+    'Passer d’une écriture sous forme d’une fraction décimale ou de la somme de fractions décimales à une écriture à virgule et réciproquement',
+    'Interpréter, représenter, écrire et lire des nombres décimaux (écriture à virgule)',
+    'Placer un nombre décimal en écriture à virgule sur une demi-droite graduée et repérer un point d’une demi-droite graduée par un nombre en écriture à virgule',
+    'Savoir donner la partie entière et l’arrondi à l’entier d’un nombre décimal',
+    'Comparer, encadrer, intercaler, ordonner par ordre croissant ou décroissant des nombres décimaux donnés par leur écriture à virgule en utilisant les symboles =, < et >',
+  ];
+  const decimalObjectiveText = decimalObjectives.join('; ');
+  const decimalMetadata = stagingLevelMetadata(decimalTopicId, decimalTopic, decimalObjectives.map((_, index) => `objective-${index}`), decimalObjectiveText);
+
+  it('uses the decimal model contract instead of the fraction contract', () => {
+    expect(stagingTopicKind(decimalTopic, 'Comparer et placer des nombres décimaux')).toBe('decimal');
+    expect(decimalMetadata).toHaveLength(4);
+    expect(decimalMetadata.every((level) => level.required_geometry_alternatives?.some((kinds) => kinds.includes('number_line') && kinds.includes('rectangle')))).toBe(true);
+    expect(decimalMetadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('fraction_bar');
+    expect(decimalMetadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('fraction_circle');
+  });
+
+  it('embeds complete decimal examples and accepts a complete rectangle without a paid call', () => {
+    for (const level of decimalMetadata) {
+      const example = structuredClone(stagingFullLevelExample(level));
+      const validation = validateStagingLevel(example, level, decimalTopic, 'CM2');
+      expect(validation.canonicalIssues).toEqual([]);
+      expect(validation.pedagogicalIssues).toEqual([]);
+      expect(validation.geometryIssues).toEqual([]);
+      expect(requiredGeometryKindsIssues(example, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([]);
+      expect(stagingLevelPrompt(decimalTopic, 'CM2', 'fr', level, 'Comparer des nombres décimaux')).toContain('kind "number_line" ou kind "rectangle"');
+    }
+  });
+
+  it('rejects a fraction-only output for a decimal topic', () => {
+    const level = decimalMetadata[3];
+    const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+    candidate.sequence[0].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+    candidate.sequence[1].visual = { kind: 'fraction_bar', purpose: 'Montrer une fraction.', alt_text: 'Barre de fraction.', data: { parts: 10, filled: 4 } };
+    expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([]);
+    candidate.sequence[0].visual = { kind: 'fraction_circle', purpose: 'Montrer une fraction.', alt_text: 'Disque fractionné.', data: { parts: 10, filled: 4 } };
+    candidate.sequence[1].visual = { kind: 'fraction_bar', purpose: 'Montrer une fraction.', alt_text: 'Barre de fraction.', data: { parts: 10, filled: 4 } };
+    expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([
+      expect.objectContaining({ message: expect.stringContaining('number_line|rectangle') }),
+    ]);
+  });
+
+  it('keeps the real decimal topic contract authoritative when an objective mentions fractions', () => {
+    expect(stagingTopicKind(decimalTopic, decimalObjectiveText)).toBe('decimal');
+    expect(decimalMetadata).toHaveLength(4);
+    const lexicalPolicy = determineVisualRequirement({ title: 'Fraction décimale', content: 'Une fraction représente une partie du tout.' });
+    expect(lexicalPolicy.suggestedKinds).toEqual(['fraction_bar', 'fraction_circle']);
+
+    for (const level of decimalMetadata) {
+      const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+      candidate.sequence[0].title = 'Fraction décimale';
+      candidate.sequence[0].content = 'Une fraction décimale représente une partie du tout et se lit avec une écriture à virgule.';
+      const validation = validateStagingLevel(candidate, level, decimalTopic, 'CM2');
+      expect(validation.pedagogicalIssues.some((issue) => issue.message.includes('fraction_bar|fraction_circle'))).toBe(false);
+      expect(validation.pedagogicalIssues.some((issue) => issue.message.includes('number_line|rectangle'))).toBe(false);
+      expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds, level.required_geometry_alternatives)).toEqual([]);
+      expect(stagingLevelPrompt(decimalTopic, 'CM2', 'fr', level, decimalObjectiveText)).toContain('kind "number_line" ou kind "rectangle"');
+    }
+  });
+
+  it('keeps generic visual requirements when geometry level 4 has no replacement contract', () => {
+    const geometryMetadata = stagingLevelMetadata('geometry-topic', topicName, ['geometry']);
+    const level = geometryMetadata[3];
+    expect(level.required_geometry_kinds).toEqual([]);
+    expect(level.required_geometry_alternatives).toBeUndefined();
+
+    const candidate = structuredClone(validLevel1) as any;
+    delete candidate.sequence[0].visual;
+    const validation = validateStagingLevel(candidate, level, topicName, 'CM2');
+
+    expect(validation.pedagogicalIssues).toContainEqual(expect.objectContaining({
+      path: 'sequence[0].visual',
+      message: expect.stringContaining('Visuel requis'),
+    }));
+  });
+
+  it('keeps the fraction visual policy for a genuine fractions subject', () => {
+    const policy = determineVisualRequirement({ title: 'Fractions', content: 'Une fraction représente une partie du tout.' });
+    expect(policy.requirement).toBe('required');
+    expect(policy.suggestedKinds).toEqual(['fraction_bar', 'fraction_circle']);
+    expect(policy.suggestedKinds).not.toContain('number_line');
+  });
+});
+
+describe('spatial-movement topic contract (providerCalls=0)', () => {
+  const topic = SPATIAL_MOVEMENT_TOPIC_NAME;
+  const objectiveText = [
+    'Se repérer sur un quadrillage.',
+    'Décrire et suivre un déplacement.',
+    'Interpréter un parcours en distinguant distance parcourue et déplacement net.',
+    'Programmer un parcours avec changements de direction.',
+  ].join('; ');
+  const metadata = stagingLevelMetadata(SPATIAL_MOVEMENT_TOPIC_ID, topic, ['o1', 'o2', 'o3', 'o4'], objectiveText);
+
+  it('uses the explicit topic contract instead of the generic circle/radius program', () => {
+    expect(stagingTopicKind(topic, 'Cercle, rayon et diamètre')).toBe('geometry');
+    expect(metadata.map((level) => level.title)).toEqual([
+      'Se repérer par coordonnées',
+      'Décrire et suivre un déplacement',
+      'Interpréter un parcours',
+      'Programmer un parcours',
+    ]);
+    expect(metadata.every((level) => level.required_geometry_kinds.length === 1 && level.required_geometry_kinds[0] === 'diagram')).toBe(true);
+    expect(metadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('circle');
+    expect(metadata.flatMap((level) => level.required_geometry_kinds)).not.toContain('rectangle');
+  });
+
+  it('sends the authoritative progression and renderer limitation to every level prompt', () => {
+    for (const level of metadata) {
+      const prompt = stagingLevelPrompt(topic, 'CM2', 'fr', level, objectiveText);
+      expect(prompt).toContain('kind "diagram"');
+      expect(prompt).toContain(SPATIAL_MOVEMENT_RENDERER_LIMITATION);
+      expect(prompt).toContain('distance parcourue');
+      expect(prompt).toContain('déplacement net');
+      const spatialContract = prompt.split('CONTRAT SPATIAL AUTORITAIRE — ')[1]?.split('\nVisuels obligatoires')[0] ?? '';
+      expect(spatialContract).not.toContain('rayon');
+      expect(spatialContract).not.toContain('diamètre');
+      expect(prompt).toContain(JSON.stringify(STAGING_VISUAL_EXAMPLES.diagram));
+      expect(prompt).toContain('d’abord la position horizontale, puis la position verticale');
+      expect(prompt).toContain('N’introduis ni axes formels, ni vecteurs, ni repère de collège');
+    }
+  });
+
+  it('does not replace the decimal, fraction, time, or general geometry contracts', () => {
+    const unaffected = [
+      { name: 'Les nombres décimaux', objective: 'Comparer et placer des nombres décimaux.', kind: 'decimal' },
+      { name: 'Les fractions', objective: 'Comparer des fractions.', kind: 'general' },
+      { name: 'Le repérage dans le temps et les durées', objective: 'Lire et convertir des durées.', kind: 'time' },
+      { name: 'Figures planes', objective: 'Décrire un rectangle et un triangle.', kind: 'geometry' },
+    ];
+
+    for (const [index, subject] of unaffected.entries()) {
+      const otherTopicId = `unaffected-topic-${index}`;
+      const levels = stagingLevelMetadata(otherTopicId, subject.name, [], subject.objective);
+      expect(stagingTopicKind(subject.name, subject.objective)).toBe(subject.kind);
+      for (const level of levels) {
+        const prompt = stagingLevelPrompt(subject.name, 'CM2', 'fr', level, subject.objective);
+        expect(prompt).not.toContain('CONTRAT SPATIAL AUTORITAIRE');
+      }
+    }
+  });
+
+  it('validates a complete diagram example for all four levels without provider calls', () => {
+    for (const level of metadata) {
+      const candidate = structuredClone(stagingFullLevelExample(level));
+      const validation = validateStagingLevel(candidate, level, topic, 'CM2');
+      expect(validation.canonicalIssues).toEqual([]);
+      expect(validation.pedagogicalIssues).toEqual([]);
+      expect(validation.geometryIssues).toEqual([]);
+      expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds)).toEqual([]);
+    }
+  });
+
+  it('requires segments and treats arrows as optional renderer-compatible additions', () => {
+    for (const level of metadata) {
+      const prompt = stagingLevelPrompt(topic, 'CM2', 'fr', level, objectiveText);
+      expect(prompt).toContain('data.segments obligatoires');
+      expect(prompt).toContain('data.arrows facultatifs en complément des segments');
+      expect(prompt).not.toContain('segments et/ou arrows');
+      expect(prompt).not.toContain('data.lines');
+    }
+
+    const exampleData = STAGING_VISUAL_EXAMPLES.diagram.visual.data as Record<string, unknown>;
+    expect(geometryVisualDataErrors('diagram', exampleData)).toEqual([]);
+    expect(geometryVisualDataErrors('diagram', {
+      points: exampleData.points,
+      arrows: exampleData.arrows,
+      annotations: exampleData.annotations,
+    })).toEqual([
+      expect.objectContaining({ path: 'visual.data.segments' }),
+    ]);
+  });
+
+  it('rejects a generic circle-only response for every spatial level', () => {
+    for (const level of metadata) {
+      const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+      candidate.sequence[0].visual = structuredClone(STAGING_VISUAL_EXAMPLES.circle.visual);
+      candidate.sequence[1].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+      expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds)).toEqual([
+        expect.objectContaining({ message: expect.stringContaining('diagram') }),
+      ]);
+    }
   });
 });

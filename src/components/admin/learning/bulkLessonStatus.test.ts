@@ -2,12 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { deriveBulkLessonStatus } from './bulkLessonStatus';
 
 describe('bulk lesson status', () => {
-  it('reports a staging draft for draft versions', () => {
-    expect(deriveBulkLessonStatus({ lessonContent: null, stagingStatuses: ['draft'] })).toBe('staging');
-  });
-
-  it('reports a staging draft for validated versions', () => {
+  it('reports a staging draft for draft and validated versions', () => {
     expect(deriveBulkLessonStatus({ lessonContent: null, stagingStatuses: ['validated'] })).toBe('staging');
+    expect(deriveBulkLessonStatus({ lessonContent: null, stagingStatuses: ['draft'] })).toBe('staging');
   });
 
   it('reports a published lesson when lesson_content exists without a staging version', () => {

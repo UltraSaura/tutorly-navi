@@ -9,7 +9,8 @@ export async function callOpenAI(
   isExercise: boolean = false,
   requestExplanation: boolean = false,
   maxTokens: number = 800,
-  responseFormat?: { type: 'json_object' | 'text' }
+  responseFormat?: { type: 'json_object' | 'text' },
+  temperature?: number,
 ): Promise<any> {
   const { value: openAIApiKey, source } = await resolveProviderKey('OpenAI');
   console.log(`[OpenAI] key source: ${source}`);
@@ -105,7 +106,7 @@ export async function callOpenAI(
       requestBody.max_completion_tokens = maxTokens;
     } else {
       requestBody.max_tokens = maxTokens;
-      requestBody.temperature = 0.7;
+      requestBody.temperature = temperature ?? 0.7;
     }
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -132,6 +133,7 @@ export async function callOpenAI(
     
     const data = await response.json();
     const metadata = {
+      choiceCount: Array.isArray(data.choices) ? data.choices.length : 0,
       finishReason: data.choices?.[0]?.finish_reason ?? null,
       promptTokens: data.usage?.prompt_tokens ?? null,
       completionTokens: data.usage?.completion_tokens ?? null,

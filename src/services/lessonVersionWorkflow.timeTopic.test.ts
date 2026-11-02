@@ -16,12 +16,14 @@ vi.mock('@/integrations/supabase/client', () => ({
 import {
   classifyStagingTopic,
   saveDraftVersion,
+  validateDrawableDecimalVisuals,
   validateDrawableTimeVisuals,
   validateLessonVersion,
 } from './lessonVersionWorkflow';
 
 const TIME_TOPIC_ID = '7588497a-6173-4144-864e-25bcab6b4011';
 const TIME_TOPIC_NAME = 'Le repérage dans le temps et les durées';
+const DECIMAL_TOPIC_ID = '07fe506e-71f4-44c9-bf7f-98c51a2ca68a';
 
 const timeVisualBlock = (id: string, title: string, content: string, visual: Record<string, unknown>) => ({ id, type: 'visual', title, content, visual });
 
@@ -47,8 +49,43 @@ describe('time-topic staging validation', () => {
 
   it('classifies the CM2 time topic as time and geometry topics as geometry', () => {
     expect(classifyStagingTopic(TIME_TOPIC_NAME)).toBe('time');
+    expect(classifyStagingTopic('Les nombres décimaux')).toBe('decimal');
     expect(classifyStagingTopic('La géométrie plane')).toBe('geometry');
     expect(classifyStagingTopic(undefined)).toBe('geometry');
+  });
+
+  it('accepts decimal lessons with number_line or rectangle visuals only', () => {
+    const lesson = structuredClone(geometryDraftLesson) as any;
+    lesson.levels[0].lesson.sequence = lesson.levels[0].lesson.sequence.map((block: any) => ({
+      ...block,
+      visual: { kind: 'number_line', data: { min: 0, max: 2, step: 0.1 }, purpose: 'Placer un nombre.', alt_text: 'Droite graduée.' },
+    }));
+    const validation = validateLessonVersion(lesson, { topicKind: 'decimal' });
+    expect(validation.geometryValid).toBe(true);
+    expect(validateDrawableDecimalVisuals(lesson)).toEqual([]);
+  });
+
+  it('rejects decimal output that contains neither number_line nor rectangle', () => {
+    const lesson = structuredClone(geometryDraftLesson) as any;
+    lesson.levels[0].lesson.sequence = lesson.levels[0].lesson.sequence.map((block: any) => ({
+      ...block,
+      visual: { kind: 'polygon', data: { shape: 'triangle', vertices: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }] }, purpose: 'Triangle.', alt_text: 'Triangle.' },
+    }));
+    const validation = validateLessonVersion(lesson, { topicKind: 'decimal' });
+    expect(validation.geometryValid).toBe(false);
+    expect(validation.geometryIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: 'Missing required drawable visual: number_line or rectangle.' }),
+    ]));
+  });
+
+  it('does not save an invalid decimal visual contract', async () => {
+    const lesson = structuredClone(geometryDraftLesson) as any;
+    lesson.levels[0].lesson.sequence = lesson.levels[0].lesson.sequence.map((block: any) => ({
+      ...block,
+      visual: { kind: 'polygon', data: { shape: 'triangle', vertices: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }] }, purpose: 'Triangle.', alt_text: 'Triangle.' },
+    }));
+    await expect(saveDraftVersion(DECIMAL_TOPIC_ID, lesson, DECIMAL_TOPIC_ID, null, 'decimal')).rejects.toThrow(/Draft validation failed/);
+    expect(from).not.toHaveBeenCalled();
   });
 
   it('still requires every geometry visual for geometry topics', () => {

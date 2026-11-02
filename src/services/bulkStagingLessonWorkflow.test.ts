@@ -12,6 +12,8 @@ const generated = (topicId: string, providerCalls = 4) => ({
   canonicalValid: true as const,
   pedagogicalValid: true as const,
   geometryValid: true as const,
+  levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: providerCalls === 4 ? 1 : Math.max(1, providerCalls - 3) })),
+  progress: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: 1 })),
 });
 
 const valid = () => ({ canonicalValid: true, pedagogicalValid: true, prerequisiteValid: true, interactionValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
@@ -42,7 +44,7 @@ describe('bulk staging lesson workflow', () => {
     const generate = vi.fn(async () => { throw { ...failure, httpStatus: 422, requestId: 'req-multiplier', message: failure.technicalDetail }; });
     const save = vi.fn();
     const results = await runBulkStagingGeneration([{ id: '7588497a-6173-4144-864e-25bcab6b4011', name: 'Le repérage dans le temps et les durées' }], undefined, { generate, save });
-    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics.filter((d) => d.reason.includes('identiques après normalisation'))).toHaveLength(1);
     expect(results[0].status).toBe('failed');
     expect(results[0].failure).toMatchObject({ httpStatus: 422, failedLevel: 1, providerCalls: 1, requestId: 'req-multiplier' });
     expect(results[0].failure?.technicalDiagnostic).toContain('key_points[0].text et key_points[1].text');
@@ -59,6 +61,18 @@ describe('bulk staging lesson workflow', () => {
     expect(save).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    [5, [2, 1, 1, 1]],
+    [6, [2, 2, 1, 1]],
+  ])('saves a complete result when bounded JSON retries raise calls to %i', async (providerCalls, callsByLevel) => {
+    const levelResults = callsByLevel.map((calls, index) => ({ level: index + 1, status: 'complete' as const, providerCalls: calls }));
+    const generate = vi.fn(async (id: string) => ({ ...generated(id), providerCalls, levelResults, progress: levelResults }));
+    const save = vi.fn(async (id: string) => ({ id: `version-${id}` } as any));
+    const results = await runBulkStagingGeneration([{ id: `topic-${providerCalls}`, name: 'Figures' }], undefined, { generate, save, validate: valid });
+    expect(results[0]).toMatchObject({ status: 'saved', providerCalls });
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it('continues a multi-topic bundle after one topic fails, without retrying', async () => {
     const generate = vi.fn(async (id: string) => {
       if (id === 'bad') throw Object.assign(new Error('levels[2].lesson.sequence: invalid'), { providerCalls: 3, failedLevel: 3, failureStage: 'level_validation' });
@@ -70,6 +84,24 @@ describe('bulk staging lesson workflow', () => {
     expect(generate).toHaveBeenCalledTimes(2);
     expect(save).toHaveBeenCalledTimes(1);
     expect(results[0].failure).toMatchObject({ topicId: 'bad', topicTitle: 'Bad', failedLevel: 3, failureStage: 'level_validation', providerCalls: 3 });
+  });
+
+  it('bulk preserves a server preflight block and continues independently', async () => {
+    const generate = vi.fn(async (id: string) => {
+      if (id === 'unapproved') throw Object.assign(new Error('review.status: specification_not_approved'), {
+        code: 'staging_preflight_failed', stage: 'pre_generation', providerCalls: 0,
+        databaseWrite: false, requestId: 'preflight-bulk',
+      });
+      return generated(id);
+    });
+    const save = vi.fn(async (id: string) => ({ id } as any));
+    const results = await runBulkStagingGeneration([
+      { id: 'unapproved', name: 'Sujet sans revue' },
+      { id: 'independent', name: 'Sujet indépendant' },
+    ], undefined, { generate, save, validate: valid });
+    expect(results.map((result) => result.status)).toEqual(['failed', 'saved']);
+    expect(results[0].failure).toMatchObject({ failureStage: 'pre_generation', providerCalls: 0, requestId: 'preflight-bulk' });
+    expect(save).toHaveBeenCalledTimes(1);
   });
 
   it('rejects duplicate and missing IDs before any provider call', async () => {
@@ -114,6 +146,15 @@ describe('bulk staging lesson workflow', () => {
     });
     expect(results[0].levelResults).toEqual(progress);
     expect(JSON.stringify(results[0])).not.toContain('[object Object]');
+  });
+
+  it('does not invent level progress when the connection fails without a response', async () => {
+    const results = await runBulkStagingGeneration([{ id: 'topic-cutoff', name: 'Figures' }], undefined, {
+      generate: async () => { throw Object.assign(new Error('Failed to send a request to the Edge Function'), { code: 'edge_unavailable', stage: 'provider_failure', databaseWrite: false, responseBodyAvailable: false }); },
+    });
+    expect(results[0].status).toBe('failed');
+    expect(results[0].failure).toMatchObject({ providerCallsKnown: false, databaseWrite: false, responseBodyAvailable: false, lastKnownProgress: { level: 1, providerCalls: 0, confirmed: false } });
+    expect(results[0].failure).not.toHaveProperty('providerCalls', 0);
   });
 
   it.each([

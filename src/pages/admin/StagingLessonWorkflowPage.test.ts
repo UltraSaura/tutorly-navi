@@ -17,11 +17,35 @@ describe('independent staging lesson-version workflow', () => {
     expect(panelSource).not.toContain('required: {CM2_GEOMETRY_TOPIC_ID}');
   });
 
-  it('keeps destructive legacy controls isolated and clearly labelled', () => {
+  it('keeps the normal bulk path staging-only and hides developer controls by default', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/BulkLessonGenerator.tsx'), 'utf8');
-    expect(source).toContain('Afficher les contrôles legacy');
+    expect(source).toContain("const developerMode = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEVELOPER_MODE === 'true';");
+    expect(source).toContain('data-testid="bulk-developer-controls"');
     expect(source).toContain('Générateur legacy (modifie topics.lesson_content)');
     expect(source).toContain('Le bouton staging ci-dessus n’utilise jamais cette persistance.');
+    expect(source.match(/data-testid="bulk-generate-button"/g)).toHaveLength(1);
+    expect(source).toContain('Générer les leçons');
+    expect(source).toContain('Voir la leçon');
+  });
+
+  it('keeps the bulk workflow limited to topics without a published or staging version', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/BulkLessonGenerator.tsx'), 'utf8');
+    expect(source).toContain("if (statusForTopic(t) !== 'none') return false;");
+    expect(source).toContain("curriculum_country_code, curriculum_level_code");
+    expect(source).toContain('filterCurriculum');
+    expect(source).toContain('runBulkStagingGeneration');
+    expect(source).toContain('dryRun: developerMode && dryRun');
+  });
+
+  it('offers read-only preview followed by explicit validation and publication', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/GeneratedLessonsPage.tsx'), 'utf8');
+    expect(source).toContain('GeneratedLessonPreview');
+    expect(source).toContain('validateSavedDraft');
+    expect(source).toContain('publishValidatedDraft');
+    expect(source).toContain('data-testid="validate-draft-button"');
+    expect(source).toContain('data-testid="publish-draft-button"');
+    expect(source).toContain("selectedVersion.status === 'draft'");
+    expect(source).toContain("selectedVersion.status === 'validated'");
   });
 
   it('adapts every stored level for the shared student player and keeps visuals', () => {
@@ -55,7 +79,7 @@ describe('independent staging lesson-version workflow', () => {
     const results = await runBulkStagingGeneration([{ id: 'bad', name: 'Bad' }, { id: 'good', name: 'Good' }], undefined, {
       generate: async (id) => id === 'bad'
         ? Promise.reject({ code: 'level_validation_failed', message: 'Bad level', technicalDetail: 'exact diagnostic', stage: 'validation_failure', providerCalls: 1, level: 2 })
-        : Promise.resolve({ success: true, lesson_content: storedGeometryVisualFixture, topic_id: id, providerCalls: 4, canonicalValid: true, pedagogicalValid: true, geometryValid: true }),
+        : Promise.resolve({ success: true, lesson_content: storedGeometryVisualFixture, topic_id: id, providerCalls: 4, canonicalValid: true, pedagogicalValid: true, geometryValid: true, levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: 1 })), progress: [1, 2, 3, 4].map((level) => ({ level, status: 'complete' as const, providerCalls: 1 })) }),
       validate: () => ({ canonicalValid: true, pedagogicalValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] }),
       save: async (id) => ({ id: `draft-${id}` } as any),
     });

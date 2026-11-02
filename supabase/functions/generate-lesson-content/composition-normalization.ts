@@ -18,7 +18,7 @@ function replacementTakeaway(block: LessonBlock, topicName: string): string {
   let best = candidates[0];
   let bestScore = Number.POSITIVE_INFINITY;
   for (const candidate of candidates) {
-    const diagnostics = semanticDuplicationDiagnostics({ ...block, takeaway: candidate });
+    const diagnostics = semanticDuplicationDiagnostics({ ...block, takeaway: candidate }, topicName);
     const score = diagnostics.reduce((total, item) => total + item.diagnostic.overlap * 10 + item.diagnostic.ratio, 0);
     if (score < bestScore) { best = candidate; bestScore = score; }
   }
@@ -30,8 +30,8 @@ export function normalizeLessonComposition(lesson: Record<string, unknown>, topi
   const sequence = Array.isArray(lesson.sequence) ? lesson.sequence.map((raw, index) => {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw) || (raw as LessonBlock).type !== 'concept') return raw;
     const block = { ...(raw as LessonBlock) };
-    const duplicates = semanticDuplicationDiagnostics(block);
-    const takeawayDuplicate = duplicates.some((item) => item.fieldB === 'takeaway');
+    const duplicates = semanticDuplicationDiagnostics(block, topicName);
+    const takeawayDuplicate = duplicates.some((item) => item.blocking && item.fieldB === 'takeaway');
     if (takeawayDuplicate || typeof block.takeaway !== 'string' || !block.takeaway.trim()) {
       block.takeaway = replacementTakeaway(block, topicName);
       events.push({ path: `sequence[${index}].takeaway`, action: 'takeaway_replaced', message: 'Takeaway simplifié pour éviter une répétition.' });
@@ -53,7 +53,7 @@ export function normalizeLessonComposition(lesson: Record<string, unknown>, topi
         events.push({ path: `sequence[${index}].key_points`, action: 'key_points_simplified', message: 'Key points simplifiés pour conserver des rôles distincts.' });
       }
     }
-    const remaining = semanticDuplicationDiagnostics(block);
+    const remaining = semanticDuplicationDiagnostics(block, topicName);
     if (remaining.length) events.push({ path: `sequence[${index}]`, action: 'warning', message: 'Répétition pédagogique résiduelle conservée comme avertissement.' });
     return block;
   }) : lesson.sequence;
