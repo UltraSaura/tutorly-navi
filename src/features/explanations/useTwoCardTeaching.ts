@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
 import type { Step } from "./types";
 import { getLearningMode } from "@/domain/learningMode";
+import { evaluateFractionBounds, formatFraction, parseFractions } from "@/utils/fractionBounds";
 import {
   analyzeExerciseProfile,
   countOperandDigits,
@@ -367,6 +368,78 @@ function learningSupportIntro(style: LearningStyle, responseLanguage: string) {
   return "Use three supports: look at an example, say the rule in your words, then try a small action.";
 }
 
+function buildFractionBoundsExplanation(
+  exercise: string,
+  studentAnswer: string,
+  responseLanguage: string,
+): TeachingSections {
+  const french = responseLanguage === "French";
+  const [target] = parseFractions(exercise);
+  const result = evaluateFractionBounds(exercise, studentAnswer);
+  const targetText = target ? formatFraction(target) : "la fraction";
+  const lowerText = result?.lower ? formatFraction(result.lower) : (french ? "une fraction plus petite" : "a smaller fraction");
+  const upperText = result?.upper ? formatFraction(result.upper) : (french ? "une fraction plus grande" : "a larger fraction");
+  const relation = french
+    ? `${lowerText} < ${targetText} < ${upperText}`
+    : `${lowerText} < ${targetText} < ${upperText}`;
+
+  return {
+    exercise,
+    steps: [
+      {
+        title: french ? "Lire la consigne" : "Read the task",
+        body: french
+          ? `On cherche deux fractions autour de ${targetText}. Elles doivent encadrer la fraction demandée.`
+          : `Find two fractions around ${targetText}. They must bound the requested fraction.`,
+        icon: "lightbulb",
+        kind: "concept",
+      },
+      {
+        title: french ? "Vérifier les deux côtés" : "Check both sides",
+        body: french
+          ? `La première fraction doit être strictement plus petite et la seconde strictement plus grande. On vise ${relation}.`
+          : `The first fraction must be strictly smaller and the second strictly larger. Aim for ${relation}.`,
+        icon: "magnifier",
+        kind: "strategy",
+      },
+      {
+        title: french ? "Regarder ta réponse" : "Check your answer",
+        body: result?.isCorrect
+          ? (french ? `Ta réponse vérifie bien ${relation}.` : `Your answer verifies ${relation}.`)
+          : (french
+            ? `Compare chaque fraction à ${targetText}. Une fraction égale à ${targetText} ne convient pas pour un encadrement strict.`
+            : `Compare each fraction with ${targetText}. A fraction equal to ${targetText} does not work for a strict bound.`),
+        icon: "target",
+        kind: "check",
+      },
+      {
+        title: french ? "Méthode" : "Method",
+        body: french
+          ? `Compare les valeurs des deux fractions avec ${targetText}, puis écris l'inégalité dans l'ordre croissant.`
+          : `Compare both fraction values with ${targetText}, then write the inequality in increasing order.`,
+        icon: "checklist",
+        kind: "strategy",
+      },
+      {
+        title: french ? "Attention" : "Watch out",
+        body: french
+          ? "Les deux bornes doivent être différentes de la fraction donnée : l'inégalité est stricte."
+          : "Both bounds must differ from the given fraction: the inequality is strict.",
+        icon: "warning",
+        kind: "pitfall",
+      },
+    ],
+    concept: french ? `Encadrer ${targetText}, c'est placer cette fraction entre une borne inférieure et une borne supérieure.` : `To bound ${targetText}, place it between a lower and an upper bound.`,
+    example: french ? `Exemple guidé : ${relation}` : `Guided example: ${relation}`,
+    method: french ? "Compare les valeurs, puis vérifie l'ordre des trois termes." : "Compare the values, then check the order of all three terms.",
+    currentExercise: french ? `Exercice original : ${exercise}` : `Original exercise: ${exercise}`,
+    pitfall: french ? "Une égalité avec la fraction donnée ne forme pas un encadrement strict." : "An equality with the given fraction is not a strict bound.",
+    check: french ? `Vérifie : ${relation}.` : `Check: ${relation}.`,
+    practice: french ? "Nouvel entraînement : choisis deux autres fractions, puis vérifie les deux inégalités." : "New practice: choose two other fractions and check both inequalities.",
+    parentHelpHint: french ? "Demander à l'élève de comparer chaque borne séparément avec la fraction donnée." : "Ask the learner to compare each bound separately with the given fraction.",
+  };
+}
+
 function synthesizeAdaptiveStepsFromLegacySections(
   sections: any,
   learningStyle: LearningStyle,
@@ -506,6 +579,16 @@ export function useTwoCardTeaching() {
 
       const cacheHash = buildExerciseHash(exercise_content, response_language, grade_level, learning_style);
       const reuseMeta = buildReuseMeta(exercise_content, response_language, subject.toLowerCase());
+
+      // Fraction bounds have a deterministic, safe explanation. Keep this
+      // path independent of the provider and of the division animation.
+      if (/\bencadr\w*\b|\bencadrement\b/i.test(exercise_content)) {
+        const deterministic = buildFractionBoundsExplanation(exercise_content, student_answer, response_language);
+        if (!isCurrentRequest()) return;
+        debugSetSections(deterministic);
+        setLoading(false);
+        return;
+      }
 
       const cachedResult = await checkExplanationCache(cacheHash);
       // Integer divisions bypass all legacy synthesis, cross-exercise reuse and partial repairs.

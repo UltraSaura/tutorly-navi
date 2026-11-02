@@ -4,6 +4,7 @@
 
 import { areMathematicallyEquivalent } from '@/utils/mathValidation';
 import { detectMathTaskIntent } from '@/utils/mathTaskIntent';
+import { evaluateFractionBounds, formatFraction, parseFractions } from '@/utils/fractionBounds';
 import { gradeGeometry } from './geometryGrader';
 
 export interface LocalGradeResult {
@@ -25,6 +26,18 @@ export function localGrade(question: string, userAnswer: string): LocalGradeResu
   // Fraction bounds are a distinct task. Do not let the slash fall through
   // to arithmetic equivalence or the long-division explanation.
   if (detectMathTaskIntent(q) === 'fraction_encadrement') {
+    const fractionBounds = evaluateFractionBounds(q, a);
+    if (fractionBounds && parseFractions(a).length >= 2) {
+      return {
+        isCorrect: fractionBounds.isCorrect,
+        correctAnswer: fractionBounds.lower && fractionBounds.upper
+          ? `${formatFraction(fractionBounds.lower)} et ${formatFraction(fractionBounds.upper)}`
+          : 'une fraction inférieure et une fraction supérieure',
+        confidence: 'high',
+        method: 'local',
+      };
+    }
+
     const fraction = q.match(/(-?\d+)\s*\/\s*(-?\d+)/);
     if (!fraction || Number(fraction[2]) === 0) return null;
     const numerator = Number(fraction[1]);

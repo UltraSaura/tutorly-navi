@@ -14,6 +14,13 @@ describe("localMathGrader", () => {
     expect(localGrade("Encadrer 7/3 entre deux entiers", "2 et 4")).toMatchObject({ isCorrect: false });
   });
 
+  it("rejects an equal fraction in a strict fraction bound without AI fallback", () => {
+    expect(localGrade("Encadrer 7/3 entre 2 fractions", "7/2 et 7/3")).toMatchObject({
+      isCorrect: false,
+      confidence: "high",
+    });
+  });
+
   it("keeps explicit division on the arithmetic path", () => {
     expect(localGrade("Pose la division 748 ÷ 4", "187")).toMatchObject({
       isCorrect: true,

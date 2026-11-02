@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { showXpToast } from '@/components/game/XpToast';
 import { TwoCards } from './TwoCards';
 import { useTwoCardTeaching, TeachingSections } from './useTwoCardTeaching';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -83,7 +82,6 @@ export function ExplanationModal({
   const handleTryAgain = () => {
     if (onTryAgain) {
       onTryAgain();
-      showXpToast(5, t('exercises.explanation.xp.great_effort'));
     }
     onClose();
   };
