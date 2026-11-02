@@ -50,6 +50,12 @@ interface ExerciseCardProps {
 
 // Inline helper to render text that may contain math
 const MathText = ({ text, className }: { text: string; className?: string }) => {
+  // Bounds requests are natural-language instructions. Keep their fraction
+  // readable as 7/3 instead of exposing LaTeX syntax inside the sentence.
+  if (/\bencadr\w*\b|\bencadrement\b/i.test(text)) {
+    const readable = text.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '$1/$2');
+    return <span className={className}>{readable}</span>;
+  }
   if (!containsMathContent(text)) return <span className={className}>{text}</span>;
   const { prefix, latex } = textToMathDisplay(text);
   return (
