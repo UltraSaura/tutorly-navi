@@ -1,6 +1,6 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { memo, useMemo, useState, useCallback } from 'react';
-import { Calculator, CheckCircle2, Send, Trash2, X, XCircle } from 'lucide-react';
+import { Calculator, CheckCircle2, Send, Trash2, X, XCircle, Lightbulb, Trophy } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ import { buildSafeHomeworkLearningRows, type SafeHomeworkLearningRow } from '@/s
 import { motion } from 'framer-motion';
 import { PracticeFeedback } from '@/components/practice/PracticeFeedback';
 import { localGrade, type LocalGradeResult } from '@/services/localMathGrader';
+import { formatFraction, parseFractions, parseRationalValues, type FractionValue } from '@/utils/fractionBounds';
 
 interface AIResponseProps {
   messages: Message[];
@@ -115,6 +116,149 @@ export function resolveExerciseEvaluation(
   return { isCorrect: providerIsCorrect, isIncorrect: providerIsIncorrect, localResult: null };
 }
 
+type FractionFeedbackChallenge = {
+  target: FractionValue;
+  choices: Array<{ id: 'A' | 'B' | 'C'; label: string }>;
+  correctChoice: 'A' | 'B' | 'C';
+};
+
+export function buildFractionFeedbackChallenge(question: string): FractionFeedbackChallenge | null {
+  const target = parseFractions(question)[0];
+  if (!target || !/\bentre\s+(?:deux|2)\s+fractions?\b/i.test(question)) return null;
+
+  const above = { numerator: target.numerator + 1, denominator: target.denominator };
+  const fartherAbove = { numerator: target.numerator + 3, denominator: target.denominator };
+  return {
+    target,
+    choices: [
+      { id: 'A', label: formatFraction(above) },
+      { id: 'B', label: formatFraction(fartherAbove) },
+      { id: 'C', label: formatFraction(target) },
+    ],
+    correctChoice: 'A',
+  };
+}
+
+function formatBoundsInequality(question: string, answer: string): string | null {
+  const target = parseFractions(question)[0];
+  const bounds = parseRationalValues(answer);
+  if (!target || bounds.length !== 2) return null;
+  return `${formatFraction(bounds[0])} < ${formatFraction(target)} < ${formatFraction(bounds[1])}`;
+}
+
+export function FractionBoundsFeedbackCard({
+  question,
+  answer,
+  result,
+  language,
+}: {
+  question: string;
+  answer: string;
+  result: LocalGradeResult;
+  language: string;
+}) {
+  const french = language === 'fr';
+  const [selectedChoice, setSelectedChoice] = useState<string>('');
+  const [challengeState, setChallengeState] = useState<'idle' | 'correct' | 'incorrect' | 'hidden'>('idle');
+  const challenge = buildFractionFeedbackChallenge(question);
+  const inequality = formatBoundsInequality(question, answer);
+  const isFormatError = result.evaluation?.reason === 'format';
+  const closerFraction = challenge?.choices[0].label;
+
+  const checkChallenge = () => {
+    if (!selectedChoice || !challenge) return;
+    setChallengeState(selectedChoice === challenge.correctChoice ? 'correct' : 'incorrect');
+  };
+
+  return (
+    <div className={cn(
+      'mb-4 rounded-2xl border p-4 shadow-sm',
+      result.isCorrect ? 'border-emerald-200 bg-emerald-50/70' : 'border-amber-200 bg-amber-50/70',
+    )} data-feedback-card="fraction-bounds">
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+          result.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
+        )} aria-hidden="true">
+          {result.isCorrect ? <Trophy className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-bold text-slate-900">
+            {result.isCorrect
+              ? (french ? "Bravo, c'est correct !" : "Great, that's correct!")
+              : (french ? 'Pas encore, continue !' : 'Not yet, keep going!')}
+          </h3>
+          <p className="mt-1 text-sm text-slate-700">
+            {result.isCorrect
+              ? (french ? 'Tu as trouvé deux fractions qui encadrent correctement la fraction centrale.' : 'You found two fractions that correctly bound the central fraction.')
+              : isFormatError
+                ? (french
+                  ? 'Tu as trouvé deux nombres qui encadrent correctement la fraction. Mais la consigne demande des fractions : écris-les, par exemple 2/1 et 5/1.'
+                  : 'Your two numbers bound the fraction correctly, but the instruction asks for fractions. Write them as fractions, for example 2/1 and 5/1.')
+                : result.evaluation?.feedback}
+          </p>
+          {inequality && (
+            <div className="mt-3 overflow-x-auto rounded-xl border border-white/80 bg-white/80 px-3 py-2" aria-label={french ? 'Encadrement mathématique' : 'Mathematical bounds'}>
+              <MathRenderer latex={inequality.split(' < ').map((part) => {
+                const [numerator, denominator] = part.split('/');
+                return `\\frac{${numerator}}{${denominator}}`;
+              }).join(' < ')} inline className="text-base" />
+            </div>
+          )}
+          {!result.isCorrect && answer && (
+            <p className="mt-2 text-sm font-medium text-slate-800">
+              {french ? 'Ta réponse :' : 'Your answer:'} {answer}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {result.isCorrect && challenge && challengeState !== 'hidden' && (
+        <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3" data-feedback-challenge="fraction-bounds">
+          <p className="font-semibold text-sky-950">{french ? 'Petit défi pour aller plus loin' : 'A small challenge'}</p>
+          <p className="mt-1 text-sm text-sky-900">
+            {french
+              ? `Peux-tu trouver une fraction plus proche de ${formatFraction(challenge.target)} que ${formatFraction({ numerator: challenge.target.numerator + 3, denominator: challenge.target.denominator })}, tout en gardant le même dénominateur ?`
+              : `Can you find a fraction closer to ${formatFraction(challenge.target)} than ${formatFraction({ numerator: challenge.target.numerator + 3, denominator: challenge.target.denominator })}, with the same denominator?`}
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={french ? 'Choix du défi' : 'Challenge choices'}>
+            {challenge.choices.map((choice) => (
+              <button
+                key={choice.id}
+                type="button"
+                role="radio"
+                aria-checked={selectedChoice === choice.id}
+                onClick={() => { setSelectedChoice(choice.id); setChallengeState('idle'); }}
+                className={cn(
+                  'rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors',
+                  selectedChoice === choice.id ? 'border-sky-500 bg-white text-sky-950' : 'border-sky-200 bg-sky-100/50 text-sky-900 hover:bg-white',
+                )}
+              >
+                {choice.id}. {choice.label}
+              </button>
+            ))}
+          </div>
+          {challengeState !== 'idle' && (
+            <p className={cn('mt-2 text-sm font-semibold', challengeState === 'correct' ? 'text-emerald-800' : 'text-amber-800')} role="status">
+              {challengeState === 'correct'
+                ? (french ? `Exact ! ${closerFraction} est plus proche.` : `Exactly! ${closerFraction} is closer.`)
+                : (french ? 'Regarde les numérateurs : nous cherchons une fraction juste au-dessus de la fraction centrale.' : 'Compare the numerators: we need a fraction just above the central fraction.')}
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" size="sm" onClick={checkChallenge} disabled={!selectedChoice}>
+              {french ? 'Vérifier ma réponse' : 'Check my answer'}
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setChallengeState('hidden')}>
+              {french ? 'Ignorer' : 'Skip'}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ExerciseResultBanner({
   isCorrect,
   isIncorrect,
@@ -188,7 +332,6 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   );
   const isCorrect = evaluation.isCorrect;
   const isIncorrect = evaluation.isIncorrect;
-  const evaluationFeedback = evaluation.localResult?.evaluation?.feedback;
 
   const handleSubmitAnswer = async () => {
     if (!userAnswerInput.trim() || !onSubmitAnswer) return;
@@ -294,13 +437,16 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 <MathText text={question || jsonResponse.exercise} />
               </div>
 
-              <ExerciseResultBanner
-                isCorrect={jsonIsCorrect}
-                isIncorrect={jsonIsIncorrect}
-                hasAnswer={!hasNoAnswer}
-                feedback={jsonEvaluation.localResult?.evaluation?.feedback}
-                language={language}
-              />
+              {jsonEvaluation.localResult?.evaluation ? (
+                <FractionBoundsFeedbackCard question={question || jsonResponse.exercise || ''} answer={answer} result={jsonEvaluation.localResult} language={language} />
+              ) : (
+                <ExerciseResultBanner
+                  isCorrect={jsonIsCorrect}
+                  isIncorrect={jsonIsIncorrect}
+                  hasAnswer={!hasNoAnswer}
+                  language={language}
+                />
+              )}
               
               <div className="mb-3">
                 {hasNoAnswer ? (
@@ -392,13 +538,16 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               <MathText text={question} />
             </div>
 
-            <ExerciseResultBanner
-              isCorrect={isCorrect}
-              isIncorrect={isIncorrect}
-              hasAnswer={!hasNoAnswer}
-              feedback={evaluationFeedback}
-              language={language}
-            />
+            {evaluation.localResult?.evaluation ? (
+              <FractionBoundsFeedbackCard question={question} answer={answer} result={evaluation.localResult} language={language} />
+            ) : (
+              <ExerciseResultBanner
+                isCorrect={isCorrect}
+                isIncorrect={isIncorrect}
+                hasAnswer={!hasNoAnswer}
+                language={language}
+              />
+            )}
             
             <div className="mb-3">
               {hasNoAnswer ? (
