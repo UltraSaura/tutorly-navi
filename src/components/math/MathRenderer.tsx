@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { normalizeLatexForDisplay } from '@/utils/latexUtils';
+import { latexToPlainText, normalizeLatexForDisplay } from '@/utils/latexUtils';
 
 interface MathRendererProps {
   latex: string;
@@ -55,8 +55,8 @@ export const MathRenderer = ({
             renderRef.current.innerHTML = content;
             (mathlive as any).renderMathInElement(renderRef.current);
           } else {
-            // Ultimate fallback to plain text
-            renderRef.current.textContent = latex;
+            // Ultimate fallback: keep the math readable instead of exposing raw LaTeX.
+            renderRef.current.textContent = latexToPlainText(latex);
           }
 
         }
@@ -64,7 +64,7 @@ export const MathRenderer = ({
         console.error('Failed to render math:', error);
         // Fallback to plain text
         if (renderRef.current) {
-          renderRef.current.textContent = latex;
+          renderRef.current.textContent = latexToPlainText(latex);
         }
       }
     };
