@@ -174,11 +174,13 @@ export function FractionBoundsFeedbackCard({
   answer,
   result,
   language,
+  onChallengeStateChange,
 }: {
   question: string;
   answer: string;
   result: LocalGradeResult;
   language: string;
+  onChallengeStateChange?: (state: FractionChallengeState) => void;
 }) {
   const french = language === 'fr';
   const [selectedChoice, setSelectedChoice] = useState<string>('');
@@ -188,39 +190,53 @@ export function FractionBoundsFeedbackCard({
   const isFormatError = result.evaluation?.reason === 'format';
   const closerFraction = challenge?.choices[0].label;
   const isImprovement = result.isCorrect && Boolean(challenge);
+  const isFinalChallengeSuccess = challengeState === 'correct';
+
+  const updateChallengeState = (state: FractionChallengeState) => {
+    setChallengeState(state);
+    onChallengeStateChange?.(state);
+  };
 
   const checkChallenge = () => {
     if (!selectedChoice || !challenge || challengeState !== 'idle') return;
-    setChallengeState(selectedChoice === challenge.correctChoice ? 'correct' : 'incorrect');
+    updateChallengeState(selectedChoice === challenge.correctChoice ? 'correct' : 'incorrect');
   };
 
   const retryChallenge = () => {
     setSelectedChoice('');
-    setChallengeState('idle');
+    updateChallengeState('idle');
   };
 
   return (
     <div className={cn(
       'mb-4 rounded-2xl border p-4 shadow-sm',
-      isImprovement ? 'border-amber-200 bg-amber-50/70' : result.isCorrect ? 'border-emerald-200 bg-emerald-50/70' : 'border-rose-200 bg-rose-50/70',
+      isFinalChallengeSuccess || (result.isCorrect && !isImprovement)
+        ? 'border-emerald-200 bg-emerald-50/70'
+        : isImprovement ? 'border-amber-200 bg-amber-50/70' : 'border-rose-200 bg-rose-50/70',
     )} data-feedback-card="fraction-bounds">
       <div className="flex items-start gap-3">
         <div className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-          isImprovement ? 'bg-amber-100 text-amber-700' : result.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700',
+          isFinalChallengeSuccess || (result.isCorrect && !isImprovement)
+            ? 'bg-emerald-100 text-emerald-700'
+            : isImprovement ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700',
         )} aria-hidden="true">
-          {result.isCorrect && !isImprovement ? <Trophy className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
+          {isFinalChallengeSuccess || (result.isCorrect && !isImprovement) ? <Trophy className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-bold text-slate-900">
-            {isImprovement
+            {isFinalChallengeSuccess
+              ? (french ? 'Bravo, tu as réussi !' : 'Great job, you did it!')
+              : isImprovement
               ? (french ? 'Pas mal, tu es sur la bonne voie !' : 'Nice work, you are on the right track!')
               : result.isCorrect
               ? (french ? "Bravo, c'est correct !" : "Great, that's correct!")
               : (french ? 'Pas encore, continue !' : 'Not yet, keep going!')}
           </h3>
           <p className="mt-1 text-sm text-slate-700">
-            {isImprovement
+            {isFinalChallengeSuccess
+              ? (french ? 'Tu as trouvé un encadrement plus précis.' : 'You found a more precise bound.')
+              : isImprovement
               ? (french ? 'Ton encadrement est juste, mais tu peux trouver des fractions plus proches.' : 'Your bounds are correct, but you can find closer fractions.')
               : result.isCorrect
               ? (french ? 'Tu as trouvé deux fractions qui encadrent correctement la fraction centrale.' : 'You found two fractions that correctly bound the central fraction.')
@@ -247,10 +263,19 @@ export function FractionBoundsFeedbackCard({
       </div>
 
       {result.isCorrect && challenge && challengeState !== 'hidden' && (
-        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3" data-feedback-challenge="fraction-bounds">
-          <p className="font-semibold text-amber-950">{french ? 'Tu peux aller plus loin !' : 'You can go further!'}</p>
-          <p className="mt-1 text-sm text-amber-900">
-            {french
+        <div className={cn(
+          'mt-4 rounded-xl border p-3',
+          isFinalChallengeSuccess ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50',
+        )} data-feedback-challenge="fraction-bounds">
+          <p className={cn('font-semibold', isFinalChallengeSuccess ? 'text-emerald-950' : 'text-amber-950')}>
+            {isFinalChallengeSuccess
+              ? (french ? 'Défi réussi !' : 'Challenge complete!')
+              : (french ? 'Tu peux aller plus loin !' : 'You can go further!')}
+          </p>
+          <p className={cn('mt-1 text-sm', isFinalChallengeSuccess ? 'text-emerald-900' : 'text-amber-900')}>
+            {isFinalChallengeSuccess
+              ? (french ? 'Tu as trouvé un encadrement plus précis.' : 'You found a more precise bound.')
+              : french
               ? `Ton encadrement est correct. Peux-tu trouver une borne supérieure plus proche de ${formatFraction(challenge.target)} que ${formatFraction(challenge.referenceUpper)}, en gardant le même dénominateur ?`
               : `Your bounds are correct. Can you find an upper bound closer to ${formatFraction(challenge.target)} than ${formatFraction(challenge.referenceUpper)}, with the same denominator?`}
           </p>
@@ -262,7 +287,7 @@ export function FractionBoundsFeedbackCard({
                 role="radio"
                 aria-checked={selectedChoice === choice.id}
                 disabled={challengeState === 'correct'}
-                onClick={() => { setSelectedChoice(choice.id); setChallengeState('idle'); }}
+                onClick={() => { setSelectedChoice(choice.id); updateChallengeState('idle'); }}
                 className={cn(
                   'rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors',
                   getFractionChallengeChoiceClass(choice.id, selectedChoice, challengeState),
@@ -274,7 +299,7 @@ export function FractionBoundsFeedbackCard({
             ))}
           </div>
           {challengeState !== 'idle' && (
-            <p className="mt-2 text-sm font-semibold text-amber-900" role="status">
+            <p className={cn('mt-2 text-sm font-semibold', challengeState === 'correct' ? 'text-emerald-900' : 'text-amber-900')} role="status">
               {challengeState === 'correct'
                 ? (french ? `Exact ! ${closerFraction} est plus proche : tu as trouvé un encadrement plus précis.` : `Exactly! ${closerFraction} is closer: you found a more precise bound.`)
                 : (french ? 'Regarde les numérateurs : nous cherchons une fraction juste au-dessus de la fraction centrale.' : 'Compare the numerators: we need a fraction just above the central fraction.')}
@@ -291,7 +316,7 @@ export function FractionBoundsFeedbackCard({
                 {french ? 'Réessayer' : 'Try again'}
               </Button>
             )}
-            <Button type="button" size="sm" variant="ghost" onClick={() => setChallengeState('hidden')}>
+            <Button type="button" size="sm" variant="ghost" onClick={() => updateChallengeState('hidden')}>
               {french ? 'Ignorer' : 'Skip'}
             </Button>
           </div>
@@ -343,6 +368,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [fractionChallengeState, setFractionChallengeState] = useState<FractionChallengeState>('idle');
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
   
@@ -374,6 +400,11 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   );
   const isCorrect = evaluation.isCorrect;
   const isIncorrect = evaluation.isIncorrect;
+  const fractionChallenge = evaluation.localResult
+    ? buildFractionFeedbackChallenge(question, answer)
+    : null;
+  const hasFinalChallengeSuccess = isCorrect && Boolean(fractionChallenge) && fractionChallengeState === 'correct';
+  const hasImprovement = isCorrect && Boolean(fractionChallenge) && !hasFinalChallengeSuccess;
 
   const handleSubmitAnswer = async () => {
     if (!userAnswerInput.trim() || !onSubmitAnswer) return;
@@ -443,19 +474,23 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     );
     const jsonIsCorrect = jsonEvaluation.isCorrect;
     const jsonIsIncorrect = jsonEvaluation.isIncorrect;
-    const jsonHasImprovement = jsonIsCorrect && Boolean(jsonEvaluation.localResult?.evaluation);
+    const jsonHasFinalChallengeSuccess = jsonIsCorrect && Boolean(fractionChallenge) && fractionChallengeState === 'correct';
+    const jsonHasImprovement = jsonIsCorrect && Boolean(fractionChallenge) && !jsonHasFinalChallengeSuccess;
     
     return (
       <div className="w-full overflow-hidden">
         <div className={cn(
           'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
-          jsonHasImprovement ? 'bg-amber-50 border border-amber-200'
+          jsonHasFinalChallengeSuccess ? 'bg-green-50 border border-green-200'
+            : jsonHasImprovement ? 'bg-amber-50 border border-amber-200'
             : jsonIsCorrect ? 'bg-green-50 border border-green-200'
             : jsonIsIncorrect ? 'bg-red-50 border border-red-200'
             : 'bg-neutral-surface border border-neutral-border'
         )}>
           <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
-            {jsonHasImprovement ? (
+            {jsonHasFinalChallengeSuccess ? (
+              <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
+            ) : jsonHasImprovement ? (
               <Lightbulb className="h-5 w-5 text-amber-700" aria-label={t('exercise.correct')} />
             ) : jsonIsCorrect ? (
               <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
@@ -471,7 +506,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
           <div className="flex items-start gap-3 pr-8">
             <div className={cn(
               'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
-              jsonHasImprovement ? 'bg-amber-100 border border-amber-300 text-amber-700'
+              jsonHasFinalChallengeSuccess ? 'bg-green-100 border border-green-300 text-green-600'
+                : jsonHasImprovement ? 'bg-amber-100 border border-amber-300 text-amber-700'
                 : jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-600'
                 : jsonIsIncorrect ? 'bg-blue-100 border border-blue-200 text-blue-600'
                 : 'bg-neutral-surface border border-neutral-border text-blue-600'
@@ -485,7 +521,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               </div>
 
               {jsonEvaluation.localResult?.evaluation ? (
-                <FractionBoundsFeedbackCard question={question || jsonResponse.exercise || ''} answer={answer} result={jsonEvaluation.localResult} language={language} />
+                <FractionBoundsFeedbackCard
+                  question={question || jsonResponse.exercise || ''}
+                  answer={answer}
+                  result={jsonEvaluation.localResult}
+                  language={language}
+                  onChallengeStateChange={setFractionChallengeState}
+                />
               ) : (
                 <ExerciseResultBanner
                   isCorrect={jsonIsCorrect}
@@ -529,7 +571,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 ) : (
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className={cn('px-3 py-1',
-                      jsonHasImprovement ? 'bg-amber-100 border border-amber-300 text-amber-900'
+                      jsonHasFinalChallengeSuccess ? 'bg-green-100 border border-green-300 text-green-800'
+                        : jsonHasImprovement ? 'bg-amber-100 border border-amber-300 text-amber-900'
                         : jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-800'
                         : jsonIsIncorrect ? 'bg-white border border-border text-muted-foreground'
                         : 'bg-neutral-bg text-neutral-muted'
@@ -560,12 +603,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   }
 
   // Fallback for non-JSON responses
-  const hasImprovement = isCorrect && Boolean(evaluation.localResult?.evaluation);
   return (
     <div className="w-full">
-      <div className={cn('p-4 rounded-card transition-all duration-200 hover:shadow-md relative', hasImprovement ? 'bg-amber-50 border border-amber-200' : getStatusStyles(content))}>
+      <div className={cn('p-4 rounded-card transition-all duration-200 hover:shadow-md relative', hasFinalChallengeSuccess ? 'bg-green-50 border border-green-200' : hasImprovement ? 'bg-amber-50 border border-amber-200' : getStatusStyles(content))}>
         <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
-          {hasImprovement ? (
+          {hasFinalChallengeSuccess ? (
+            <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
+          ) : hasImprovement ? (
             <Lightbulb className="h-5 w-5 text-amber-700" aria-label={t('exercise.correct')} />
           ) : isCorrect ? (
             <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
@@ -580,7 +624,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
 
         <div className="flex items-start gap-3 pr-8">
           <div className={cn('flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
-            'bg-neutral-surface border border-neutral-border text-blue-600')}>
+            hasFinalChallengeSuccess ? 'bg-green-100 border border-green-300 text-green-600' : 'bg-neutral-surface border border-neutral-border text-blue-600')}>
             <Calculator size={20} />
           </div>
           
@@ -590,7 +634,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             </div>
 
             {evaluation.localResult?.evaluation ? (
-              <FractionBoundsFeedbackCard question={question} answer={answer} result={evaluation.localResult} language={language} />
+              <FractionBoundsFeedbackCard
+                question={question}
+                answer={answer}
+                result={evaluation.localResult}
+                language={language}
+                onChallengeStateChange={setFractionChallengeState}
+              />
             ) : (
               <ExerciseResultBanner
                 isCorrect={isCorrect}
@@ -634,7 +684,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               ) : (
                 <Badge variant="secondary" className={cn(
                   'px-3 py-1',
-                  hasImprovement
+                  hasFinalChallengeSuccess
+                    ? 'bg-green-100 border border-green-300 text-green-800'
+                    : hasImprovement
                     ? 'bg-amber-100 border border-amber-300 text-amber-900'
                     : isCorrect
                     ? 'bg-green-100 border border-green-300 text-green-800'
