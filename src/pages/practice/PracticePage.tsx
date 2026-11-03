@@ -4,12 +4,12 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
+  BookOpen,
   Calculator,
   FlaskConical,
-  Globe2,
   Landmark,
-  Languages,
   MapPinned,
+  MoreHorizontal,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -27,39 +27,32 @@ const FALLBACK_MASCOT_SRC = '/fox-mascot.png';
 
 const subjectColors = {
   mathematiques: {
-    bg: "#E8F8F3",
-    icon: "#12C6A0",
-    iconBg: "#DDF8F0",
-  },
-  histoire: {
-    bg: "#F0EDFF",
-    icon: "#F5A623",
-    iconBg: "#FFF1D6",
-  },
-  sciences: {
-    bg: "#EAF5FF",
-    icon: "#2F9BFF",
-    iconBg: "#E2F1FF",
-  },
-  geographie: {
-    bg: "#ECFBEA",
-    icon: "#5EC84D",
-    iconBg: "#E6F8DE",
+    bg: "#E6EDFF",
+    icon: "#285AC4",
   },
   francais: {
-    bg: "#F2EDFF",
-    icon: "#8B5CF6",
-    iconBg: "#EEE6FF",
+    bg: "#F7E8FA",
+    icon: "#9445A8",
+  },
+  sciences: {
+    bg: "#E5F7EB",
+    icon: "#168A52",
+  },
+  histoire: {
+    bg: "#FFF1D9",
+    icon: "#B77716",
+  },
+  geographie: {
+    bg: "#E2F2FF",
+    icon: "#2584B8",
   },
   anglais: {
-    bg: "#FFF0F5",
-    icon: "#F55783",
-    iconBg: "#FFE4EE",
+    bg: "#F0F1F5",
+    icon: "#687387",
   },
   default: {
     bg: "#F3F6FA",
     icon: "#667085",
-    iconBg: "#E8ECF2",
   },
 };
 
@@ -74,19 +67,16 @@ const getSubjectVisuals = (slug: string, colorScheme?: string | null) => {
   const key = normalizeSubjectKey(slug) as keyof typeof subjectColors;
   const mapped = subjectColors[key] ?? subjectColors.default;
 
-  return {
-    ...mapped,
-    iconBg: colorScheme && !colorScheme.startsWith('bg-') ? colorScheme : mapped.iconBg,
-  };
+  return { ...mapped, iconBg: colorScheme && !colorScheme.startsWith('bg-') ? colorScheme : mapped.bg };
 };
 
 const defaultPracticeSubjects = [
   { slug: 'mathematiques', name: 'Maths', icon_name: 'calculator', icon: Calculator },
-  { slug: 'francais', name: 'Français', icon_name: 'languages', icon: Languages },
+  { slug: 'francais', name: 'Français', icon_name: 'book-open', icon: BookOpen },
   { slug: 'sciences', name: 'Sciences', icon_name: 'flask-conical', icon: FlaskConical },
   { slug: 'histoire', name: 'Histoire', icon_name: 'landmark', icon: Landmark },
   { slug: 'geographie', name: 'Géographie', icon_name: 'map-pinned', icon: MapPinned },
-  { slug: 'anglais', name: 'Anglais', icon_name: 'globe-2', icon: Globe2 },
+  { slug: 'anglais', name: 'Autres', icon_name: 'more-horizontal', icon: MoreHorizontal },
 ] as const;
 
 export default function PracticePage() {
@@ -230,7 +220,6 @@ export default function PracticePage() {
       const sourceSubject = [normalizedSlug, ...getSubjectSlugAliases(fallback.slug).map(normalizeSubjectKey)]
         .map((key) => subjectsByKey.get(key))
         .find(Boolean);
-      if (!sourceSubject?.practiceReady) return [];
 
       return [{
         ...fallback,
@@ -300,27 +289,34 @@ export default function PracticePage() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
               {practiceSubjects.map((subject) => {
                 const colors = getSubjectVisuals(subject.slug, subject.color_scheme);
                 const sourceSubject = subjectsByKey.get(normalizeSubjectKey(subject.slug));
                 const exerciseCount = sourceSubject?.exercises ?? 0;
                 const exerciseLabel = t('practice.subjects.exerciseCount', { count: exerciseCount });
                 const Icon = subject.icon;
-                const subjectTitleFontSize = Math.max((subject.practice_font_size ?? 18) + 4, 16);
+                const subjectTitleFontSize = Math.min(Math.max((subject.practice_font_size ?? 18) + 1, 16), 19);
                 const subjectTitleFontFamily = subject.practice_font_family ?? 'Poppins, sans-serif';
+                const displaySubjectName = subject.slug === 'mathematiques'
+                  ? 'Maths'
+                  : subject.slug === 'anglais'
+                    ? 'Autres'
+                    : subjectLabel(subject.name);
 
                 return (
                   <button
                     key={subject.id}
                     type="button"
                     onClick={() => navigate(`/practice/${subject.slug}`)}
-                    className="relative flex h-[178px] flex-col justify-between rounded-[28px] bg-white p-5 text-left shadow-[0_18px_45px_rgba(15,23,42,0.06)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12C6A0] focus-visible:ring-offset-2"
+                    aria-label={displaySubjectName}
+                    className="relative flex h-[178px] flex-col items-center justify-between rounded-[28px] p-4 text-center shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    style={{ backgroundColor: colors.bg, ['--tw-ring-color' as string]: colors.icon }}
                   >
-                    <div className="flex items-start">
+                    <div className="flex w-full justify-center">
                       <span
-                        className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full p-3"
-                        style={{ backgroundColor: colors.iconBg, color: subject.icon_color ?? colors.icon }}
+                        className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/65 p-3"
+                        style={{ color: colors.icon }}
                       >
                         {subject.icon_image_url ? (
                           <img
@@ -340,16 +336,16 @@ export default function PracticePage() {
                     </div>
                     <div className="space-y-1.5">
                       <h2
-                        className="font-extrabold leading-tight tracking-normal"
-                        style={{ color: subject.practice_text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
+                        className="font-extrabold leading-tight tracking-normal text-[#162033]"
+                        style={{ fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
                       >
-                        {subjectLabel(subject.name)}
+                        {displaySubjectName}
                       </h2>
                       <p className="text-base font-semibold leading-snug text-[#667085]">
                         {exerciseLabel}
                       </p>
                     </div>
-                    <span className="absolute bottom-6 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#050B34] shadow-[0_8px_20px_rgba(15,23,42,0.09)]">
+                    <span className="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[#162033] shadow-[0_8px_20px_rgba(15,23,42,0.09)]">
                       <ArrowRight className="h-5 w-5 stroke-[3]" aria-hidden="true" />
                     </span>
                   </button>
