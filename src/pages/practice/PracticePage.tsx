@@ -20,55 +20,13 @@ import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { getSubjectNameForSlug, getSubjectSlugAliases, normalizeDisciplineKey, resolveExamDisciplinesForSubjectSlug, resolveSubjectSlugForExamDiscipline } from '@/utils/examSubjectMapping';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
 import type { Subject } from '@/types/learning';
+import { getSubjectPastelVisuals, normalizeSubjectKey } from '@/components/learning/subjectPastelVisuals';
 
 const NO_ACTIVE_LEVEL = '__no_active_level__';
 const MASCOT_SRC = '/practice-mascot.png';
 const FALLBACK_MASCOT_SRC = '/fox-mascot.png';
 
-const subjectColors = {
-  mathematiques: {
-    bg: "#E6EDFF",
-    icon: "#285AC4",
-  },
-  francais: {
-    bg: "#F7E8FA",
-    icon: "#9445A8",
-  },
-  sciences: {
-    bg: "#E5F7EB",
-    icon: "#168A52",
-  },
-  histoire: {
-    bg: "#FFF1D9",
-    icon: "#B77716",
-  },
-  geographie: {
-    bg: "#E2F2FF",
-    icon: "#2584B8",
-  },
-  anglais: {
-    bg: "#F0F1F5",
-    icon: "#687387",
-  },
-  default: {
-    bg: "#F3F6FA",
-    icon: "#667085",
-  },
-};
-
-const normalizeSubjectKey = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '');
-
-const getSubjectVisuals = (slug: string, colorScheme?: string | null) => {
-  const key = normalizeSubjectKey(slug) as keyof typeof subjectColors;
-  const mapped = subjectColors[key] ?? subjectColors.default;
-
-  return { ...mapped, iconBg: colorScheme && !colorScheme.startsWith('bg-') ? colorScheme : mapped.bg };
-};
+const getSubjectVisuals = getSubjectPastelVisuals;
 
 const defaultPracticeSubjects = [
   { slug: 'mathematiques', name: 'Maths', icon_name: 'calculator', icon: Calculator },
