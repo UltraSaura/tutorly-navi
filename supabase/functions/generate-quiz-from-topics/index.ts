@@ -7,6 +7,7 @@ import {
   promptReferencesVisual,
 } from "../../../src/lib/quiz/promptVisual.ts";
 import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
+import { safeProviderContentDiagnostics } from '../_shared/provider-diagnostics.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -744,7 +745,7 @@ RULES:
       try {
         return parseAiQuestions(content);
       } catch {
-        console.error("Failed to parse AI response:", content);
+        console.error("Failed to parse AI response", safeProviderContentDiagnostics(content, content.trim() ? 'malformed' : 'empty'));
         throw new Error("Failed to parse generated questions");
       }
     };

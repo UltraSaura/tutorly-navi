@@ -2,6 +2,7 @@ import { requirePrivilegedFamily } from '../_shared/family-access.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
+import { safeProviderContentDiagnostics } from '../_shared/provider-diagnostics.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -369,7 +370,7 @@ RULES:
         if (!Array.isArray(parsed)) throw new Error("AI response is not an array of questions");
         return parsed;
       } catch {
-        console.error("Failed to parse AI response:", content);
+        console.error("Failed to parse AI response", safeProviderContentDiagnostics(content, content.trim() ? 'malformed' : 'empty'));
         throw new Error("Failed to parse generated questions");
       }
     };
