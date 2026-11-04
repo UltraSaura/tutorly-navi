@@ -215,7 +215,7 @@ export function BulkLessonGenerator() {
   };
 
   const handleGenerate = async () => {
-    if (!selected.length) return;
+    if (!selected.length || isRunning) return;
 
     const batch = topics.filter((t) => selected.includes(t.id));
     setResults(batch.map((t) => ({ topicId: t.id, name: t.name, status: 'idle' })));
@@ -277,39 +277,15 @@ export function BulkLessonGenerator() {
   };
 
   const handleLegacyGenerate = async () => {
-    if (!selected.length) return;
+    if (!selected.length || isRunning) return;
     const batch = topics.filter((topic) => selected.includes(topic.id));
     setResults(batch.map((topic) => ({ topicId: topic.id, name: topic.name, status: 'idle' })));
     setIsRunning(true);
     setRunStartedAt(Date.now());
     setElapsedMs(0);
-    for (const topic of batch) {
-      setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'generating' } : result));
-      try {
-        const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', { body: { topicId: topic.id, language } });
-        if (error) {
-          const details = await getFunctionErrorDetails(error, response);
-          throw Object.assign(new Error(details.message), details);
-        }
-        if (data?.error) throw Object.assign(new Error(getGenerationErrorDetails(data).message), getGenerationErrorDetails(data));
-        setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'saved' } : result));
-      } catch (error) {
-        const details = getGenerationErrorDetails(error);
-        setResults((previous) => previous.map((result) => result.topicId === topic.id ? {
-          ...result,
-          status: 'failed',
-          error: details.message,
-          technicalDetail: details.technicalDetail,
-          providerCalls: details.providerCalls ?? 0,
-          failedLevel: details.level,
-          failureStage: details.stage ?? 'pre_generation',
-          httpStatus: details.httpStatus,
-          errorCode: details.code,
-          requestId: details.requestId,
-          providerDiagnostics: details.providerDiagnostics,
-        } : result));
-      }
-    }
+    setResults((previous) => previous.map((result) => batch.some((topic) => topic.id === result.topicId)
+      ? { ...result, status: 'failed', error: 'Le générateur legacy est désactivé. Utilisez le workflow staging.' }
+      : result));
     setIsRunning(false);
     setRunStartedAt(null);
     setSelected([]);

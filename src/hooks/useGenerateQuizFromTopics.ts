@@ -19,6 +19,24 @@ interface GenerateResponse {
   topicNames: string[];
 }
 
+export interface QuizGenerationProgress {
+  requested: number;
+  generated: number;
+  remaining: number;
+  providerCalls: number;
+  retryCount: number;
+  failedBatch?: number;
+  failureCategory?: string;
+  questions?: Question[];
+}
+
+export class QuizGenerationError extends Error {
+  constructor(message: string, readonly progress?: QuizGenerationProgress) {
+    super(message);
+    this.name = 'QuizGenerationError';
+  }
+}
+
 export function useGenerateQuizFromTopics() {
   return useMutation({
     mutationFn: async (request: GenerateRequest): Promise<GenerateResponse> => {
@@ -28,20 +46,22 @@ export function useGenerateQuizFromTopics() {
 
       if (error) {
         let message = error.message || 'Failed to generate questions';
+        let progress: QuizGenerationProgress | undefined;
         const response = (error as { context?: Response }).context;
         if (response instanceof Response) {
           try {
             const payload = await response.clone().json();
             message = payload?.error || payload?.message || message;
+            progress = payload?.progress;
           } catch {
             // Keep the Functions client message when the response is not JSON.
           }
         }
-        throw new Error(message);
+        throw new QuizGenerationError(message, progress);
       }
 
       if (data?.error) {
-        throw new Error(data.error);
+        throw new QuizGenerationError(data.error, data.progress);
       }
 
       return data as GenerateResponse;

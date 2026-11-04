@@ -1,6 +1,6 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { memo, useMemo, useState, useCallback } from 'react';
-import { Calculator, CheckCircle2, Send, Trash2, X, XCircle } from 'lucide-react';
+import { Calculator, CheckCircle2, Send, Trash2, X, XCircle, Lightbulb, Trophy } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,8 @@ import { useAdmin } from '@/context/AdminContext';
 import { buildSafeHomeworkLearningRows, type SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 import { motion } from 'framer-motion';
 import { PracticeFeedback } from '@/components/practice/PracticeFeedback';
+import { localGrade, type LocalGradeResult } from '@/services/localMathGrader';
+import { formatFraction, parseFractions, parseRationalValues, type FractionValue } from '@/utils/fractionBounds';
 
 interface AIResponseProps {
   messages: Message[];
@@ -50,6 +52,12 @@ interface ExerciseCardProps {
 
 // Inline helper to render text that may contain math
 const MathText = ({ text, className }: { text: string; className?: string }) => {
+  // Bounds requests are natural-language instructions. Keep their fraction
+  // readable as 7/3 instead of exposing LaTeX syntax inside the sentence.
+  if (/\bencadr\w*\b|\bencadrement\b/i.test(text)) {
+    const readable = text.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '$1/$2');
+    return <span className={className}>{readable}</span>;
+  }
   if (!containsMathContent(text)) return <span className={className}>{text}</span>;
   const { prefix, latex } = textToMathDisplay(text);
   return (
@@ -91,17 +99,273 @@ const parseAIResponse = (content: string) => {
   }
 };
 
+export function resolveExerciseEvaluation(
+  question: string,
+  answer: string,
+  providerIsCorrect: boolean,
+  providerIsIncorrect: boolean,
+): { isCorrect: boolean; isIncorrect: boolean; localResult: LocalGradeResult | null } {
+  const localResult = question.trim() && answer.trim() ? localGrade(question, answer) : null;
+  if (localResult) {
+    return {
+      isCorrect: localResult.isCorrect,
+      isIncorrect: !localResult.isCorrect,
+      localResult,
+    };
+  }
+  return { isCorrect: providerIsCorrect, isIncorrect: providerIsIncorrect, localResult: null };
+}
+
+type FractionFeedbackChallenge = {
+  target: FractionValue;
+  referenceUpper: FractionValue;
+  choices: Array<{ id: 'A' | 'B' | 'C'; label: string }>;
+  correctChoice: 'A' | 'B' | 'C';
+};
+export type FractionChallengeState = 'idle' | 'correct' | 'incorrect' | 'hidden';
+
+export function getFractionChallengeChoiceClass(
+  choiceId: string,
+  selectedChoice: string,
+  state: FractionChallengeState,
+): string {
+  if (state === 'correct' && selectedChoice === choiceId) return 'border-[#22C55E] bg-[#E8F8EC] text-green-900';
+  if (state === 'incorrect' && selectedChoice === choiceId) return 'border-rose-400 bg-rose-100 text-rose-900';
+  if (selectedChoice === choiceId) return 'border-amber-500 bg-white text-amber-950';
+  return 'border-amber-200 bg-amber-100/50 text-amber-900 hover:bg-white';
+}
+
+export function buildFractionFeedbackChallenge(question: string, answer: string): FractionFeedbackChallenge | null {
+  const target = parseFractions(question)[0];
+  if (!target || !/\bentre\s+(?:deux|2)\s+fractions?\b/i.test(question)) return null;
+
+  const above = { numerator: target.numerator + 1, denominator: target.denominator };
+  const answerBounds = parseRationalValues(answer);
+  const referenceUpper = answerBounds.length === 2 ? answerBounds[1] : null;
+  if (!referenceUpper || referenceUpper.numerator * target.denominator <= target.numerator * referenceUpper.denominator) return null;
+  const fartherAbove = {
+    numerator: referenceUpper.numerator + 1,
+    denominator: referenceUpper.denominator,
+  };
+  return {
+    target,
+    referenceUpper,
+    choices: [
+      { id: 'A', label: formatFraction(above) },
+      { id: 'B', label: formatFraction(fartherAbove) },
+      { id: 'C', label: formatFraction(target) },
+    ],
+    correctChoice: 'A',
+  };
+}
+
+function formatBoundsInequality(question: string, answer: string): string | null {
+  const target = parseFractions(question)[0];
+  const bounds = parseRationalValues(answer);
+  if (!target || bounds.length !== 2) return null;
+  return `${formatFraction(bounds[0])} < ${formatFraction(target)} < ${formatFraction(bounds[1])}`;
+}
+
+function inequalityToLatex(inequality: string): string {
+  return inequality.split(' < ').map((part) => {
+    const [numerator, denominator] = part.split('/');
+    return `\\frac{${numerator}}{${denominator}}`;
+  }).join(' < ');
+}
+
+export const fractionChallengeCheckButtonClass =
+  'bg-[#7452C4] text-white hover:bg-[#6344B0] disabled:cursor-not-allowed disabled:bg-[#EDE5FA] disabled:text-[#6B4BA5] disabled:opacity-100';
+
+export function FractionBoundsFeedbackCard({
+  question,
+  answer,
+  result,
+  language,
+  onChallengeStateChange,
+}: {
+  question: string;
+  answer: string;
+  result: LocalGradeResult;
+  language: string;
+  onChallengeStateChange?: (state: FractionChallengeState) => void;
+}) {
+  const french = language === 'fr';
+  const [selectedChoice, setSelectedChoice] = useState<string>('');
+  const [challengeState, setChallengeState] = useState<FractionChallengeState>('idle');
+  const challenge = buildFractionFeedbackChallenge(question, answer);
+  const inequality = formatBoundsInequality(question, answer);
+  const isFormatError = result.evaluation?.reason === 'format';
+  const closerFraction = challenge?.choices[0].label;
+  const isImprovement = result.isCorrect && Boolean(challenge);
+  const isFinalChallengeSuccess = challengeState === 'correct';
+  const answerBounds = parseRationalValues(answer);
+  const improvedInequality = challenge && closerFraction && answerBounds[0]
+    ? `${formatFraction(answerBounds[0])} < ${formatFraction(challenge.target)} < ${closerFraction}`
+    : null;
+
+  const updateChallengeState = (state: FractionChallengeState) => {
+    setChallengeState(state);
+    onChallengeStateChange?.(state);
+  };
+
+  const checkChallenge = () => {
+    if (!selectedChoice || !challenge || challengeState !== 'idle') return;
+    updateChallengeState(selectedChoice === challenge.correctChoice ? 'correct' : 'incorrect');
+  };
+
+  const retryChallenge = () => {
+    setSelectedChoice('');
+    updateChallengeState('idle');
+  };
+
+  return (
+    <div className={cn(
+      'mb-3 rounded-2xl border p-3 shadow-sm sm:mb-4 sm:p-4',
+      isFinalChallengeSuccess || (result.isCorrect && !isImprovement)
+        ? 'border-emerald-200 bg-emerald-50/70'
+        : isImprovement ? 'border-amber-200 bg-amber-50/70' : 'border-rose-200 bg-rose-50/70',
+    )} data-feedback-card="fraction-bounds">
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+          isFinalChallengeSuccess || (result.isCorrect && !isImprovement)
+            ? 'bg-emerald-100 text-emerald-700'
+            : isImprovement ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700',
+        )} aria-hidden="true">
+          {isFinalChallengeSuccess || (result.isCorrect && !isImprovement) ? <Trophy className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-bold text-slate-900">
+            {isFinalChallengeSuccess
+              ? (french ? 'Bravo, tu as réussi !' : 'Great job, you did it!')
+              : isImprovement
+              ? (french ? 'Pas mal, tu es sur la bonne voie !' : 'Nice work, you are on the right track!')
+              : result.isCorrect
+              ? (french ? "Bravo, c'est correct !" : "Great, that's correct!")
+              : (french ? 'Pas encore, continue !' : 'Not yet, keep going!')}
+          </h3>
+          <p className="mt-1 text-sm text-slate-700">
+            {isFinalChallengeSuccess
+              ? (french ? 'Tu as trouvé un encadrement plus précis.' : 'You found a more precise bound.')
+              : isImprovement
+              ? (french ? 'Ton encadrement est juste, mais tu peux trouver des fractions plus proches.' : 'Your bounds are correct, but you can find closer fractions.')
+              : result.isCorrect
+              ? (french ? 'Tu as trouvé deux fractions qui encadrent correctement la fraction centrale.' : 'You found two fractions that correctly bound the central fraction.')
+              : isFormatError
+                ? (french
+                  ? 'Tu as trouvé deux nombres qui encadrent correctement la fraction. Mais la consigne demande des fractions : écris-les, par exemple 2/1 et 5/1.'
+                  : 'Your two numbers bound the fraction correctly, but the instruction asks for fractions. Write them as fractions, for example 2/1 and 5/1.')
+                : result.evaluation?.feedback}
+          </p>
+          {inequality && (
+            <div className="mt-3 overflow-x-auto rounded-xl border border-white/80 bg-white/80 px-3 py-2" aria-label={french ? 'Encadrement mathématique' : 'Mathematical bounds'}>
+              <MathRenderer latex={inequalityToLatex(inequality)} inline className="text-base" />
+            </div>
+          )}
+          {!result.isCorrect && answer && (
+            <p className="mt-2 text-sm font-medium text-slate-800">
+              {french ? 'Ta réponse :' : 'Your answer:'} {answer}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {result.isCorrect && challenge && challengeState === 'correct' && (
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3" data-feedback-challenge="fraction-bounds">
+          <p className="font-semibold text-emerald-950">{french ? 'Défi réussi !' : 'Challenge complete!'}</p>
+          {improvedInequality && (
+            <div className="mt-2 overflow-x-auto rounded-lg border border-emerald-100 bg-white/80 px-3 py-2" aria-label={french ? 'Encadrement amélioré' : 'Improved bounds'}>
+              <MathRenderer latex={inequalityToLatex(improvedInequality)} inline className="text-base" />
+            </div>
+          )}
+          <p className="mt-2 text-sm text-emerald-900" role="status">
+            {french ? 'Tu as trouvé un encadrement plus précis.' : 'You found a more precise bound.'}
+          </p>
+        </div>
+      )}
+      {result.isCorrect && challenge && challengeState !== 'correct' && challengeState !== 'hidden' && (
+        <div className={cn(
+          'mt-3 rounded-xl border p-3 sm:mt-4',
+          'border-amber-200 bg-amber-50',
+        )} data-feedback-challenge="fraction-bounds">
+          <p className="font-semibold text-amber-950">{french ? 'Tu peux aller plus loin !' : 'You can go further!'}</p>
+          <p className="mt-1 text-sm text-amber-900">
+            {french
+              ? `Ton encadrement est correct. Peux-tu trouver une borne supérieure plus proche de ${formatFraction(challenge.target)} que ${formatFraction(challenge.referenceUpper)}, en gardant le même dénominateur ?`
+              : `Your bounds are correct. Can you find an upper bound closer to ${formatFraction(challenge.target)} than ${formatFraction(challenge.referenceUpper)}, with the same denominator?`}
+          </p>
+          {challengeState === 'incorrect' && (
+            <p className="mt-2 text-sm font-semibold text-amber-900" role="status">
+              {french ? 'Regarde les numérateurs : nous cherchons une fraction juste au-dessus de la fraction centrale.' : 'Compare the numerators: we need a fraction just above the central fraction.'}
+            </p>
+          )}
+          <div className="mt-3 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={french ? 'Choix du défi' : 'Challenge choices'}>
+            {challenge.choices.map((choice) => (
+              <button
+                key={choice.id}
+                type="button"
+                role="radio"
+                aria-checked={selectedChoice === choice.id}
+                onClick={() => { setSelectedChoice(choice.id); updateChallengeState('idle'); }}
+                className={cn(
+                  'min-h-10 rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors',
+                  getFractionChallengeChoiceClass(choice.id, selectedChoice, challengeState),
+                )}
+              >
+                {choice.id}. {choice.label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {challengeState === 'idle' && (
+              <Button type="button" size="sm" className={fractionChallengeCheckButtonClass} onClick={checkChallenge} disabled={!selectedChoice}>
+                {french ? 'Vérifier ma réponse' : 'Check my answer'}
+              </Button>
+            )}
+            {challengeState === 'incorrect' && (
+              <Button type="button" size="sm" className="bg-[#7452C4] text-white hover:bg-[#6344B0]" onClick={retryChallenge}>
+                {french ? 'Réessayer' : 'Try again'}
+              </Button>
+            )}
+            <Button type="button" size="sm" variant="ghost" onClick={() => updateChallengeState('hidden')}>
+              {french ? 'Ignorer' : 'Skip'}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ExerciseResultBanner({
   isCorrect,
   isIncorrect,
+  hasAnswer,
+  feedback,
   language,
 }: {
   isCorrect: boolean;
   isIncorrect: boolean;
+  hasAnswer: boolean;
+  feedback?: string;
   language: string;
 }) {
-  if (!isCorrect && !isIncorrect) return null;
-  return <PracticeFeedback status={isCorrect ? 'correct' : 'incorrect'} language={language} />;
+  if (!isCorrect && !isIncorrect) {
+    if (!hasAnswer) return null;
+    return (
+      <div className="mb-3 inline-flex rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700" role="status">
+        {language === 'fr' ? 'Réponse non évaluée' : 'Answer not evaluated'}
+      </div>
+    );
+  }
+  return (
+    <div className="mb-3 space-y-2">
+      <PracticeFeedback status={isCorrect ? 'correct' : 'incorrect'} language={language} />
+      {feedback && (
+        <p className="text-sm text-slate-700" role="status">{feedback}</p>
+      )}
+    </div>
+  );
 }
 
 // Memoized ExerciseCard component
@@ -115,6 +379,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [fractionChallengeState, setFractionChallengeState] = useState<FractionChallengeState>('idle');
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
   
@@ -136,8 +401,21 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   
   const contentTrimmed = content.trim();
   const firstLine = contentTrimmed.split('\n')[0];
-  const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
-  const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
+  const providerIsCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
+  const providerIsIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
+  const evaluation = resolveExerciseEvaluation(
+    question,
+    answer,
+    !isRetrying && hasAnswer ? providerIsCorrect : false,
+    !isRetrying && hasAnswer ? providerIsIncorrect : false,
+  );
+  const isCorrect = evaluation.isCorrect;
+  const isIncorrect = evaluation.isIncorrect;
+  const fractionChallenge = evaluation.localResult
+    ? buildFractionFeedbackChallenge(question, answer)
+    : null;
+  const hasFinalChallengeSuccess = isCorrect && Boolean(fractionChallenge) && fractionChallengeState === 'correct';
+  const hasImprovement = isCorrect && Boolean(fractionChallenge) && !hasFinalChallengeSuccess;
 
   const handleSubmitAnswer = async () => {
     if (!userAnswerInput.trim() || !onSubmitAnswer) return;
@@ -197,19 +475,35 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   // JSON response path
   const jsonResponse = parseAIResponse(content);
   if (jsonResponse && jsonResponse.isMath && jsonResponse.sections) {
-    const jsonIsCorrect = jsonResponse.isCorrect === true;
-    const jsonIsIncorrect = jsonResponse.isCorrect === false;
+    const jsonProviderIsCorrect = jsonResponse.isCorrect === true;
+    const jsonProviderIsIncorrect = jsonResponse.isCorrect === false;
+    const jsonEvaluation = resolveExerciseEvaluation(
+      question || jsonResponse.exercise || '',
+      answer,
+      !isRetrying && hasAnswer ? jsonProviderIsCorrect : false,
+      !isRetrying && hasAnswer ? jsonProviderIsIncorrect : false,
+    );
+    const jsonIsCorrect = jsonEvaluation.isCorrect;
+    const jsonIsIncorrect = jsonEvaluation.isIncorrect;
+    const jsonHasFinalChallengeSuccess = jsonIsCorrect && Boolean(fractionChallenge) && fractionChallengeState === 'correct';
+    const jsonHasImprovement = jsonIsCorrect && Boolean(fractionChallenge) && !jsonHasFinalChallengeSuccess;
     
     return (
-      <div className="w-full overflow-hidden">
+      <div className="w-full min-w-0 overflow-hidden">
         <div className={cn(
-          'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
-          jsonIsCorrect ? 'bg-green-50 border border-green-200'
+          'p-3 rounded-card transition-all duration-200 hover:shadow-md relative min-w-0 break-words overflow-hidden sm:p-4',
+          jsonHasFinalChallengeSuccess ? 'bg-green-50 border border-green-200'
+            : jsonHasImprovement ? 'bg-amber-50 border border-amber-200'
+            : jsonIsCorrect ? 'bg-green-50 border border-green-200'
             : jsonIsIncorrect ? 'bg-red-50 border border-red-200'
             : 'bg-neutral-surface border border-neutral-border'
         )}>
           <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
-            {jsonIsCorrect ? (
+            {jsonHasFinalChallengeSuccess ? (
+              <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
+            ) : jsonHasImprovement ? (
+              <Lightbulb className="h-5 w-5 text-amber-700" aria-label={t('exercise.correct')} />
+            ) : jsonIsCorrect ? (
               <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
             ) : jsonIsIncorrect ? (
               <img src="/images/Sad Face wrong Answer.png" alt={t('exercise.incorrect')} className="w-6 h-6 object-contain" />
@@ -220,26 +514,39 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             )}
           </div>
 
-          <div className="flex items-start gap-3 pr-8">
+          <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:pr-8">
             <div className={cn(
               'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
-              jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-600'
+              jsonHasFinalChallengeSuccess ? 'bg-green-100 border border-green-300 text-green-600'
+                : jsonHasImprovement ? 'bg-amber-100 border border-amber-300 text-amber-700'
+                : jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-600'
                 : jsonIsIncorrect ? 'bg-blue-100 border border-blue-200 text-blue-600'
                 : 'bg-neutral-surface border border-neutral-border text-blue-600'
             )}>
               <Calculator size={20} />
             </div>
             
-            <div className="flex-1 min-w-0">
+            <div className="w-full min-w-0 sm:flex-1">
               <div className="text-body font-semibold text-neutral-text mb-3 break-words whitespace-pre-wrap">
                 <MathText text={question || jsonResponse.exercise} />
               </div>
 
-              <ExerciseResultBanner
-                isCorrect={jsonIsCorrect}
-                isIncorrect={jsonIsIncorrect}
-                language={language}
-              />
+              {jsonEvaluation.localResult?.evaluation ? (
+                <FractionBoundsFeedbackCard
+                  question={question || jsonResponse.exercise || ''}
+                  answer={answer}
+                  result={jsonEvaluation.localResult}
+                  language={language}
+                  onChallengeStateChange={setFractionChallengeState}
+                />
+              ) : (
+                <ExerciseResultBanner
+                  isCorrect={jsonIsCorrect}
+                  isIncorrect={jsonIsIncorrect}
+                  hasAnswer={!hasNoAnswer}
+                  language={language}
+                />
+              )}
               
               <div className="mb-3">
                 {hasNoAnswer ? (
@@ -275,7 +582,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 ) : (
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className={cn('px-3 py-1',
-                      jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-800'
+                      jsonHasFinalChallengeSuccess ? 'bg-green-100 border border-green-300 text-green-800'
+                        : jsonHasImprovement ? 'bg-amber-100 border border-amber-300 text-amber-900'
+                        : jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-800'
                         : jsonIsIncorrect ? 'bg-white border border-border text-muted-foreground'
                         : 'bg-neutral-bg text-neutral-muted'
                     )}>
@@ -306,10 +615,14 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
 
   // Fallback for non-JSON responses
   return (
-    <div className="w-full">
-      <div className={cn('p-4 rounded-card transition-all duration-200 hover:shadow-md relative', getStatusStyles(content))}>
+    <div className="w-full min-w-0">
+      <div className={cn('p-3 rounded-card transition-all duration-200 hover:shadow-md relative min-w-0 sm:p-4', hasFinalChallengeSuccess ? 'bg-green-50 border border-green-200' : hasImprovement ? 'bg-amber-50 border border-amber-200' : getStatusStyles(content))}>
         <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
-          {isCorrect ? (
+          {hasFinalChallengeSuccess ? (
+            <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
+          ) : hasImprovement ? (
+            <Lightbulb className="h-5 w-5 text-amber-700" aria-label={t('exercise.correct')} />
+          ) : isCorrect ? (
             <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
           ) : isIncorrect ? (
             <img src="/images/Sad Face wrong Answer.png" alt={t('exercise.incorrect')} className="w-6 h-6 object-contain" />
@@ -320,22 +633,33 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
           )}
         </div>
 
-        <div className="flex items-start gap-3 pr-8">
+        <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:pr-8">
           <div className={cn('flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
-            'bg-neutral-surface border border-neutral-border text-blue-600')}>
+            hasFinalChallengeSuccess ? 'bg-green-100 border border-green-300 text-green-600' : 'bg-neutral-surface border border-neutral-border text-blue-600')}>
             <Calculator size={20} />
           </div>
           
-          <div className="flex-1 min-w-0">
+          <div className="w-full min-w-0 sm:flex-1">
             <div className="text-body font-semibold text-neutral-text mb-3">
               <MathText text={question} />
             </div>
 
-            <ExerciseResultBanner
-              isCorrect={isCorrect}
-              isIncorrect={isIncorrect}
-              language={language}
-            />
+            {evaluation.localResult?.evaluation ? (
+              <FractionBoundsFeedbackCard
+                question={question}
+                answer={answer}
+                result={evaluation.localResult}
+                language={language}
+                onChallengeStateChange={setFractionChallengeState}
+              />
+            ) : (
+              <ExerciseResultBanner
+                isCorrect={isCorrect}
+                isIncorrect={isIncorrect}
+                hasAnswer={!hasNoAnswer}
+                language={language}
+              />
+            )}
             
             <div className="mb-3">
               {hasNoAnswer ? (
@@ -371,7 +695,11 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               ) : (
                 <Badge variant="secondary" className={cn(
                   'px-3 py-1',
-                  isCorrect
+                  hasFinalChallengeSuccess
+                    ? 'bg-green-100 border border-green-300 text-green-800'
+                    : hasImprovement
+                    ? 'bg-amber-100 border border-amber-300 text-amber-900'
+                    : isCorrect
                     ? 'bg-green-100 border border-green-300 text-green-800'
                     : isIncorrect
                       ? 'bg-white border border-border text-muted-foreground'
@@ -578,8 +906,8 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   if (exercisePairs.length === 0 && problemMessages.length === 0 && !isLoading) return null;
 
   return (
-    <div className="p-6">
-      <div className="max-w-6xl mx-auto space-y-4">
+    <div className="min-w-0 px-2 py-3 sm:p-6">
+      <div className="mx-auto min-w-0 max-w-6xl space-y-3 sm:space-y-4">
         {(exercisePairs.length > 0 || problemMessages.length > 0) && onClearAll && (
           <div className="flex justify-end">
             <Button variant="outline" size="sm" onClick={onClearAll}

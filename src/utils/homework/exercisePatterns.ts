@@ -45,6 +45,14 @@ export const answerPatterns = [
  * Extract question and answer using pattern matching
  */
 export const extractWithPatterns = (message: string): { question: string; answer: string } => {
+  const explicitFrench = message.match(/^(.+?)\s+(?:ma\s+r[ée]ponse|ma\s+solution|j['’]ai\s+trouv[ée])\s*(?::|est|=)?\s*(.+)$/i);
+  if (explicitFrench?.[1] && explicitFrench[2]) {
+    return {
+      question: explicitFrench[1].trim().replace(/[\s,;:]+$/, ''),
+      answer: explicitFrench[2].trim(),
+    };
+  }
+
   let question = "";
   let answer = "";
   
@@ -74,4 +82,3 @@ export const extractWithPatterns = (message: string): { question: string; answer
   
   return { question, answer };
 };
-
