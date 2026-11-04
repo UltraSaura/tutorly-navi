@@ -9,6 +9,7 @@ import {
 import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
 import { safeProviderContentDiagnostics } from '../_shared/provider-diagnostics.ts';
 import { fetchProviderResponse, isRetryableProviderFailure, PROVIDER_TOTAL_BUDGET_MS, readProviderJson } from '../_shared/provider-request.ts';
+import { generateQuizIncrementally, IncrementalQuizGenerationError, QUIZ_BATCH_SIZE, QUIZ_MAX_PROVIDER_CALLS, QUIZ_MAX_RETRIES_PER_BATCH } from '../_shared/incremental-quiz-generation.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -193,19 +194,7 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }`;
 
       case 'mix':
-        return `Choose the BEST question type for each question from ALL supported kinds: single, multi, numeric, ordering, column-fill, slider, match, fill-expr, visual pie (select_pie or color_slices mode), visual angle.
-Create a rich Brilliant-style variety when the topic allows it:
-- single/multi: conceptual recall, verbal reasoning, "which is true" style
-- numeric: calculation, apply a rule, find a missing number
-- ordering: steps, procedures, sequences, chronological order
-- column-fill: primary-school arithmetic in vertical columns with missing digits
-- slider: estimate a quantity, read a scale, place a value on a number line
-- match: vocabulary ↔ definition, fraction ↔ decimal, term ↔ example
-- fill-expr: complete an equation, fill missing numbers in a formula or calculation
-- visual pie: fractions, proportions — use color_slices AND select_pie modes alternately
-- visual angle: geometry, angle measurement
-Prioritise slider, match, and fill-expr when the topic involves numbers, equivalences, or formulas — these create the most engaging interactive experience.
-For single/multi/numeric questions that reference a cake, shape, diagram, figure, image, triangle, rectangle, square, circle, solid, angle, side, bar, band, segment, or colored part, always include a matching "context_visual" (pie, bar, angle, triangle, or geometry_figure) so the student can see it.`;
+        return `Choose the most appropriate supported kind for each question: single, multi, numeric, ordering, column-fill, visual, slider, match, or fill-expr. Mix reasoning, calculation, ordering, and interaction only when the topic supports them. If a prompt refers to a visual object, include complete visual data.`;
       default:
         return '';
     }
@@ -225,6 +214,30 @@ function buildLearningFriendlyGuidance(): string {
 - For column-fill: include operation, operands, and optional instructions only. Do NOT include a layout object.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
 - If a "single", "multi", or "numeric" prompt references a visual ("ce gâteau", "cette figure", "ce triangle", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
+}
+
+function buildBatchSchemaGuidance(questionTypes: string[]): string {
+  const types = questionTypes.includes('mix')
+    ? ['single', 'multi', 'numeric', 'ordering', 'column-fill', 'visual', 'slider', 'match', 'fill-expr']
+    : questionTypes;
+  return types.map((type) => {
+    switch (type) {
+      case 'single': return 'single: id, kind, prompt, hint, points, choices[{id,label,correct}] with exactly one correct choice.';
+      case 'multi': return 'multi: id, kind, prompt, hint, points, choices[{id,label,correct}] with at least two correct choices.';
+      case 'numeric': return 'numeric: id, kind, prompt, hint, points, numeric answer; include answerUnit for measured quantities.';
+      case 'ordering': return 'ordering: id, kind, prompt, hint, points, items[], correctOrder[] containing the same items.';
+      case 'column-fill': return 'column-fill: id, kind, prompt, hint, points, operation, operands[2], instructions.';
+      case 'visual': return 'visual: id, kind, prompt, hint, points, visual with a supported subtype and complete data.';
+      case 'slider': return 'slider: id, kind, prompt, hint, points, min, max, step, answer, tolerance.';
+      case 'match': return 'match: id, kind, prompt, hint, points, pairs[] of plain strings and answers.';
+      case 'fill-expr': return 'fill-expr: id, kind, prompt, hint, points, template, blanks, chips, answers.';
+      default: return '';
+    }
+  }).filter(Boolean).join('\n');
+}
+
+function maxOutputTokensForBatch(count: number): number {
+  return Math.min(2048, 512 + Math.max(1, count) * 512);
 }
 
 type ColumnOperation = "addition" | "subtraction" | "multiplication" | "division";
@@ -670,24 +683,10 @@ ${buildLearningFriendlyGuidance()}
 DIFFICULTY: ${difficulty}
 ${difficultyGuide[difficulty]}
 
-Return ONLY a valid JSON array. Each question must follow one of these structures:
-
-For "single" or "multi":
-{ "id": "q-1", "kind": "single", "prompt": "...", "hint": "...", "points": 1, "choices": [{"id": "c1", "label": "...", "correct": true/false}, ...] }
-
-For "numeric":
-{ "id": "q-2", "kind": "numeric", "prompt": "...", "hint": "...", "points": 1, "answer": 42, "range": {"min": 40, "max": 44} }
-
-For a measurement or quantity with a unit, include "answerUnit" with the exact expected unit, for example: { "answer": 125, "answerUnit": "cm" } or { "answer": 90, "answerUnit": "min" }. Never use a bare numeric response when the answer needs a unit.
-
-For a clock-time answer, ALWAYS use the time format (never encode 9 h 55 as a plain 955 and never add a numeric range):
-{ "id": "q-time", "kind": "numeric", "answerFormat": "time", "answer": 955, "timeAnswer": {"hours": 9, "minutes": 55}, "dragOptions": [955, 945, 1005, 1015], "prompt": "...", "hint": "...", "points": 1 }
-
-For "ordering":
-{ "id": "q-3", "kind": "ordering", "prompt": "...", "hint": "...", "points": 1, "items": ["B","A","C"], "correctOrder": ["A","B","C"] }
-
-For "column-fill":
-{ "id": "q-4", "kind": "column-fill", "prompt": "...", "hint": "...", "points": 1, "operation": "addition", "operands": ["29","66"], "instructions": "Complète les retenues et le résultat." }
+Return ONLY one valid JSON array. Do not use Markdown fences or surrounding text.
+Required structures for this batch:
+${buildBatchSchemaGuidance(effectiveTypes)}
+For numeric time answers, use answerFormat=time with timeAnswer {hours,minutes}; never invent missing answers.
 
 RULES:
 - Questions must test the curriculum topics and objectives provided
@@ -725,9 +724,10 @@ RULES:
             { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
             { role: "user", content: prompt }
           ],
-          temperature: 0.7,
+          temperature: 0.2,
+          max_tokens: maxOutputTokensForBatch(count),
         }),
-      }, { deadline });
+      }, { deadline, signal: req.signal });
 
       const aiResponse = await readProviderJson<Record<string, any>>(response, { deadline });
       const content = aiResponse.choices?.[0]?.message?.content;
@@ -758,35 +758,20 @@ RULES:
       });
     }
 
-    const questions: any[] = [];
-    const seenPromptKeys = new Set<string>();
-
     const generationDeadline = Date.now() + PROVIDER_TOTAL_BUDGET_MS;
-    for (let attempt = 0; attempt < 3 && questions.length < desiredCount; attempt += 1) {
-      const remaining = desiredCount - questions.length;
-      let rawQuestions: any[];
-      try {
-        rawQuestions = await callAiForQuestions(remaining, questions.map((question) => question.prompt).slice(-12), generationDeadline);
-      } catch (error) {
-        if (!isRetryableProviderFailure(error) || attempt === 2) throw error;
-        const delay = Math.min(error.retryAfterMs ?? 250, Math.max(0, generationDeadline - Date.now()));
-        if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
-        continue;
-      }
-      const validQuestions = validateQuestions(rawQuestions);
-      for (const question of validQuestions) {
-        const key = String(question.prompt || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-        if (!key || seenPromptKeys.has(key)) continue;
-        seenPromptKeys.add(key);
-        questions.push(question);
-        if (questions.length >= desiredCount) break;
-      }
-      console.log(`Generation attempt ${attempt + 1}: ${validQuestions.length}/${rawQuestions.length} valid, total accepted ${questions.length}/${desiredCount}`);
-    }
-
-    if (questions.length < desiredCount) {
-      throw new Error(`Only generated ${questions.length} valid questions out of ${desiredCount}. Please retry or choose fewer restrictive question types.`);
-    }
+    const generation = await generateQuizIncrementally({
+      requested: desiredCount,
+      deadline: generationDeadline,
+      batchSize: QUIZ_BATCH_SIZE,
+      maxProviderCalls: QUIZ_MAX_PROVIDER_CALLS,
+      maxRetriesPerBatch: QUIZ_MAX_RETRIES_PER_BATCH,
+      callBatch: callAiForQuestions,
+      validateBatch: validateQuestions,
+      promptOf: (question) => String(question.prompt || ''),
+      isRetryable: isRetryableProviderFailure,
+      signal: req.signal,
+    });
+    const questions = generation.questions;
 
     questions.forEach((question, index) => {
       question.id = `q-${index + 1}`;
@@ -800,7 +785,31 @@ RULES:
     );
 
   } catch (error) {
-    console.error("generate-quiz-from-topics error:", error);
+    if (error instanceof IncrementalQuizGenerationError) {
+      console.error("generate-quiz-from-topics incremental failure:", {
+        requested: error.progress.requested,
+        generated: error.progress.generated,
+        remaining: error.progress.remaining,
+        providerCalls: error.progress.providerCalls,
+        retryCount: error.progress.retryCount,
+        failedBatch: error.progress.failedBatch,
+        failureCategory: error.progress.failureCategory,
+      });
+      return new Response(JSON.stringify({
+        error: error.message,
+        progress: {
+          requested: error.progress.requested,
+          generated: error.progress.generated,
+          remaining: error.progress.remaining,
+          providerCalls: error.progress.providerCalls,
+          retryCount: error.progress.retryCount,
+          failedBatch: error.progress.failedBatch,
+          failureCategory: error.progress.failureCategory,
+          questions: error.progress.questions,
+        },
+      }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    console.error("generate-quiz-from-topics error:", error instanceof Error ? error.message : 'Unknown error');
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
