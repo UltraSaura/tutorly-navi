@@ -93,7 +93,7 @@ Run blocks step by step, inspecting each result; do not paste through a failed s
 
 The remote secret inventory was filtered to **names only**. Required `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are present. These are Supabase-injected reserved variables; no new family secret or `secrets set` command is needed. Secret values were not inspected, printed, changed or validated by invoking the new runtime.
 
-Existing AI/document provider secret names are present, including `OPENAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `GOOGLE_VISION_CREDENTIALS`, `SIMPLETEX_APP_ID`, `SIMPLETEX_APP_SECRET` and `LOVABLE_API_KEY`. Preserve their existing values. Presence alone does not prove provider credentials work.
+Existing AI/document provider secret names are present, including `OPENAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `GOOGLE_VISION_CREDENTIALS`, `SIMPLETEX_APP_ID` and `SIMPLETEX_APP_SECRET`. Preserve their existing values. Presence alone does not prove provider credentials work.
 
 If an independently confirmed **custom** provider secret needs provisioning on a new staging target, the exact command is:
 

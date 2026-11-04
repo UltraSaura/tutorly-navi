@@ -5,6 +5,7 @@ import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder
 import { safeProviderContentDiagnostics } from '../_shared/provider-diagnostics.ts';
 import { fetchProviderResponse, isRetryableProviderFailure, PROVIDER_TOTAL_BUDGET_MS, readProviderJson } from '../_shared/provider-request.ts';
 import { generateQuizIncrementally, IncrementalQuizGenerationError, QUIZ_BATCH_SIZE, QUIZ_MAX_PROVIDER_CALLS, QUIZ_MAX_RETRIES_PER_BATCH } from '../_shared/incremental-quiz-generation.ts';
+import { resolveProviderKey } from '../_shared/resolveProviderKey.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -273,7 +274,10 @@ function parseJsonResponse(content: string): any[] {
   else if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
   if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
   jsonStr = jsonStr.trim();
-  return JSON.parse(jsonStr);
+  const parsed = JSON.parse(jsonStr);
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && Array.isArray(parsed.questions)) return parsed.questions;
+  throw new Error('AI response does not contain a questions array');
 }
 
 serve(async (req) => {
@@ -283,8 +287,7 @@ serve(async (req) => {
 
   try {
     await requirePrivilegedFamily(req);
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const { value: deepseekApiKey } = await resolveProviderKey('DeepSeek');
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -340,7 +343,7 @@ ${buildLearningFriendlyGuidance()}
 DIFFICULTY: ${difficulty}
 ${difficultyGuide[difficulty]}
 
-Return ONLY one valid JSON array with questions following these required structures:
+Return ONLY one valid JSON object with a "questions" array following these required structures:
 ${buildBatchSchemaGuidance(effectiveTypes)}
 
 RULES:
@@ -354,24 +357,25 @@ RULES:
 - Hints must be short, encouraging, and actionable without giving away the answer
 - Visual prompts must mention the visual object the student should inspect
 - Use only supported output kinds: single, multi, numeric, ordering, column-fill, visual
-- Return ONLY the JSON array, no markdown, no explanation`;
+- Return ONLY the JSON object {"questions":[...]}, no markdown, no explanation`;
 
     const callAiForQuestions = async (count: number, existingPrompts: string[], deadline: number) => {
       const prompt = buildPrompt(count, existingPrompts);
-      console.log("Calling AI gateway, prompt length:", prompt.length, "requested:", count);
+      console.log("Calling DeepSeek, prompt length:", prompt.length, "requested:", count);
 
-      const response = await fetchProviderResponse("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetchProviderResponse("https://api.deepseek.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${deepseekApiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "deepseek-chat",
           messages: [
             { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
             { role: "user", content: prompt }
           ],
+          response_format: { type: "json_object" },
           temperature: 0.2,
           max_tokens: maxOutputTokensForBatch(count),
         }),

@@ -55,14 +55,14 @@ export async function fetchProviderResponse(
     }
 
     if (response.ok) return response;
-    const kind: ProviderFailureKind = response.status === 429
+    const kind: ProviderFailureKind = response.status === 408 || response.status === 425 || response.status === 429
       ? 'rate_limit'
       : response.status === 401 || response.status === 403
         ? 'authentication'
         : response.status >= 500
           ? 'upstream'
           : 'permanent';
-    throw new ProviderRequestError('Provider request failed.', kind, {
+    throw new ProviderRequestError(`Provider request failed (HTTP ${response.status}).`, kind, {
       status: response.status,
       retryAfterMs: parseRetryAfter(response.headers.get('retry-after')),
     });
