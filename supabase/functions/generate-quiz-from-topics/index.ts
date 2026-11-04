@@ -7,6 +7,10 @@ import {
   promptReferencesVisual,
 } from "../../../src/lib/quiz/promptVisual.ts";
 import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
+import { safeProviderContentDiagnostics } from '../_shared/provider-diagnostics.ts';
+import { fetchProviderResponse, isRetryableProviderFailure, PROVIDER_TOTAL_BUDGET_MS, readProviderJson } from '../_shared/provider-request.ts';
+import { generateQuizIncrementally, IncrementalQuizGenerationError, QUIZ_BATCH_SIZE, QUIZ_MAX_PROVIDER_CALLS, QUIZ_MAX_RETRIES_PER_BATCH } from '../_shared/incremental-quiz-generation.ts';
+import { resolveProviderKey } from '../_shared/resolveProviderKey.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -191,19 +195,7 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }`;
 
       case 'mix':
-        return `Choose the BEST question type for each question from ALL supported kinds: single, multi, numeric, ordering, column-fill, slider, match, fill-expr, visual pie (select_pie or color_slices mode), visual angle.
-Create a rich Brilliant-style variety when the topic allows it:
-- single/multi: conceptual recall, verbal reasoning, "which is true" style
-- numeric: calculation, apply a rule, find a missing number
-- ordering: steps, procedures, sequences, chronological order
-- column-fill: primary-school arithmetic in vertical columns with missing digits
-- slider: estimate a quantity, read a scale, place a value on a number line
-- match: vocabulary ↔ definition, fraction ↔ decimal, term ↔ example
-- fill-expr: complete an equation, fill missing numbers in a formula or calculation
-- visual pie: fractions, proportions — use color_slices AND select_pie modes alternately
-- visual angle: geometry, angle measurement
-Prioritise slider, match, and fill-expr when the topic involves numbers, equivalences, or formulas — these create the most engaging interactive experience.
-For single/multi/numeric questions that reference a cake, shape, diagram, figure, image, triangle, rectangle, square, circle, solid, angle, side, bar, band, segment, or colored part, always include a matching "context_visual" (pie, bar, angle, triangle, or geometry_figure) so the student can see it.`;
+        return `Choose the most appropriate supported kind for each question: single, multi, numeric, ordering, column-fill, visual, slider, match, or fill-expr. Mix reasoning, calculation, ordering, and interaction only when the topic supports them. If a prompt refers to a visual object, include complete visual data.`;
       default:
         return '';
     }
@@ -223,6 +215,30 @@ function buildLearningFriendlyGuidance(): string {
 - For column-fill: include operation, operands, and optional instructions only. Do NOT include a layout object.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
 - If a "single", "multi", or "numeric" prompt references a visual ("ce gâteau", "cette figure", "ce triangle", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
+}
+
+function buildBatchSchemaGuidance(questionTypes: string[]): string {
+  const types = questionTypes.includes('mix')
+    ? ['single', 'multi', 'numeric', 'ordering', 'column-fill', 'visual', 'slider', 'match', 'fill-expr']
+    : questionTypes;
+  return types.map((type) => {
+    switch (type) {
+      case 'single': return 'single: id, kind, prompt, hint, points, choices[{id,label,correct}] with exactly one correct choice.';
+      case 'multi': return 'multi: id, kind, prompt, hint, points, choices[{id,label,correct}] with at least two correct choices.';
+      case 'numeric': return 'numeric: id, kind, prompt, hint, points, numeric answer; include answerUnit for measured quantities.';
+      case 'ordering': return 'ordering: id, kind, prompt, hint, points, items[], correctOrder[] containing the same items.';
+      case 'column-fill': return 'column-fill: id, kind, prompt, hint, points, operation, operands[2], instructions.';
+      case 'visual': return 'visual: id, kind, prompt, hint, points, visual with a supported subtype and complete data.';
+      case 'slider': return 'slider: id, kind, prompt, hint, points, min, max, step, answer, tolerance.';
+      case 'match': return 'match: id, kind, prompt, hint, points, pairs[] of plain strings and answers.';
+      case 'fill-expr': return 'fill-expr: id, kind, prompt, hint, points, template, blanks, chips, answers.';
+      default: return '';
+    }
+  }).filter(Boolean).join('\n');
+}
+
+function maxOutputTokensForBatch(count: number): number {
+  return Math.min(2048, 512 + Math.max(1, count) * 512);
 }
 
 type ColumnOperation = "addition" | "subtraction" | "multiplication" | "division";
@@ -570,8 +586,7 @@ serve(async (req) => {
 
   try {
     await requirePrivilegedFamily(req);
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const { value: deepseekApiKey } = await resolveProviderKey('DeepSeek');
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -668,24 +683,10 @@ ${buildLearningFriendlyGuidance()}
 DIFFICULTY: ${difficulty}
 ${difficultyGuide[difficulty]}
 
-Return ONLY a valid JSON array. Each question must follow one of these structures:
-
-For "single" or "multi":
-{ "id": "q-1", "kind": "single", "prompt": "...", "hint": "...", "points": 1, "choices": [{"id": "c1", "label": "...", "correct": true/false}, ...] }
-
-For "numeric":
-{ "id": "q-2", "kind": "numeric", "prompt": "...", "hint": "...", "points": 1, "answer": 42, "range": {"min": 40, "max": 44} }
-
-For a measurement or quantity with a unit, include "answerUnit" with the exact expected unit, for example: { "answer": 125, "answerUnit": "cm" } or { "answer": 90, "answerUnit": "min" }. Never use a bare numeric response when the answer needs a unit.
-
-For a clock-time answer, ALWAYS use the time format (never encode 9 h 55 as a plain 955 and never add a numeric range):
-{ "id": "q-time", "kind": "numeric", "answerFormat": "time", "answer": 955, "timeAnswer": {"hours": 9, "minutes": 55}, "dragOptions": [955, 945, 1005, 1015], "prompt": "...", "hint": "...", "points": 1 }
-
-For "ordering":
-{ "id": "q-3", "kind": "ordering", "prompt": "...", "hint": "...", "points": 1, "items": ["B","A","C"], "correctOrder": ["A","B","C"] }
-
-For "column-fill":
-{ "id": "q-4", "kind": "column-fill", "prompt": "...", "hint": "...", "points": 1, "operation": "addition", "operands": ["29","66"], "instructions": "Complète les retenues et le résultat." }
+Return ONLY one valid JSON object with a "questions" array. Do not use Markdown fences or surrounding text.
+Required structures for this batch:
+${buildBatchSchemaGuidance(effectiveTypes)}
+For numeric time answers, use answerFormat=time with timeAnswer {hours,minutes}; never invent missing answers.
 
 RULES:
 - Questions must test the curriculum topics and objectives provided
@@ -695,56 +696,82 @@ RULES:
 - All prompts, hints, labels, explanations, instructions, and answer text must be written in ${language === 'fr' ? 'French' : 'English'}
 - Visual prompts must mention the visual object the student should inspect
 - Use only supported output kinds: single, multi, numeric, ordering, column-fill, visual, slider, match, fill-expr
-- Return ONLY the JSON array`;
+- Return ONLY the JSON object {"questions":[...]}`;
 
-    const parseAiQuestions = (content: string) => {
-      let jsonStr = content.trim();
-      if (jsonStr.startsWith('```json')) jsonStr = jsonStr.slice(7);
-      else if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
-      if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
-      const parsed = JSON.parse(jsonStr.trim());
-      if (!Array.isArray(parsed)) throw new Error("AI response is not an array");
-      return parsed;
+    const parseAiQuestions = (content: unknown) => {
+      const text = typeof content === 'string'
+        ? content
+        : Array.isArray(content)
+          ? content.map((part) => typeof part === 'string' ? part : String(part?.text ?? '')).join('')
+          : '';
+      const normalized = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+      const parseCandidate = (candidate: string) => {
+        const parsed = JSON.parse(candidate);
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed && Array.isArray(parsed.questions)) return parsed.questions;
+        throw new Error("AI response does not contain a questions array");
+      };
+
+      try {
+        return parseCandidate(normalized);
+      } catch {
+        // Providers occasionally add a short explanation around otherwise valid JSON.
+        // Extract one balanced array without attempting to repair or invent content.
+        const start = normalized.indexOf('[');
+        if (start < 0) throw new Error("AI response does not contain a JSON array");
+        let depth = 0;
+        let inString = false;
+        let escaped = false;
+        for (let i = start; i < normalized.length; i += 1) {
+          const char = normalized[i];
+          if (inString) {
+            if (escaped) escaped = false;
+            else if (char === '\\') escaped = true;
+            else if (char === '"') inString = false;
+            continue;
+          }
+          if (char === '"') inString = true;
+          else if (char === '[') depth += 1;
+          else if (char === ']') {
+            depth -= 1;
+            if (depth === 0) return parseCandidate(normalized.slice(start, i + 1));
+          }
+        }
+        throw new Error("AI response contains an incomplete JSON array");
+      }
     };
 
-    const callAiForQuestions = async (count: number, existingPrompts: string[]) => {
+    const callAiForQuestions = async (count: number, existingPrompts: string[], deadline: number) => {
       const prompt = buildPrompt(count, existingPrompts);
-      console.log("Calling AI gateway for topic-based generation, prompt length:", prompt.length, "requested:", count);
+      console.log("Calling DeepSeek for topic-based generation, prompt length:", prompt.length, "requested:", count);
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetchProviderResponse("https://api.deepseek.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${deepseekApiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "deepseek-chat",
           messages: [
             { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
             { role: "user", content: prompt }
           ],
-          temperature: 0.7,
+          response_format: { type: "json_object" },
+          temperature: 0.2,
+          max_tokens: maxOutputTokensForBatch(count),
         }),
-      });
+      }, { deadline, signal: req.signal });
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        }
-        if (response.status === 402) {
-          throw new Error("AI credits exhausted.");
-        }
-        throw new Error("AI generation failed");
-      }
-
-      const aiResponse = await response.json();
+      const aiResponse = await readProviderJson<Record<string, any>>(response, { deadline });
       const content = aiResponse.choices?.[0]?.message?.content;
       if (!content) throw new Error("No content in AI response");
 
       try {
         return parseAiQuestions(content);
       } catch {
-        console.error("Failed to parse AI response:", content);
+        console.error("Failed to parse AI response", safeProviderContentDiagnostics(content, content.trim() ? 'malformed' : 'empty'));
         throw new Error("Failed to parse generated questions");
       }
     };
@@ -766,26 +793,20 @@ RULES:
       });
     }
 
-    const questions: any[] = [];
-    const seenPromptKeys = new Set<string>();
-
-    for (let attempt = 0; attempt < 3 && questions.length < desiredCount; attempt += 1) {
-      const remaining = desiredCount - questions.length;
-      const rawQuestions = await callAiForQuestions(remaining, questions.map((question) => question.prompt).slice(-12));
-      const validQuestions = validateQuestions(rawQuestions);
-      for (const question of validQuestions) {
-        const key = String(question.prompt || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-        if (!key || seenPromptKeys.has(key)) continue;
-        seenPromptKeys.add(key);
-        questions.push(question);
-        if (questions.length >= desiredCount) break;
-      }
-      console.log(`Generation attempt ${attempt + 1}: ${validQuestions.length}/${rawQuestions.length} valid, total accepted ${questions.length}/${desiredCount}`);
-    }
-
-    if (questions.length < desiredCount) {
-      throw new Error(`Only generated ${questions.length} valid questions out of ${desiredCount}. Please retry or choose fewer restrictive question types.`);
-    }
+    const generationDeadline = Date.now() + PROVIDER_TOTAL_BUDGET_MS;
+    const generation = await generateQuizIncrementally({
+      requested: desiredCount,
+      deadline: generationDeadline,
+      batchSize: QUIZ_BATCH_SIZE,
+      maxProviderCalls: QUIZ_MAX_PROVIDER_CALLS,
+      maxRetriesPerBatch: QUIZ_MAX_RETRIES_PER_BATCH,
+      callBatch: callAiForQuestions,
+      validateBatch: validateQuestions,
+      promptOf: (question) => String(question.prompt || ''),
+      isRetryable: isRetryableProviderFailure,
+      signal: req.signal,
+    });
+    const questions = generation.questions;
 
     questions.forEach((question, index) => {
       question.id = `q-${index + 1}`;
@@ -799,7 +820,32 @@ RULES:
     );
 
   } catch (error) {
-    console.error("generate-quiz-from-topics error:", error);
+    if (error instanceof IncrementalQuizGenerationError) {
+      console.error("generate-quiz-from-topics incremental failure:", {
+        message: error.message,
+        requested: error.progress.requested,
+        generated: error.progress.generated,
+        remaining: error.progress.remaining,
+        providerCalls: error.progress.providerCalls,
+        retryCount: error.progress.retryCount,
+        failedBatch: error.progress.failedBatch,
+        failureCategory: error.progress.failureCategory,
+      });
+      return new Response(JSON.stringify({
+        error: error.message,
+        progress: {
+          requested: error.progress.requested,
+          generated: error.progress.generated,
+          remaining: error.progress.remaining,
+          providerCalls: error.progress.providerCalls,
+          retryCount: error.progress.retryCount,
+          failedBatch: error.progress.failedBatch,
+          failureCategory: error.progress.failureCategory,
+          questions: error.progress.questions,
+        },
+      }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    console.error("generate-quiz-from-topics error:", error instanceof Error ? error.message : 'Unknown error');
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

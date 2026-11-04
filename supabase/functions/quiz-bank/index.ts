@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { resolveProviderKey } from '../_shared/resolveProviderKey.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -119,18 +120,19 @@ Rules:
   "questions": [...]
 }`;
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "deepseek-chat",
       messages: [
         { role: "system", content: "You translate quiz JSON. Return valid JSON only." },
         { role: "user", content: `${prompt}\n\n${JSON.stringify(payload)}` },
       ],
+      response_format: { type: 'json_object' },
       temperature: 0.2,
     }),
   });
@@ -232,14 +234,14 @@ serve(async (req) => {
         resolvedDescription = variant.description;
         resolvedQuestions = Array.isArray(variant.questions) ? variant.questions : baseQuestions;
       } else {
-        const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-        if (lovableApiKey) {
+        try {
+          const { value: deepseekApiKey } = await resolveProviderKey('DeepSeek');
           const translated = await translateBankVariant({
             title: bank.title,
             description: bank.description,
             questions: baseQuestions,
             language: effectiveLanguage,
-            apiKey: lovableApiKey,
+            apiKey: deepseekApiKey,
           });
 
           resolvedTitle = translated.title;
@@ -255,7 +257,8 @@ serve(async (req) => {
           }, {
             onConflict: 'bank_id,language',
           });
-        } else {
+        } catch (error) {
+          console.error('DeepSeek translation unavailable:', error);
           effectiveLanguage = sourceLanguage;
         }
       }

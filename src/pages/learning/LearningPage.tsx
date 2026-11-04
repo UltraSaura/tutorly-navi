@@ -1,4 +1,3 @@
-import { useSubjectLabel } from '@/i18n/useSubjectLabel';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useNavigate } from 'react-router-dom';
@@ -6,27 +5,16 @@ import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { BookOpen } from 'lucide-react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
-import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
+import { SubjectPastelCard } from '@/components/learning/SubjectPastelCard';
 import { CompactStreakChip } from '@/components/game';
 import { useStudentStats } from '@/hooks/useStudentStats';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
-import { toast } from 'sonner';
 import { PageMeta } from '@/components/seo/PageMeta';
 
-const getSubjectTileBackground = (colorScheme?: string | null) => {
-  if (!colorScheme || colorScheme.startsWith('bg-')) {
-    return '#dbeafe';
-  }
-
-  return colorScheme;
-};
-
 const LearningPage = () => {
-  const subjectLabel = useSubjectLabel();
   const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
@@ -89,7 +77,7 @@ const LearningPage = () => {
       </header>
 
       {/* Subject List */}
-      <main className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4">
+      <main className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:gap-4">
         {subjects?.filter(({ subject, lessons_ready }) =>
           lessons_ready > 0 && (subject.display_context === 'learn' || subject.display_context === 'both')
         ).map(({
@@ -99,69 +87,22 @@ const LearningPage = () => {
         lessons_completed
       }) => {
         const subjectName = getSubjectNameForSlug(subject.slug, language, subject.name);
-        const isReady = lessons_ready > 0;
         const subjectTitleFontSize = Math.max(subject.lesson_font_size ?? subject.font_size ?? 18, 12);
         const subjectTitleFontFamily = subject.lesson_font_family ?? subject.font_family ?? 'Poppins, sans-serif';
-        return <div 
-          key={subject.id} 
-          onClick={() => {
-            if (isReady) {
-              navigate(`/learning/${subject.slug}`);
-            } else {
-              toast.info(t('learning.comingSoon', { subject: subjectName }), {
-                description: t('learning.comingSoonDescription')
-              });
-            }
-          }} 
-          className={`
-            aspect-square rounded-2xl border border-white/70 px-4 py-4
-            shadow-sm cursor-pointer
-            transition-transform transform
-            hover:scale-[1.01] active:scale-[0.99]
-            ${!isReady ? 'opacity-60 cursor-not-allowed' : ''}
-          `}
-          style={{ backgroundColor: getSubjectTileBackground(subject.color_scheme) }}
-        >
-              <div className="flex h-full flex-col items-center justify-center gap-2 pb-3">
-                <div className="flex min-h-0 items-center justify-center">
-                  {subject.icon_image_url ? (
-                    <img
-                      src={subject.icon_image_url}
-                      alt=""
-                      className="max-h-28 max-w-full object-contain sm:max-h-32"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <DynamicIcon name={subject.icon_name} className="h-[5.5rem] w-[5.5rem] sm:h-[6.6rem] sm:w-[6.6rem]" style={{ color: subject.icon_color ?? '#1e3a5f' }} />
-                  )}
-                </div>
-
-                <div className="w-full rounded-xl bg-white/80 px-3 py-2 text-center shadow-sm backdrop-blur-sm">
-                  <span
-                    className="line-clamp-2 font-semibold leading-tight"
-                    style={{ color: subject.lesson_text_color ?? subject.text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
-                  >
-                    {subjectName}
-                  </span>
-                  {videos_ready > 0 && (
-                    <div style={{ marginTop: 4 }}>
-                      <div style={{ height: 3, background: 'rgba(15,23,42,0.12)', borderRadius: 999, overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%',
-                          background: '#12C6A0',
-                          borderRadius: 999,
-                          width: `${Math.round((lessons_completed / Math.max(videos_ready, 1)) * 100)}%`,
-                          transition: 'width 0.3s ease',
-                        }} />
-                      </div>
-                      <p style={{ fontSize: 9, color: 'rgba(15,23,42,0.5)', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
-                        {lessons_completed}/{videos_ready} {t('learning.lessons')}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>;
+        return <SubjectPastelCard
+          key={subject.id}
+          slug={subject.slug}
+          title={subjectName}
+          iconName={subject.icon_name}
+          iconImageUrl={subject.icon_image_url}
+          colorScheme={subject.color_scheme}
+          textColor={subject.lesson_text_color ?? subject.text_color}
+          titleFontSize={subjectTitleFontSize}
+          titleFontFamily={subjectTitleFontFamily}
+          progress={videos_ready > 0 ? { completed: lessons_completed, total: videos_ready } : undefined}
+          meta={videos_ready > 0 ? <p className="text-[10px] font-semibold text-slate-900/50">{lessons_completed}/{videos_ready} {t('learning.lessons')}</p> : undefined}
+          onClick={() => navigate(`/learning/${subject.slug}`)}
+        />;
       })}
       </main>
     </div>;

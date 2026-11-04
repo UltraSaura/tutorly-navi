@@ -2,6 +2,7 @@ import { requirePrivilegedFamily } from '../_shared/family-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { resolveProviderKey } from '../_shared/resolveProviderKey.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,25 +67,7 @@ serve(async (req) => {
    Notes: ${obj.notes_from_prog || 'none'}`
     ).join('\n\n');
 
-    // Get AI API key
-    let apiKey = Deno.env.get('OPENAI_API_KEY');
-    let apiUrl = 'https://api.openai.com/v1/chat/completions';
-    let modelId = 'gpt-4o-mini';
-
-    // Use Lovable AI Gateway if available
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    if (lovableApiKey) {
-      apiKey = lovableApiKey;
-      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-      modelId = 'google/gemini-2.5-flash';
-    }
-
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'No AI API key configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { value: deepseekApiKey } = await resolveProviderKey('DeepSeek');
 
     const systemPrompt = `You are a curriculum expert specializing in educational content alignment for French-speaking African countries (Morocco, Senegal, etc.). Your task is to match learning topics with the most relevant learning objectives from a curriculum.
 
@@ -101,14 +84,14 @@ EXAMPLES:
 - "Périmètre du rectangle" → Match "Longueurs" (keywords: périmètre, mesurer, longueur)
 - "Fractions équivalentes" → Match "Fractions" (keywords: fractions, numérateur, dénominateur)
 
-Return ONLY a valid JSON array of matching objectives with confidence scores (0-1) and brief reasons.
-Format: [{"objective_id": "actual_id_from_list", "confidence": 0.95, "reason": "Brief French explanation"}]
+Return ONLY a valid JSON object with a "suggestions" array of matching objectives with confidence scores (0-1) and brief reasons.
+Format: {"suggestions":[{"objective_id": "actual_id_from_list", "confidence": 0.95, "reason": "Brief French explanation"}]}
 
 IMPORTANT:
 - Use the EXACT objective_id from the list (e.g., "obj_ca993cdc")
 - Only return objectives with confidence >= 0.7
 - Return an empty array [] if no objectives match well
-- Do not include any text outside the JSON array`;
+- Do not include any text outside the JSON object`;
 
     const keywordsStr = topicKeywords && topicKeywords.length > 0 
       ? `Keywords: [${topicKeywords.join(', ')}]`
@@ -123,23 +106,24 @@ Country: ${countryCode || 'Not specified'}
 Available objectives for ${levelCode || 'this level'}:
 ${objectivesList}
 
-Identify matching objectives and return as JSON array.`;
+Identify matching objectives and return as JSON object.`;
 
-    console.log('Calling AI API for objective suggestions...');
+    console.log('Calling DeepSeek for objective suggestions...');
     console.log('Topic:', topicName, 'Keywords:', topicKeywords);
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${deepseekApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: modelId,
+        model: 'deepseek-chat',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
+        response_format: { type: 'json_object' },
         temperature: 0.2,
         max_tokens: 2000,
       }),
@@ -156,7 +140,7 @@ Identify matching objectives and return as JSON array.`;
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: 'Payment required, please add funds' }),
+          JSON.stringify({ error: 'DeepSeek billing or quota is required' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -176,7 +160,8 @@ Identify matching objectives and return as JSON array.`;
       if (jsonStr.startsWith('```')) {
         jsonStr = jsonStr.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
       }
-      suggestions = JSON.parse(jsonStr);
+      const parsed = JSON.parse(jsonStr);
+      suggestions = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.suggestions) ? parsed.suggestions : []);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError, 'Content:', content);
       suggestions = [];

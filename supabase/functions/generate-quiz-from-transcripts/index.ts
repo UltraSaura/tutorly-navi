@@ -2,6 +2,10 @@ import { requirePrivilegedFamily } from '../_shared/family-access.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
+import { safeProviderContentDiagnostics } from '../_shared/provider-diagnostics.ts';
+import { fetchProviderResponse, isRetryableProviderFailure, PROVIDER_TOTAL_BUDGET_MS, readProviderJson } from '../_shared/provider-request.ts';
+import { generateQuizIncrementally, IncrementalQuizGenerationError, QUIZ_BATCH_SIZE, QUIZ_MAX_PROVIDER_CALLS, QUIZ_MAX_RETRIES_PER_BATCH } from '../_shared/incremental-quiz-generation.ts';
+import { resolveProviderKey } from '../_shared/resolveProviderKey.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,6 +114,27 @@ function buildLearningFriendlyGuidance(): string {
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
 - Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, visual.`;
+}
+
+function buildBatchSchemaGuidance(questionTypes: string[]): string {
+  const types = questionTypes.includes('mix')
+    ? ['single', 'multi', 'numeric', 'ordering', 'column-fill', 'visual']
+    : questionTypes;
+  return types.map((type) => {
+    switch (type) {
+      case 'single': return 'single: id, kind, prompt, hint, points, choices[{id,label,correct}] with exactly one correct choice.';
+      case 'multi': return 'multi: id, kind, prompt, hint, points, choices[{id,label,correct}] with at least two correct choices.';
+      case 'numeric': return 'numeric: id, kind, prompt, hint, points, numeric answer; include answerUnit for measured quantities.';
+      case 'ordering': return 'ordering: id, kind, prompt, hint, points, items[], correctOrder[] containing the same items.';
+      case 'column-fill': return 'column-fill: id, kind, prompt, hint, points, operation, operands[2], instructions.';
+      case 'visual': return 'visual: id, kind, prompt, hint, points, visual with a supported subtype and complete data.';
+      default: return '';
+    }
+  }).filter(Boolean).join('\n');
+}
+
+function maxOutputTokensForBatch(count: number): number {
+  return Math.min(2048, 512 + Math.max(1, count) * 512);
 }
 
 function buildPromptExamples(): string {
@@ -249,7 +274,10 @@ function parseJsonResponse(content: string): any[] {
   else if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
   if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
   jsonStr = jsonStr.trim();
-  return JSON.parse(jsonStr);
+  const parsed = JSON.parse(jsonStr);
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && Array.isArray(parsed.questions)) return parsed.questions;
+  throw new Error('AI response does not contain a questions array');
 }
 
 serve(async (req) => {
@@ -259,8 +287,7 @@ serve(async (req) => {
 
   try {
     await requirePrivilegedFamily(req);
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const { value: deepseekApiKey } = await resolveProviderKey('DeepSeek');
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -316,8 +343,8 @@ ${buildLearningFriendlyGuidance()}
 DIFFICULTY: ${difficulty}
 ${difficultyGuide[difficulty]}
 
-Return ONLY a valid JSON array with questions following this exact structure:
-${buildPromptExamples()}
+Return ONLY one valid JSON object with a "questions" array following these required structures:
+${buildBatchSchemaGuidance(effectiveTypes)}
 
 RULES:
 - Questions must be directly based on transcript content
@@ -330,37 +357,31 @@ RULES:
 - Hints must be short, encouraging, and actionable without giving away the answer
 - Visual prompts must mention the visual object the student should inspect
 - Use only supported output kinds: single, multi, numeric, ordering, column-fill, visual
-- Return ONLY the JSON array, no markdown, no explanation`;
+- Return ONLY the JSON object {"questions":[...]}, no markdown, no explanation`;
 
-    const callAiForQuestions = async (count: number, existingPrompts: string[]) => {
+    const callAiForQuestions = async (count: number, existingPrompts: string[], deadline: number) => {
       const prompt = buildPrompt(count, existingPrompts);
-      console.log("Calling AI gateway, prompt length:", prompt.length, "requested:", count);
+      console.log("Calling DeepSeek, prompt length:", prompt.length, "requested:", count);
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetchProviderResponse("https://api.deepseek.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${deepseekApiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "deepseek-chat",
           messages: [
             { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
             { role: "user", content: prompt }
           ],
-          temperature: 0.7,
+          response_format: { type: "json_object" },
+          temperature: 0.2,
+          max_tokens: maxOutputTokensForBatch(count),
         }),
-      });
+      }, { deadline, signal: req.signal });
 
-      if (!response.ok) {
-        if (response.status === 429) throw new Error("Rate limit exceeded. Please try again later.");
-        if (response.status === 402) throw new Error("AI credits exhausted. Please add funds to continue.");
-        const errorText = await response.text();
-        console.error("AI gateway error:", response.status, errorText);
-        throw new Error("AI generation failed");
-      }
-
-      const aiResponse = await response.json();
+      const aiResponse = await readProviderJson<Record<string, any>>(response, { deadline });
       const content = aiResponse.choices?.[0]?.message?.content;
       if (!content) throw new Error("No content in AI response");
 
@@ -369,32 +390,27 @@ RULES:
         if (!Array.isArray(parsed)) throw new Error("AI response is not an array of questions");
         return parsed;
       } catch {
-        console.error("Failed to parse AI response:", content);
+        console.error("Failed to parse AI response", safeProviderContentDiagnostics(content, content.trim() ? 'malformed' : 'empty'));
         throw new Error("Failed to parse generated questions");
       }
     };
 
-    const questions: any[] = [];
-    const seenPromptKeys = new Set<string>();
     const desiredCount = Math.max(1, Math.min(20, Number(questionCount) || 5));
 
-    for (let attempt = 0; attempt < 3 && questions.length < desiredCount; attempt += 1) {
-      const remaining = desiredCount - questions.length;
-      const rawQuestions = await callAiForQuestions(remaining, questions.map((question) => question.prompt).slice(-12));
-      const validQuestions = validateQuestions(rawQuestions);
-      for (const question of validQuestions) {
-        const key = String(question.prompt || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-        if (!key || seenPromptKeys.has(key)) continue;
-        seenPromptKeys.add(key);
-        questions.push(question);
-        if (questions.length >= desiredCount) break;
-      }
-      console.log(`Transcript generation attempt ${attempt + 1}: ${validQuestions.length}/${rawQuestions.length} valid, total accepted ${questions.length}/${desiredCount}`);
-    }
-
-    if (questions.length < desiredCount) {
-      throw new Error(`Only generated ${questions.length} valid questions out of ${desiredCount}. Please retry or choose fewer restrictive question types.`);
-    }
+    const generationDeadline = Date.now() + PROVIDER_TOTAL_BUDGET_MS;
+    const generation = await generateQuizIncrementally({
+      requested: desiredCount,
+      deadline: generationDeadline,
+      batchSize: QUIZ_BATCH_SIZE,
+      maxProviderCalls: QUIZ_MAX_PROVIDER_CALLS,
+      maxRetriesPerBatch: QUIZ_MAX_RETRIES_PER_BATCH,
+      callBatch: callAiForQuestions,
+      validateBatch: validateQuestions,
+      promptOf: (question) => String(question.prompt || ''),
+      isRetryable: isRetryableProviderFailure,
+      signal: req.signal,
+    });
+    const questions = generation.questions;
 
     questions.forEach((question, index) => {
       question.id = `q-${index + 1}`;
@@ -408,7 +424,31 @@ RULES:
     );
 
   } catch (error) {
-    console.error("generate-quiz-from-transcripts error:", error);
+    if (error instanceof IncrementalQuizGenerationError) {
+      console.error("generate-quiz-from-transcripts incremental failure:", {
+        requested: error.progress.requested,
+        generated: error.progress.generated,
+        remaining: error.progress.remaining,
+        providerCalls: error.progress.providerCalls,
+        retryCount: error.progress.retryCount,
+        failedBatch: error.progress.failedBatch,
+        failureCategory: error.progress.failureCategory,
+      });
+      return new Response(JSON.stringify({
+        error: error.message,
+        progress: {
+          requested: error.progress.requested,
+          generated: error.progress.generated,
+          remaining: error.progress.remaining,
+          providerCalls: error.progress.providerCalls,
+          retryCount: error.progress.retryCount,
+          failedBatch: error.progress.failedBatch,
+          failureCategory: error.progress.failureCategory,
+          questions: error.progress.questions,
+        },
+      }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    console.error("generate-quiz-from-transcripts error:", error instanceof Error ? error.message : 'Unknown error');
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
