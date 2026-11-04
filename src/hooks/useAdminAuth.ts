@@ -3,12 +3,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useUserContext } from '@/hooks/useUserContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isAdministratorRole, permissionsForRoles, type AdminPermission } from '@/lib/admin/permissions';
 
 export const useAdminAuth = () => {
   const { user, loading: authLoading } = useAuth();
   const family = useFamilyProfile();
 
-  const { data: userRoles, isLoading } = useQuery({
+  const { data: userRoles, isLoading, refetch: refetchRoles } = useQuery({
     queryKey: ['user-roles', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -24,7 +25,9 @@ export const useAdminAuth = () => {
     enabled: !!user?.id,
   });
 
-  const isAdmin = !family.isFamily && (userRoles?.includes('admin') ?? false);
+  const roles = userRoles || [];
+  const permissions = permissionsForRoles(roles);
+  const isAdmin = !family.isFamily && roles.some(isAdministratorRole);
   // A tester can preview curriculum levels but never inherits admin access.
   const isTester = !family.isFamily && (userRoles?.includes('tester') ?? false);
   const canPreviewSchoolLevels = isAdmin || isTester;
@@ -39,6 +42,9 @@ export const useAdminAuth = () => {
     isAuthenticated,
     canAccessAdmin: isAuthenticated && isAdmin,
     isLoading: isLoading_,
-    userRoles: userRoles || [],
+    userRoles: roles,
+    permissions,
+    hasPermission: (permission: AdminPermission) => permissions.has(permission),
+    refreshPermissions: refetchRoles,
   };
 };

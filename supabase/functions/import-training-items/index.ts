@@ -1,4 +1,4 @@
-import { requirePrivilegedFamily } from '../_shared/family-access.ts';
+import { requireAdminPermission } from '../_shared/admin-access.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { Client } from 'https://deno.land/x/postgres@v0.17.0/mod.ts';
 
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    await requirePrivilegedFamily(req);
+    await requireAdminPermission(req, 'annales.write');
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) return jsonResponse({ success: false, error: 'No authorization header' }, 200);
 

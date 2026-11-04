@@ -1,4 +1,4 @@
-import { requirePrivilegedFamily } from '../_shared/family-access.ts';
+import { requireAdminPermissionOrTeacher } from '../_shared/admin-access.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { resolveProviderKey } from "../_shared/resolveProviderKey.ts";
@@ -269,7 +269,7 @@ serve(async (req) => {
     });
 
   try {
-    await requirePrivilegedFamily(req);
+    await requireAdminPermissionOrTeacher(req, 'curriculum.write');
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Missing authorization" }, 401);
 

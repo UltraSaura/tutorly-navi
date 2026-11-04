@@ -1,4 +1,4 @@
-import { requirePrivilegedFamily } from '../_shared/family-access.ts';
+import { requireAdminPermission } from '../_shared/admin-access.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await requirePrivilegedFamily(req);
+    await requireAdminPermission(req, 'subjects.write');
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const authHeader = req.headers.get("Authorization");

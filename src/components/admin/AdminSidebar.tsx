@@ -4,10 +4,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { adminNavGroups, iconMap } from './adminNavGroups';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const AdminSidebar = () => {
   const ui = useInterfaceTranslation();
   const location = useLocation();
+  const { hasPermission } = useAdminAuth();
 
   return (
     <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 z-50 glass border-r">
@@ -19,12 +21,13 @@ const AdminSidebar = () => {
       </div>
       <nav className="flex-1 overflow-y-auto py-6 px-4">
         {adminNavGroups.map(group => (
+          group.items.some(item => hasPermission(item.permission)) && (
           <div key={ui(group.label)} className="mb-6">
             <div className="text-xs font-semibold uppercase text-gray-400 tracking-wide px-1 mb-2">
               {ui(group.label)}
             </div>
             <div className="space-y-1">
-              {group.items.map(item => {
+              {group.items.filter(item => hasPermission(item.permission)).map(item => {
                 const Icon = iconMap[item.iconName];
                 return (
                   <Link
@@ -44,6 +47,7 @@ const AdminSidebar = () => {
               })}
             </div>
           </div>
+          )
         ))}
       </nav>
       <div className="p-4 border-t">

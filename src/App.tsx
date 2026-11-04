@@ -5,8 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, type ReactNode } from "react";
 import { AnimatePresence } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
 import { AdminProvider } from "./context/AdminContext";
@@ -64,10 +64,23 @@ import GeneratedLessonsPage from "./components/admin/learning/GeneratedLessonsPa
 import StagingLessonWorkflowPage, { StagingLessonDraftPreviewPage } from "./pages/admin/StagingLessonWorkflowPage";
 import SolidVisualGalleryPage from "./pages/admin/SolidVisualGalleryPage";
 import AdminSettings from "./components/admin/AdminSettings";
+import RequireAdminPermission from "./components/admin/RequireAdminPermission";
+import { useAdminAuth } from "./hooks/useAdminAuth";
+import { firstAuthorizedAdminPath } from "./lib/admin/permissions";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
 
 const FamilyPage = lazy(() => import("./pages/FamilyPage"));
+
+const AdminLandingRedirect = () => {
+  const { permissions, isLoading } = useAdminAuth();
+  if (isLoading) return <LoadingFallback />;
+  return <Navigate to={firstAuthorizedAdminPath(permissions)} replace />;
+};
+
+const AdminPermissionRoute = ({ permission, children }: { permission: import('./lib/admin/permissions').AdminPermission; children: ReactNode }) => (
+  <RequireAdminPermission permission={permission}>{children}</RequireAdminPermission>
+);
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -262,20 +275,20 @@ const App = () => {
                             <AdminLayout />
                           </ErrorBoundary>
                         }>
-                          <Route index element={<AIModelManagement />} />
-                          <Route path="models" element={<AIModelManagement />} />
-                          <Route path="diagnostics" element={<ConnectionDiagnostics />} />
-                          <Route path="subjects" element={<SubjectManagement />} />
-                          <Route path="users" element={<UserManagement />} />
-                          <Route path="prompts" element={<PromptManagement />} />
-                          <Route path="learning" element={<LearningContentManagement />} />
-                          <Route path="curriculum" element={<CurriculumManager />} />
-                          <Route path="generated-lessons" element={<GeneratedLessonsPage />} />
-                          <Route path="staging-lessons" element={<StagingLessonWorkflowPage />} />
-                          <Route path="staging-lessons/preview/:versionId" element={<StagingLessonDraftPreviewPage />} />
-                          <Route path="exams" element={<ExamAnnales />} />
-                          <Route path="recent-updates" element={<RecentUpdates />} />
-                          <Route path="settings" element={<AdminSettings />} />
+                          <Route index element={<AdminLandingRedirect />} />
+                          <Route path="models" element={<AdminPermissionRoute permission="ai.manage"><AIModelManagement /></AdminPermissionRoute>} />
+                          <Route path="diagnostics" element={<AdminPermissionRoute permission="system.manage"><ConnectionDiagnostics /></AdminPermissionRoute>} />
+                          <Route path="subjects" element={<AdminPermissionRoute permission="subjects.read"><SubjectManagement /></AdminPermissionRoute>} />
+                          <Route path="users" element={<AdminPermissionRoute permission="users.manage"><UserManagement /></AdminPermissionRoute>} />
+                          <Route path="prompts" element={<AdminPermissionRoute permission="prompts.manage"><PromptManagement /></AdminPermissionRoute>} />
+                          <Route path="learning" element={<AdminPermissionRoute permission="content.read"><LearningContentManagement /></AdminPermissionRoute>} />
+                          <Route path="curriculum" element={<AdminPermissionRoute permission="curriculum.read"><CurriculumManager /></AdminPermissionRoute>} />
+                          <Route path="generated-lessons" element={<AdminPermissionRoute permission="content.read"><GeneratedLessonsPage /></AdminPermissionRoute>} />
+                          <Route path="staging-lessons" element={<AdminPermissionRoute permission="content.write"><StagingLessonWorkflowPage /></AdminPermissionRoute>} />
+                          <Route path="staging-lessons/preview/:versionId" element={<AdminPermissionRoute permission="content.read"><StagingLessonDraftPreviewPage /></AdminPermissionRoute>} />
+                          <Route path="exams" element={<AdminPermissionRoute permission="annales.read"><ExamAnnales /></AdminPermissionRoute>} />
+                          <Route path="recent-updates" element={<AdminPermissionRoute permission="system.manage"><RecentUpdates /></AdminPermissionRoute>} />
+                          <Route path="settings" element={<AdminPermissionRoute permission="system.manage"><AdminSettings /></AdminPermissionRoute>} />
                         </Route>
                         
           {/* Guardian Portal Routes */}
