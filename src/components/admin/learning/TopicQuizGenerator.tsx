@@ -14,7 +14,7 @@ import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, BookOpen, Pencil, Tras
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useGenerateQuizFromTopics } from '@/hooks/useGenerateQuizFromTopics';
+import { QuizGenerationError, useGenerateQuizFromTopics } from '@/hooks/useGenerateQuizFromTopics';
 import { QuestionEditor } from './QuestionEditor';
 import { QuizPreviewDialog } from './QuizPreviewDialog';
 import { QuizOverlay } from '@/components/learning/QuizOverlay';
@@ -132,6 +132,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
   // Generated questions
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
+  const [partialGeneration, setPartialGeneration] = useState(false);
+  const [partialGenerationConfirmed, setPartialGenerationConfirmed] = useState(false);
   const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
   // Batch results: one entry per future bank
   const [batchUnits, setBatchUnits] = useState<BatchUnit[]>([]);
@@ -486,7 +488,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               }
               completedUnit = {
                 ...u,
-                questions: [],
+                questions: error instanceof QuizGenerationError ? error.progress?.questions ?? [] : [],
                 error: error instanceof Error ? error.message : 'Generation failed',
               };
             }
@@ -495,6 +497,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           setBatchProgress({ done: i + 1, total: units.length });
         }
         setBatchUnits(filled);
+        setPartialGeneration(filled.some((unit) => unit.error));
+        setPartialGenerationConfirmed(false);
         setBatchProgress(null);
         setStep('review');
         const totalQ = filled.reduce((n, u) => n + u.questions.length, 0);
@@ -522,12 +526,22 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         ...commonGenArgs(),
       });
       setGeneratedQuestions(result.questions);
+      setPartialGeneration(false);
+      setPartialGenerationConfirmed(false);
       setStep('review');
       toast.success(`Generated ${result.questions.length} questions!`);
     } catch (error) {
       console.error('Generation failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to generate questions');
-      setStep('settings');
+      if (error instanceof QuizGenerationError && (error.progress?.questions?.length ?? 0) > 0) {
+        setGeneratedQuestions(error.progress?.questions ?? []);
+        setPartialGeneration(true);
+        setPartialGenerationConfirmed(false);
+        setStep('review');
+        toast.warning(`Génération incomplète : ${error.progress?.generated ?? 0}/${error.progress?.requested ?? questionCount} questions valides. Les questions restantes n'ont pas été sauvegardées.`);
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Failed to generate questions');
+        setStep('settings');
+      }
     }
   };
 
@@ -614,6 +628,10 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
   // Batch save: one bank per unit (auto-titled), each auto-assigned to its topic as Practice.
   const handleSaveBatch = async () => {
+    if (partialGeneration && !partialGenerationConfirmed) {
+      toast.error('Confirmez explicitement la sauvegarde des banques complètes disponibles.');
+      return;
+    }
     const units = batchUnits.filter((u) => u.questions.length > 0);
     if (units.length === 0) {
       toast.error('No questions to save');
@@ -1263,11 +1281,17 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 ))}
               </div>
             </ScrollArea>
+            {partialGeneration && (
+              <label className="mt-3 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm">
+                <Checkbox checked={partialGenerationConfirmed} onCheckedChange={(checked) => setPartialGenerationConfirmed(checked === true)} />
+                <span>Je confirme enregistrer uniquement les banques complètes disponibles.</span>
+              </label>
+            )}
             <div className="flex justify-between mt-4">
               <Button variant="outline" onClick={() => setStep('settings')}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> {ui("Back")}
               </Button>
-              <Button onClick={handleSaveBatch} disabled={isSaving || batchUnits.every((u) => u.questions.length === 0)}>
+              <Button onClick={handleSaveBatch} disabled={isSaving || batchUnits.every((u) => u.questions.length === 0) || (partialGeneration && !partialGenerationConfirmed)}>
                 {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
                 {ui("Créer")} {batchUnits.filter((u) => u.questions.length > 0).length} {ui("banque(s)")}
               </Button>
@@ -1356,6 +1380,16 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         {step === 'save' && (
           <div className="flex-1 flex flex-col">
             <div className="space-y-4">
+              {partialGeneration && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
+                  <p className="font-medium">Génération incomplète</p>
+                  <p className="mt-1">Seules les questions valides déjà produites sont affichées. Les questions manquantes ne seront pas ajoutées automatiquement.</p>
+                  <label className="mt-3 flex items-center gap-2">
+                    <Checkbox checked={partialGenerationConfirmed} onCheckedChange={(checked) => setPartialGenerationConfirmed(checked === true)} />
+                    <span>Je confirme enregistrer uniquement ces questions validées.</span>
+                  </label>
+                </div>
+              )}
               <div>
                 <Label htmlFor="bank-title">{ui("Quiz Bank Title *")}</Label>
                 <Input id="bank-title" value={bankTitle} onChange={(e) => setBankTitle(e.target.value)} placeholder={ui("e.g., Fractions Quiz - Generated")} />
@@ -1378,7 +1412,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               <Button variant="outline" onClick={() => setStep('preview')}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> {ui("Back")}
               </Button>
-              <Button onClick={handleSave} disabled={!bankTitle.trim() || isSaving}>
+              <Button onClick={handleSave} disabled={!bankTitle.trim() || isSaving || (partialGeneration && !partialGenerationConfirmed)}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {ui("Saving...")}</> : <><Check className="w-4 h-4 mr-2" /> {ui("Save Quiz Bank")}</>}
               </Button>
             </div>

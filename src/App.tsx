@@ -238,7 +238,6 @@ const App = () => {
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
-                          <Route path=":subject/theme/:themeId" element={<LessonThemePage />} />
                           <Route path=":subject/topics" element={<PracticeTopicsPage />} />
                           <Route path=":subject" element={<PracticeSubjectPage />} />
                         </Route>
