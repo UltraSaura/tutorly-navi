@@ -11,7 +11,6 @@ import { UserDetails } from './users/UserDetails';
 import { AddChildDialog } from './users/AddChildDialog';
 import { UserSearch } from './users/UserSearch';
 import { PageMeta } from '@/components/seo/PageMeta';
-import { AdministratorAccessManagement } from './users/AdministratorAccessManagement';
 
 const defaultActivity = [
   { day: 'Mon', minutes: 45 },
@@ -360,7 +359,6 @@ const UserManagement = () => {
   
   return (
       <div className="space-y-6">
-      <AdministratorAccessManagement />
       <PageMeta title={ui("Users")} description={ui("Administer user accounts, roles, and permissions.")} />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{ui("User Management")}</h1>
