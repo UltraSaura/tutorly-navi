@@ -63,12 +63,12 @@ export function AdministratorAccessManagement() {
     <Card className="glass">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Administrator access</CardTitle>
-        <CardDescription>Assign or revoke administrator roles. Existing legacy administrators remain full-access until explicitly changed.</CardDescription>
+        <CardDescription>Promote any existing user to a scoped manager or full Super Admin, or revoke administrator access.</CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? <p className="text-sm text-muted-foreground">Loading administrator accounts…</p> : (
           <div className="space-y-3">
-            {accounts.map(account => {
+            {accounts.length === 0 ? <p className="text-sm text-muted-foreground">No users found.</p> : accounts.map(account => {
               const role = currentAdminRole(account.roles);
               const label = [account.first_name, account.last_name].filter(Boolean).join(' ') || account.email || account.user_id;
               return (
