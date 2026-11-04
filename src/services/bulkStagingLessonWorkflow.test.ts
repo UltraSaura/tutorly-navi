@@ -112,6 +112,15 @@ describe('bulk staging lesson workflow', () => {
     expect(generate).not.toHaveBeenCalled();
   });
 
+  it('stops before the next topic when the bulk run is cancelled', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const generate = vi.fn();
+    const results = await runBulkStagingGeneration([{ id: 'topic-1', name: 'Figures' }], undefined, { generate, signal: controller.signal });
+    expect(results).toEqual([]);
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it('rejects the known duplicate fixture before any provider call', async () => {
     const generate = vi.fn();
     await expect(runBulkStagingGeneration([{ id: '185f20b5-d698-446d-80e8-c3c462819b94', name: 'Fixture' }], undefined, { generate })).resolves.toEqual([

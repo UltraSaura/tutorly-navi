@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
 import { safeProviderContentDiagnostics } from '../_shared/provider-diagnostics.ts';
+import { fetchProviderResponse, isRetryableProviderFailure, PROVIDER_TOTAL_BUDGET_MS, readProviderJson } from '../_shared/provider-request.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -333,11 +334,11 @@ RULES:
 - Use only supported output kinds: single, multi, numeric, ordering, column-fill, visual
 - Return ONLY the JSON array, no markdown, no explanation`;
 
-    const callAiForQuestions = async (count: number, existingPrompts: string[]) => {
+    const callAiForQuestions = async (count: number, existingPrompts: string[], deadline: number) => {
       const prompt = buildPrompt(count, existingPrompts);
       console.log("Calling AI gateway, prompt length:", prompt.length, "requested:", count);
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetchProviderResponse("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -351,17 +352,9 @@ RULES:
           ],
           temperature: 0.7,
         }),
-      });
+      }, { deadline });
 
-      if (!response.ok) {
-        if (response.status === 429) throw new Error("Rate limit exceeded. Please try again later.");
-        if (response.status === 402) throw new Error("AI credits exhausted. Please add funds to continue.");
-        const errorText = await response.text();
-        console.error("AI gateway error:", response.status, errorText);
-        throw new Error("AI generation failed");
-      }
-
-      const aiResponse = await response.json();
+      const aiResponse = await readProviderJson<Record<string, any>>(response, { deadline });
       const content = aiResponse.choices?.[0]?.message?.content;
       if (!content) throw new Error("No content in AI response");
 
@@ -379,9 +372,18 @@ RULES:
     const seenPromptKeys = new Set<string>();
     const desiredCount = Math.max(1, Math.min(20, Number(questionCount) || 5));
 
+    const generationDeadline = Date.now() + PROVIDER_TOTAL_BUDGET_MS;
     for (let attempt = 0; attempt < 3 && questions.length < desiredCount; attempt += 1) {
       const remaining = desiredCount - questions.length;
-      const rawQuestions = await callAiForQuestions(remaining, questions.map((question) => question.prompt).slice(-12));
+      let rawQuestions: any[];
+      try {
+        rawQuestions = await callAiForQuestions(remaining, questions.map((question) => question.prompt).slice(-12), generationDeadline);
+      } catch (error) {
+        if (!isRetryableProviderFailure(error) || attempt === 2) throw error;
+        const delay = Math.min(error.retryAfterMs ?? 250, Math.max(0, generationDeadline - Date.now()));
+        if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
       const validQuestions = validateQuestions(rawQuestions);
       for (const question of validQuestions) {
         const key = String(question.prompt || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();

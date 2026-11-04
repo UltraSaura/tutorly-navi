@@ -89,12 +89,13 @@ export type BulkStagingResult = {
 export type StagingGeneration = Awaited<ReturnType<typeof generateStagingDraft>>;
 
 export type BulkStagingDependencies = {
-  generate?: (topicId: string) => Promise<StagingGeneration>;
+  generate?: (topicId: string, signal?: AbortSignal) => Promise<StagingGeneration>;
   save?: (topicId: string, content: unknown, returnedTopicId?: unknown, topicKind?: StagingTopicKind, stagingMetadata?: StagingReviewMetadata) => Promise<LessonVersion>;
   validate?: (content: unknown, topicKind?: StagingTopicKind) => ReturnType<typeof validateLessonVersion>;
   dryRun?: boolean;
   dryRunContent?: unknown;
   language?: 'fr' | 'en';
+  signal?: AbortSignal;
 };
 
 export function validateBulkTopicIds(topics: BulkStagingTopic[]): void {
@@ -156,6 +157,7 @@ export async function runBulkStagingGeneration(
   const results: BulkStagingResult[] = [];
 
   for (const [index, topic] of topics.entries()) {
+    if (dependencies.signal?.aborted) break;
     const topicId = topic.id!.trim();
     const base = { topicIndex: index + 1, totalTopics: topics.length, topicId, topicTitle: topic.name, totalLevels: STAGING_LEVEL_COUNT };
     let providerCalls = 0;
@@ -169,7 +171,10 @@ export async function runBulkStagingGeneration(
       emitProgress({ ...base, level: 1, providerCalls, confirmed: false, status: 'generating' });
       // One Edge invocation generates all four levels. Until it responds, the
       // browser cannot know which level (if any) has started or completed.
-      const generated = await generate(topicId);
+      const generated = dependencies.signal
+        ? await generate(topicId, dependencies.signal)
+        : await generate(topicId);
+      if (dependencies.signal?.aborted) break;
       providerCalls = Number(generated.providerCalls) || 0;
       if (!dependencies.dryRun) validateStagingGenerationEnvelope(generated);
       assertReturnedTopicMatches(topicId, generated.topic_id);
