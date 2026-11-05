@@ -29,12 +29,17 @@ export default function FamilyPage() {
   const returnTo = typeof location.state?.returnTo === 'string' && location.state.returnTo.startsWith('/guardian')
     ? location.state.returnTo
     : null;
-  const setup = !family.pinConfigured || reset;
+  const setup = family.parentPinRequired && (!family.pinConfigured || reset);
   const explain = (message: string) => ['invalid_pin', 'rate_limited'].includes(message) ? ui(`family.${message}`) : message.startsWith('family.') ? ui(message) : ui('family.error');
   const openParent = (next: 'parent' | 'add') => { setTarget(next); setPin(''); setConfirmPin(''); setPassword(''); setError(''); setReset(false); };
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setPending(true); setError('');
     try {
+      if (!family.parentPinRequired) {
+        await family.unlockParent('');
+        navigate(returnTo ?? (target === 'add' ? '/guardian/children' : '/guardian'), { replace: true, state: null });
+        return;
+      }
       if (setup) {
         if (pin !== confirmPin) throw new Error('family.pinMismatch');
         await family.setupPin(password, pin);
@@ -80,8 +85,9 @@ export default function FamilyPage() {
     <Dialog open={Boolean(target)} onOpenChange={open => { if (!open && !pending) { setTarget(null); setPin(''); setPassword(''); } }}>
       <DialogContent className="max-w-md"><DialogHeader><DialogTitle>{ui(setup ? 'family.setupPin' : 'family.enterPin')}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-4">
+          {!family.parentPinRequired && <p className="text-sm text-muted-foreground">Parent PIN protection is disabled for testing.</p>}
           {setup && <><p className="text-sm text-muted-foreground">{ui('family.reauthenticate')}</p><div className="space-y-2"><Label htmlFor="family-password">{ui('family.password')}</Label><Input id="family-password" type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required /></div></>}
-          <div className="space-y-2"><Label htmlFor="family-pin">{ui('family.pin')}</Label><Input id="family-pin" type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]{6}" maxLength={6} value={pin} onChange={event => setPin(event.target.value)} required autoFocus /></div>
+          {family.parentPinRequired && <div className="space-y-2"><Label htmlFor="family-pin">{ui('family.pin')}</Label><Input id="family-pin" type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]{6}" maxLength={6} value={pin} onChange={event => setPin(event.target.value)} required autoFocus /></div>}
           {setup && <div className="space-y-2"><Label htmlFor="family-pin-confirm">{ui('family.confirmPin')}</Label><Input id="family-pin-confirm" type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]{6}" maxLength={6} value={confirmPin} onChange={event => setConfirmPin(event.target.value)} required /></div>}
           {error && <p role="alert" className="text-destructive text-sm">{error}</p>}
           <Button type="submit" className="w-full min-h-12" disabled={pending}>{ui(pending ? 'family.loading' : 'family.continue')}</Button>
