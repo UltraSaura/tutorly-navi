@@ -62,6 +62,12 @@ export function FamilyProfileProvider({ children }: { children: React.ReactNode 
     setProfiles(state?.isFamily ? await familyRpc<FamilyChild[]>('family_profiles') : []);
   }, []);
 
+  useEffect(() => {
+    const refreshAfterFeatureFlagChange = () => { void refreshFamily().catch(() => undefined); };
+    window.addEventListener('stuwy:feature-flags-changed', refreshAfterFeatureFlagChange);
+    return () => window.removeEventListener('stuwy:feature-flags-changed', refreshAfterFeatureFlagChange);
+  }, [refreshFamily]);
+
   // Initialization runs for a new Auth session, not for token refresh events.
   const sessionId = session?.access_token ? (() => {
     try { return JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).session_id as string; }
