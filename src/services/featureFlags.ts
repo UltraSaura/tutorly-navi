@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const ADAPTIVE_TEACHING_RECOMMENDATIONS_FLAG = "adaptive_teaching_recommendations_enabled" as const;
+export const FAMILY_PARENT_PIN_REQUIRED_FLAG = "family_parent_pin_required" as const;
 
 export interface AppFeatureFlag {
   key: string;
@@ -27,6 +28,13 @@ const DEFAULT_ADAPTIVE_TEACHING_FLAG: AppFeatureFlag = {
     recommendedStyleShare: 0.7,
     mixedStyleShare: 0.3,
   },
+};
+
+const DEFAULT_FAMILY_PARENT_PIN_FLAG: AppFeatureFlag = {
+  key: FAMILY_PARENT_PIN_REQUIRED_FLAG,
+  enabled: true,
+  description: "When enabled, family parents must enter their PIN. Disable temporarily for testing only.",
+  metadata: {},
 };
 
 function logFeatureFlagError(action: string, error: unknown) {
@@ -93,15 +101,14 @@ export async function listFeatureFlags(): Promise<AppFeatureFlag[]> {
     logFeatureFlagError("List flags", error);
     const supabaseError = error as SupabaseFeatureFlagError;
     if (supabaseError?.code === "42P01") {
-      return [DEFAULT_ADAPTIVE_TEACHING_FLAG];
+      return [DEFAULT_ADAPTIVE_TEACHING_FLAG, DEFAULT_FAMILY_PARENT_PIN_FLAG];
     }
     throw error;
   }
 
   const flags = (data || []) as AppFeatureFlag[];
-  if (!flags.some(flag => flag.key === ADAPTIVE_TEACHING_RECOMMENDATIONS_FLAG)) {
-    return [...flags, DEFAULT_ADAPTIVE_TEACHING_FLAG];
-  }
+  if (!flags.some(flag => flag.key === ADAPTIVE_TEACHING_RECOMMENDATIONS_FLAG)) flags.push(DEFAULT_ADAPTIVE_TEACHING_FLAG);
+  if (!flags.some(flag => flag.key === FAMILY_PARENT_PIN_REQUIRED_FLAG)) flags.push(DEFAULT_FAMILY_PARENT_PIN_FLAG);
   return flags;
 }
 
@@ -113,7 +120,9 @@ export async function updateFeatureFlagEnabled(key: string, enabled: boolean): P
       enabled,
       description: key === ADAPTIVE_TEACHING_RECOMMENDATIONS_FLAG
         ? DEFAULT_ADAPTIVE_TEACHING_FLAG.description
-        : null,
+        : key === FAMILY_PARENT_PIN_REQUIRED_FLAG
+          ? DEFAULT_FAMILY_PARENT_PIN_FLAG.description
+          : null,
       metadata: key === ADAPTIVE_TEACHING_RECOMMENDATIONS_FLAG
         ? DEFAULT_ADAPTIVE_TEACHING_FLAG.metadata
         : {},

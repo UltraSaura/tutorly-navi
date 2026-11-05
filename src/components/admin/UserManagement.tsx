@@ -358,7 +358,7 @@ const UserManagement = () => {
   };
   
   return (
-    <div className="space-y-6">
+      <div className="space-y-6">
       <PageMeta title={ui("Users")} description={ui("Administer user accounts, roles, and permissions.")} />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{ui("User Management")}</h1>

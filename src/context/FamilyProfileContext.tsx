@@ -15,6 +15,7 @@ interface FamilyProfileContextValue {
   children: FamilyChild[];
   selection: FamilySelection | null;
   pinConfigured: boolean;
+  parentPinRequired: boolean;
   selectChild: (childId: string) => Promise<void>;
   unlockParent: (pin: string) => Promise<void>;
   switchProfile: () => Promise<void>;
@@ -34,6 +35,7 @@ export function FamilyProfileProvider({ children }: { children: React.ReactNode 
   const [error, setError] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<FamilyChild[]>([]);
   const [pinConfigured, setPinConfigured] = useState(false);
+  const [parentPinRequired, setParentPinRequired] = useState(true);
   const [selection, setSelection] = useState<FamilySelection | null>(null);
   const [epoch, setEpoch] = useState(0);
   const activeAccount = useRef<string | null>(null);
@@ -53,9 +55,10 @@ export function FamilyProfileProvider({ children }: { children: React.ReactNode 
   }, [queryClient]);
   const refreshFamily = useCallback(async () => {
     setError(null);
-    const state = await familyRpc<{ isFamily: boolean; isGuardian: boolean; pinConfigured: boolean }>('family_bootstrap');
+    const state = await familyRpc<{ isFamily: boolean; isGuardian: boolean; pinConfigured: boolean; parentPinRequired?: boolean }>('family_bootstrap');
     setIsFamily(Boolean(state?.isFamily)); setIsLegacyGuardian(Boolean(state?.isGuardian && !state?.isFamily));
     setPinConfigured(Boolean(state?.pinConfigured));
+    setParentPinRequired(state?.parentPinRequired !== false);
     setProfiles(state?.isFamily ? await familyRpc<FamilyChild[]>('family_profiles') : []);
   }, []);
 
@@ -82,9 +85,9 @@ export function FamilyProfileProvider({ children }: { children: React.ReactNode 
       if (!user) { if (!cancelled) { setIsFamily(false); setLoading(false); } return; }
       const account = user.id;
       try {
-        const state = await familyRpc<{ isFamily: boolean; isGuardian: boolean; pinConfigured: boolean }>('family_bootstrap');
+        const state = await familyRpc<{ isFamily: boolean; isGuardian: boolean; pinConfigured: boolean; parentPinRequired?: boolean }>('family_bootstrap');
         if (cancelled) return;
-        setIsFamily(Boolean(state?.isFamily)); setIsLegacyGuardian(Boolean(state?.isGuardian && !state?.isFamily)); setPinConfigured(Boolean(state?.pinConfigured));
+        setIsFamily(Boolean(state?.isFamily)); setIsLegacyGuardian(Boolean(state?.isGuardian && !state?.isFamily)); setPinConfigured(Boolean(state?.pinConfigured)); setParentPinRequired(state?.parentPinRequired !== false);
         if (!state?.isFamily) { setProfileRuntime({ family: false, user, token: null, legacyGuardian: Boolean(state.isGuardian) }); return; }
         const cards = await familyRpc<FamilyChild[]>('family_profiles');
         if (cancelled) return;
@@ -175,7 +178,7 @@ export function FamilyProfileProvider({ children }: { children: React.ReactNode 
     if (requestError || !data?.ok) throw new Error(data?.error ?? requestError?.message ?? 'family.error');
     await refreshFamily();
   };
-  return <FamilyContext.Provider value={{ activeProfile: selection?.profile ?? null, selection, isFamily, isLegacyGuardian, loading, busy, error, children: profiles, pinConfigured, selectChild: id => select('child', id), unlockParent: pin => select('parent', pin), switchProfile, refreshFamily, setupPin, epoch }}>{children}</FamilyContext.Provider>;
+  return <FamilyContext.Provider value={{ activeProfile: selection?.profile ?? null, selection, isFamily, isLegacyGuardian, loading, busy, error, children: profiles, pinConfigured, parentPinRequired, selectChild: id => select('child', id), unlockParent: pin => select('parent', pin), switchProfile, refreshFamily, setupPin, epoch }}>{children}</FamilyContext.Provider>;
 }
 export const useFamilyProfile = () => {
   const value = useContext(FamilyContext);
