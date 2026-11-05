@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useFamilyProfile } from '@/context/FamilyProfileContext';
@@ -29,6 +29,7 @@ export default function FamilyPage() {
   const returnTo = typeof location.state?.returnTo === 'string' && location.state.returnTo.startsWith('/guardian')
     ? location.state.returnTo
     : null;
+  useEffect(() => { void family.refreshFamily().catch(() => undefined); }, [family.refreshFamily]);
   const setup = family.parentPinRequired && (!family.pinConfigured || reset);
   const explain = (message: string) => ['invalid_pin', 'rate_limited'].includes(message) ? ui(`family.${message}`) : message.startsWith('family.') ? ui(message) : ui('family.error');
   const openParent = (next: 'parent' | 'add') => { setTarget(next); setPin(''); setConfirmPin(''); setPassword(''); setError(''); setReset(false); };
