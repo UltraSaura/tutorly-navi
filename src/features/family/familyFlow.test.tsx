@@ -12,7 +12,7 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock('@/context/FamilyProfileContext', () => ({ useFamilyProfile: () => ({
   isFamily: state.isFamily, isLegacyGuardian: state.isLegacyGuardian, activeProfile: state.profile, loading: state.loading, busy: state.busy,
-  error: null, epoch: 1, children: state.children, pinConfigured: true,
+  error: null, epoch: 1, children: state.children, pinConfigured: true, parentPinRequired: true,
   switchProfile: vi.fn(), selectChild: vi.fn(), unlockParent: vi.fn(), refreshFamily: vi.fn(), setupPin: vi.fn(),
 }) }));
 vi.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'account' }, loading: false, signOut: vi.fn(), resetPassword: vi.fn() }) }));

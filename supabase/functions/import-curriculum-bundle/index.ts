@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
-import { requirePrivilegedFamily } from '../_shared/family-access.ts';
+import { requireAdminPermission } from '../_shared/admin-access.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await requirePrivilegedFamily(req);
+    await requireAdminPermission(req, 'curriculum.write');
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) return jsonResponse({ success: false, error: 'No authorization header' }, 200);
 

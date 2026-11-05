@@ -1,4 +1,4 @@
-import { requirePrivilegedFamily } from '../_shared/family-access.ts';
+import { requireAdminPermissionOrTeacher } from '../_shared/admin-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { validateLessonV21 } from './lesson-v21-contract.ts';
@@ -207,7 +207,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   // including provider-free healthchecks and fixtures. Those modes cannot
   // call an AI provider, but they are still part of this privileged function.
   try {
-    await requirePrivilegedFamily(req);
+    await requireAdminPermissionOrTeacher(req, 'content.write');
     requestId = req.headers.get('x-request-id') ?? req.headers.get('sb-request-id') ?? requestId;
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error ?? 'Unauthorized');
@@ -326,19 +326,6 @@ export async function handleRequest(req: Request): Promise<Response> {
       return new Response(
         JSON.stringify({ success: false, ok: false, requestId, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Unauthorized', providerCalls: aiProviderCalls, requestId } }),
         { status: 401, headers: responseHeaders() }
-      );
-    }
-
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .in('role', ['admin', 'teacher']);
-
-    if (!roles || roles.length === 0) {
-      return new Response(
-        JSON.stringify({ success: false, ok: false, requestId, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Admin or teacher role required', providerCalls: aiProviderCalls, requestId } }),
-        { status: 403, headers: responseHeaders() }
       );
     }
 

@@ -1,4 +1,4 @@
-import { requirePrivilegedFamily } from '../_shared/family-access.ts';
+import { requireAdminPermission } from '../_shared/admin-access.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
@@ -585,7 +585,7 @@ serve(async (req) => {
   }
 
   try {
-    await requirePrivilegedFamily(req);
+    await requireAdminPermission(req, 'content.write');
     const { value: deepseekApiKey } = await resolveProviderKey('DeepSeek');
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

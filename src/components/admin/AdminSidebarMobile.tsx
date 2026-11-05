@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { adminNavGroups, iconMap } from './adminNavGroups';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface AdminSidebarMobileProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface AdminSidebarMobileProps {
 const AdminSidebarMobile = ({ open, onOpenChange, closeMenu }: AdminSidebarMobileProps) => {
   const ui = useInterfaceTranslation();
   const location = useLocation();
+  const { hasPermission } = useAdminAuth();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -34,13 +36,14 @@ const AdminSidebarMobile = ({ open, onOpenChange, closeMenu }: AdminSidebarMobil
           </Button>
         </div>
         <nav className="flex-1 overflow-y-auto py-6 px-4">
-          {adminNavGroups.map(group => (
-            <div key={ui(group.label)} className="mb-6">
+        {adminNavGroups.map(group => (
+          group.items.some(item => hasPermission(item.permission)) && (
+          <div key={ui(group.label)} className="mb-6">
               <div className="text-xs font-semibold uppercase text-gray-400 tracking-wide px-1 mb-2">
                 {ui(group.label)}
               </div>
               <div className="space-y-1">
-                {group.items.map(item => {
+              {group.items.filter(item => hasPermission(item.permission)).map(item => {
                   const Icon = iconMap[item.iconName];
                   return (
                     <Link
@@ -60,8 +63,9 @@ const AdminSidebarMobile = ({ open, onOpenChange, closeMenu }: AdminSidebarMobil
                   );
                 })}
               </div>
-            </div>
-          ))}
+          </div>
+          )
+        ))}
         </nav>
         <div className="p-4 border-t">
           <Link to="/">
