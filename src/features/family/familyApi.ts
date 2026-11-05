@@ -19,6 +19,51 @@ export interface FamilySelection {
   token: string;
   expiresAt: string;
 }
+
+function record(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function nullableText(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
+
+/**
+ * RPC payloads are untrusted runtime data even though the TypeScript return
+ * type is known at compile time. Keep malformed family rows out of React
+ * state so the chooser cannot crash while switching profiles.
+ */
+export function normalizeFamilyChildren(payload: unknown): FamilyChild[] {
+  if (!Array.isArray(payload)) return [];
+  return payload.flatMap((value) => {
+    if (!record(value) || typeof value.id !== 'string' || !value.id.trim() || typeof value.learnerId !== 'string' || !value.learnerId.trim()) return [];
+    return [{
+      id: value.id,
+      learnerId: value.learnerId,
+      firstName: nullableText(value.firstName),
+      grade: nullableText(value.grade),
+      avatarUrl: nullableText(value.avatarUrl),
+      available: value.available === true,
+    }];
+  });
+}
+
+export function normalizeCurrentProfile(payload: unknown): {
+  kind: 'parent' | 'child';
+  childId: string | null;
+  learner: Record<string, unknown> | null;
+  expiresAt: string;
+} | null {
+  if (!record(payload) || (payload.kind !== 'parent' && payload.kind !== 'child') || typeof payload.expiresAt !== 'string') return null;
+  if (payload.kind === 'child' && typeof payload.childId !== 'string') return null;
+  return {
+    kind: payload.kind,
+    childId: typeof payload.childId === 'string' ? payload.childId : null,
+    learner: record(payload.learner) ? payload.learner : null,
+    expiresAt: payload.expiresAt,
+  };
+}
+
 export async function familyRpc<T>(name: string, args?: Record<string, unknown>): Promise<T> {
   // Generated schema types are extended by the family migration at deployment time.
   const { data, error } = await supabase.rpc(name as never, args as never);
