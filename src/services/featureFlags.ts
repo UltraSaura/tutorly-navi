@@ -134,4 +134,5 @@ export async function updateFeatureFlagEnabled(key: string, enabled: boolean): P
     logFeatureFlagError(`Update flag ${key}`, error);
     throw new Error(featureFlagUserMessage(error));
   }
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("stuwy:feature-flags-changed"));
 }
