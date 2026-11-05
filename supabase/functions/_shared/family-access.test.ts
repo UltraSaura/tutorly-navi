@@ -25,18 +25,29 @@ describe('privileged family Edge Function contract', () => {
       const file = existsSync(resolve('supabase/functions', name, 'handler.ts')) ? 'handler.ts' : 'index.ts';
       const source = readFileSync(resolve('supabase/functions', name, file), 'utf8');
       const handlerStart = Math.max(source.indexOf('Deno.serve('), source.indexOf('serve(async'), source.indexOf('export async function handleRequest('));
-      const guard = source.indexOf('await requirePrivilegedFamily(req)', handlerStart);
+      const adminGuard = source.includes('requireAdminPermissionOrTeacher')
+        ? 'await requireAdminPermissionOrTeacher(req'
+        : source.includes('requireAdminPermission')
+          ? 'await requireAdminPermission(req'
+          : 'await requirePrivilegedFamily(req)';
+      const guardPosition = source.indexOf(adminGuard, handlerStart);
       const protectedWork = [
         source.indexOf('req.headers.get', handlerStart),
         source.indexOf('await req.json()', handlerStart),
         source.indexOf('Deno.env.get', handlerStart),
       ].filter((position) => position >= 0).sort((left, right) => left - right)[0] ?? -1;
 
-      expect(source).toContain("import { requirePrivilegedFamily } from '../_shared/family-access.ts'");
+      if (adminGuard === 'await requireAdminPermissionOrTeacher(req') {
+        expect(source).toContain("import { requireAdminPermissionOrTeacher } from '../_shared/admin-access.ts'");
+      } else if (adminGuard === 'await requireAdminPermission(req') {
+        expect(source).toContain("import { requireAdminPermission } from '../_shared/admin-access.ts'");
+      } else {
+        expect(source).toContain("import { requirePrivilegedFamily } from '../_shared/family-access.ts'");
+      }
       expect(source).toContain('x-family-grant');
       expect(handlerStart).toBeGreaterThanOrEqual(0);
-      expect(guard).toBeGreaterThan(handlerStart);
-      expect(protectedWork).toBeGreaterThan(guard);
+      expect(guardPosition).toBeGreaterThan(handlerStart);
+      expect(protectedWork).toBeGreaterThan(guardPosition);
     });
   }
 });

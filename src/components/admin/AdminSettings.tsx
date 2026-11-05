@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import {
   ADAPTIVE_TEACHING_RECOMMENDATIONS_FLAG,
+  FAMILY_PARENT_PIN_REQUIRED_FLAG,
   listFeatureFlags,
   updateFeatureFlagEnabled,
 } from "@/services/featureFlags";
@@ -52,6 +53,8 @@ export default function AdminSettings() {
 
   const adaptiveFlag = flags.find(flag => flag.key === ADAPTIVE_TEACHING_RECOMMENDATIONS_FLAG);
   const enabled = Boolean(adaptiveFlag?.enabled);
+  const parentPinFlag = flags.find(flag => flag.key === FAMILY_PARENT_PIN_REQUIRED_FLAG);
+  const parentPinRequired = parentPinFlag?.enabled ?? true;
   const isReady = analyticsSummary?.readinessStatus === "ready";
   const strongestSupport = analyticsSummary?.mostHelpfulSupportStyle
     ? supportStyleLabels[analyticsSummary.mostHelpfulSupportStyle][isFrench ? "fr" : "en"]
@@ -131,6 +134,30 @@ export default function AdminSettings() {
                 })
               }
               aria-label={ui("Adaptive teaching recommendations")}
+            />
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Parent PIN protection</CardTitle>
+          <CardDescription>
+            Keep this enabled for normal use. Disable it temporarily when testing the parent area without a PIN.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+            <div>
+              <p className="font-medium">Require a parent PIN</p>
+              <p className="text-sm text-muted-foreground">
+                {parentPinRequired ? 'Enabled — parents must enter their PIN.' : 'Disabled — testing mode, no parent PIN is required.'}
+              </p>
+            </div>
+            <Switch
+              checked={parentPinRequired}
+              disabled={updateFlag.isPending}
+              onCheckedChange={(checked) => updateFlag.mutate({ key: FAMILY_PARENT_PIN_REQUIRED_FLAG, enabled: checked })}
+              aria-label="Require a parent PIN"
             />
           </div>
         </CardContent>

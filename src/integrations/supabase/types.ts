@@ -3284,6 +3284,20 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_accounts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          email: string | null
+          first_name: string | null
+          last_name: string | null
+          roles: string[]
+        }[]
+      }
+      admin_set_role: {
+        Args: { _role?: string | null; _target_user: string }
+        Returns: undefined
+      }
       create_vault_secret: {
         Args: { secret_name: string; secret_value: string }
         Returns: undefined
@@ -3318,6 +3332,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      has_admin_permission: {
+        Args: { _capability: string; _user_id: string }
+        Returns: boolean
+      }
+      is_super_admin: {
+        Args: { _user_id: string }
         Returns: boolean
       }
       is_guardian_of_child: {
@@ -3365,6 +3387,9 @@ export type Database = {
         | "guardian"
         | "teacher"
         | "tester"
+        | "content_manager"
+        | "curriculum_manager"
+        | "super_admin"
       applicability_status: "en_vigueur" | "transitoire" | "planifie"
       class_level:
         | "CP"
@@ -3528,6 +3553,9 @@ export const Constants = {
         "guardian",
         "teacher",
         "tester",
+        "content_manager",
+        "curriculum_manager",
+        "super_admin",
       ],
       applicability_status: ["en_vigueur", "transitoire", "planifie"],
       class_level: [
