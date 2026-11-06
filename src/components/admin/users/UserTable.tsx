@@ -1,6 +1,8 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { MoreHorizontal, ChevronLeft, ChevronRight, GraduationCap, UsersRound, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@/types/admin';
@@ -24,6 +26,14 @@ export const UserTable = ({
   onApprovalChange
 }: UserTableProps) => {
   const ui = useInterfaceTranslation();
+  const { data: testerIds = new Set<string>() } = useQuery({
+    queryKey: ['tester-role-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_roles').select('user_id').eq('role', 'tester');
+      if (error) throw error;
+      return new Set((data ?? []).map(row => row.user_id));
+    },
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
 
@@ -50,6 +60,7 @@ export const UserTable = ({
             <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Name')}</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Email')}</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Type')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">Tester</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Approval')}</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Phone')}</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Country')}</th>
@@ -92,6 +103,9 @@ export const UserTable = ({
                       {getUserTypeIcon(user.user_type)}
                       <span className="ml-1.5 text-sm capitalize">{user.user_type}</span>
                     </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm">
+                    <span className={testerIds.has(user.id) ? 'rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800' : 'text-muted-foreground'}>{testerIds.has(user.id) ? 'Tester' : '—'}</span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     <div className="flex items-center gap-2">
@@ -195,7 +209,7 @@ export const UserTable = ({
             })
           ) : (
             <tr>
-              <td colSpan={10} className="px-4 py-6 text-center text-muted-foreground">
+              <td colSpan={11} className="px-4 py-6 text-center text-muted-foreground">
                 {ui("No users found matching your filters.")}
               </td>
             </tr>
