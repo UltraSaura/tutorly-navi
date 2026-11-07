@@ -16,6 +16,8 @@ Completed in local integration branch `integration/stuwy-explain-v2`.
 
 `main` and `practice` merged cleanly into a temporary branch from `development`. `learning`, `parent` and release lines were reviewed and not merged wholesale because they contain broad divergent product/mobile changes.
 
+Consolidation PR: [#53](https://github.com/UltraSaura/tutorly-navi/pull/53), targeting `development`. It is open, mergeable, and awaiting checks/approval.
+
 ## Milestone 1 — initialization
 
 Completed on `feature/stuwy-explain-v2`, based on consolidated commit `828413a3`.
