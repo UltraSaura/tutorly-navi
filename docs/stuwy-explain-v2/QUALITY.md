@@ -20,3 +20,8 @@ Browser-level visual verification passed. The harness starts the Vite developmen
 The renderer now shows the arithmetic state transition itself: crossed-out source digits and replacement values for exchanges, including the `4 → 3`, `0 → 9`, and `3 → 13` chain in `403 − 178`. These cells retain explicit place-value exponents and have text labels for assistive technology. The benchmark contains 16 verified written-arithmetic cases and 14 explicit unsupported cases. See [`BENCHMARK_REPORT.md`](./BENCHMARK_REPORT.md).
 
 The quality assessment is partial for pedagogical wording and temporal animation review. No Photomath comparison was performed because no genuine reference material was provided.
+## Cycle 5 pedagogical gate
+
+The benchmark is now auditable: every row carries an audit trail, and the two ambiguous prompts identified in review have complete French wording and rechecked expected results. Supported walkthroughs distinguish the mathematical operation, the French explanation, and the visual animation. Guided mode does not show the final answer or verification equality before the last frame.
+
+Interaction coverage is implemented through native keyboard-focusable buttons, explicit control labels, a polite live explanation region, stable previous/next/replay behavior, and reduced-motion autoplay suppression. A manual screen-reader pass and teacher review remain required before claiming full pedagogical readiness.

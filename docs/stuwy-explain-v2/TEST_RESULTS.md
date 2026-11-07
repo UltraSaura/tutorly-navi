@@ -4,7 +4,7 @@
 
 Run on 2026-11-07 after dependency installation:
 
-- `npm test -- --run`: **passed**, 115 files and 1,125 tests.
+- `npm test -- --run`: **passed**, 115 files and 1,127 tests.
 - `npm run build`: **passed**. Existing warnings include unresolved SF Pro runtime font references, dynamic/static import chunking, and large chunks.
 - `npm run lint`: **failed** on the existing repository baseline: 1,065 errors and 108 warnings.
 
@@ -12,7 +12,7 @@ No external AI calls or production database writes were made.
 
 ## V2 Lab slice
 
-- `npm test -- --run src/features/explanations/stuwyExplainLab.test.ts`: **passed**, 3 tests.
+- `npm test -- --run src/features/explanations/stuwyExplainLab.test.ts`: **passed**, 4 tests.
 - Focused ESLint on V2 Lab files and route: **passed**, 0 errors / 0 warnings.
 - `npm run build` after Lab route addition: **passed**.
 
@@ -32,3 +32,8 @@ No external AI calls or production database writes were made.
 - Place-value tests now verify direct carry annotations, `52 − 27` exchange values, and the `403 − 178` zero-crossing chain.
 - Benchmark test verifies exactly 30 exercises, all four grades, all five requested domains, generated results for supported cases, and explicit unsupported status for non-rendered types.
 - Visual coverage adds `907 ÷ 4` with remainder and preserves the original 48 screenshot names; the reviewed baseline count is 58.
+## Cycle 5 additions
+
+- Benchmark audit test verifies the corrected `CE2-G01` and `CM2-W01` wording and correction trail.
+- Lab now presents French pedagogical notes separating operation, explanation and animation; guided mode withholds the answer until the final frame.
+- Demo presets are documented in `DEMO.md`; visual baselines are preserved and the existing 58-image regression suite remains the review target.

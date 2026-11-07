@@ -42,14 +42,15 @@ export function buildLabSolution(request: LabRequest): LabSolution {
       { name: 'Opération persistante', passed: hasPersistentOperation, detail: 'Chaque étape conserve la structure de l’opération.' },
       { name: 'Méthode sélectionnée', passed: Boolean(request.method), detail: request.method },
     ],
-    pedagogicalNotes: buildPedagogicalNotes(request, steps),
+    pedagogicalNotes: buildPedagogicalNotes(request, steps, grid),
     grid,
   };
 }
 
-function buildPedagogicalNotes(request: LabRequest, steps: MathStep[]): string[] {
-  const notes = [`Niveau ${request.grade} · objectif : ${request.objective}`, `${steps.length} étapes déterministes avant toute formulation IA.`];
-  if (request.depth === 'remediation') notes.push('Prévoir une vérification de prérequis après chaque étape.');
-  if (request.depth === 'guided') notes.push('Nommer la valeur de position de chaque colonne et verbaliser le geste.');
+function buildPedagogicalNotes(request: LabRequest, steps: MathStep[], grid: PlaceValueSolution): string[] {
+  const operation = { addition: 'addition', subtraction: 'soustraction', multiplication: 'multiplication', division: 'division posée' }[grid.operation];
+  const notes = [`Niveau ${request.grade} · objectif : ${request.objective}`, `Opération : ${operation}. Méthode : ${request.method}.`, `${steps.length} étapes déterministes avant toute formulation IA.`, 'Explication : chaque transformation est formulée en français et reliée à une valeur de position.', 'Animation visuelle : les colonnes sources et destinations sont surlignées sans déplacer les chiffres.'];
+  if (request.depth === 'remediation') notes.push('Remédiation : vérifier les prérequis et le vocabulaire des unités, dizaines et centaines après chaque étape.');
+  if (request.depth === 'guided') notes.push('Guidée : observer la colonne active et expliquer le geste avant de consulter la réponse finale.');
   return notes;
 }

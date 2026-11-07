@@ -15,6 +15,15 @@ describe('Stuwy Explain Lab solver contract', () => {
     expect(solution.checks.every((check) => check.passed)).toBe(true);
     expect(solution.pedagogicalNotes.at(-1)).toContain('prérequis');
   });
+  it('separates the French operation, explanation and visual animation guidance', () => {
+    const solution = buildLabSolution(request);
+    expect(solution.pedagogicalNotes).toEqual(expect.arrayContaining([
+      expect.stringContaining('Opération : soustraction'),
+      expect.stringContaining('Explication :'),
+      expect.stringContaining('Animation visuelle :'),
+    ]));
+    expect(solution.grid.frames.find((frame) => frame.id === 'column-0')?.explanation).toContain('échange');
+  });
   it('rejects unsupported input instead of fabricating steps', () => {
     expect(() => buildLabSolution({ ...request, expression: 'bonjour' })).toThrow();
   });

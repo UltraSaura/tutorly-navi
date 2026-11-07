@@ -4,6 +4,15 @@ Updated 2026-11-07. The reproducible source of truth is [`stuwyExplainBenchmark.
 
 No Photomath reference material was supplied, so no Photomath comparison is claimed. Supported rows are evaluated against the deterministic renderer and the benchmark test; pedagogical clarity remains a human-review item where noted.
 
+## Cycle 5 audit trail
+
+All 30 rows were re-read for a complete student-facing question, one unambiguous expected result, a grade-appropriate objective, and a method matching the curriculum intent. Two specifications required correction:
+
+- `CE2-G01`: changed “Rectangle de 6 cm sur 4 cm” to a complete question specifying length, width and the requested perimeter.
+- `CM2-W01`: changed the fragment about four notebooks to a complete constant-unit-price situation specifying identical notebooks and the seven-notebook question.
+
+The corrections and arithmetic checks are stored on the rows as `auditTrail` in the benchmark source and are asserted by the benchmark test. No unsupported category was promoted to a passing status.
+
 ## Summary
 
 | Status | Count | Meaning |
@@ -59,3 +68,5 @@ No Photomath reference material was supplied, so no Photomath comparison is clai
 - Guides understanding: PARTIAL. The operation remains visible and changed values are shown, but fractions, geometry and word-problem reasoning are not implemented.
 
 Product-owner readiness: suitable for evaluation of supported written arithmetic, not a complete general-purpose math tutor. No production integration or deployment was performed.
+
+Cycle 5 implementation note: supported explanations now expose French operation/method notes, explicit transformation wording, and a separate visual-animation note. In guided mode, the answer and verification equality are intentionally withheld until the final frame.

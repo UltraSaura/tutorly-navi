@@ -18,3 +18,10 @@
 - [x] Remainder visual-regression coverage added without replacing existing baseline cases.
 - [ ] Manual teacher review of grade-specific wording and screen-reader behavior.
 - [ ] Extend renderer to fractions, geometry and word-problem modeling.
+## Cycle 5 completed work
+
+- [x] Audit all 30 exercises and preserve corrections in benchmark data.
+- [x] Add grade-aware French pedagogical notes and avoid premature guided answers.
+- [x] Add product-owner demo presets and reviewed walkthrough links.
+- [x] Add keyboard-friendly labels and a polite live explanation region.
+- [ ] Manual teacher and screen-reader review of phrasing and announcement cadence.

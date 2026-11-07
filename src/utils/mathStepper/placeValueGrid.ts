@@ -108,9 +108,11 @@ function arithmeticFrames(left: bigint, right: bigint, decimals: number, operato
     const leftDigit = Number((left / (10n ** BigInt(offset))) % 10n);
     const rightDigit = Number((right / (10n ** BigInt(offset))) % 10n);
     let digit: number;
+    let incomingCarry = 0;
     const events: GridEvent[] = [{ kind: 'highlight', sourceExponent: exponent, destinationExponent: exponent, description: `Colonne des ${labelFor(exponent)}` }];
     if (operator === '+') {
-      const sum = leftDigit + rightDigit + carry;
+      incomingCarry = carry;
+      const sum = leftDigit + rightDigit + incomingCarry;
       digit = sum % 10;
       const nextCarry = Math.floor(sum / 10);
       if (nextCarry) events.push({ kind: 'carry', sourceExponent: exponent, destinationExponent: exponent + 1, value: String(nextCarry), description: `Porte ${nextCarry} vers les ${labelFor(exponent + 1)}.` });
@@ -142,7 +144,7 @@ function arithmeticFrames(left: bigint, right: bigint, decimals: number, operato
         digit = top - rightDigit;
         rows.push({ id: 'result', cells: digits(BigInt(String(digit)), width, 'result', decimals, 'result').map((item) => ({ ...item, emphasis: item.exponent === exponent ? 'active' : undefined })) });
         output.unshift(String(digit));
-        frames.push({ id: `column-${exponent}`, label: `Regrouper les ${labelFor(exponent)}`, explanation: `Le chiffre ${leftDigit} devient ${leftDigit + 10} après l’échange; le chiffre de rang supérieur diminue de 1.`, rows, events });
+        frames.push({ id: `column-${exponent}`, label: `Regrouper les ${labelFor(exponent)}`, explanation: `Comme ${leftDigit} est plus petit que ${rightDigit}, échange une unité du rang supérieur : ${leftDigit} devient ${leftDigit + 10}, puis ${leftDigit + 10} − ${rightDigit} = ${digit}.`, rows, events });
         continue;
       }
       digit = top - rightDigit;
@@ -152,7 +154,7 @@ function arithmeticFrames(left: bigint, right: bigint, decimals: number, operato
     const rows = baseRows(left, right, decimals, width, operator);
     if (operator === '+' && carry) rows.push(annotationRow(`carry-${exponent}`, 'retenue', exponent + 1, String(carry), 'carry'));
     rows.push({ id: 'result', cells: digits(resultValue, width, 'result', decimals, 'result').map((item) => ({ ...item, emphasis: item.exponent === exponent ? 'active' : undefined })) });
-    frames.push({ id: `column-${exponent}`, label: `Calculer les ${labelFor(exponent)}`, explanation: operator === '+' ? `${leftDigit} + ${rightDigit}${carry ? ' + retenue' : ''} = ${digit}.` : `Soustrais la colonne des ${labelFor(exponent)}.`, rows, events });
+    frames.push({ id: `column-${exponent}`, label: `Calculer les ${labelFor(exponent)}`, explanation: operator === '+' ? `${leftDigit} + ${rightDigit}${incomingCarry ? ` + ${incomingCarry} de retenue` : ''} = ${leftDigit + rightDigit + incomingCarry}. Écris ${digit}${carry ? ` et porte ${carry}` : ''}.` : `${leftDigit} − ${rightDigit} = ${digit} dans la colonne des ${labelFor(exponent)}.`, rows, events });
   }
   if (operator === '+' && carry) output.unshift(String(carry));
   frames.push({ id: 'final', label: 'Résultat', explanation: `Le résultat est ${formatResult(result, decimals)}.`, rows: baseRows(left, right, decimals, width, operator, result), events: [] });

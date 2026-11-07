@@ -55,6 +55,27 @@ def pixels_match(actual_path: Path, baseline_path: Path) -> bool:
     return not any(any(channel > 1 for channel in pixel) for pixel in difference.getdata())
 
 
+def verify_keyboard_controls(page) -> None:
+    """Exercise native keyboard controls and reduced-motion autoplay behavior."""
+    next_button = page.get_by_role("button", name="Étape suivante")
+    previous_button = page.get_by_role("button", name="Étape précédente")
+    replay_button = page.get_by_role("button", name="Rejouer l’explication")
+    play_button = page.get_by_role("button", name="Lire l’explication")
+    next_button.focus()
+    page.keyboard.press("Enter")
+    previous_button.focus()
+    page.keyboard.press("Enter")
+    replay_button.focus()
+    page.keyboard.press("Enter")
+    play_button.focus()
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(150)
+    if not page.get_by_role("button", name="Lire l’explication").is_visible():
+        raise RuntimeError("Reduced-motion play control did not settle back to the readable state")
+    replay_button.focus()
+    page.keyboard.press("Enter")
+
+
 @contextmanager
 def application_server(base_url: str):
     if server_ready(base_url):
@@ -128,6 +149,7 @@ def main() -> None:
                         page.evaluate("document.activeElement?.blur()")
                         stem = f"{case_name}-{viewport_name}"
                         page.screenshot(path=actual_root / f"{stem}-setup.png", full_page=True)
+                        verify_keyboard_controls(page)
                         for step in range(1, STEP_LIMITS.get(case_name, 3) + 1):
                             next_button = page.get_by_role("button", name="Suivant")
                             if next_button.is_disabled():
