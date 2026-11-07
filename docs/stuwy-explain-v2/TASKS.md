@@ -1,0 +1,9 @@
+# Tasks
+
+| ID | Description | Dependencies | Status | Acceptance criteria | Evidence | Commit / PR | Blockers |
+|---|---|---|---|---|---|---|---|
+| V2-001 | Audit branch heads and divergence | Git remote access | Done | Record requested branch SHAs and differences | `STATUS.md` | local integration commits | None |
+| V2-002 | Create V2 branch and project record | V2-001 | Done | Dedicated branch from verified baseline; seven authoritative docs | This directory | `feature/stuwy-explain-v2` | Remote push/PR requires repository credentials |
+| V2-003 | Build isolated Explanation Lab | V2-002 | Done (initial slice) | Dev-only route, local inputs, deterministic steps, validation, preview controls | 3 focused tests; build | local commit | Benchmark corpus remains |
+| V2-004 | Build 30-exercise benchmark corpus | V2-003 | Planned | Multiple grades and exercise families with separate correctness/pedagogy results | — | — | Product-owner review |
+| V2-005 | Approval gate | V2-004 | Blocked by design | Lab demo, benchmark and cost/performance evidence approved | — | — | Approval not yet requested |

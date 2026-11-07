@@ -51,6 +51,7 @@ const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPag
 const PracticeTopicsPage = lazy(() => import("./pages/practice/PracticeTopicsPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
 const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
+const StuwyExplainLabPage = lazy(() => import("./pages/dev/StuwyExplainLabPage"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -267,6 +268,9 @@ const App = () => {
                         )}
                         {isDev && (
                           <Route path="/dev/solid-gallery" element={<SolidVisualGalleryPage />} />
+                        )}
+                        {isDev && (
+                          <Route path="/dev/stuwy-explain-v2" element={<StuwyExplainLabPage />} />
                         )}
                         
                         {/* Admin Panel Routes */}
