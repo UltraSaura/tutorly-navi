@@ -206,6 +206,7 @@ export function evaluatePostfix(postfixTokens: Token[]): number {
  */
 export function normalizeExpression(expression: string): string {
   return expression
+    .replace(/,/g, '.') // Accept French decimal commas in the Lab and calculator input
     .replace(/÷/g, '/')  // Convert ÷ to /
     .replace(/%/g, '/100'); // Convert % to /100
 }

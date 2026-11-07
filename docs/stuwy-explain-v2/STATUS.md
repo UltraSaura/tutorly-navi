@@ -36,10 +36,10 @@ Initial isolated Lab is implemented at `/dev/stuwy-explain-v2`. It now uses an e
 - Lab-focused lint: **0 errors / 0 warnings**.
 - TypeScript no-emit check: **passed**.
 - Place-value grid tests: **10 passed**; Lab tests: **3 passed**.
-- Screenshot harness: **prepared**, at `scripts/visual-regression/stuwy-explain-v2.py`; it captures setup and intermediate frames for six operations at desktop/mobile sizes and compares PNG baselines byte-for-byte.
+- Screenshot harness: **passed**, at `scripts/visual-regression/stuwy-explain-v2.py`; it autonomously starts Vite development mode on port 4173, captures setup and intermediate frames for six operations at desktop/mobile sizes, and matches 48 PNG baselines byte-for-byte.
 
 ## Gate
 
 Production integration is not authorized. The Explanation Lab and benchmark evidence must be reviewed first.
 
-Screenshot capture remains open: no local server was running during this cycle and it was not restarted, so baseline images have not yet been captured or visually reviewed.
+Visual review completed for representative setup and intermediate frames. No incorrect final arithmetic or column placement was found. Remaining limitation: regrouping is represented by semantic highlights and event text; crossed-out/replaced source digits are not yet drawn as separate annotation cells.

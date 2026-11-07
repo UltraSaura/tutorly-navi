@@ -16,11 +16,14 @@ No external AI calls or production database writes were made.
 - Focused ESLint on V2 Lab files and route: **passed**, 0 errors / 0 warnings.
 - `npm run build` after Lab route addition: **passed**.
 
-## Structured grid cycle 3
+## Structured grid cycle 3/4
 
 - `npm test -- --run src/utils/mathStepper/placeValueGrid.test.ts src/features/explanations/stuwyExplainLab.test.ts`: **passed**, 10 tests.
 - `npx tsc --noEmit`: **passed**.
 - Focused ESLint for grid, Lab and renderer files: **passed**, 0 errors / 0 warnings.
 - `python3 scripts/visual-regression/stuwy-explain-v2.py --help`: **passed**.
-- Full French/mobile screenshot regression: **not run**; the harness is prepared, but no local server was running and the app was not restarted. Baseline capture and visual review remain required.
+- `npm run test:visual:stuwy -- --update`: **passed**, 48 baseline screenshots generated.
+- `npm run test:visual:stuwy`: **passed**, 48 screenshots matched byte-for-byte.
+- Visual review: **passed** for representative desktop/mobile frames; no incorrect final arithmetic or column placement found. Regrouping source-digit replacement remains a known visual limitation.
+- Decimal input fix: French comma decimals are now normalized before the Lab validation parser evaluates them.
 - Synchronization: local merge `d9998353` preserves feature parent `1b9f15c9` and adds merged development `a8708d54`.
