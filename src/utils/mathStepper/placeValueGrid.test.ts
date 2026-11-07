@@ -8,6 +8,8 @@ describe('place-value grid contracts', () => {
     ['403 - 178', '225', 'subtraction', 'regroup'],
     ['247 × 36', '8892', 'multiplication', 'partial-product'],
     ['864 ÷ 8', '108', 'division', 'bring-down'],
+    ['907 ÷ 4', '226 reste 3', 'division', 'partial-subtraction'],
+    ['1005 ÷ 5', '201', 'division', 'quotient-digit'],
     ['125,6 + 8,75', '134,35', 'addition', 'carry'],
   ])('%s has explicit columns, result and semantic events', (expression, result, operation, eventKind) => {
     const solution = buildPlaceValueSolution(expression);
@@ -23,5 +25,13 @@ describe('place-value grid contracts', () => {
     const solution = buildPlaceValueSolution('125,6 + 8,75');
     expect(solution.columns.map((column) => column.exponent)).toContain(-1);
     expect(solution.columns.map((column) => column.exponent)).toContain(-2);
+  });
+
+  it('keeps a French division potence and quotient zeros across frames', () => {
+    const solution = buildPlaceValueSolution('1005 ÷ 5');
+    expect(solution.layout).toBe('long-division');
+    expect(solution.frames.every((frame) => frame.layout === 'long-division')).toBe(true);
+    expect(solution.frames.some((frame) => frame.events.some((event) => event.kind === 'quotient-digit' && event.value === '0'))).toBe(true);
+    expect(solution.frames.some((frame) => frame.rows.some((row) => row.id.startsWith('subtraction-')))).toBe(true);
   });
 });

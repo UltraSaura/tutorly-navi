@@ -31,6 +31,7 @@ export interface PlaceValueFrame {
   explanation: string;
   rows: GridRow[];
   events: GridEvent[];
+  layout?: 'column' | 'long-division';
 }
 
 export interface PlaceValueSolution {
@@ -39,6 +40,7 @@ export interface PlaceValueSolution {
   columns: PlaceValueColumn[];
   frames: PlaceValueFrame[];
   result: string;
+  layout?: 'column' | 'long-division';
 }
 
 const labels = ['unités', 'dizaines', 'centaines', 'milliers', 'dizaines de mille', 'centaines de mille'];
@@ -58,6 +60,10 @@ function cell(rowId: string, exponent: number, text: string, kind: GridCell['kin
 function digits(value: bigint, width: number, rowId: string, decimals: number, kind: GridCell['kind'] = 'digit'): GridCell[] {
   const raw = value.toString().padStart(width, '0');
   return [...raw].map((text, index) => cell(rowId, width - decimals - index - 1, text, kind));
+}
+
+function shiftedDigits(value: bigint, maxExponent: number, rowId: string, kind: GridCell['kind'] = 'digit', emphasis?: GridCell['emphasis']): GridCell[] {
+  return [...value.toString()].map((text, index, all) => cell(rowId, maxExponent - all.length + index + 1, text, kind, emphasis));
 }
 
 function columns(minExponent: number, maxExponent: number): PlaceValueColumn[] {
@@ -136,16 +142,19 @@ function multiplicationFrames(left: bigint, right: bigint, expression: string): 
 
 function divisionFrames(dividend: bigint, divisor: bigint, expression: string): PlaceValueSolution {
   const dividendText = dividend.toString(); const quotient = dividend / divisor; const remainder = dividend % divisor;
-  const width = dividendText.length; const frames: PlaceValueFrame[] = [{ id: 'setup', label: 'Poser la division', explanation: 'Le diviseur est à gauche, le dividende sous la potence et le quotient au-dessus.', rows: [{ id: 'quotient', cells: [cell('quotient', width, '', 'result')] }, { id: 'dividend', cells: digits(dividend, width, 'dividend', 0) }, { id: 'divisor', cells: [cell('divisor', -1, divisor.toString(), 'operator')] }], events: [] }];
-  let partial = 0n; let quotientText = '';
+  const width = dividendText.length; const frames: PlaceValueFrame[] = [{ id: 'setup', label: 'Poser la division', explanation: 'Le diviseur est à gauche, le dividende sous la potence et le quotient au-dessus.', layout: 'long-division', rows: [{ id: 'quotient', label: 'quotient', cells: [] }, { id: 'dividend', label: `${divisor} )`, cells: digits(dividend, width, 'dividend', 0) }], events: [] }];
+  let partial = 0n; let quotientText = ''; const historyRows: GridRow[] = [];
   [...dividendText].forEach((digitText, index) => {
     partial = partial * 10n + BigInt(digitText);
     const q = partial >= divisor ? partial / divisor : 0n; const product = q * divisor; const newRemainder = partial - product; quotientText += q.toString();
-    frames.push({ id: `division-${index}`, label: `Traiter le chiffre ${digitText}`, explanation: `${partial} ÷ ${divisor} = ${q}, reste ${newRemainder}.`, rows: [{ id: 'quotient', cells: [...quotientText].map((text, qIndex) => cell('quotient', width - qIndex - 1, text, 'result', qIndex === quotientText.length - 1 ? 'active' : undefined)) }, { id: 'dividend', cells: digits(dividend, width, 'dividend', 0) }, { id: 'subtraction', cells: digits(product, width, 'subtraction', 0, 'result') }], events: [{ kind: 'bring-down', sourceExponent: width - index - 1, destinationExponent: width - index - 2, value: digitText, description: `Abaisse le chiffre ${digitText}.` }, { kind: 'quotient-digit', sourceExponent: width - index - 1, destinationExponent: width - index - 1, value: q.toString(), description: `Écris ${q} au quotient.` }, { kind: 'partial-subtraction', sourceExponent: width - index - 1, destinationExponent: width - index - 1, value: product.toString(), description: `Soustrais ${product}.` }] });
+    const currentExponent = width - index - 1;
+    historyRows.push({ id: `subtraction-${index}`, label: '−', cells: shiftedDigits(product, currentExponent, `subtraction-${index}`, 'result') });
+    if (newRemainder > 0n) historyRows.push({ id: `remainder-${index}`, label: '', cells: shiftedDigits(newRemainder, currentExponent, `remainder-${index}`, 'annotation', 'active') });
+    frames.push({ id: `division-${index}`, label: `Traiter le chiffre ${digitText}`, explanation: `${partial} ÷ ${divisor} = ${q}, reste ${newRemainder}.`, layout: 'long-division', rows: [{ id: 'quotient', label: 'quotient', cells: [...quotientText].map((text, qIndex) => cell('quotient', width - qIndex - 1, text, 'result', qIndex === quotientText.length - 1 ? 'active' : undefined)) }, { id: 'dividend', label: `${divisor} )`, cells: digits(dividend, width, 'dividend', 0) }, ...historyRows], events: [{ kind: 'bring-down', sourceExponent: currentExponent, destinationExponent: currentExponent - 1, value: digitText, description: `Abaisse le chiffre ${digitText}.` }, { kind: 'quotient-digit', sourceExponent: currentExponent, destinationExponent: currentExponent, value: q.toString(), description: `Écris ${q} au quotient${q === 0n ? ' (zéro conservé)' : ''}.` }, { kind: 'partial-subtraction', sourceExponent: currentExponent, destinationExponent: currentExponent, value: product.toString(), description: `Soustrais ${product}.` }] });
     partial = newRemainder;
   });
-  frames.push({ id: 'final', label: 'Résultat', explanation: remainder ? `Quotient ${quotient}, reste ${remainder}.` : `Le quotient est ${quotient}.`, rows: frames.at(-1)!.rows, events: [] });
-  return { expression, operation: 'division', columns: columns(0, width), frames, result: remainder ? `${quotient} reste ${remainder}` : quotient.toString() };
+  frames.push({ id: 'final', label: 'Résultat', explanation: remainder ? `Quotient ${quotient}, reste ${remainder}.` : `Le quotient est ${quotient}.`, layout: 'long-division', rows: frames.at(-1)!.rows, events: [] });
+  return { expression, operation: 'division', columns: columns(0, width - 1), frames, result: remainder ? `${quotient} reste ${remainder}` : quotient.toString(), layout: 'long-division' };
 }
 
 function formatResult(value: bigint, decimals: number): string {
