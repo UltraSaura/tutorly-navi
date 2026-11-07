@@ -24,17 +24,21 @@ Completed on `feature/stuwy-explain-v2`, based on consolidated commit `828413a3`
 
 ## Milestone 2/3 — Explanation Lab and structured solver slice
 
-Initial isolated Lab is implemented at `/dev/stuwy-explain-v2`. It supports local exercise input, French grade/objective/method/depth selectors, deterministic step generation, result checks, persistent operation preview, replay/playback with reduced-motion handling, and local reviewer notes. No AI provider or production data is used.
+Initial isolated Lab is implemented at `/dev/stuwy-explain-v2`. It now uses an exponent-based place-value grid with explicit cells and semantic events for the six reference operations: `58 + 67`, `52 − 27`, `403 − 178`, `247 × 36`, `864 ÷ 8`, and `125,6 + 8,75`. No AI provider or production data is used.
 
 ## Verification
 
-- Vitest: **113 files / 1,110 tests passed**.
+- Vitest: **114 files / 1,117 tests passed**.
 - Vite production build: **passed**.
 - ESLint: **blocked by 1,065 existing errors and 108 warnings** across the repository; no claim of a clean lint baseline is made.
 - External AI cost: **none**.
 - Lab contract tests: **3 passed**.
 - Lab-focused lint: **0 errors / 0 warnings**.
+- TypeScript no-emit check: **passed**.
+- Place-value grid tests: **7 passed**; Lab tests: **3 passed**.
 
 ## Gate
 
 Production integration is not authorized. The Explanation Lab and benchmark evidence must be reviewed first.
+
+Screenshot automation remains open: the repository has no Playwright/Puppeteer screenshot harness configured, so viewport validation is currently covered by explicit grid contracts and responsive overflow styling, not captured image baselines.

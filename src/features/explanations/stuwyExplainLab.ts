@@ -1,6 +1,7 @@
 import { generateSteps } from '@/utils/mathStepper/stepGenerator';
 import { parseExpression } from '@/utils/mathStepper/parser';
 import type { MathStep } from '@/utils/mathStepper/types';
+import { buildPlaceValueSolution, type PlaceValueSolution } from '@/utils/mathStepper/placeValueGrid';
 
 export type LabDepth = 'guided' | 'concise' | 'remediation';
 
@@ -18,12 +19,14 @@ export interface LabSolution {
   result: number;
   checks: { name: string; passed: boolean; detail: string }[];
   pedagogicalNotes: string[];
+  grid: PlaceValueSolution;
 }
 
 export function buildLabSolution(request: LabRequest): LabSolution {
   const parsed = parseExpression(request.expression);
   if (!parsed.isValid || parsed.result === undefined) throw new Error(parsed.error ?? 'Expression invalide');
   const steps = generateSteps(request.expression);
+  const grid = buildPlaceValueSolution(request.expression);
   if (steps.length === 0) throw new Error('Aucune étape générée pour cette expression');
   const finalStep = steps.at(-1)!;
   const resultMatchesParser = Math.abs(finalStep.result - parsed.result) < 0.001;
@@ -38,6 +41,7 @@ export function buildLabSolution(request: LabRequest): LabSolution {
       { name: 'Méthode sélectionnée', passed: Boolean(request.method), detail: request.method },
     ],
     pedagogicalNotes: buildPedagogicalNotes(request, steps),
+    grid,
   };
 }
 
