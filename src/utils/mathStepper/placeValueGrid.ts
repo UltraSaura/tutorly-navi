@@ -13,6 +13,7 @@ export interface GridCell {
   text: string;
   kind: 'digit' | 'operator' | 'annotation' | 'result' | 'line' | 'text';
   emphasis?: 'source' | 'destination' | 'active' | 'muted';
+  annotationType?: 'crossed-out' | 'replacement' | 'carry' | 'borrow';
 }
 
 export interface GridRow { id: string; label?: string; cells: GridCell[]; }
@@ -53,8 +54,12 @@ function parseNumber(value: string): { integer: bigint; decimals: number; normal
   return { integer: BigInt(`${whole}${fraction}` || '0'), decimals: fraction.length, normalized };
 }
 
-function cell(rowId: string, exponent: number, text: string, kind: GridCell['kind'] = 'digit', emphasis?: GridCell['emphasis']): GridCell {
-  return { rowId, exponent, text, kind, emphasis };
+function cell(rowId: string, exponent: number, text: string, kind: GridCell['kind'] = 'digit', emphasis?: GridCell['emphasis'], annotationType?: GridCell['annotationType']): GridCell {
+  return { rowId, exponent, text, kind, emphasis, annotationType };
+}
+
+function annotationRow(id: string, label: string, exponent: number, text: string, annotationType: NonNullable<GridCell['annotationType']>): GridRow {
+  return { id, label, cells: [cell(id, exponent, text, 'annotation', undefined, annotationType)] };
 }
 
 function digits(value: bigint, width: number, rowId: string, decimals: number, kind: GridCell['kind'] = 'digit'): GridCell[] {
@@ -113,12 +118,39 @@ function arithmeticFrames(left: bigint, right: bigint, decimals: number, operato
     } else {
       let top = leftDigit - borrow;
       borrow = 0;
-      if (top < rightDigit) { top += 10; borrow = 1; events.push({ kind: 'borrow', sourceExponent: exponent + 1, destinationExponent: exponent, value: '1', description: `Emprunte 1 aux ${labelFor(exponent + 1)}.` }, { kind: 'regroup', sourceExponent: exponent + 1, destinationExponent: exponent, description: `Regroupe 1 unité de rang supérieur en 10 ${labelFor(exponent)}.` }); }
+      if (top < rightDigit) {
+        top += 10;
+        borrow = 1;
+        const sourceExponent = exponent + 1;
+        let source = sourceExponent;
+        while (source < width && Number((left / (10n ** BigInt(source + decimals))) % 10n) === 0) source += 1;
+        const sourceDigit = Number((left / (10n ** BigInt(source + decimals))) % 10n);
+        events.push({ kind: 'borrow', sourceExponent: source, destinationExponent: exponent, value: '1', description: `Emprunte 1 aux ${labelFor(source)}.` }, { kind: 'regroup', sourceExponent: source, destinationExponent: exponent, description: `Regroupe 1 unité de rang supérieur en 10 ${labelFor(exponent)}.` });
+        const regroupRows: GridRow[] = [
+          annotationRow(`regroup-${source}-before-${exponent}`, 'avant', source, String(sourceDigit), 'crossed-out'),
+          annotationRow(`regroup-${source}-after-${exponent}`, 'après', source, String(sourceDigit - 1), 'replacement'),
+        ];
+        for (let chainExponent = source - 1; chainExponent > exponent; chainExponent -= 1) {
+          const chainDigit = Number((left / (10n ** BigInt(chainExponent + decimals))) % 10n);
+          regroupRows.push(annotationRow(`regroup-${chainExponent}-before-${exponent}`, 'avant', chainExponent, String(chainDigit), 'crossed-out'));
+          regroupRows.push(annotationRow(`regroup-${chainExponent}-after-${exponent}`, 'après', chainExponent, String(chainDigit + 9), 'replacement'));
+        }
+        regroupRows.push(annotationRow(`regroup-${exponent}-before`, 'unités avant', exponent, String(leftDigit), 'crossed-out'));
+        regroupRows.push(annotationRow(`regroup-${exponent}-after`, 'unités après', exponent, String(leftDigit + 10), 'replacement'));
+        const rows = baseRows(left, right, decimals, width, operator);
+        rows.push(...regroupRows);
+        digit = top - rightDigit;
+        rows.push({ id: 'result', cells: digits(BigInt(String(digit)), width, 'result', decimals, 'result').map((item) => ({ ...item, emphasis: item.exponent === exponent ? 'active' : undefined })) });
+        output.unshift(String(digit));
+        frames.push({ id: `column-${exponent}`, label: `Regrouper les ${labelFor(exponent)}`, explanation: `Le chiffre ${leftDigit} devient ${leftDigit + 10} après l’échange; le chiffre de rang supérieur diminue de 1.`, rows, events });
+        continue;
+      }
       digit = top - rightDigit;
     }
     output.unshift(String(digit));
     const resultValue = BigInt(output.join(''));
     const rows = baseRows(left, right, decimals, width, operator);
+    if (operator === '+' && carry) rows.push(annotationRow(`carry-${exponent}`, 'retenue', exponent + 1, String(carry), 'carry'));
     rows.push({ id: 'result', cells: digits(resultValue, width, 'result', decimals, 'result').map((item) => ({ ...item, emphasis: item.exponent === exponent ? 'active' : undefined })) });
     frames.push({ id: `column-${exponent}`, label: `Calculer les ${labelFor(exponent)}`, explanation: operator === '+' ? `${leftDigit} + ${rightDigit}${carry ? ' + retenue' : ''} = ${digit}.` : `Soustrais la colonne des ${labelFor(exponent)}.`, rows, events });
   }

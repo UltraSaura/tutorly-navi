@@ -17,6 +17,7 @@ export interface LabSolution {
   request: LabRequest;
   steps: MathStep[];
   result: number;
+  displayResult: string;
   checks: { name: string; passed: boolean; detail: string }[];
   pedagogicalNotes: string[];
   grid: PlaceValueSolution;
@@ -35,6 +36,7 @@ export function buildLabSolution(request: LabRequest): LabSolution {
     request,
     steps,
     result: parsed.result,
+    displayResult: grid.operation === 'division' ? grid.result : String(parsed.result).replace('.', ','),
     checks: [
       { name: 'Résultat vérifié', passed: resultMatchesParser, detail: `${finalStep.result} = ${parsed.result}` },
       { name: 'Opération persistante', passed: hasPersistentOperation, detail: 'Chaque étape conserve la structure de l’opération.' },

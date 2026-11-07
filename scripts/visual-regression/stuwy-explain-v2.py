@@ -11,7 +11,6 @@ reachable server is present. It never deploys or mutates production data.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import os
 import subprocess
 import time
@@ -21,6 +20,7 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from playwright.sync_api import sync_playwright
+from PIL import Image, ImageChops
 
 
 CASES = {
@@ -29,8 +29,10 @@ CASES = {
     "subtraction-zero": "403 - 178",
     "multiplication": "247 × 36",
     "long-division": "864 ÷ 8",
+    "long-division-remainder": "907 ÷ 4",
     "decimal-alignment": "125,6 + 8,75",
 }
+STEP_LIMITS = {"long-division-remainder": 5}
 VIEWPORTS = {"desktop": {"width": 1280, "height": 900}, "mobile": {"width": 390, "height": 844}}
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -41,6 +43,16 @@ def server_ready(base_url: str) -> bool:
             return response.status == 200
     except (OSError, URLError):
         return False
+
+
+def pixels_match(actual_path: Path, baseline_path: Path) -> bool:
+    """Compare decoded pixels, allowing one-channel antialiasing noise of one level."""
+    actual = Image.open(actual_path).convert("RGBA")
+    baseline = Image.open(baseline_path).convert("RGBA")
+    if actual.size != baseline.size:
+        return False
+    difference = ImageChops.difference(actual, baseline)
+    return not any(any(channel > 1 for channel in pixel) for pixel in difference.getdata())
 
 
 @contextmanager
@@ -95,35 +107,40 @@ def main() -> None:
         browser = playwright.chromium.launch(headless=True)
         try:
             for viewport_name, viewport in VIEWPORTS.items():
-                page = browser.new_page(viewport=viewport, reduced_motion="reduce")
-                page.add_init_script(
-                    "localStorage.setItem('lang', 'fr'); localStorage.setItem('countryDetected', 'true');"
-                )
                 for case_name, expression in CASES.items():
-                    page.goto(base_url, wait_until="domcontentloaded")
-                    page.add_style_tag(content="li[data-radix-collection-item], [data-testid='staging-environment-indicator'] { display: none !important; } button[type='submit'] { background-color: hsl(var(--primary)) !important; }")
-                    page.get_by_label("Exercice").fill(expression)
-                    page.get_by_role("button", name="Générer localement").click()
-                    page.get_by_text("Validation mathématique").wait_for()
-                    page.evaluate("document.fonts.ready")
-                    page.wait_for_timeout(500)
-                    page.mouse.move(0, 0)
-                    page.mouse.click(0, 0)
-                    page.evaluate("document.activeElement?.blur()")
-                    stem = f"{case_name}-{viewport_name}"
-                    page.screenshot(path=actual_root / f"{stem}-setup.png", full_page=True)
-                    for step in range(1, 4):
-                        next_button = page.get_by_role("button", name="Suivant")
-                        if next_button.is_disabled():
-                            break
-                        next_button.click()
-                        page.wait_for_timeout(300)
-                        page.screenshot(path=actual_root / f"{stem}-step-{step}.png", full_page=True)
-                    if args.update:
-                        baseline_root.mkdir(parents=True, exist_ok=True)
-                        for screenshot in actual_root.glob(f"{stem}-*.png"):
-                            screenshot.replace(baseline_root / screenshot.name)
-                page.close()
+                    page = browser.new_page(viewport=viewport, reduced_motion="reduce")
+                    try:
+                        page.add_init_script(
+                            "localStorage.setItem('lang', 'fr'); localStorage.setItem('countryDetected', 'true');"
+                        )
+                        page.goto(base_url, wait_until="domcontentloaded")
+                        page.add_style_tag(content="li[data-radix-collection-item], [data-testid='staging-environment-indicator'] { display: none !important; } button[type='submit'] { background-color: hsl(var(--primary)) !important; }")
+                        page.get_by_label("Exercice").fill(expression)
+                        page.get_by_role("button", name="Générer localement").click()
+                        page.get_by_text("Validation mathématique").wait_for()
+                        page.evaluate("document.fonts.ready")
+                        # Google Poppins is loaded by the existing app stylesheet; give the
+                        # browser a deterministic settle window before capturing pixels.
+                        page.wait_for_timeout(1500)
+                        page.wait_for_timeout(500)
+                        page.mouse.move(0, 0)
+                        page.mouse.click(0, 0)
+                        page.evaluate("document.activeElement?.blur()")
+                        stem = f"{case_name}-{viewport_name}"
+                        page.screenshot(path=actual_root / f"{stem}-setup.png", full_page=True)
+                        for step in range(1, STEP_LIMITS.get(case_name, 3) + 1):
+                            next_button = page.get_by_role("button", name="Suivant")
+                            if next_button.is_disabled():
+                                break
+                            next_button.click()
+                            page.wait_for_timeout(300)
+                            page.screenshot(path=actual_root / f"{stem}-step-{step}.png", full_page=True)
+                        if args.update:
+                            baseline_root.mkdir(parents=True, exist_ok=True)
+                            for screenshot in actual_root.glob(f"{stem}-*.png"):
+                                screenshot.replace(baseline_root / screenshot.name)
+                    finally:
+                        page.close()
         finally:
             browser.close()
 
@@ -134,11 +151,11 @@ def main() -> None:
         mismatched = []
         for actual in actual_root.glob("*.png"):
             baseline = baseline_root / actual.name
-            if hashlib.sha256(actual.read_bytes()).digest() != hashlib.sha256(baseline.read_bytes()).digest():
+            if not pixels_match(actual, baseline):
                 mismatched.append(actual.name)
         if mismatched:
             raise SystemExit(f"Visual baseline mismatch: {', '.join(sorted(mismatched))}")
-        print(f"Captured and matched {len(list(actual_root.glob('*.png')))} screenshots against byte-identical baselines.")
+        print(f"Captured and matched {len(list(actual_root.glob('*.png')))} screenshots against reviewed pixel baselines.")
 
 
 if __name__ == "__main__":

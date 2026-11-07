@@ -34,4 +34,37 @@ describe('place-value grid contracts', () => {
     expect(solution.frames.some((frame) => frame.events.some((event) => event.kind === 'quotient-digit' && event.value === '0'))).toBe(true);
     expect(solution.frames.some((frame) => frame.rows.some((row) => row.id.startsWith('subtraction-')))).toBe(true);
   });
+
+  it('shows the exchanged ten directly for 52 − 27', () => {
+    const solution = buildPlaceValueSolution('52 - 27');
+    const regroup = solution.frames.find((frame) => frame.id === 'column-0');
+    expect(regroup).toBeDefined();
+    const annotations = regroup!.rows.flatMap((row) => row.cells.filter((cell) => cell.kind === 'annotation'));
+    expect(annotations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ exponent: 1, text: '5', annotationType: 'crossed-out' }),
+      expect.objectContaining({ exponent: 1, text: '4', annotationType: 'replacement' }),
+      expect.objectContaining({ exponent: 0, text: '2', annotationType: 'crossed-out' }),
+      expect.objectContaining({ exponent: 0, text: '12', annotationType: 'replacement' }),
+    ]));
+  });
+
+  it('shows the zero-crossing regrouping chain for 403 − 178', () => {
+    const solution = buildPlaceValueSolution('403 - 178');
+    const regroup = solution.frames.find((frame) => frame.id === 'column-0');
+    const annotations = regroup!.rows.flatMap((row) => row.cells.filter((cell) => cell.kind === 'annotation'));
+    expect(annotations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ exponent: 2, text: '4', annotationType: 'crossed-out' }),
+      expect.objectContaining({ exponent: 2, text: '3', annotationType: 'replacement' }),
+      expect.objectContaining({ exponent: 1, text: '0', annotationType: 'crossed-out' }),
+      expect.objectContaining({ exponent: 1, text: '9', annotationType: 'replacement' }),
+      expect.objectContaining({ exponent: 0, text: '3', annotationType: 'crossed-out' }),
+      expect.objectContaining({ exponent: 0, text: '13', annotationType: 'replacement' }),
+    ]));
+  });
+
+  it('renders a carry as a positioned annotation for 58 + 67', () => {
+    const solution = buildPlaceValueSolution('58 + 67');
+    const carry = solution.frames.flatMap((frame) => frame.rows.flatMap((row) => row.cells)).find((cell) => cell.annotationType === 'carry');
+    expect(carry).toMatchObject({ exponent: 1, text: '1', kind: 'annotation' });
+  });
 });

@@ -14,4 +14,9 @@ The repository already contains stepper, operation-posee verification and math-r
 
 The Lab now renders through `StructuredOperationGrid`, which maps every visible digit and annotation to an exponent-based column, marks decimal boundaries and keeps source/destination columns explicit for semantic events. Division frames retain quotient, dividend, intermediate products, subtraction rows, remainders and bring-down events. Reduced-motion classes are applied to the grid and controls.
 
-Browser-level visual verification passed. The harness starts the Vite development server when needed, captures setup and intermediate states for all six reference operations at mobile and desktop sizes, and compares 48 PNG baselines byte-for-byte. Representative frames were visually reviewed for alignment, persistence and responsive layout. Regrouping remains a pedagogical limitation because source-digit replacement is communicated by events/highlights rather than crossed-out annotation cells.
+Browser-level visual verification passed. The harness starts the Vite development server when needed, captures setup and intermediate states for seven reference operations at mobile and desktop sizes, and compares 58 reviewed PNG baselines by decoded pixels. Representative frames were visually reviewed for alignment, persistence and responsive layout. Regrouping now includes crossed-out and replacement annotation cells; grade-specific wording and temporal motion remain review items.
+## Cycle 4 quality gate
+
+The renderer now shows the arithmetic state transition itself: crossed-out source digits and replacement values for exchanges, including the `4 → 3`, `0 → 9`, and `3 → 13` chain in `403 − 178`. These cells retain explicit place-value exponents and have text labels for assistive technology. The benchmark contains 16 verified written-arithmetic cases and 14 explicit unsupported cases. See [`BENCHMARK_REPORT.md`](./BENCHMARK_REPORT.md).
+
+The quality assessment is partial for pedagogical wording and temporal animation review. No Photomath comparison was performed because no genuine reference material was provided.

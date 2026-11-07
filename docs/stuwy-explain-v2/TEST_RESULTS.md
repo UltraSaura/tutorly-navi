@@ -4,7 +4,7 @@
 
 Run on 2026-11-07 after dependency installation:
 
-- `npm test -- --run`: **passed**, 114 files and 1,120 tests.
+- `npm test -- --run`: **passed**, 115 files and 1,125 tests.
 - `npm run build`: **passed**. Existing warnings include unresolved SF Pro runtime font references, dynamic/static import chunking, and large chunks.
 - `npm run lint`: **failed** on the existing repository baseline: 1,065 errors and 108 warnings.
 
@@ -22,8 +22,13 @@ No external AI calls or production database writes were made.
 - `npx tsc --noEmit`: **passed**.
 - Focused ESLint for grid, Lab and renderer files: **passed**, 0 errors / 0 warnings.
 - `python3 scripts/visual-regression/stuwy-explain-v2.py --help`: **passed**.
-- `npm run test:visual:stuwy -- --update`: **passed**, 48 baseline screenshots generated.
-- `npm run test:visual:stuwy`: **passed**, 48 screenshots matched byte-for-byte.
-- Visual review: **passed** for representative desktop/mobile frames; no incorrect final arithmetic or column placement found. Regrouping source-digit replacement remains a known visual limitation.
+- `npm run test:visual:stuwy -- --update`: **passed**, reviewed baseline set contains 58 screenshots (the original 48 names remain present).
+- `npm run test:visual:stuwy`: **passed**, 58 screenshots matched after decoded-pixel comparison (only one-level antialiasing noise is tolerated).
+- Visual review: **passed** for representative desktop/mobile frames; no incorrect final arithmetic or column placement found. The new subtraction frames visibly show regrouping and the remainder case visibly shows quotient 226, remainder 3.
 - Decimal input fix: French comma decimals are now normalized before the Lab validation parser evaluates them.
 - Synchronization: local merge `d9998353` preserves feature parent `1b9f15c9` and adds merged development `a8708d54`.
+## Cycle 4 additions
+
+- Place-value tests now verify direct carry annotations, `52 − 27` exchange values, and the `403 − 178` zero-crossing chain.
+- Benchmark test verifies exactly 30 exercises, all four grades, all five requested domains, generated results for supported cases, and explicit unsupported status for non-rendered types.
+- Visual coverage adds `907 ÷ 4` with remainder and preserves the original 48 screenshot names; the reviewed baseline count is 58.

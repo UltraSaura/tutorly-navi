@@ -28,7 +28,7 @@ Initial isolated Lab is implemented at `/dev/stuwy-explain-v2`. It now uses an e
 
 ## Verification
 
-- Vitest: **114 files / 1,120 tests passed**.
+- Vitest: **115 files / 1,125 tests passed**.
 - Vite production build: **passed**.
 - ESLint: **blocked by 1,065 existing errors and 108 warnings** across the repository; no claim of a clean lint baseline is made.
 - External AI cost: **none**.
@@ -36,10 +36,15 @@ Initial isolated Lab is implemented at `/dev/stuwy-explain-v2`. It now uses an e
 - Lab-focused lint: **0 errors / 0 warnings**.
 - TypeScript no-emit check: **passed**.
 - Place-value grid tests: **10 passed**; Lab tests: **3 passed**.
-- Screenshot harness: **passed**, at `scripts/visual-regression/stuwy-explain-v2.py`; it autonomously starts Vite development mode on port 4173, captures setup and intermediate frames for six operations at desktop/mobile sizes, and matches 48 PNG baselines byte-for-byte.
+- Screenshot harness: **passed**, at `scripts/visual-regression/stuwy-explain-v2.py`; it autonomously starts Vite development mode on port 4173, captures setup and intermediate frames for seven operations at desktop/mobile sizes, and matches 58 reviewed decoded-pixel baselines.
 
 ## Gate
 
 Production integration is not authorized. The Explanation Lab and benchmark evidence must be reviewed first.
 
 Visual review completed for representative setup and intermediate frames. No incorrect final arithmetic or column placement was found. Remaining limitation: regrouping is represented by semantic highlights and event text; crossed-out/replaced source digits are not yet drawn as separate annotation cells.
+## Cycle 4 pedagogical quality gate
+
+- Added explicit crossed-out/replacement regrouping annotations for `52 − 27` and zero-crossing regrouping for `403 − 178`; carry annotations are positioned in the destination column.
+- Added a reproducible 30-exercise CE2/CM1/CM2/6e benchmark. The report is [`BENCHMARK_REPORT.md`](./BENCHMARK_REPORT.md); unsupported fractions, geometry and word problems are recorded as unsupported rather than passing.
+- Added a remainder-focused visual case (`907 ÷ 4`) while preserving the existing 48 baselines. New screenshots are reviewed separately before commit.

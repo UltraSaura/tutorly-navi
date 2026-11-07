@@ -11,3 +11,10 @@
 | V2-009 | Synchronize V2 with merged development | Git history | Done | Preserve V2 commits while adding merged development ancestry | `d9998353` | `d9998353` | None |
 | V2-004 | Build 30-exercise benchmark corpus | V2-003 | Planned | Multiple grades and exercise families with separate correctness/pedagogy results | — | — | Product-owner review |
 | V2-005 | Approval gate | V2-004 | Blocked by design | Lab demo, benchmark and cost/performance evidence approved | — | — | Approval not yet requested |
+## Cycle 4 completed work
+
+- [x] Explicit regrouping annotations and zero-crossing borrowing model.
+- [x] 30-exercise reproducible benchmark and quality-gate report.
+- [x] Remainder visual-regression coverage added without replacing existing baseline cases.
+- [ ] Manual teacher review of grade-specific wording and screen-reader behavior.
+- [ ] Extend renderer to fractions, geometry and word-problem modeling.
