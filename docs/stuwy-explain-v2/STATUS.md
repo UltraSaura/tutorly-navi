@@ -26,7 +26,7 @@ Initial isolated Lab is implemented at `/dev/stuwy-explain-v2`. It supports loca
 
 ## Verification
 
-- Vitest: **112 files / 1,107 tests passed**.
+- Vitest: **113 files / 1,110 tests passed**.
 - Vite production build: **passed**.
 - ESLint: **blocked by 1,065 existing errors and 108 warnings** across the repository; no claim of a clean lint baseline is made.
 - External AI cost: **none**.
