@@ -110,3 +110,8 @@ Visual review completed for representative setup and intermediate frames. No inc
 - [x] Added concise completion evidence without claiming mastery.
 - [x] Rechecked contextual TwoCards/V2 method consistency and voice reuse.
 - [ ] Manual teacher and screen-reader review of the full journey.
+## T11 stall hotfix — latest update
+
+Development-only stall correction implemented and browser-validated. One active question, exact numeric checks, explicit 10 → 15 → 7 remediation, remaining columns, bounded fallback and transfer. Original TwoCards and speech implementation unchanged. Awaiting product-owner approval; not deployed or merged.
+
+Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).

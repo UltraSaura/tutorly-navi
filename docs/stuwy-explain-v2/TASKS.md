@@ -74,3 +74,11 @@
 - [x] Implement progressive hints, retry, demonstration, and transfer.
 - [x] Preserve existing TwoCards animation and speech for under-11 learners.
 - [ ] Product-owner approval before any production integration.
+## T11 stall hotfix — latest update
+
+- [x] Reproduce stall and replace feedback-only flow with answerable remediation.
+- [x] Complete tens/hundreds before transfer; preserve transfer through help.
+- [x] Add bounded fallback, mobile/desktop browser tests and screenshot evidence.
+- [ ] Product-owner walkthrough and real-device speech/screen-reader review.
+
+Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).

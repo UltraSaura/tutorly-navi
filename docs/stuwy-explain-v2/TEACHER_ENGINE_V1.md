@@ -147,3 +147,8 @@ hint → contextual demonstration → prerequisite remediation. Repeated evidenc
 of the same misconception triggers the last two levels; one isolated error
 does not automatically force a demonstration. Completion reports the evidence
 collected but explicitly does not claim mastery from one transfer exercise.
+## T11 stall hotfix — latest update
+
+The prior three-question controller did not actually implement the full remediation ladder or remaining columns. The hotfix separates question stage from UI state and reuses TwoCards for prerequisite calculations. The prior method-equivalence claim is corrected in the architectural record: compensation and upper-digit exchange must not be mixed.
+
+Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).

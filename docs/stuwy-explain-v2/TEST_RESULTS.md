@@ -105,3 +105,8 @@ No external AI calls or production database writes were made.
 - Production build: **passed** with existing repository warnings.
 - Voice/accessibility: existing TwoCards controls remain reused and exposed;
   manual screen-reader and speech-timing review remains open.
+## T11 stall hotfix — latest update
+
+Validation: 119 test files / 1,158 tests passed; TypeScript, focused lint and build passed. All 74 full-page visual comparisons pass after intentional panel refresh. Eight requested browser journeys pass at mobile and desktop sizes; 20 new screenshots captured. See the report for reviewed images and manual-review limits.
+
+Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).

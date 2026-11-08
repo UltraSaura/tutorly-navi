@@ -51,3 +51,8 @@ place-value tests. The visual result is ready for product-owner review, not
 for production integration: division and multiplication still need a manual
 teacher review for notation preferences, and screen-reader timing requires a
 manual pass.
+## T11 stall hotfix — latest update
+
+Acceptance now requires wrong-answer → 10 → 15 → 7 → remaining columns → transfer, not merely feedback text or model tests. Original TwoCards and voice files remain unchanged. Screenshots and browser assertions cover the actual student panel. No production approval is implied.
+
+Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).

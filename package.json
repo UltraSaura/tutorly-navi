@@ -13,6 +13,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "test:visual:stuwy": "python3 scripts/visual-regression/stuwy-explain-v2.py",
+    "test:e2e:student-session": "python3 scripts/visual-regression/student-session-hotfix.py",
     "preview": "vite preview",
     "debug:dnb-visibility": "node scripts/debug-dnb.js",
     "debug:training-item-docs": "node --experimental-strip-types exam-import/scripts/debug-training-item-docs.ts",

@@ -1,57 +1,63 @@
 import { describe, expect, it } from 'vitest';
-import { continueAfterDemonstration, createInteractiveTutorSession, demonstrateTutorStep, requestTutorHint, retryTutorQuestion, submitTutorResponse } from './interactiveTutorSession';
+import { continueAfterDemonstration, createInteractiveTutorSession, requestTutorHint, retryTutorQuestion, submitTutorResponse } from './interactiveTutorSession';
 
-describe('interactive tutor session', () => {
-  it('diagnoses distinct regrouping answers', () => {
-    const reversed = submitTutorResponse(createInteractiveTutorSession(), '8 moins 5');
-    const skipped = submitTutorResponse(createInteractiveTutorSession(), 'Je commence par les dizaines');
-    expect(reversed.lastMisconception).toBe('reversed-subtraction');
-    expect(skipped.lastMisconception).toBe('skipped-units');
-    expect(reversed.feedback).not.toBe(skipped.feedback);
+describe('interactive tutor session hotfix', () => {
+  const remediate = () => submitTutorResponse(createInteractiveTutorSession(), '8 - 5');
+  const transfer = () => {
+    let s = remediate();
+    for (const answer of ['10', '15', '7', '1', '11', '7', '1', '177']) s = submitTutorResponse(s, answer);
+    return s;
+  };
+  it('replaces the question with an answerable prerequisite', () => {
+    const s = remediate();
+    expect(s.step).toBe(1);
+    expect(s.question).toBe('Une dizaine représente combien d’unités ?');
+    expect(s.feedback).toContain("pas l'inverse");
+    expect(s.lastMisconception).toBe('reversed-subtraction');
   });
-
-  it('escalates hints and retries without revealing the final result', () => {
-    const initial = createInteractiveTutorSession();
-    const hinted = requestTutorHint(initial);
-    const retried = retryTutorQuestion(hinted);
-    expect(hinted.state).toBe('hint');
-    expect(hinted.feedback).toContain('unités');
-    expect(retried.state).toBe('awaiting-response');
-    expect(retried.feedback).not.toContain('177');
+  it('requires every column before transfer', () => {
+    let s = remediate();
+    for (const [answer, step] of [['10', 2], ['15', 3], ['7', 4], ['1', 5], ['11', 6], ['7', 7], ['1', 8], ['177', 9]] as const) {
+      s = submitTutorResponse(s, answer);
+      expect(s.step).toBe(step);
+    }
+    expect(s.state).toBe('transfer');
+    expect(submitTutorResponse(s, '169').state).toBe('complete');
   });
-
-  it('requires the student to complete the worked example and transfer exercise', () => {
-    let session = createInteractiveTutorSession();
-    session = submitTutorResponse(session, 'J’échange une dizaine contre 10 unités');
-    session = submitTutorResponse(session, '15');
-    session = submitTutorResponse(session, '7');
-    expect(session.state).toBe('transfer');
-    session = submitTutorResponse(session, '169');
-    expect(session.state).toBe('complete');
+  it.each(['110', '10 + 1', '210', '-10', '10.5'])('rejects incorrect numeric answer %s', answer => {
+    expect(submitTutorResponse(remediate(), answer).attempts.at(-1)?.isCorrect).toBe(false);
   });
-
-  it('returns to the student after a demonstration', () => {
-    const demonstrated = demonstrateTutorStep(createInteractiveTutorSession());
-    expect(demonstrated.state).toBe('demonstrate');
-    expect(continueAfterDemonstration(demonstrated).state).toBe('awaiting-response');
+  it('accepts the selectable approach', () => {
+    expect(submitTutorResponse(createInteractiveTutorSession(), 'J’échange une dizaine contre 10 unités').step).toBe(2);
   });
-
-  it('uses prerequisite remediation after the same misconception repeats', () => {
-    let session = createInteractiveTutorSession();
-    session = submitTutorResponse(session, 'Je commence par les dizaines');
-    session = retryTutorQuestion(session);
-    session = submitTutorResponse(session, 'Je commence par les dizaines');
-    expect(session.state).toBe('demonstrate');
-    expect(session.assistanceLevel).toBe(4);
-    expect(session.demonstrationUsed).toBe(true);
+  it('escalates to demonstration, prerequisite, then human help instead of endless retries', () => {
+    let s = submitTutorResponse(remediate(), '2');
+    s = submitTutorResponse(retryTutorQuestion(s), '2');
+    expect(s.state).toBe('demonstrate');
+    s = submitTutorResponse(continueAfterDemonstration(s), '2');
+    expect(s.prerequisite).toBe(true);
+    s = submitTutorResponse(submitTutorResponse(s, '2'), '2');
+    expect(s.state).toBe('needs-support');
+    expect(submitTutorResponse(s, '2')).toBe(s);
   });
-
-  it('escalates the third requested hint to a contextual demonstration', () => {
-    let session = createInteractiveTutorSession();
-    session = requestTutorHint(session);
-    session = requestTutorHint(session);
-    session = requestTutorHint(session);
-    expect(session.state).toBe('demonstrate');
-    expect(session.assistanceLevel).toBe(3);
+  it('returns from prerequisite without erasing history', () => {
+    let s = remediate();
+    for (let n = 0; n < 3; n++) s = requestTutorHint(s);
+    expect(s.state).toBe('demonstrate');
+    s = requestTutorHint(continueAfterDemonstration(s));
+    expect(s.prerequisite).toBe(true);
+    s = submitTutorResponse(s, '10');
+    expect(s.prerequisite).toBe(false);
+    expect(s.step).toBe(1);
+    expect(s.demonstrationUsed).toBe(true);
+  });
+  it('preserves transfer through hints, retry and demonstration', () => {
+    let s = retryTutorQuestion(requestTutorHint(transfer()));
+    expect(submitTutorResponse(s, '169').state).toBe('complete');
+    s = requestTutorHint(requestTutorHint(s));
+    expect(s.state).toBe('demonstrate');
+    s = continueAfterDemonstration(s);
+    expect(s.state).toBe('transfer');
+    expect(submitTutorResponse(s, '169').state).toBe('complete');
   });
 });

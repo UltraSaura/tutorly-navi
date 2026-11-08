@@ -169,10 +169,15 @@ for `325 - 148`, not a production migration.
 
 ## T11 method consistency audit
 
-The reused TwoCards `CompactMathStepper` teaches the child-friendly exchange
-as “add 10 in the units column and compensate with 1 in the tens column”. The
-V2 renderer shows the same exchange explicitly as `2 → 1` and `5 → 15`.
-These are two presentations of the same regrouping method, not two different
-mathematical procedures. The Teacher Engine asks about the exchange first and
-only then chooses the relevant demonstration. Under-11 learners keep the
-TwoCards method and narration; older learners keep the paper-first V2 method.
+Correction (T11 stall hotfix): the earlier audit incorrectly equated two methods.
+TwoCards subtraction adds ten to the upper column and compensates by adding
+one to the lower next column. The interactive exchange method instead reduces
+the upper next column by one. Both preserve the difference, but their written
+procedures must not be mixed within a child's worked example.
+
+The hotfix keeps all original TwoCards code and narration unchanged. For its
+development-only exchange scenario, it reuses TwoCards for smaller prerequisite
+calculations (5 + 5, 5 + 10, 15 − 8, etc.), not the full compensation-based
+325 − 148 animation. A static place-value record tracks the student's confirmed
+answers; it is not another animation engine. Existing A/B/C comparison and
+advanced V2 renderer remain separate. Production presentation routing is unchanged.
