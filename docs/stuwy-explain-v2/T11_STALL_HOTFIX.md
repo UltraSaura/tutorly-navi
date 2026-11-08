@@ -77,7 +77,8 @@ offer accompaniment, preserving the original calculation.
 - `npm run test:e2e:student-session`: eight requested journeys checked at desktop
   1280 × 900 and mobile 390 × 844, including keyboard submission, no section
   overflow, obsolete choices removed, transfer after hints/retry, bounded fallback.
-- 20 journey screenshots in `artifacts/stuwy-explain-v2/hotfix/`, plus the before image.
+- 48 student-session journey screenshots in `artifacts/stuwy-explain-v2/hotfix/`,
+  including 36 latest captures at desktop, 375px and 447px, plus the before image.
 - Existing 74 full-page baselines intentionally refreshed because they include
   the changed student-session panel. No original arithmetic cases removed.
 - All 74 refreshed baselines matched on a second run. Direct review caught
@@ -122,3 +123,14 @@ a shorter explanation about the starting number and can be checked again.
 The same typed contract has a generic path for skipped-units and other
 misconception categories, so this is not a text-only special case. The original
 TwoCards stepper, navigation and narration files remain unchanged.
+
+## T11.3 — compact visual remediation
+
+The correction no longer embeds `CompactMathStepper` for the comparison itself.
+`CompactConceptIllustration` uses small object groups: eight with five removed
+leaves three, while five cannot supply eight. Its speech controls reuse the
+existing `MathExplanationReader` and speech hook. The full TwoCards stepper is
+still used for the original `325 − 148` demonstration for under-11 grades;
+older-grade demonstrations continue to use the concise contextual expression.
+The comparison card is tested at 375px and 447px and avoids the misleading
+instruction to write 3 into the original operation.

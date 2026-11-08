@@ -15,7 +15,12 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 with visual.application_server(URL), sync_playwright() as p:
     browser = p.chromium.launch()
-    for name, viewport in visual.VIEWPORTS.items():
+    viewports = {
+        'desktop': visual.VIEWPORTS['desktop'],
+        'mobile-375': {'width': 375, 'height': 844},
+        'mobile-447': {'width': 447, 'height': 844},
+    }
+    for name, viewport in viewports.items():
         page = browser.new_page(viewport=viewport, reduced_motion='reduce')
         page.add_init_script("localStorage.setItem('lang','fr'); localStorage.setItem('countryDetected','true')")
         page.goto(URL)
