@@ -58,8 +58,9 @@ Run the existing development server and open:
 The Teacher Lab is below the existing Explanation Lab. Use `52 - 27`, `325 -
 148`, or `403 - 178`, choose a grade/mastery/mode, then select one of the six
 scenarios. Compare the “Décision du professeur” panel with the separate
-“Message à l’élève” panel. The “Tentative correcte”, “Donner un indice”, and
-“Réinitialiser” controls demonstrate deterministic transitions.
+“Message à l’élève” panel and the “Démonstration sélectionnée” mathematical
+frame. The “Tentative correcte”, “Donner un indice”, and “Réinitialiser”
+controls demonstrate deterministic transitions.
 
 This is a reviewer simulation, not evidence of real learning improvement.
 

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { StructuredOperationGrid } from '@/components/math/StructuredOperationGrid';
 import { buildLabSolution } from '@/features/explanations/stuwyExplainLab';
 import {
   buildTeacherDecision,
@@ -62,6 +63,7 @@ export function TeacherLabPanel() {
   }, [attempts, grade, mastery, mode, problem, scenario, solution]);
 
   const decision = input ? buildTeacherDecision(input, step) : null;
+  const activeFrame = solution?.grid.frames[Math.min(step, Math.max(solution.grid.frames.length - 1, 0))];
 
   const applyEvent = (event: TeacherEvent, label: string) => {
     if (!input) return;
@@ -95,6 +97,7 @@ export function TeacherLabPanel() {
       </div>
       <div className="flex flex-wrap gap-2"><Button type="button" onClick={simulateScenario}>Simuler la situation</Button><Button type="button" variant="outline" onClick={() => applyEvent({ type: 'request_hint' }, 'Indice demandé')}>Donner un indice</Button><Button type="button" variant="outline" onClick={() => applyEvent({ type: 'student_attempt', answer: '25', isCorrect: true }, 'Tentative correcte')}>Tentative correcte</Button><Button type="button" variant="outline" onClick={() => { setAttempts([]); setStep(0); setLastEvent('Réinitialisé.'); }}>Réinitialiser</Button></div>
       <p className="text-sm text-slate-500" aria-live="polite">{lastEvent}</p>
+      {decision && activeFrame && <section className="rounded-lg border bg-white p-4 dark:bg-slate-950"><h3 className="mb-3 font-semibold">Démonstration sélectionnée</h3><StructuredOperationGrid frame={activeFrame} columns={solution?.grid.columns ?? []} /><p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{activeFrame.explanation}</p></section>}
       {decision && <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-indigo-950 dark:bg-indigo-950/30 dark:text-indigo-100"><h3 className="font-semibold">Décision du professeur</h3><dl className="mt-3 space-y-2 text-sm"><div><dt className="font-medium">Objectif</dt><dd>{decision.teachingObjective}</dd></div><div><dt className="font-medium">Niveau d’aide</dt><dd>{decision.assistance}</dd></div><div><dt className="font-medium">Stratégie</dt><dd>{decision.strategy}</dd></div><div><dt className="font-medium">Remédiation</dt><dd>{decision.remediationRecommendation}</dd></div><div><dt className="font-medium">Critère de progression</dt><dd>{decision.progressionCriteria}</dd></div></dl></section>
         <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100"><h3 className="font-semibold">Message à l’élève</h3><p className="mt-3 text-sm">{decision.studentFacingExplanation}</p><p className="mt-3 font-medium">{decision.studentFacingQuestion}</p><div className="mt-3"><p className="text-sm font-medium">Indices disponibles</p><ol className="mt-1 list-decimal pl-5 text-sm">{decision.progressiveHints.map((hint) => <li key={hint}>{hint}</li>)}</ol></div><p className="mt-3 text-sm">Réponse attendue : {decision.expectedStudentResponse}</p><p className="mt-3 text-sm font-semibold">{decision.finalAnswerVisible ? `Réponse vérifiée : ${solution?.displayResult}` : 'La réponse finale reste masquée jusqu’à une tentative.'}</p></section>
