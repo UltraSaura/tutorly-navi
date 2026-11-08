@@ -115,3 +115,6 @@ Visual review completed for representative setup and intermediate frames. No inc
 Development-only stall correction implemented and browser-validated. One active question, exact numeric checks, explicit 10 → 15 → 7 remediation, remaining columns, bounded fallback and transfer. Original TwoCards and speech implementation unchanged. Awaiting product-owner approval; not deployed or merged.
 
 Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).
+
+T11.2 adds a why-before-remediation correction and understanding check for
+reversed subtraction. Product-owner review remains pending.

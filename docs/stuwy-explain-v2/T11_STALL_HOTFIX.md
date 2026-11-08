@@ -101,3 +101,24 @@ screen-reader experience and mobile software keyboard need manual device review.
 Reduced-motion browser journeys run successfully; no claim is made that this
 hotfix audits every animation inside unchanged TwoCards.
 Product-owner pedagogical approval is still required. No merge or deployment.
+
+## T11.2 — explain why
+
+The prior hotfix classified `8 − 5` correctly but immediately opened the
+ten-unit remediation. T11.2 adds the reusable
+`PedagogicalCorrection` contract in
+`src/features/explanations/pedagogicalCorrection.ts`. It records the observed
+response, misconception hypothesis, principle, explanation, concrete example,
+understanding check and next action. The controller now exposes
+`correction-explanation` and `correction-check` states before step 10.
+
+For the reversed-subtraction case, the student sees the actual proposed
+`8 − 5` through the existing TwoCards stepper, alongside an explicit `5 − 8`
+comparison. The text says that 5 − 8 is not completed in whole-number units in
+this column; it does not claim negative numbers are impossible. The student
+must identify that the two starting situations differ. A wrong check receives
+a shorter explanation about the starting number and can be checked again.
+
+The same typed contract has a generic path for skipped-units and other
+misconception categories, so this is not a text-only special case. The original
+TwoCards stepper, navigation and narration files remain unchanged.

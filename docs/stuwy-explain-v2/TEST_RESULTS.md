@@ -110,3 +110,7 @@ No external AI calls or production database writes were made.
 Validation: 119 test files / 1,158 tests passed; TypeScript, focused lint and build passed. All 74 full-page visual comparisons pass after intentional panel refresh. Eight requested browser journeys pass at mobile and desktop sizes; 20 new screenshots captured. See the report for reviewed images and manual-review limits.
 
 Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).
+
+T11.2 focused tests: 14 controller/model tests passed; mobile and desktop
+browser journeys passed with correction explanation and understanding-check
+screenshots reviewed. TypeScript, focused lint and production build passed.

@@ -1,5 +1,6 @@
-export type InteractiveTutorState = 'awaiting-response' | 'feedback' | 'hint' | 'demonstrate' | 'transfer' | 'complete' | 'needs-support';
+export type InteractiveTutorState = 'awaiting-response' | 'feedback' | 'hint' | 'demonstrate' | 'correction-explanation' | 'correction-check' | 'transfer' | 'complete' | 'needs-support';
 export type InteractiveMisconception = 'reversed-subtraction' | 'incorrect-arithmetic-fact' | 'skipped-units' | 'insufficient-evidence';
+import { createPedagogicalCorrection, understandsCorrection, type PedagogicalCorrection } from './pedagogicalCorrection';
 
 // Stage is independent of presentation state: hints and demonstrations cannot lose the question.
 export interface InteractiveTutorSession {
@@ -17,6 +18,8 @@ export interface InteractiveTutorSession {
   criticalStepIndependent: boolean;
   transferAttempts: number;
   prerequisite: boolean;
+  correction?: PedagogicalCorrection;
+  correctionCheckAttempts: number;
 }
 
 const stages = [
@@ -40,7 +43,7 @@ const activeState = (session: InteractiveTutorSession): InteractiveTutorState =>
 const terminal = (session: InteractiveTutorSession) => session.state === 'complete' || session.state === 'needs-support';
 
 export function createInteractiveTutorSession(): InteractiveTutorSession {
-  return { state: 'awaiting-response', step: 0, hintLevel: 0, attempts: [], question: stages[0].question, feedback: '', assistanceLevel: 0, hintLevelsByStep: {}, demonstrationUsed: false, demonstratedSteps: [], criticalStepIndependent: false, transferAttempts: 0, prerequisite: false };
+  return { state: 'awaiting-response', step: 0, hintLevel: 0, attempts: [], question: stages[0].question, feedback: '', assistanceLevel: 0, hintLevelsByStep: {}, demonstrationUsed: false, demonstratedSteps: [], criticalStepIndependent: false, transferAttempts: 0, prerequisite: false, correctionCheckAttempts: 0 };
 }
 
 function prerequisite(session: InteractiveTutorSession): InteractiveTutorSession {
@@ -50,6 +53,11 @@ function prerequisite(session: InteractiveTutorSession): InteractiveTutorSession
 export function submitTutorResponse(session: InteractiveTutorSession, answer: string): InteractiveTutorSession {
   if (!answer.trim() || terminal(session) || session.state === 'demonstrate') return session;
   const normalized = normalize(answer).replace(/[−–]/g, '-');
+  if (session.state === 'correction-check' && session.correction) {
+    const understood = understandsCorrection(session.correction, answer);
+    if (understood) return { ...session, state: 'awaiting-response', step: 1, question: stages[1].question, feedback: 'Oui, ce sont deux situations différentes. Maintenant, voyons combien vaut une dizaine.', correctionCheckAttempts: session.correctionCheckAttempts + 1 };
+    return { ...session, state: 'correction-explanation', feedback: session.correction.simplerExplanation, correctionCheckAttempts: session.correctionCheckAttempts + 1 };
+  }
   const numeric = normalized.replace(/\s*(unites?|dizaines?|centaines?)\.?$/, '').trim();
   const approach = /^(j['’]echange|echange[r]?|j['’]emprunte|emprunter) (une|1) dizaine (contre|pour|en) (10|dix) unites\.?$/.test(normalized);
   const correct = session.prerequisite ? numeric === '10' : session.step === 0 ? approach : numeric === stages[session.step].answer;
@@ -62,7 +70,10 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
     const step = session.step === 0 ? 2 : session.step + 1;
     return { ...updated, step, state: step === 9 ? 'transfer' : 'awaiting-response', hintLevel: 0, question: stages[step].question, feedback: stages[session.step].feedback, criticalStepIndependent: session.criticalStepIndependent || (session.step === 0 && session.attempts.length === 0 && session.hintLevel === 0 && !session.demonstrationUsed) };
   }
-  if (session.step === 0 && !session.prerequisite) return { ...updated, step: 1, state: 'awaiting-response', hintLevel: 0, question: stages[1].question, feedback: misconception === 'reversed-subtraction' ? "Attention, on doit enlever 8 à 5, pas l'inverse." : misconception === 'skipped-units' ? 'Commençons par les unités. Regardons ce que vaut une dizaine.' : 'Vérifions ensemble ce que vaut une dizaine.' };
+  if (session.step === 0 && !session.prerequisite) {
+    const correction = createPedagogicalCorrection(misconception ?? 'insufficient-evidence', answer);
+    return { ...updated, state: 'correction-explanation', correction, correctionCheckAttempts: 0, feedback: correction.explanation };
+  }
   const failures = attempts.filter(a => a.step === session.step && a.prerequisite === session.prerequisite && !a.isCorrect).length;
   if (session.prerequisite && failures >= 2) return { ...updated, state: 'needs-support', feedback: 'Fais deux groupes de cinq objets avec un adulte. Comptez-les ensemble avant de reprendre.' };
   if (!session.prerequisite && failures >= 3 && session.demonstratedSteps.includes(session.step)) {
@@ -86,6 +97,11 @@ export function requestTutorHint(session: InteractiveTutorSession): InteractiveT
 export function retryTutorQuestion(session: InteractiveTutorSession): InteractiveTutorSession {
   if (terminal(session) || session.state === 'demonstrate') return session;
   return { ...session, state: activeState(session), feedback: 'À toi : réponds à la question ci-dessous.' };
+}
+
+export function beginCorrectionCheck(session: InteractiveTutorSession): InteractiveTutorSession {
+  if (session.state !== 'correction-explanation' || !session.correction) return session;
+  return { ...session, state: 'correction-check', question: session.correction.understandingQuestion, feedback: 'À toi : explique avec tes mots ou choisis une réponse.' };
 }
 
 export function demonstrateTutorStep(session: InteractiveTutorSession): InteractiveTutorSession {

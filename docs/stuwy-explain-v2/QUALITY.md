@@ -56,3 +56,7 @@ manual pass.
 Acceptance now requires wrong-answer → 10 → 15 → 7 → remaining columns → transfer, not merely feedback text or model tests. Original TwoCards and voice files remain unchanged. Screenshots and browser assertions cover the actual student panel. No production approval is implied.
 
 Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).
+
+T11.2 acceptance requires the visible sequence “why” → comparison →
+understanding check → remediation. A classifier-only feedback string is not
+considered sufficient.

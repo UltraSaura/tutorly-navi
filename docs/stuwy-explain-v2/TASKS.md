@@ -82,3 +82,7 @@
 - [ ] Product-owner walkthrough and real-device speech/screen-reader review.
 
 Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).
+
+- [x] Explain reversed subtraction before introducing regrouping.
+- [x] Add a typed reusable pedagogical correction contract.
+- [x] Check understanding and provide a simpler retry explanation.
