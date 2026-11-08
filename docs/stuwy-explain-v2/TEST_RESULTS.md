@@ -37,3 +37,11 @@ No external AI calls or production database writes were made.
 - Benchmark audit test verifies the corrected `CE2-G01` and `CM2-W01` wording and correction trail.
 - Lab now presents French pedagogical notes separating operation, explanation and animation; guided mode withholds the answer until the final frame.
 - Demo presets are documented in `DEMO.md`; visual baselines are preserved and the existing 58-image regression suite remains the review target.
+
+## Teacher Engine V1
+
+- `npm test -- --run src/features/explanations/teacherEngine.test.ts src/features/explanations/stuwyExplainLab.test.ts src/features/explanations/explanationMode.test.ts`: **passed**, 19 tests.
+- `npx tsc --noEmit`: **passed** after Teacher Lab addition.
+- Focused ESLint for Teacher Engine and Teacher Lab files: **passed**, 0 errors / 0 warnings.
+- Production routing: **unchanged**; no Tutor, Learn, or Practice integration performed.
+- Visual baselines: **not regenerated**; existing V2 visual harness remains unchanged.

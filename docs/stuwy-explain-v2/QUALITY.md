@@ -25,3 +25,13 @@ The quality assessment is partial for pedagogical wording and temporal animation
 The benchmark is now auditable: every row carries an audit trail, and the two ambiguous prompts identified in review have complete French wording and rechecked expected results. Supported walkthroughs distinguish the mathematical operation, the French explanation, and the visual animation. Guided mode does not show the final answer or verification equality before the last frame.
 
 Interaction coverage is implemented through native keyboard-focusable buttons, explicit control labels, a polite live explanation region, stable previous/next/replay behavior, and reduced-motion autoplay suppression. A manual screen-reader pass and teacher review remain required before claiming full pedagogical readiness.
+
+## Teacher Engine gate
+
+The Teacher Engine is deterministic and solver-dependent: it refuses an
+unverified solution, selects assistance from mastery/attempt evidence, and
+keeps the guided answer hidden until an independent success or the final step.
+Seven focused tests cover assistance selection, regrouping prompts, repeated
+failure remediation, guided transitions, review grounding, solver authority,
+and TwoCards presentation preservation. The Teacher Lab is a development
+simulation; it is not evidence of real learning improvement.

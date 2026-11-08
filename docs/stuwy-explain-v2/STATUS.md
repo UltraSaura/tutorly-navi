@@ -54,3 +54,16 @@ Visual review completed for representative setup and intermediate frames. No inc
 - Added French operation/explanation/animation distinctions and guided-mode answer withholding until the final frame.
 - Added query-based demonstration presets and a product-owner walkthrough in [`DEMO.md`](./DEMO.md).
 - Added live explanation announcements and accessible control labels; manual screen-reader timing review remains open.
+
+## Teacher Engine V1
+
+- Added a deterministic typed teacher decision contract for guided, teaching,
+  and review modes.
+- Added evidence-based concrete/standard/concise assistance selection without
+  equating age with ability.
+- Added subtraction-regrouping questions, progressive hints, misconception
+  indicators, remediation recommendations, and guided answer withholding.
+- Added a development-only Teacher Lab panel with six simulated student
+  situations and separate teacher-decision/student-message views.
+- Preserved TwoCards and did not activate production routing.
+- Reuse matrix and demonstration instructions: [`TEACHER_ENGINE_V1.md`](./TEACHER_ENGINE_V1.md).

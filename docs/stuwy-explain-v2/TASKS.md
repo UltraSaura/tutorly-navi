@@ -25,3 +25,13 @@
 - [x] Add product-owner demo presets and reviewed walkthrough links.
 - [x] Add keyboard-friendly labels and a polite live explanation region.
 - [ ] Manual teacher and screen-reader review of phrasing and announcement cadence.
+
+## Teacher Engine V1
+
+- [x] Audit existing TwoCards, solver, mastery, attempts, curriculum,
+  remediation, hints, and V2 capabilities.
+- [x] Add typed deterministic pedagogical decision contract.
+- [x] Add guided, teaching, and review transitions for regrouping subtraction.
+- [x] Add development-only Teacher Lab simulation for six student situations.
+- [ ] Connect production callers after explicit product-owner approval.
+- [ ] Extend pedagogical strategies beyond written subtraction.

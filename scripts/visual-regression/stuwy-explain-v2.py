@@ -135,8 +135,10 @@ def main() -> None:
                             "localStorage.setItem('lang', 'fr'); localStorage.setItem('countryDetected', 'true');"
                         )
                         page.goto(base_url, wait_until="domcontentloaded")
-                        page.add_style_tag(content="li[data-radix-collection-item], [data-testid='staging-environment-indicator'] { display: none !important; } button[type='submit'] { background-color: hsl(var(--primary)) !important; }")
-                        page.get_by_label("Exercice").fill(expression)
+                        page.add_style_tag(content="li[data-radix-collection-item], [data-testid='staging-environment-indicator'], [data-testid='teacher-lab'] { display: none !important; } button[type='submit'] { background-color: hsl(var(--primary)) !important; }")
+                        # Teacher Lab also has an exercise-labelled control. Keep
+                        # this harness bound to the original Explanation Lab input.
+                        page.get_by_label("Exercice", exact=True).fill(expression)
                         page.get_by_role("button", name="Générer localement").click()
                         page.get_by_text("Validation mathématique").wait_for()
                         page.evaluate("document.fonts.ready")
