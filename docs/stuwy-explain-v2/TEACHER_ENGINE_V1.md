@@ -97,3 +97,24 @@ including `24 + 32`, `58 + 67`, `52 - 27`, `325 - 148`, `403 - 178`,
 development route is `/dev/stuwy-explain-v2`; no production caller was
 changed. The original TwoCards files and routing remain unchanged for
 under-11 learners.
+
+## Architectural correction — reuse TwoCards
+
+TwoCards remains the default under-11 presentation. Its animated arithmetic
+surface is `CompactMathStepper`, and its narration is already provided by
+`MathExplanationReader` through the shared `useSpeechSynthesis` hook and the
+browser Speech Synthesis API. No second speech system or second child
+animation pipeline was added.
+
+The development Teacher Lab now offers a side-by-side `325 - 148` comparison:
+
+1. TwoCards original: the existing `CompactMathStepper` unchanged.
+2. TwoCards plus Teacher Engine: the same animation with a proposed
+   mastery-sensitive message and question placed around it.
+3. Explain V2 advanced: the separate paper-first `CleanWrittenOperation`.
+
+Only the V2 presentation is being iterated in this branch. Minimal TwoCards
+improvements remain proposals until product-owner approval: feed verified
+mastery/error evidence into the existing guided text, preserve the current
+voice controls, and add progressive hints around (not inside) the established
+animation.

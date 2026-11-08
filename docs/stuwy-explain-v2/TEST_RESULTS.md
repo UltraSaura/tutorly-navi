@@ -62,3 +62,16 @@ No external AI calls or production database writes were made.
   review for division/multiplication styling.
 - Original TwoCards: **unchanged**; no production Tutor, Learn, or Practice
   routing was modified.
+
+## Architectural correction validation
+
+- TwoCards inventory: **verified** in the architecture decision record.
+- Voice path: **verified** through `MathExplanationReader` →
+  `useSpeechSynthesis`; no duplicate speech implementation added.
+- Side-by-side development comparison: **implemented** for `325 - 148` using
+  the original `CompactMathStepper` in columns A/B and `CleanWrittenOperation`
+  in column C.
+- V2 intermediate zeroes: **fixed and unit-tested**; padded `007`-style
+  intermediate results are no longer exposed.
+- Mobile navigation: **fixed and visually rechecked** with stable two-column
+  controls.

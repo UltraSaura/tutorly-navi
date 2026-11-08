@@ -45,3 +45,12 @@
 - [x] Add `24 + 32` and `325 - 148` to the visual acceptance cases.
 - [x] Re-run reviewed mobile and desktop screenshot coverage.
 - [ ] Product-owner approval before any production integration.
+
+## Architectural correction
+
+- [x] Inventory TwoCards components, callers, animation and speech path.
+- [x] Reuse the original `CompactMathStepper` in the Teacher Lab comparison.
+- [x] Keep TwoCards as the under-11 default and avoid production migration.
+- [x] Keep V2 paper-first presentation separate for older learners.
+- [ ] Obtain approval before connecting Teacher Engine enhancements to live
+  TwoCards callers.

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { CleanWrittenOperation } from '@/components/math/CleanWrittenOperation';
+import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { buildLabSolution } from '@/features/explanations/stuwyExplainLab';
 import {
   buildTeacherDecision,
@@ -29,7 +30,7 @@ function operationFor(solution: ReturnType<typeof buildLabSolution>): TeacherEng
 }
 
 export function TeacherLabPanel() {
-  const [problem, setProblem] = useState('52 - 27');
+  const [problem, setProblem] = useState('325 - 148');
   const [grade, setGrade] = useState('CM1');
   const [mode, setMode] = useState<TutoringMode>('guided');
   const [mastery, setMastery] = useState('standard');
@@ -64,6 +65,19 @@ export function TeacherLabPanel() {
 
   const decision = input ? buildTeacherDecision(input, step) : null;
   const activeFrame = solution?.grid.frames[Math.min(step, Math.max(solution.grid.frames.length - 1, 0))];
+  const comparisonSolution = useMemo(() => buildLabSolution({ expression: '325 - 148', grade: 'CM2', objective: 'Soustraire avec regroupement', method: 'Calcul posé français', depth: 'guided' }), []);
+  const comparisonInput = useMemo<TeacherEngineInput>(() => ({
+    problem: '325 - 148',
+    grade: 'CM2',
+    curriculumObjective: 'Soustraire avec regroupement',
+    mastery: { score: 0.55, recentCorrect: 1, recentIncorrect: 1 },
+    attempts: [],
+    preferredPresentation: 'visual',
+    tutoringMode: 'guided',
+    verifiedSolution: { expression: '325 - 148', result: comparisonSolution.displayResult, operation: comparisonSolution.grid.operation, stepCount: comparisonSolution.steps.length, isVerified: true },
+    explanationExperience: 'explain-v2',
+  }), [comparisonSolution]);
+  const comparisonDecision = buildTeacherDecision(comparisonInput, 1);
 
   const applyEvent = (event: TeacherEvent, label: string) => {
     if (!input) return;
@@ -103,6 +117,33 @@ export function TeacherLabPanel() {
         <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100"><h3 className="font-semibold">Message à l’élève</h3><p className="mt-3 text-sm">{decision.studentFacingExplanation}</p><p className="mt-3 font-medium">{decision.studentFacingQuestion}</p><div className="mt-3"><p className="text-sm font-medium">Indices disponibles</p><ol className="mt-1 list-decimal pl-5 text-sm">{decision.progressiveHints.map((hint) => <li key={hint}>{hint}</li>)}</ol></div><p className="mt-3 text-sm">Réponse attendue : {decision.expectedStudentResponse}</p><p className="mt-3 text-sm font-semibold">{decision.finalAnswerVisible ? `Réponse vérifiée : ${solution?.displayResult}` : 'La réponse finale reste masquée jusqu’à une tentative.'}</p></section>
       </div>}
       {!solution && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">Cette démonstration utilise le solveur local vérifié : entre une soustraction posée valide, par exemple 52 - 27, 325 - 148 ou 403 - 178.</p>}
+      <section data-testid="twocards-comparison" className="space-y-4 border-t pt-5">
+        <div>
+          <h3 className="text-lg font-semibold">Comparaison des expériences · 325 − 148</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-300">A et B réutilisent l’animation mathématique existante de TwoCards (`CompactMathStepper`). C est la présentation papier Explain V2. Aucune de ces variantes ne modifie les leçons de production.</p>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-3">
+          <section className="rounded-lg border bg-white p-4 dark:bg-slate-950" aria-label="TwoCards original">
+            <h4 className="mb-3 font-semibold">A · TwoCards original</h4>
+            <p className="mb-3 text-xs text-slate-500">Animation et navigation existantes, sans changement.</p>
+            <CompactMathStepper expression="325 - 148" className="text-sm" />
+          </section>
+          <section className="rounded-lg border bg-white p-4 dark:bg-slate-950" aria-label="TwoCards avec Teacher Engine">
+            <h4 className="mb-3 font-semibold">B · TwoCards + Teacher Engine</h4>
+            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100">
+              <p className="font-medium">Aide proposée : {comparisonDecision.assistance}</p>
+              <p className="mt-1">{comparisonDecision.studentFacingExplanation}</p>
+              <p className="mt-2 font-medium">{comparisonDecision.studentFacingQuestion}</p>
+            </div>
+            <CompactMathStepper expression="325 - 148" className="text-sm" />
+          </section>
+          <section className="rounded-lg border bg-white p-4 dark:bg-slate-950" aria-label="Explain V2 advanced">
+            <h4 className="mb-3 font-semibold">C · Explain V2 avancé</h4>
+            <p className="mb-3 text-xs text-slate-500">Notation posée conventionnelle, avec annotations directes.</p>
+            <CleanWrittenOperation frame={comparisonSolution.grid.frames[1]} columns={comparisonSolution.grid.columns} expression="325 - 148" result={comparisonSolution.displayResult} assistance="standard" />
+          </section>
+        </div>
+      </section>
     </CardContent>
   </Card>;
 }

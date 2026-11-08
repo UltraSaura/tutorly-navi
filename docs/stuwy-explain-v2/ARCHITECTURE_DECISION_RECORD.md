@@ -69,8 +69,10 @@ Learn, Practice, history, guardian, or chat flows.
 The V2-only entry point is `src/pages/dev/StuwyExplainLabPage.tsx`, mounted at
 `/dev/stuwy-explain-v2` only when `import.meta.env.DEV` is true. It uses
 `src/features/explanations/stuwyExplainLab.ts` and
-`src/components/math/StructuredOperationGrid.tsx`; it does not import
-`TwoCards`, `ExplanationModal`, or `useTwoCardTeaching`.
+`src/components/math/CleanWrittenOperation.tsx`. The internal
+`StructuredOperationGrid` is retained for semantic/debug inspection but is not
+rendered in the student-facing V2 card. V2 does not import `ExplanationModal`
+or `useTwoCardTeaching`.
 
 ## Rendering flow
 
@@ -110,7 +112,7 @@ The V2 route is intentionally a separate branch:
 ```text
 /dev/stuwy-explain-v2  →  StuwyExplainLabPage
                        →  buildLabSolution
-                       →  StructuredOperationGrid
+                       →  CleanWrittenOperation
 ```
 
 ## Regression protection
@@ -134,3 +136,33 @@ mathematical renderer independently.
 Trade-off: the product now has two explanation systems and needs an approved
 rollout decision before any existing lesson is migrated. Product-owner review
 is required before wiring the selector into production callers.
+
+## TwoCards reuse inventory
+
+The original child experience is not recreated by V2. Its exact path is:
+
+```text
+lesson/history/practice/guardian/chat caller
+  → useTwoCardTeaching.openFor
+  → ExplanationModal
+  → TwoCards
+  → CompactMathStepper (arithmetic animation for under-11 learners)
+  → MathExplanationReader
+  → useSpeechSynthesis / window.speechSynthesis
+```
+
+For progressive lesson text the same `TwoCards` component delegates to
+`ExplanationRenderer`, which selects `KidExplanation` → `KidExplanationFlow`
+→ `AnimatedStepCard` and `RuntimeMiniPracticeInline`. The main entry points
+are `src/features/explanations/TwoCards.tsx`,
+`ExplanationModal.tsx`, `ExplanationRenderer.tsx`,
+`src/components/kids/KidExplanationFlow.tsx`,
+`src/components/math/CompactMathStepper.tsx`,
+`src/components/math/MathExplanationReader.tsx`, and
+`src/hooks/useSpeechSynthesis.ts`.
+
+The Teacher Lab comparison at `data-testid="twocards-comparison"` uses the
+same `CompactMathStepper` component in columns A and B. Column A is unchanged;
+column B adds a Teacher Engine message/hint outside the animation; column C is
+the separate V2 paper-first renderer. This is a development-only comparison
+for `325 - 148`, not a production migration.

@@ -74,6 +74,23 @@ function AnnotationOverlay({ frame, exponent }: { frame: PlaceValueFrame; expone
   </span>;
 }
 
+function studentCellText(row: { id: string; cells: GridCell[] }, cell: GridCell | undefined, frame: PlaceValueFrame) {
+  if (!cell?.text) return '';
+  const trimsLeadingZeroes = ['top', 'bottom', 'result'].includes(row.id) || row.id.startsWith('partial-');
+  if (!trimsLeadingZeroes || cell.text !== '0') return cell.text;
+
+  const hasSignificantDigit = row.cells.some((item) =>
+    (item.kind === 'digit' || item.kind === 'result') && item.text !== '0' && item.text !== ''
+  );
+  if (!hasSignificantDigit) return cell.text;
+
+  const isBeforeSignificantDigit = row.cells
+    .filter((item) => item.exponent >= cell.exponent)
+    .filter((item) => item.kind === 'digit' || item.kind === 'result')
+    .every((item) => item.text === '0' || item.text === '');
+  return isBeforeSignificantDigit && frame.id !== 'final' ? '' : cell.text;
+}
+
 export function CleanWrittenOperation({ frame, columns, expression, assistance = 'standard', result, className }: Props) {
   const baseRows = frame.rows.filter((row) => visibleRowIds.has(row.id) || row.id.startsWith('partial-') || row.id.startsWith('subtraction-') || row.id.startsWith('remainder-'));
   const showAnnotations = assistance !== 'concise';
@@ -85,7 +102,7 @@ export function CleanWrittenOperation({ frame, columns, expression, assistance =
         <div className={cn('flex items-center justify-end pr-2 font-mono text-lg', row.id === 'bottom' && 'font-semibold', row.id === 'dividend' && 'border-r-2 border-indigo-400')}>{row.id === 'bottom' ? row.cells.find((cell) => cell.kind === 'operator')?.text : frame.layout === 'long-division' && row.id === 'dividend' ? row.label : ''}</div>
         {columns.map((column) => {
           const cell = cellAt(row, column.exponent);
-          return <div key={`${row.id}-${column.exponent}`} className={cn('relative flex min-h-11 items-center justify-center border-b border-slate-100 px-1 font-mono text-xl dark:border-slate-800', row.id === 'line' && 'border-b-2 border-slate-700', cell?.emphasis === 'active' && 'rounded bg-indigo-50 text-indigo-950', cell?.kind === 'line' && 'text-transparent', row.id.startsWith('partial-') && 'text-slate-700')}>{showAnnotations && row.id === 'top' && <AnnotationOverlay frame={frame} exponent={column.exponent} />}<span className={cn(cell?.annotationType === 'crossed-out' && 'line-through')}>{cell?.text}</span></div>;
+          return <div key={`${row.id}-${column.exponent}`} className={cn('relative flex min-h-11 items-center justify-center border-b border-slate-100 px-1 font-mono text-xl dark:border-slate-800', row.id === 'line' && 'border-b-2 border-slate-700', cell?.emphasis === 'active' && 'rounded bg-indigo-50 text-indigo-950', cell?.kind === 'line' && 'text-transparent', row.id.startsWith('partial-') && 'text-slate-700')}>{showAnnotations && row.id === 'top' && <AnnotationOverlay frame={frame} exponent={column.exponent} />}<span className={cn(cell?.annotationType === 'crossed-out' && 'line-through')}>{studentCellText(row, cell, frame)}</span></div>;
         })}
       </div>)}
     </div>

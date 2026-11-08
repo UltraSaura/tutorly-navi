@@ -30,4 +30,17 @@ describe('CleanWrittenOperation', () => {
     expect((html.match(/>8</g) ?? []).length).toBeGreaterThan(0);
     expect(html).toContain('13 unités');
   });
+
+  it('does not reveal padded zeroes before an intermediate result', () => {
+    const solution = buildPlaceValueSolution('247 × 36');
+    const frame = solution.frames.find((item) => item.id === 'partial-0');
+    expect(frame).toBeDefined();
+    const html = renderToStaticMarkup(<CleanWrittenOperation frame={frame!} columns={solution.columns} expression="247 × 36" result={solution.result} />);
+
+    expect(html).not.toContain('>00247<');
+    expect(html).not.toContain('>00036<');
+    expect(html).toContain('>2</span>');
+    expect(html).toContain('>4</span>');
+    expect(html).toContain('>7</span>');
+  });
 });

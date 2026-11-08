@@ -79,3 +79,14 @@ Visual review completed for representative setup and intermediate frames. No inc
 - [x] Preserved the original TwoCards implementation and production routing.
 - [ ] Product-owner approval of the new visual teaching experience.
 - [ ] Manual teacher and screen-reader review of all French walkthroughs.
+
+## Architectural correction
+
+- [x] Audited the original TwoCards route, animation component and narration
+  pipeline.
+- [x] Confirmed `CompactMathStepper` and `MathExplanationReader` remain the
+  reused child-experience implementation.
+- [x] Added a development-only A/B/C comparison for `325 - 148`.
+- [x] Kept production TwoCards files and callers unchanged.
+- [ ] Product-owner decision on any future Teacher Engine enhancement around
+  TwoCards.
