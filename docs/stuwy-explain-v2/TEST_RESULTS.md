@@ -75,3 +75,18 @@ No external AI calls or production database writes were made.
   intermediate results are no longer exposed.
 - Mobile navigation: **fixed and visually rechecked** with stable two-column
   controls.
+
+## T10 validation
+
+- Interactive tutor controller: **passed**, 4 focused tests covering diagnosis,
+  hint escalation, retry, demonstration, and transfer completion.
+- Student flow: **implemented** at `data-testid="interactive-student-session"`.
+- Under-11 demonstration: **reuses** `CompactMathStepper`, with existing
+  `MathExplanationReader` and speech controls.
+- Developer scenario tools: **separated** in a collapsible section.
+- Full suite after T10 changes: **passed**, 119 files / 1,151 tests.
+- Visual suite after exposing the student session: **passed**, 74/74 reviewed
+  screenshots matched.
+- Production build after T10 changes: **passed** with the repository's existing
+  font, Browserslist, dynamic-import, and chunk-size warnings.
+- Full product-owner approval: **pending**; this remains development-only.

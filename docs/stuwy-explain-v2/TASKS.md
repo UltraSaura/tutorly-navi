@@ -54,3 +54,13 @@
 - [x] Keep V2 paper-first presentation separate for older learners.
 - [ ] Obtain approval before connecting Teacher Engine enhancements to live
   TwoCards callers.
+
+## T10
+
+- [x] Replace scenario-only student demonstration with a real answer-driven
+  tutoring session.
+- [x] Diagnose reversal, skipped-units, incorrect-result, and insufficient
+  evidence responses without claiming unsupported evidence.
+- [x] Implement progressive hints, retry, demonstration, and transfer.
+- [x] Preserve existing TwoCards animation and speech for under-11 learners.
+- [ ] Product-owner approval before any production integration.

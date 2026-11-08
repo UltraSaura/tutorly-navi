@@ -90,3 +90,12 @@ Visual review completed for representative setup and intermediate frames. No inc
 - [x] Kept production TwoCards files and callers unchanged.
 - [ ] Product-owner decision on any future Teacher Engine enhancement around
   TwoCards.
+
+## T10 — real interactive tutor
+
+- [x] Added a stateful deterministic student session for `325 - 148`.
+- [x] Added answer validation, targeted misconception feedback, progressive
+  hints, retry, demonstration, and transfer completion.
+- [x] Reused TwoCards/CompactMathStepper for under-11 demonstrations.
+- [x] Kept developer scenario tools separate and collapsible.
+- [ ] Product-owner review of the complete interactive tutoring flow.

@@ -118,3 +118,17 @@ improvements remain proposals until product-owner approval: feed verified
 mastery/error evidence into the existing guided text, preserve the current
 voice controls, and add progressive hints around (not inside) the established
 animation.
+
+## T10 — interactive tutor session
+
+The development Lab now includes `interactiveTutorSession.ts`, a deterministic
+controller for `325 - 148`. The student-facing area asks one question at a time,
+accepts selectable or written answers, classifies the evidence, gives targeted
+French feedback, escalates hints, supports retry and demonstration, and then
+requires a transfer exercise (`326 - 157`) before completion.
+
+When the selected grade is under 11, the demonstration uses the existing
+`CompactMathStepper`/TwoCards animation and voice controls. Older grades use
+the separate clean V2 renderer. The former scenario buttons and comparison
+panels are now inside a collapsible developer-tools section; they are not the
+student interaction.

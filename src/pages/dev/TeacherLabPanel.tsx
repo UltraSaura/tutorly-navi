@@ -5,6 +5,16 @@ import { Input } from '@/components/ui/input';
 import { CleanWrittenOperation } from '@/components/math/CleanWrittenOperation';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { buildLabSolution } from '@/features/explanations/stuwyExplainLab';
+import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
+import {
+  continueAfterDemonstration,
+  createInteractiveTutorSession,
+  demonstrateTutorStep,
+  requestTutorHint,
+  retryTutorQuestion,
+  submitTutorResponse,
+  type InteractiveTutorSession,
+} from '@/features/explanations/interactiveTutorSession';
 import {
   buildTeacherDecision,
   transitionTeacherDecision,
@@ -102,6 +112,10 @@ export function TeacherLabPanel() {
   return <Card>
     <CardHeader><CardTitle>Teacher Lab · décision pédagogique</CardTitle><p className="text-sm text-slate-600 dark:text-slate-300">Espace de revue développeur : la solution vérifiée, la décision du professeur et le message adressé à l’élève sont séparés.</p></CardHeader>
     <CardContent className="space-y-5">
+      <InteractiveStudentSession grade={grade} />
+      <details data-testid="developer-tools" className="rounded-lg border bg-slate-50 p-4 dark:bg-slate-900">
+        <summary className="cursor-pointer font-semibold">Outils développeur et comparaison des moteurs</summary>
+        <div className="mt-4 space-y-5">
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
         <label className="space-y-1"><span className="text-sm font-medium">Problème</span><Input value={problem} onChange={(event) => { setProblem(event.target.value); setAttempts([]); setStep(0); }} aria-label="Problème du Teacher Lab" /></label>
         <label className="space-y-1"><span className="text-sm font-medium">Classe</span><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={grade} onChange={(event) => setGrade(event.target.value)}><option>CE2</option><option>CM1</option><option>CM2</option><option>6e</option></select></label>
@@ -144,8 +158,32 @@ export function TeacherLabPanel() {
           </section>
         </div>
       </section>
+        </div>
+      </details>
     </CardContent>
   </Card>;
+}
+
+function InteractiveStudentSession({ grade }: { grade: string }) {
+  const [session, setSession] = useState<InteractiveTutorSession>(() => createInteractiveTutorSession());
+  const [answer, setAnswer] = useState('');
+  const solution = useMemo(() => buildLabSolution({ expression: '325 - 148', grade, objective: 'Soustraire avec regroupement', method: 'Calcul posé français', depth: 'guided' }), [grade]);
+  const under11 = isUnder11YearsOld(grade);
+  const activeFrame = solution.grid.frames[Math.min(session.step, Math.max(solution.grid.frames.length - 1, 0))];
+  const submit = () => {
+    setSession((current) => submitTutorResponse(current, answer));
+    setAnswer('');
+  };
+  const choose = (value: string) => setAnswer(value);
+  const reset = () => { setSession(createInteractiveTutorSession()); setAnswer(''); };
+
+  return <section data-testid="interactive-student-session" className="rounded-xl border-2 border-teal-200 bg-teal-50 p-4 dark:border-teal-900 dark:bg-teal-950/20">
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div><p className="text-xs font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">Élève · session interactive</p><h3 className="mt-1 text-xl font-bold">325 − 148</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Le professeur attend ta réponse et adapte la suite à ce que tu écris.</p></div>
+      <Button type="button" variant="outline" onClick={reset}>Nouvel exercice</Button>
+    </div>
+    {session.state === 'complete' ? <div className="mt-4 rounded-lg bg-emerald-100 p-4 text-emerald-950"><p className="font-semibold">Séance terminée</p><p className="mt-1 text-sm">Tu as réussi l’exemple puis un exercice de transfert avec moins d’aide.</p></div> : session.state === 'demonstrate' ? <div className="mt-4 space-y-3 rounded-lg bg-white p-3 dark:bg-slate-950"><p className="text-sm font-medium">Observe seulement l’étape en cours, puis explique-la avec tes mots.</p>{under11 ? <CompactMathStepper expression="325 - 148" className="text-sm" /> : <CleanWrittenOperation frame={activeFrame} columns={solution.grid.columns} expression="325 - 148" result={solution.displayResult} assistance="standard" />}<Button type="button" onClick={() => setSession((current) => continueAfterDemonstration(current))}>J’ai compris, continuer</Button></div> : <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]"><div className="rounded-lg bg-white p-4 dark:bg-slate-950"><p className="text-lg font-semibold" aria-live="polite">{session.question}</p><div className="mt-3 grid gap-2" role="group" aria-label="Réponses proposées"><Button type="button" variant="outline" className="justify-start text-left" onClick={() => choose('J’échange une dizaine contre 10 unités')}>Échanger une dizaine contre 10 unités</Button><Button type="button" variant="outline" className="justify-start text-left" onClick={() => choose('Je calcule 8 moins 5')}>Calculer 8 − 5</Button><Button type="button" variant="outline" className="justify-start text-left" onClick={() => choose('Je commence par les dizaines')}>Commencer par les dizaines</Button></div><label className="mt-3 block text-sm font-medium">Ou écris ta réponse<input value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submit(); }} className="mt-1 h-10 w-full rounded-md border bg-background px-3" aria-label="Ta réponse" /></label><div className="mt-3 flex flex-wrap gap-2"><Button type="button" onClick={submit} disabled={!answer.trim()}>Valider ma réponse</Button><Button type="button" variant="outline" onClick={() => setSession((current) => requestTutorHint(current))}>Un indice</Button>{(session.state === 'feedback' || session.state === 'hint') && <Button type="button" variant="outline" onClick={() => setSession((current) => retryTutorQuestion(current))}>Réessayer</Button>}{(session.state === 'feedback' || session.state === 'hint') && <Button type="button" variant="outline" onClick={() => setSession((current) => demonstrateTutorStep(current))}>Voir une explication</Button>}</div></div><div className="rounded-lg border border-teal-200 bg-teal-100/70 p-4 text-sm text-teal-950 dark:bg-teal-950/40 dark:text-teal-100"><p className="font-semibold">Retour du professeur</p><p className="mt-2" role="status" aria-live="polite">{session.feedback}</p>{session.state === 'transfer' && <p className="mt-3 font-medium">{session.transferQuestion}</p>}</div></div>}
+  </section>;
 }
 
 function nextAttemptList(input: TeacherEngineInput, event: TeacherEvent): TeacherEngineInput['attempts'] {
