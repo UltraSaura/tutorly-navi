@@ -73,3 +73,27 @@ This is a reviewer simulation, not evidence of real learning improvement.
 - Review mode receives a structured attempt summary; it does not infer unseen
   student work.
 - Teacher and screen-reader review of French phrasing remains required.
+
+## Cycle T09 — student-facing presentation gate
+
+The unchanged screen was caused by the development page rendering
+`StructuredOperationGrid` directly in its primary preview. The Teacher Lab
+was only an additional reviewer panel, so its decision model could pass tests
+without changing what a student saw. The primary preview now renders
+`src/components/math/CleanWrittenOperation.tsx`; `StructuredOperationGrid`
+remains an internal/debug representation and its technical rows are not
+rendered in the student view.
+
+The clean renderer keeps one written operation visible, positions every cell
+by place-value column, and overlays only the active carry or borrowing
+annotation. It provides short French teacher explanations, stable controls,
+reduced-motion-compatible transitions, and assistance-dependent presentation
+through the Teacher Lab. The place-value solver was corrected for chained
+borrowing across zero (`403 - 178`).
+
+The T09 acceptance set contains 74 reviewed desktop/mobile screenshots,
+including `24 + 32`, `58 + 67`, `52 - 27`, `325 - 148`, `403 - 178`,
+`247 x 36`, `864 / 8`, remainder division, and decimal alignment. The
+development route is `/dev/stuwy-explain-v2`; no production caller was
+changed. The original TwoCards files and routing remain unchanged for
+under-11 learners.

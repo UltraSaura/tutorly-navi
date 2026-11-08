@@ -24,8 +24,10 @@ from PIL import Image, ImageChops
 
 
 CASES = {
+    "addition-simple": "24 + 32",
     "addition-carry": "58 + 67",
     "subtraction-borrow": "52 - 27",
+    "subtraction-long": "325 - 148",
     "subtraction-zero": "403 - 178",
     "multiplication": "247 × 36",
     "long-division": "864 ÷ 8",
@@ -140,7 +142,7 @@ def main() -> None:
                         # this harness bound to the original Explanation Lab input.
                         page.get_by_label("Exercice", exact=True).fill(expression)
                         page.get_by_role("button", name="Générer localement").click()
-                        page.get_by_text("Validation mathématique").wait_for()
+                        page.get_by_text("Explication pas à pas").wait_for()
                         page.evaluate("document.fonts.ready")
                         # Google Poppins is loaded by the existing app stylesheet; give the
                         # browser a deterministic settle window before capturing pixels.

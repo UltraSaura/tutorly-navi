@@ -45,3 +45,20 @@ No external AI calls or production database writes were made.
 - Focused ESLint for Teacher Engine and Teacher Lab files: **passed**, 0 errors / 0 warnings.
 - Production routing: **unchanged**; no Tutor, Learn, or Practice integration performed.
 - Visual baselines: **not regenerated**; existing V2 visual harness remains unchanged.
+
+## Cycle T09 validation
+
+- `npm test -- --run`: **passed**, 118 files / 1,146 tests.
+- `npx tsc --noEmit`: **passed**.
+- Focused ESLint for the clean renderer, V2 page, Teacher Lab, and place-value
+  solver: **passed**, 0 errors.
+- `npm run build`: **passed**. Existing Browserslist, unresolved font, chunk
+  size, and dynamic-import warnings remain unrelated build warnings.
+- `npm run test:visual:stuwy -- --update`: **passed**, 74 reviewed baselines
+  generated.
+- `npm run test:visual:stuwy`: **passed**, 74 screenshots matched.
+- Mobile visual review: **passed** for the clean card and absence of the old
+  technical rows; mathematical notation remains subject to product-owner
+  review for division/multiplication styling.
+- Original TwoCards: **unchanged**; no production Tutor, Learn, or Practice
+  routing was modified.

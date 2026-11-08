@@ -101,50 +101,52 @@ function arithmeticFrames(left: bigint, right: bigint, decimals: number, operato
   const maxExponent = Math.max(width - decimals - 1, 0) + (result.toString().length > width ? 1 : 0);
   const frames: PlaceValueFrame[] = [{ id: 'setup', label: 'Poser l’opération', explanation: 'Aligne chaque chiffre sur sa valeur de position.', rows: baseRows(left, right, decimals, width, operator), events: [] }];
   let carry = 0;
-  let borrow = 0;
+  const workingDigits = [...left.toString().padStart(width, '0')].reverse().map(Number);
   const output: string[] = [];
   for (let offset = 0; offset < width; offset += 1) {
     const exponent = offset - decimals;
-    const leftDigit = Number((left / (10n ** BigInt(offset))) % 10n);
+    const originalLeftDigit = Number((left / (10n ** BigInt(offset))) % 10n);
     const rightDigit = Number((right / (10n ** BigInt(offset))) % 10n);
     let digit: number;
     let incomingCarry = 0;
     const events: GridEvent[] = [{ kind: 'highlight', sourceExponent: exponent, destinationExponent: exponent, description: `Colonne des ${labelFor(exponent)}` }];
     if (operator === '+') {
       incomingCarry = carry;
-      const sum = leftDigit + rightDigit + incomingCarry;
+      const sum = originalLeftDigit + rightDigit + incomingCarry;
       digit = sum % 10;
       const nextCarry = Math.floor(sum / 10);
       if (nextCarry) events.push({ kind: 'carry', sourceExponent: exponent, destinationExponent: exponent + 1, value: String(nextCarry), description: `Porte ${nextCarry} vers les ${labelFor(exponent + 1)}.` });
       carry = nextCarry;
     } else {
-      let top = leftDigit - borrow;
-      borrow = 0;
+      let top = workingDigits[offset];
       if (top < rightDigit) {
-        top += 10;
-        borrow = 1;
-        const sourceExponent = exponent + 1;
-        let source = sourceExponent;
-        while (source < width && Number((left / (10n ** BigInt(source + decimals))) % 10n) === 0) source += 1;
-        const sourceDigit = Number((left / (10n ** BigInt(source + decimals))) % 10n);
-        events.push({ kind: 'borrow', sourceExponent: source, destinationExponent: exponent, value: '1', description: `Emprunte 1 aux ${labelFor(source)}.` }, { kind: 'regroup', sourceExponent: source, destinationExponent: exponent, description: `Regroupe 1 unité de rang supérieur en 10 ${labelFor(exponent)}.` });
+        const beforeDestination = workingDigits[offset];
+        let source = offset + 1;
+        while (source < width && workingDigits[source] === 0) source += 1;
+        if (source >= width) throw new Error('Impossible de réaliser le regroupement.');
+        const sourceExponent = source - decimals;
+        const sourceDigit = workingDigits[source];
+        workingDigits[source] -= 1;
+        for (let chain = source - 1; chain > offset; chain -= 1) workingDigits[chain] = 9;
+        workingDigits[offset] += 10;
+        top = workingDigits[offset];
+        events.push({ kind: 'borrow', sourceExponent, destinationExponent: exponent, value: '1', description: `Emprunte 1 aux ${labelFor(sourceExponent)}.` }, { kind: 'regroup', sourceExponent, destinationExponent: exponent, value: '10', description: `Regroupe 1 unité de rang supérieur en 10 ${labelFor(exponent)}.` });
         const regroupRows: GridRow[] = [
-          annotationRow(`regroup-${source}-before-${exponent}`, 'avant', source, String(sourceDigit), 'crossed-out'),
-          annotationRow(`regroup-${source}-after-${exponent}`, 'après', source, String(sourceDigit - 1), 'replacement'),
+          annotationRow(`regroup-${source}-before-${exponent}`, 'avant', sourceExponent, String(sourceDigit), 'crossed-out'),
+          annotationRow(`regroup-${source}-after-${exponent}`, 'après', sourceExponent, String(workingDigits[source]), 'replacement'),
         ];
         for (let chainExponent = source - 1; chainExponent > exponent; chainExponent -= 1) {
-          const chainDigit = Number((left / (10n ** BigInt(chainExponent + decimals))) % 10n);
-          regroupRows.push(annotationRow(`regroup-${chainExponent}-before-${exponent}`, 'avant', chainExponent, String(chainDigit), 'crossed-out'));
-          regroupRows.push(annotationRow(`regroup-${chainExponent}-after-${exponent}`, 'après', chainExponent, String(chainDigit + 9), 'replacement'));
+          regroupRows.push(annotationRow(`regroup-${chainExponent}-before-${exponent}`, 'avant', chainExponent - decimals, '0', 'crossed-out'));
+          regroupRows.push(annotationRow(`regroup-${chainExponent}-after-${exponent}`, 'après', chainExponent - decimals, String(workingDigits[chainExponent]), 'replacement'));
         }
-        regroupRows.push(annotationRow(`regroup-${exponent}-before`, 'unités avant', exponent, String(leftDigit), 'crossed-out'));
-        regroupRows.push(annotationRow(`regroup-${exponent}-after`, 'unités après', exponent, String(leftDigit + 10), 'replacement'));
+        regroupRows.push(annotationRow(`regroup-${exponent}-before`, 'avant', exponent, String(beforeDestination), 'crossed-out'));
+        regroupRows.push(annotationRow(`regroup-${exponent}-after`, 'après', exponent, String(top), 'replacement'));
         const rows = baseRows(left, right, decimals, width, operator);
         rows.push(...regroupRows);
         digit = top - rightDigit;
         rows.push({ id: 'result', cells: digits(BigInt(String(digit)), width, 'result', decimals, 'result').map((item) => ({ ...item, emphasis: item.exponent === exponent ? 'active' : undefined })) });
         output.unshift(String(digit));
-        frames.push({ id: `column-${exponent}`, label: `Regrouper les ${labelFor(exponent)}`, explanation: `Comme ${leftDigit} est plus petit que ${rightDigit}, échange une unité du rang supérieur : ${leftDigit} devient ${leftDigit + 10}, puis ${leftDigit + 10} − ${rightDigit} = ${digit}.`, rows, events });
+        frames.push({ id: `column-${exponent}`, label: `Regrouper les ${labelFor(exponent)}`, explanation: `Comme ${beforeDestination} est plus petit que ${rightDigit}, échange une unité du rang supérieur : ${beforeDestination} devient ${top}, puis ${top} − ${rightDigit} = ${digit}.`, rows, events });
         continue;
       }
       digit = top - rightDigit;
@@ -152,9 +154,9 @@ function arithmeticFrames(left: bigint, right: bigint, decimals: number, operato
     output.unshift(String(digit));
     const resultValue = BigInt(output.join(''));
     const rows = baseRows(left, right, decimals, width, operator);
-    if (operator === '+' && carry) rows.push(annotationRow(`carry-${exponent}`, 'retenue', exponent + 1, String(carry), 'carry'));
+    if (operator === '+' && incomingCarry) rows.push(annotationRow(`carry-${exponent}`, 'retenue', exponent, String(incomingCarry), 'carry'));
     rows.push({ id: 'result', cells: digits(resultValue, width, 'result', decimals, 'result').map((item) => ({ ...item, emphasis: item.exponent === exponent ? 'active' : undefined })) });
-    frames.push({ id: `column-${exponent}`, label: `Calculer les ${labelFor(exponent)}`, explanation: operator === '+' ? `${leftDigit} + ${rightDigit}${incomingCarry ? ` + ${incomingCarry} de retenue` : ''} = ${leftDigit + rightDigit + incomingCarry}. Écris ${digit}${carry ? ` et porte ${carry}` : ''}.` : `${leftDigit} − ${rightDigit} = ${digit} dans la colonne des ${labelFor(exponent)}.`, rows, events });
+    frames.push({ id: `column-${exponent}`, label: `Calculer les ${labelFor(exponent)}`, explanation: operator === '+' ? `${originalLeftDigit} + ${rightDigit}${incomingCarry ? ` + ${incomingCarry} de retenue` : ''} = ${originalLeftDigit + rightDigit + incomingCarry}. Écris ${digit}${carry ? ` et porte ${carry}` : ''}.` : `${workingDigits[offset]} − ${rightDigit} = ${digit} dans la colonne des ${labelFor(exponent)}.`, rows, events });
   }
   if (operator === '+' && carry) output.unshift(String(carry));
   frames.push({ id: 'final', label: 'Résultat', explanation: `Le résultat est ${formatResult(result, decimals)}.`, rows: baseRows(left, right, decimals, width, operator, result), events: [] });

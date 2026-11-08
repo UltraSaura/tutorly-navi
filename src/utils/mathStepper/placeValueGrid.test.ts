@@ -62,6 +62,17 @@ describe('place-value grid contracts', () => {
     ]));
   });
 
+  it('carries the transformed value into the next subtraction column', () => {
+    const solution = buildPlaceValueSolution('325 - 148');
+    expect(solution.frames.find((frame) => frame.id === 'column-0')?.explanation).toContain('15 − 8 = 7');
+    expect(solution.frames.find((frame) => frame.id === 'column-1')?.explanation).toContain('11 − 4 = 7');
+  });
+
+  it('does not borrow twice after crossing a zero in 403 − 178', () => {
+    const solution = buildPlaceValueSolution('403 - 178');
+    expect(solution.frames.find((frame) => frame.id === 'column-1')?.explanation).toContain('9 − 7 = 2');
+  });
+
   it('renders a carry as a positioned annotation for 58 + 67', () => {
     const solution = buildPlaceValueSolution('58 + 67');
     const carry = solution.frames.flatMap((frame) => frame.rows.flatMap((row) => row.cells)).find((cell) => cell.annotationType === 'carry');

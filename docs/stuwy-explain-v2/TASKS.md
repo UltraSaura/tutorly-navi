@@ -35,3 +35,13 @@
 - [x] Add development-only Teacher Lab simulation for six student situations.
 - [ ] Connect production callers after explicit product-owner approval.
 - [ ] Extend pedagogical strategies beyond written subtraction.
+
+## Cycle T09
+
+- [x] Trace and fix the root cause of the unchanged student-facing screen.
+- [x] Render conventional written operations without technical event rows.
+- [x] Show direct carry/borrow annotations and natural French guidance.
+- [x] Wire assistance level to the visible V2 presentation.
+- [x] Add `24 + 32` and `325 - 148` to the visual acceptance cases.
+- [x] Re-run reviewed mobile and desktop screenshot coverage.
+- [ ] Product-owner approval before any production integration.

@@ -67,3 +67,15 @@ Visual review completed for representative setup and intermediate frames. No inc
   situations and separate teacher-decision/student-message views.
 - Preserved TwoCards and did not activate production routing.
 - Reuse matrix and demonstration instructions: [`TEACHER_ENGINE_V1.md`](./TEACHER_ENGINE_V1.md).
+
+## Cycle T09 — student-facing explanation
+
+- [x] Replaced the main V2 preview's technical structured-operation table with
+  the clean written-operation renderer.
+- [x] Connected Teacher Lab assistance decisions to the visible explanation.
+- [x] Corrected chained borrowing state for `403 - 178`.
+- [x] Reviewed 74 mobile/desktop visual baselines; technical rows are absent
+  from the student-facing card.
+- [x] Preserved the original TwoCards implementation and production routing.
+- [ ] Product-owner approval of the new visual teaching experience.
+- [ ] Manual teacher and screen-reader review of all French walkthroughs.

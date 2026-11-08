@@ -35,3 +35,19 @@ Seven focused tests cover assistance selection, regrouping prompts, repeated
 failure remediation, guided transitions, review grounding, solver authority,
 and TwoCards presentation preservation. The Teacher Lab is a development
 simulation; it is not evidence of real learning improvement.
+
+## Cycle T09 presentation gate
+
+The student-facing V2 card now has one conventional operation, a single
+active explanation, and direct digit annotations. It does not render the
+internal labels `avant`, `après`, `unités avant`, `unités après`, or `résultat`
+as a debugging table. The complete operation remains visible while the active
+column changes. The live mobile review covered addition, subtraction with
+borrowing (including zero crossing), multiplication, division, and decimal
+alignment.
+
+The acceptance evidence is 74 reviewed visual baselines plus mathematical
+place-value tests. The visual result is ready for product-owner review, not
+for production integration: division and multiplication still need a manual
+teacher review for notation preferences, and screen-reader timing requires a
+manual pass.
