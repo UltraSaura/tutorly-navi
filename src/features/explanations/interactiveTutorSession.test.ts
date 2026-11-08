@@ -35,4 +35,23 @@ describe('interactive tutor session', () => {
     expect(demonstrated.state).toBe('demonstrate');
     expect(continueAfterDemonstration(demonstrated).state).toBe('awaiting-response');
   });
+
+  it('uses prerequisite remediation after the same misconception repeats', () => {
+    let session = createInteractiveTutorSession();
+    session = submitTutorResponse(session, 'Je commence par les dizaines');
+    session = retryTutorQuestion(session);
+    session = submitTutorResponse(session, 'Je commence par les dizaines');
+    expect(session.state).toBe('demonstrate');
+    expect(session.assistanceLevel).toBe(4);
+    expect(session.demonstrationUsed).toBe(true);
+  });
+
+  it('escalates the third requested hint to a contextual demonstration', () => {
+    let session = createInteractiveTutorSession();
+    session = requestTutorHint(session);
+    session = requestTutorHint(session);
+    session = requestTutorHint(session);
+    expect(session.state).toBe('demonstrate');
+    expect(session.assistanceLevel).toBe(3);
+  });
 });

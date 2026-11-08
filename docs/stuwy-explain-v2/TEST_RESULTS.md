@@ -90,3 +90,18 @@ No external AI calls or production database writes were made.
 - Production build after T10 changes: **passed** with the repository's existing
   font, Browserslist, dynamic-import, and chunk-size warnings.
 - Full product-owner approval: **pending**; this remains development-only.
+
+## T11 validation
+
+- Natural-language and diagnosis controller tests: **passed**.
+- Assistance ladder: **passed** for independent, two-hint, repeated-error,
+  and demonstration paths.
+- Transfer evidence: **passed** for correct/incorrect attempts and completion
+  summary data.
+- Full suite: **passed**, 119 files / 1,153 tests.
+- TypeScript and focused lint: **passed**.
+- Mobile visual regression: **passed**, 74/74 screenshots matched after the
+  student experience refinement.
+- Production build: **passed** with existing repository warnings.
+- Voice/accessibility: existing TwoCards controls remain reused and exposed;
+  manual screen-reader and speech-timing review remains open.

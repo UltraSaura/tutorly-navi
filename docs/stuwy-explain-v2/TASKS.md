@@ -46,6 +46,16 @@
 - [x] Re-run reviewed mobile and desktop screenshot coverage.
 - [ ] Product-owner approval before any production integration.
 
+## T11
+
+- [x] Centralize typed pedagogical prompts for regrouping subtraction.
+- [x] Reduce student cognitive load and preserve meaningful free-text answers.
+- [x] Track assistance level, hint history, demonstration use, and transfer
+  evidence.
+- [x] Keep the existing TwoCards method and narration for under-11 learners.
+- [x] Add explicit method-consistency documentation for TwoCards versus V2.
+- [ ] Complete manual accessibility and teacher review.
+
 ## Architectural correction
 
 - [x] Inventory TwoCards components, callers, animation and speech path.

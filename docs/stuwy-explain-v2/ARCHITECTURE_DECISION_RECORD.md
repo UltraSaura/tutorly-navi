@@ -166,3 +166,13 @@ same `CompactMathStepper` component in columns A and B. Column A is unchanged;
 column B adds a Teacher Engine message/hint outside the animation; column C is
 the separate V2 paper-first renderer. This is a development-only comparison
 for `325 - 148`, not a production migration.
+
+## T11 method consistency audit
+
+The reused TwoCards `CompactMathStepper` teaches the child-friendly exchange
+as “add 10 in the units column and compensate with 1 in the tens column”. The
+V2 renderer shows the same exchange explicitly as `2 → 1` and `5 → 15`.
+These are two presentations of the same regrouping method, not two different
+mathematical procedures. The Teacher Engine asks about the exchange first and
+only then chooses the relevant demonstration. Under-11 learners keep the
+TwoCards method and narration; older learners keep the paper-first V2 method.

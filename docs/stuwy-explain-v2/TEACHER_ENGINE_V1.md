@@ -132,3 +132,18 @@ When the selected grade is under 11, the demonstration uses the existing
 the separate clean V2 renderer. The former scenario buttons and comparison
 panels are now inside a collapsible developer-tools section; they are not the
 student interaction.
+
+## T11 pedagogical refinement
+
+Student-facing prompts are now centralized as typed regrouping prompts. The
+first prompt is: “On a 5 unités, mais on doit en enlever 8. Comment peut-on
+faire ?” Free text is the primary response method; optional answer choices are
+collapsed to reduce cognitive load. The session records attempts, per-step
+hint levels, demonstration use, independent completion of the critical
+regrouping step, and transfer attempts.
+
+The assistance ladder is independent attempt → conceptual clue → procedural
+hint → contextual demonstration → prerequisite remediation. Repeated evidence
+of the same misconception triggers the last two levels; one isolated error
+does not automatically force a demonstration. Completion reports the evidence
+collected but explicitly does not claim mastery from one transfer exercise.

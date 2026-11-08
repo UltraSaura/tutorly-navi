@@ -99,3 +99,14 @@ Visual review completed for representative setup and intermediate frames. No inc
 - [x] Reused TwoCards/CompactMathStepper for under-11 demonstrations.
 - [x] Kept developer scenario tools separate and collapsible.
 - [ ] Product-owner review of the complete interactive tutoring flow.
+
+## T11 — pedagogical experience refinement
+
+- [x] Rewrote student prompts and feedback in concise natural French.
+- [x] Made free text primary and secondary choices collapsible.
+- [x] Added typed prompt data and assistance tracking per step.
+- [x] Distinguished arithmetic, place-value, regrouping, skipped-step,
+  transcription, and insufficient-evidence cases where supported by the text.
+- [x] Added concise completion evidence without claiming mastery.
+- [x] Rechecked contextual TwoCards/V2 method consistency and voice reuse.
+- [ ] Manual teacher and screen-reader review of the full journey.
