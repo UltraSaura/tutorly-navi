@@ -1,5 +1,16 @@
 # Test Results
 
+## T11.6 audit — 2026-11-09
+
+- Reproduced the existing TwoCards operation at 375px and 447px; captured 12
+  screenshots and the speech-synthesis text for all six stages at each width.
+- `python3 scripts/visual-regression/t116-twocards-audit.py`: **failed as expected**,
+  detecting four false-equation occurrences (`6 − 9 = 7` and `2 − 5 = 7`).
+- Speech payload interception does not validate audible voice quality.
+- No new baselines accepted; no application changes. Full tests, TypeScript,
+  lint and build were not rerun. T11.6 journey acceptance has not passed.
+- [Detailed evidence and approval blocker](T116_METHOD_AUDIT.md).
+
 ## Consolidated baseline
 
 Run on 2026-11-07 after dependency installation:
