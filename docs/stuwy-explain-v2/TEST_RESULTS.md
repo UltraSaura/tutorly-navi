@@ -1,15 +1,29 @@
 # Test Results
 
-## T11.6 audit — 2026-11-09
+## T11.6A correction validation — 2026-11-09
 
 - Reproduced the existing TwoCards operation at 375px and 447px; captured 12
   screenshots and the speech-synthesis text for all six stages at each width.
-- `python3 scripts/visual-regression/t116-twocards-audit.py`: **failed as expected**,
-  detecting four false-equation occurrences (`6 − 9 = 7` and `2 − 5 = 7`).
+- `python3 scripts/visual-regression/t116-twocards-audit.py`: **passed**, with no
+  false equations at either viewport. It records `15 − 8 = 7`, `12 − 5 = 7`
+  and `3 − 2 = 1` in the speech payload.
 - Speech payload interception does not validate audible voice quality.
-- No new baselines accepted; no application changes. Full tests, TypeScript,
-  lint and build were not rerun. T11.6 journey acceptance has not passed.
-- [Detailed evidence and approval blocker](T116_METHOD_AUDIT.md).
+- Corrected screenshots are in `artifacts/stuwy-explain-v2/t116-audit/`.
+- Focused Vitest: **19 passed** (compensation model, correction flow and
+  interactive journey).
+- Student-session browser journey: **passed** on desktop, 375px and 447px,
+  including optional understanding support, direct method demonstration,
+  bounded retry, fallback and transfer completion.
+- Full Vitest: **passed**, 120 files and 1,166 tests.
+- Visual regression: **passed**, 74 screenshots matched against reviewed
+  baselines, including the corrected TwoCards evidence at 375px and 447px.
+- Production build: **passed**. Existing font-resolution, chunk-size and
+  import-order warnings remain.
+- Focused lint for changed tutoring/model files: **passed**. Linting the full
+  existing stepper also reports unrelated legacy errors in that file.
+- TypeScript still reports pre-existing unrelated errors; see validation log
+  below. Full build/lint results are reported separately after this cycle.
+- [Detailed evidence and correction record](T116_METHOD_AUDIT.md).
 
 ## Consolidated baseline
 

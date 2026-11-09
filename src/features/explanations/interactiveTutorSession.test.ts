@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beginCorrectionCheck, continueAfterDemonstration, createInteractiveTutorSession, requestTutorHint, retryTutorQuestion, submitTutorResponse } from './interactiveTutorSession';
+import { beginCorrectionCheck, continueAfterDemonstration, createInteractiveTutorSession, demonstrateCorrectionMethod, requestTutorHint, retryTutorQuestion, submitTutorResponse } from './interactiveTutorSession';
 import { createPedagogicalCorrection } from './pedagogicalCorrection';
 
 describe('interactive tutor session hotfix', () => {
@@ -43,6 +43,15 @@ describe('interactive tutor session hotfix', () => {
     expect(correction.understandingQuestion).toBeTruthy();
     expect(correction.nextAction).toBe('check-understanding');
   });
+  it('moves directly from why to the corrected TwoCards method without forcing a quiz', () => {
+    const shown = demonstrateCorrectionMethod(remediate());
+    expect(shown.state).toBe('demonstrate');
+    const returned = continueAfterDemonstration(shown);
+    expect(returned.state).toBe('awaiting-response');
+    expect(returned.step).toBe(3);
+    expect(returned.question).toContain('15 − 8');
+  });
+
   it('requires every column before transfer', () => {
     let s = understood();
     for (const [answer, step] of [['10', 2], ['15', 3], ['7', 4], ['1', 5], ['11', 6], ['7', 7], ['1', 8], ['177', 9]] as const) {

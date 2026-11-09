@@ -2,7 +2,7 @@
   {
     "width": 375,
     "step": 0,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n1 sur 6\n3\n2\n5\n−\n1\n4\n8\n•\n•\n•\nOn regarde la colonne des unités : 5 − 8. Il n’y a pas assez de unités pour enlever 8. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n1 sur 6\n+10\n3\n2\n5\n−\n1\n4\n+1\n8\n•\n•\n•\nOn regarde la colonne des unités : 5 − 8. Il n’y a pas assez de unités pour enlever 8. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.\nÉcouter",
     "speech": {
       "text": "On regarde la colonne des unités : 5 − 8. Il n’y a pas assez de unités pour enlever 8. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.",
       "lang": "fr-FR"
@@ -11,52 +11,52 @@
   {
     "width": 375,
     "step": 1,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n2 sur 6\n3\n2\n5\n−\n1\n4\n8\n•\n•\n7\n6 − 9 = 7. On écrit 7 dans la colonne des unités.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n2 sur 6\n+10\n3\n2\n5\n−\n1\n4\n+1\n8\n•\n•\n7\n15 − 8 = 7. On écrit 7 dans la colonne des unités.\nÉcouter",
     "speech": {
-      "text": "6 − 9 = 7. On écrit 7 dans la colonne des unités.",
+      "text": "15 − 8 = 7. On écrit 7 dans la colonne des unités.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 375,
     "step": 2,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n3 sur 6\n1\n3\n2\n5\n−\n1\n4\n9\n•\n•\n7\nOn regarde la colonne des dizaines : 2 − 4. Il n’y a pas assez de dizaines pour enlever 4. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n3 sur 6\n+10\n+10\n3\n2\n5\n−\n1\n+1\n4\n+1\n8\n•\n•\n7\nOn regarde la colonne des dizaines : 2 − 5. Il n’y a pas assez de dizaines pour enlever 5. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.\nÉcouter",
     "speech": {
-      "text": "On regarde la colonne des dizaines : 2 − 4. Il n’y a pas assez de dizaines pour enlever 4. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.",
+      "text": "On regarde la colonne des dizaines : 2 − 5. Il n’y a pas assez de dizaines pour enlever 5. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 375,
     "step": 3,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n4 sur 6\n1\n3\n2\n5\n−\n1\n4\n9\n•\n7\n7\n2 − 5 = 7. On écrit 7 dans la colonne des dizaines.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n4 sur 6\n+10\n+10\n3\n2\n5\n−\n1\n+1\n4\n+1\n8\n•\n7\n7\n12 − 5 = 7. On écrit 7 dans la colonne des dizaines.\nÉcouter",
     "speech": {
-      "text": "2 − 5 = 7. On écrit 7 dans la colonne des dizaines.",
+      "text": "12 − 5 = 7. On écrit 7 dans la colonne des dizaines.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 375,
     "step": 4,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n5 sur 6\n1\n1\n3\n2\n5\n−\n1\n5\n9\n•\n7\n7\nOn regarde la colonne des centaines : 2 − 1.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n5 sur 6\n+10\n+10\n3\n2\n5\n−\n1\n+1\n4\n+1\n8\n•\n7\n7\nOn regarde la colonne des centaines : 3 − 2.\nÉcouter",
     "speech": {
-      "text": "On regarde la colonne des centaines : 2 − 1.",
+      "text": "On regarde la colonne des centaines : 3 − 2.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 375,
     "step": 5,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n6 sur 6\n1\n1\n3\n2\n5\n−\n1\n5\n9\n1\n7\n7\n2 − 1 = 1. On écrit 1 dans la colonne des centaines.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n6 sur 6\n+10\n+10\n3\n2\n5\n−\n1\n+1\n4\n+1\n8\n1\n7\n7\n3 − 2 = 1. On écrit 1 dans la colonne des centaines.\nÉcouter",
     "speech": {
-      "text": "2 − 1 = 1. On écrit 1 dans la colonne des centaines.",
+      "text": "3 − 2 = 1. On écrit 1 dans la colonne des centaines.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 447,
     "step": 0,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n1 sur 6\n3\n2\n5\n−\n1\n4\n8\n•\n•\n•\nOn regarde la colonne des unités : 5 − 8. Il n’y a pas assez de unités pour enlever 8. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n1 sur 6\n+10\n3\n2\n5\n−\n1\n4\n+1\n8\n•\n•\n•\nOn regarde la colonne des unités : 5 − 8. Il n’y a pas assez de unités pour enlever 8. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.\nÉcouter",
     "speech": {
       "text": "On regarde la colonne des unités : 5 − 8. Il n’y a pas assez de unités pour enlever 8. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.",
       "lang": "fr-FR"
@@ -65,45 +65,45 @@
   {
     "width": 447,
     "step": 1,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n2 sur 6\n3\n2\n5\n−\n1\n4\n8\n•\n•\n7\n6 − 9 = 7. On écrit 7 dans la colonne des unités.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n2 sur 6\n+10\n3\n2\n5\n−\n1\n4\n+1\n8\n•\n•\n7\n15 − 8 = 7. On écrit 7 dans la colonne des unités.\nÉcouter",
     "speech": {
-      "text": "6 − 9 = 7. On écrit 7 dans la colonne des unités.",
+      "text": "15 − 8 = 7. On écrit 7 dans la colonne des unités.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 447,
     "step": 2,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n3 sur 6\n1\n3\n2\n5\n−\n1\n4\n9\n•\n•\n7\nOn regarde la colonne des dizaines : 2 − 4. Il n’y a pas assez de dizaines pour enlever 4. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n3 sur 6\n+10\n+10\n3\n2\n5\n−\n1\n+1\n4\n+1\n8\n•\n•\n7\nOn regarde la colonne des dizaines : 2 − 5. Il n’y a pas assez de dizaines pour enlever 5. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.\nÉcouter",
     "speech": {
-      "text": "On regarde la colonne des dizaines : 2 − 4. Il n’y a pas assez de dizaines pour enlever 4. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.",
+      "text": "On regarde la colonne des dizaines : 2 − 5. Il n’y a pas assez de dizaines pour enlever 5. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 447,
     "step": 3,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n4 sur 6\n1\n3\n2\n5\n−\n1\n4\n9\n•\n7\n7\n2 − 5 = 7. On écrit 7 dans la colonne des dizaines.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n4 sur 6\n+10\n+10\n3\n2\n5\n−\n1\n+1\n4\n+1\n8\n•\n7\n7\n12 − 5 = 7. On écrit 7 dans la colonne des dizaines.\nÉcouter",
     "speech": {
-      "text": "2 − 5 = 7. On écrit 7 dans la colonne des dizaines.",
+      "text": "12 − 5 = 7. On écrit 7 dans la colonne des dizaines.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 447,
     "step": 4,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n5 sur 6\n1\n1\n3\n2\n5\n−\n1\n5\n9\n•\n7\n7\nOn regarde la colonne des centaines : 2 − 1.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n5 sur 6\n+10\n+10\n3\n2\n5\n−\n1\n+1\n4\n+1\n8\n•\n7\n7\nOn regarde la colonne des centaines : 3 − 2.\nÉcouter",
     "speech": {
-      "text": "On regarde la colonne des centaines : 2 − 1.",
+      "text": "On regarde la colonne des centaines : 3 − 2.",
       "lang": "fr-FR"
     }
   },
   {
     "width": 447,
     "step": 5,
-    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n6 sur 6\n1\n1\n3\n2\n5\n−\n1\n5\n9\n1\n7\n7\n2 − 1 = 1. On écrit 1 dans la colonne des centaines.\nÉcouter",
+    "visible": "A · TwoCards original\n\nAnimation et navigation existantes, sans changement.\n\nMathématiques étape par étape\n6 sur 6\n+10\n+10\n3\n2\n5\n−\n1\n+1\n4\n+1\n8\n1\n7\n7\n3 − 2 = 1. On écrit 1 dans la colonne des centaines.\nÉcouter",
     "speech": {
-      "text": "2 − 1 = 1. On écrit 1 dans la colonne des centaines.",
+      "text": "3 − 2 = 1. On écrit 1 dans la colonne des centaines.",
       "lang": "fr-FR"
     }
   }

@@ -20,6 +20,7 @@ export interface InteractiveTutorSession {
   prerequisite: boolean;
   correction?: PedagogicalCorrection;
   correctionCheckAttempts: number;
+  correctionDemo: boolean;
 }
 
 const stages = [
@@ -43,7 +44,7 @@ const activeState = (session: InteractiveTutorSession): InteractiveTutorState =>
 const terminal = (session: InteractiveTutorSession) => session.state === 'complete' || session.state === 'needs-support';
 
 export function createInteractiveTutorSession(): InteractiveTutorSession {
-  return { state: 'awaiting-response', step: 0, hintLevel: 0, attempts: [], question: stages[0].question, feedback: '', assistanceLevel: 0, hintLevelsByStep: {}, demonstrationUsed: false, demonstratedSteps: [], criticalStepIndependent: false, transferAttempts: 0, prerequisite: false, correctionCheckAttempts: 0 };
+  return { state: 'awaiting-response', step: 0, hintLevel: 0, attempts: [], question: stages[0].question, feedback: '', assistanceLevel: 0, hintLevelsByStep: {}, demonstrationUsed: false, demonstratedSteps: [], criticalStepIndependent: false, transferAttempts: 0, prerequisite: false, correctionCheckAttempts: 0, correctionDemo: false };
 }
 
 function prerequisite(session: InteractiveTutorSession): InteractiveTutorSession {
@@ -104,6 +105,11 @@ export function beginCorrectionCheck(session: InteractiveTutorSession): Interact
   return { ...session, state: 'correction-check', question: session.correction.understandingQuestion, feedback: 'À toi : explique avec tes mots ou choisis une réponse.' };
 }
 
+export function demonstrateCorrectionMethod(session: InteractiveTutorSession): InteractiveTutorSession {
+  if (session.state !== 'correction-explanation' || !session.correction) return session;
+  return { ...session, state: 'demonstrate', correctionDemo: true, assistanceLevel: Math.max(3, session.assistanceLevel) as 3 | 4, demonstrationUsed: true, feedback: 'Regardons la méthode sur toute l’opération, puis tu feras le calcul des unités.' };
+}
+
 export function demonstrateTutorStep(session: InteractiveTutorSession): InteractiveTutorSession {
   if (terminal(session)) return session;
   return { ...session, state: 'demonstrate', assistanceLevel: Math.max(3, session.assistanceLevel) as 3 | 4, demonstrationUsed: true, demonstratedSteps: [...new Set([...session.demonstratedSteps, session.step])], feedback: 'Regarde ce petit calcul avec les flèches, puis reviens répondre à la question.' };
@@ -111,6 +117,7 @@ export function demonstrateTutorStep(session: InteractiveTutorSession): Interact
 
 export function continueAfterDemonstration(session: InteractiveTutorSession): InteractiveTutorSession {
   if (session.state !== 'demonstrate') return session;
+  if (session.correctionDemo) return { ...session, state: 'awaiting-response', correctionDemo: false, step: 3, question: stages[3].question, feedback: 'À toi maintenant : calcule les unités de cette opération.' };
   return { ...session, state: activeState(session), feedback: 'À toi : réponds maintenant à la question de cette étape.' };
 }
 

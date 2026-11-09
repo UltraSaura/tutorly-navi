@@ -1,10 +1,10 @@
-# T11.6 — method audit: implementation blocked
+# T11.6 / T11.6A — method audit and correction
 
 Audited 2026-11-09, after fetching `origin/feature/stuwy-explain-v2`.
 Local and remote both pointed to `d6c47854397d41d7ac2a86ba806d8fcfb733e1c4`;
 the worktree was clean. No subsequent user changes were overwritten.
 
-## Decision
+## Initial decision
 
 T11.6 is **not implemented or complete**. Its explicit exception applies:
 “Do not stop after the initial audit unless a fundamental mathematical
@@ -16,8 +16,31 @@ the requirement that narration match the animation. Correcting that shared
 renderer would conflict with “Do not change the original animations” and
 requires a narrow product-owner decision first.
 
-This commit changes only the audit script, evidence and documentation. No
-application code, animation, speech hook or production lesson is modified.
+The initial audit commit changed only the audit script, evidence and
+documentation. No application code, animation, speech hook or production lesson
+was modified at that point.
+
+## T11.6A result
+
+The product owner authorized the narrow correction. The shared TwoCards
+subtraction adapter now derives its French compensation equations from one
+typed per-column record and keeps the existing layout, controls and speech
+reader. The original operands remain visible (`148` is not rewritten to `149`),
+and the compensation marker is shown in the lower row of the column to the
+left.
+
+For `325 − 148`, the browser now displays and narrates:
+
+- `15 − 8 = 7`;
+- `12 − 5 = 7`;
+- `3 − 2 = 1`;
+- final result `177`.
+
+The approved POURQUOI → COMMENT → À TOI path is available in the development
+Teacher Lab. The natural correction explains the reversed order, then offers
+the corrected TwoCards demonstration directly; the understanding check remains
+available as optional support. The student is returned to `15 − 8` without a
+forced extra quiz.
 
 ## Actual rendering and narration paths
 
@@ -106,7 +129,7 @@ No new baselines were accepted. Full suite, TypeScript, lint and build were
 not rerun: there are no application changes and phase 1 is blocked. T11.6
 journey acceptance is **not passed**.
 
-## Concrete correction required before the approved dialogue
+## Correction implemented
 
 Keep TwoCards as the single animation and speech system, but repair its French
 subtraction adapter to use one compensation record per column:
@@ -124,7 +147,10 @@ After that repair, COMMENT can use the approved compensation script; the
 Teacher Engine's existing upper-digit exchange questions must then be aligned
 with compensation as part of T11.6. POURQUOI and À TOI are still pending.
 
-Approval needed: allow a targeted correction to the shared TwoCards French
-subtraction calculation-to-presentation mapping, preserving its design,
-existing voice infrastructure, other operations and production lesson data.
-No merge or deployment is proposed.
+Implementation: `src/utils/mathStepper/compensationSubtraction.ts` owns the
+per-column compensation record; `CompactMathStepper.tsx` uses it for displayed
+equations, lower-row `+1` markers and narration. The pedagogical transition is
+implemented in `interactiveTutorSession.ts` and `InteractiveStudentSession.tsx`.
+No unrelated operation or production lesson was changed.
+
+Validation after correction is recorded in the project test results.

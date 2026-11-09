@@ -2,13 +2,13 @@
 
 Updated: 2026-11-09
 
-## T11.6 — blocked by verified original-renderer inconsistency
+## T11.6A — TwoCards subtraction corrected
 
-The original TwoCards French subtraction displays and narrates false intermediate
-equations for 325 − 148. T11.6 is not implemented. Correcting the shared renderer
-requires approval because this cycle explicitly prohibits changing original
-animations. See [method audit and proposed correction](T116_METHOD_AUDIT.md).
-Application code and production behavior remain unchanged by this audit.
+The product owner authorized the narrow fix. TwoCards now keeps `148` intact,
+shows compensation in the correct adjacent columns, and narrates true
+intermediate equations. The development Teacher Lab offers the approved
+POURQUOI → COMMENT → À TOI flow. See [method audit and correction evidence](T116_METHOD_AUDIT.md).
+No unrelated operation, production lesson or deployment was changed.
 
 ## Milestone 0 — branch consolidation
 

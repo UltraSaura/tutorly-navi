@@ -1,5 +1,6 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { buildDecimalMultiplicationSteps } from '@/utils/mathStepper/decimalMultiplication';
+import { compensationSubtraction } from '@/utils/mathStepper/compensationSubtraction';
 /**
  * Compact Math Stepper Component
  * A simplified version of the Interactive Math Stepper for modal environments
@@ -335,6 +336,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       const diff = t - bd;
       stepsRTL.push({ index: i, top: t, bottom: bd, borrowed, diff });
     }
+    // French presentation uses compensation, not a decrement of the upper digit.
+    if (language === 'fr') stepsRTL.splice(0, stepsRTL.length, ...compensationSubtraction(A, B));
     const resultArr: number[] = new Array(digitCols).fill(0);
     stepsRTL.forEach((s, idx) => {
       const pos = digitCols - 1 - idx;
@@ -379,13 +382,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       }
       // Odd phase: write digit
       if (language === 'fr') {
-        // In the French written method, an emprunt is recorded by adding one
-        // to the lower line while retaining the original upper digit. This
-        // keeps the displayed equivalent operation (e.g. 5 − 3) consistent
-        // with the notation students see on paper.
-        const frenchTop = info.borrowed ? info.top - 10 + 1 : info.top;
-        const frenchBottom = info.borrowed ? info.bottom + 1 : info.bottom;
-        explanations.push(`${frenchTop} − ${frenchBottom} = ${info.diff}. On écrit ${info.diff} dans la colonne des ${pn}.`);
+        explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. On écrit ${info.diff} dans la colonne des ${pn}.`);
       } else {
         explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. Write ${info.diff} in the ${pn} column.`);
       }
@@ -1208,7 +1205,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               // Only show borrow indicators for columns we've already processed
               let processedColumns = 0;
               if (withinColumns) {
-                processedColumns = Math.floor((colPhaseIndex as number) / 2);
+                processedColumns = Math.floor((colPhaseIndex as number) / 2) + 1;
               } else if (currentStep >= totalColumnPhases) {
                 processedColumns = stepsRTL.length;
               }
@@ -1220,15 +1217,16 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   const colIndex = digitColToVisualIndex(info.index, displayIntDigits, hasDecimal); // actual column index in the display array
                   showBorrow1[colIndex] = true;
                   // The "+1" appears on the column to the left (where we borrowed from)
-                  if (colIndex > 0) {
-                    showBottomPlus1[colIndex - 1] = true;
+                  const leftIndex = digitColToVisualIndex(info.index - 1, displayIntDigits, hasDecimal);
+                  if (info.index > 0) {
+                    showBottomPlus1[leftIndex] = true;
                   }
                   
                   // Mark for strikethrough if this column has been processed
                   if (k < processedColumns - 1) {
                     strikeBorrow1[colIndex] = true;
-                    if (colIndex > 0) {
-                      strikeBottomPlus1[colIndex - 1] = true;
+                    if (info.index > 0) {
+                      strikeBottomPlus1[leftIndex] = true;
                     }
                   }
                 }
@@ -1237,13 +1235,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               // French notation writes the borrowed unit on the lower line.
               // Keep this visual adjustment local to the displayed row; the
               // calculation data remains unchanged.
-              const frenchBottomDigits = bDisplay.map((digit, index) => {
-                if (language !== 'fr') return digit;
-                const borrowedStep = stepsRTL.slice(0, processedColumns).find((step) =>
-                  step.borrowed && digitColToVisualIndex(step.index, displayIntDigits, hasDecimal) === index,
-                );
-                return borrowedStep ? String(Number(digit) + 1) : digit;
-              });
+              const frenchBottomDigits = bDisplay;
 
               // Build result digits array for reveal (RIGHT TO LEFT)
               const resultDigits = (() => {
@@ -1280,9 +1272,11 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                               initial={{ y: -6, opacity: 0 }} 
                               animate={{ y: 0, opacity: 1 }} 
                               exit={{ opacity: 0 }}
-                              className={strikeBorrow1[i] ? 'math-stepper-strikethrough borrow-used' : ''}
+                              data-testid={`sub-add-ten-${i}`}
+                              aria-label="Ajouter dix dans cette colonne"
+                              className={language !== 'fr' && strikeBorrow1[i] ? 'math-stepper-strikethrough borrow-used' : ''}
                             >
-                              1
+                              {language === 'fr' ? '+10' : '1'}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -1304,8 +1298,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${n + 1}, 2rem)` }}>
                     <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">−</div>
                     {frenchBottomDigits.map((ch, i) => (
-                      <div key={i} className={cn("w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
+                      <div key={i} className={cn("relative w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
                         {ch}
+                        {language === 'fr' && showBottomPlus1[i] && <span data-testid={`sub-compensation-${i}`} aria-label="Retenue de un à ajouter" className="absolute -left-1 top-0 text-[10px] text-sky-700 dark:text-sky-300">+1</span>}
                         </div>
                     ))}
                   </div>
