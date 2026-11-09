@@ -29,6 +29,25 @@ remain readable. Verified in the 375px and 447px TwoCards screenshots.
   below. Full build/lint results are reported separately after this cycle.
 - [Detailed evidence and correction record](T116_METHOD_AUDIT.md).
 
+## T11.7 pedagogical acceptance review — 2026-11-09
+
+- POURQUOI: the reversed response is explicitly explained in French before the
+  method demonstration; no negative-number claim is introduced.
+- COMMENT: the existing TwoCards animation and speech reader now agree at every
+  stage: `15 − 8 = 7`, `12 − 5 = 7`, `3 − 2 = 1`, then `177`.
+- À TOI: the direct path returns to the student at `15 − 8`; the understanding
+  check is optional support, not a compulsory gate.
+- Language review: corrected `de unités` to `d’unités`; the 21 focused math and
+  tutoring tests pass, and the full suite passes with 120 files / 1,168 tests.
+- Representative subtraction coverage includes no regrouping, one regrouping,
+  consecutive regrouping, zero digits and `403 − 178`; all equations are
+  checked from the shared compensation model.
+- Browser journey and screenshots pass on desktop, 375px and 447px. Original
+  controls, narration integration, layout and navigation remain intact.
+- TypeScript reports the same 10 pre-existing errors as the previous review;
+  none reference the changed files. No production lesson or deployment was
+  changed.
+
 ## Consolidated baseline
 
 Run on 2026-11-07 after dependency installation:

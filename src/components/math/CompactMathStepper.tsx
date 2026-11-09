@@ -365,11 +365,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       const info = stepsRTL[k];
       const colFromRight = k;
       const pn = decimalPlaceName(colFromRight, layout.fractionalDigits);
+      const quantityName = pn === 'unités' ? 'd’unités' : `de ${pn}`;
       const origTop = A[info.index];
       // Even phase: borrow check
       if (info.borrowed) {
         if (language === 'fr') {
-          explanations.push(`On regarde la colonne des ${pn} : ${origTop} − ${info.bottom}. Il n’y a pas assez de ${pn} pour enlever ${info.bottom}. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.`);
+          explanations.push(`On regarde la colonne des ${pn} : ${origTop} − ${info.bottom}. Il n’y a pas assez ${quantityName} pour enlever ${info.bottom}. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.`);
         } else {
           explanations.push(`Look at the ${pn} column: ${origTop} − ${info.bottom}. There are not enough ${pn} to take away ${info.bottom}. Exchange 1 from the column on the left for 10 ${pn}.`);
         }
