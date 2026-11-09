@@ -1274,7 +1274,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                               exit={{ opacity: 0 }}
                               data-testid={`sub-add-ten-${i}`}
                               aria-label="Ajouter dix dans cette colonne"
-                              className={language !== 'fr' && strikeBorrow1[i] ? 'math-stepper-strikethrough borrow-used' : ''}
+                              className={strikeBorrow1[i] ? 'math-stepper-strikethrough borrow-used' : ''}
                             >
                               {language === 'fr' ? '+10' : '1'}
                             </motion.div>
@@ -1300,7 +1300,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     {frenchBottomDigits.map((ch, i) => (
                       <div key={i} className={cn("relative w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
                         {ch}
-                        {language === 'fr' && showBottomPlus1[i] && <span data-testid={`sub-compensation-${i}`} aria-label="Retenue de un à ajouter" className="absolute -left-1 top-0 text-[10px] text-sky-700 dark:text-sky-300">+1</span>}
+                        {language === 'fr' && showBottomPlus1[i] && <span data-testid={`sub-compensation-${i}`} aria-label="Retenue de un à ajouter" className={cn("absolute -left-1 top-0 text-[10px] text-sky-700 dark:text-sky-300", strikeBottomPlus1[i] && 'math-stepper-strikethrough borrow-used')}>+1</span>}
                         </div>
                     ))}
                   </div>

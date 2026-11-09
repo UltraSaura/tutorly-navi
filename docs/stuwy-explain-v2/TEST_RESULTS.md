@@ -2,6 +2,10 @@
 
 ## T11.6A correction validation — 2026-11-09
 
+Follow-up visual rule: compensation markers already consumed are crossed out
+when the animation advances to the next column; the active column's markers
+remain readable. Verified in the 375px and 447px TwoCards screenshots.
+
 - Reproduced the existing TwoCards operation at 375px and 447px; captured 12
   screenshots and the speech-synthesis text for all six stages at each width.
 - `python3 scripts/visual-regression/t116-twocards-audit.py`: **passed**, with no
