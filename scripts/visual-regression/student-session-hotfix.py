@@ -57,6 +57,7 @@ with visual.application_server(URL), sync_playwright() as p:
         capture('correction-why')
         s.get_by_role('button', name='Voir la méthode sur l’opération').click()
         expect(s.get_by_text('Démonstration TwoCards', exact=False)).to_be_visible()
+        expect(s.get_by_text('Exercice', exact=True)).to_be_visible()
         capture('correction-method')
         s.get_by_role('button', name='À moi de répondre', exact=True).click()
         expect(s.get_by_test_id('active-question')).to_contain_text('15 − 8')

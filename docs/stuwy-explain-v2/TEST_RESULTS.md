@@ -162,3 +162,15 @@ Details: [T11_STALL_HOTFIX.md](./T11_STALL_HOTFIX.md).
 T11.2 focused tests: 14 controller/model tests passed; mobile and desktop
 browser journeys passed with correction explanation and understanding-check
 screenshots reviewed. TypeScript, focused lint and production build passed.
+
+## T11.8 TwoCards embedding review — 2026-11-09
+
+- `src/features/explanations/TwoCards.tsx` remains untouched.
+- The student session now mounts the existing `TwoCards` public component with
+  its `TeachingSections` API. No duplicate playback or speech controls were
+  added.
+- The teacher sentence appears above the embedded component and `À moi de
+  répondre` appears directly after it.
+- Browser journey passed on desktop, 375px and 447px. Captures show the real
+  TwoCards `Exercice`, `Concept`, `Méthode`, `Piège` and `Auto-vérification`
+  surface.
