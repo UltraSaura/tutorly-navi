@@ -174,3 +174,16 @@ screenshots reviewed. TypeScript, focused lint and production build passed.
 - Browser journey passed on desktop, 375px and 447px. Captures show the real
   TwoCards `Exercice`, `Concept`, `Méthode`, `Piège` and `Auto-vérification`
   surface.
+
+## T11.12 — Original animation and independent application
+
+- Supersedes the T11.8 card-mode embedding and the T11.10 duplicate grid. The student view mounts the exact `CompactMathStepper` through its existing public props.
+- Full suite: 120 files / 1164 tests passed. Focused controller tests: 11 passed, including bounded fallback and prerequisite restoration. Focused lint and production build passed.
+- Browser journeys passed at 1280, 375 and 447px: misconception explanation, unchanged demonstration, distinct application (326 − 157), wrong answer, retry, hint, revisiting the original example and correct completion (169).
+- Six settled steps per viewport matched the original component's pixels (existing one-channel antialiasing tolerance) and speech payloads: 18 comparisons. Parent width and subpixel origin are equalized in the test only. No stepper styles or logic are overridden. Side-by-side mobile states were inspected visually.
+- 72 evidence images in `artifacts/stuwy-explain-v2/t1112/`. The original is left and the integration right in comparison images.
+- Full-page baselines refreshed for the intentional removal of the independent student grid and the new surrounding interaction. Original animation comparison evidence is separate.
+- TypeScript still reports 11 diagnostics in unrelated admin/guardian/practice/service/benchmark files; none in the changed files. Build warnings concern existing fonts, bundle size and mixed imports.
+- Actual device audio and product-owner pedagogical acceptance remain manual. The tests check narrated text, not voice quality; settled-state screenshots do not assert every transitional frame. TwoCards, CompactMathStepper and the shared mathematical engine are untouched.
+
+See `T1112_ACCEPTANCE.md` for the walkthrough and limitations.

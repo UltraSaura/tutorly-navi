@@ -28,7 +28,7 @@ export function createPedagogicalCorrection(
       explanation: mastery === 'high'
         ? 'Tu as inversé les deux nombres. Cela change la soustraction : 8 − 5 et 5 − 8 ne décrivent pas la même situation.'
         : 'Tu as proposé de faire 8 − 5. Mais dans notre exercice, on part de 325 et on enlève 148. Dans la colonne des unités, on part donc de 5 et on enlève 8. Si on inverse les nombres, on change le calcul.',
-      concreteExample: '8 − 5 signifie : partir de 8 et enlever 5. Notre colonne signifie : partir de 5 et enlever 8. En nombres naturels, il manque des unités ; on va échanger une dizaine.',
+      concreteExample: '8 − 5 signifie : partir de 8 et enlever 5. Notre colonne signifie : partir de 5 et enlever 8. On ajoute 10 unités en haut et 1 dizaine en bas pour conserver la différence.',
       exampleExpressions: ['8 - 5', '5 - 8'],
       understandingQuestion: 'Si on part de 8 et qu’on enlève 5, est-ce la même situation que partir de 5 et enlever 8 ?',
       expectedUnderstanding: ['non', 'pas la meme', 'différent', 'différente', 'pas la même'],

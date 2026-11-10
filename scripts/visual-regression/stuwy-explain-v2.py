@@ -19,7 +19,7 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 from PIL import Image, ImageChops
 
 
@@ -117,6 +117,7 @@ def application_server(base_url: str):
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--update", action="store_true", help="write current screenshots as baselines")
+    parser.add_argument("--case", choices=CASES, help="capture one operation for targeted baseline review")
     args = parser.parse_args()
     base_url = os.environ.get("STUWY_EXPLAIN_BASE_URL", "http://127.0.0.1:4173/dev/stuwy-explain-v2")
     root = Path(os.environ.get("STUWY_EXPLAIN_ARTIFACT_DIR", "artifacts/stuwy-explain-v2"))
@@ -131,6 +132,8 @@ def main() -> None:
         try:
             for viewport_name, viewport in VIEWPORTS.items():
                 for case_name, expression in CASES.items():
+                    if args.case and args.case != case_name:
+                        continue
                     page = browser.new_page(viewport=viewport, reduced_motion="reduce")
                     try:
                         page.add_init_script(
@@ -152,6 +155,7 @@ def main() -> None:
                         page.mouse.click(0, 0)
                         page.evaluate("document.activeElement?.blur()")
                         stem = f"{case_name}-{viewport_name}"
+                        expect(page.get_by_label("Exercice", exact=True)).to_have_value(expression)
                         page.screenshot(path=actual_root / f"{stem}-setup.png", full_page=True)
                         verify_keyboard_controls(page)
                         for step in range(1, STEP_LIMITS.get(case_name, 3) + 1):
@@ -160,6 +164,7 @@ def main() -> None:
                                 break
                             next_button.click()
                             page.wait_for_timeout(300)
+                            expect(page.get_by_label("Exercice", exact=True)).to_have_value(expression)
                             page.screenshot(path=actual_root / f"{stem}-step-{step}.png", full_page=True)
                         if args.update:
                             baseline_root.mkdir(parents=True, exist_ok=True)

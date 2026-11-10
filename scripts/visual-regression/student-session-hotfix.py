@@ -1,7 +1,8 @@
-"""Real-browser tutoring progression checks; reuse the existing server lifecycle."""
+"""T11.12: original animation parity and independent application journeys."""
 import importlib.util
 import sys
 from pathlib import Path
+from PIL import Image
 from playwright.sync_api import sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -10,98 +11,101 @@ spec = importlib.util.spec_from_file_location('visual', Path(__file__).with_name
 visual = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(visual)
 URL = 'http://127.0.0.1:4173/dev/stuwy-explain-v2'
-OUT = ROOT / 'artifacts/stuwy-explain-v2/hotfix'
+OUT = ROOT / 'artifacts/stuwy-explain-v2/t1112'
 OUT.mkdir(parents=True, exist_ok=True)
 
 with visual.application_server(URL), sync_playwright() as p:
     browser = p.chromium.launch()
-    viewports = {
-        'desktop': visual.VIEWPORTS['desktop'],
-        'mobile-375': {'width': 375, 'height': 844},
-        'mobile-447': {'width': 447, 'height': 844},
-    }
-    for name, viewport in viewports.items():
-        page = browser.new_page(viewport=viewport, reduced_motion='reduce')
-        page.add_init_script("localStorage.setItem('lang','fr'); localStorage.setItem('countryDetected','true')")
+    for width in [1280, 375, 447]:
+        page = browser.new_page(viewport={'width': width, 'height': 900}, reduced_motion='reduce')
+        page.add_init_script("""
+          localStorage.setItem('lang','fr'); localStorage.setItem('countryDetected','true');
+          window.__spoken = [];
+          Object.defineProperty(window, 'speechSynthesis', {value: {
+            getVoices: () => [], addEventListener: () => {}, removeEventListener: () => {},
+            cancel: () => {}, pause: () => {}, resume: () => {},
+            speak: u => window.__spoken.push(u.text)
+          }});
+        """)
         page.goto(URL)
+        page.add_style_tag(content="[data-testid='staging-environment-indicator'] {display:none!important}")
         s = page.get_by_test_id('interactive-student-session')
         expect(s).to_be_visible()
-        page.add_style_tag(content="[data-testid='staging-environment-indicator'], [data-testid='developer-tools'] {display:none!important}")
-        def capture(label):
+        def capture(name):
             page.evaluate('document.fonts.ready')
-            page.wait_for_timeout(1500)
-            s.screenshot(path=str(OUT / f'{name}-{label}.png'))
-            assert s.evaluate('(e) => e.scrollWidth <= e.clientWidth + 1'), 'Session overflow'
-            if s.get_by_label('Ta réponse').count():
-                field = s.get_by_label('Ta réponse').bounding_box()
-                submit = s.get_by_role('button', name='Valider ma réponse').bounding_box()
-                assert submit['y'] >= field['y'] + field['height'], 'Controls cover answer field'
+            page.wait_for_timeout(600)
+            s.screenshot(path=str(OUT / f'{width}-{name}.png'))
+            assert s.evaluate('(e) => e.scrollWidth <= e.clientWidth + 1')
         def answer(value):
-            s.get_by_label('Ta réponse').fill(value)
-            s.get_by_label('Ta réponse').press('Enter')
-        def reset():
-            s.get_by_role('button', name='Nouvel exercice').click()
-        def wrong():
-            s.get_by_text('Choisir une réponse', exact=True).click()
-            s.get_by_role('button', name='Je calcule 8 moins 5', exact=True).click()
-            s.get_by_role('button', name='Valider ma réponse').click()
-        def understand_correction():
-            expect(s.get_by_test_id('pedagogical-correction')).to_be_visible()
-            s.get_by_role('button', name='Vérifier si j’ai compris').click()
-            s.get_by_role('button', name='Oui, ce sont deux situations différentes.').click()
-            s.get_by_role('button', name='Valider ma réponse').click()
-        expect(s.get_by_role('button', name='Réessayer', exact=True)).to_have_count(0)
-        capture('initial')
-        wrong()
-        expect(s.get_by_test_id('pedagogical-correction')).to_contain_text('Tu as proposé de faire 8 − 5')
-        capture('correction-why')
+            s.get_by_label('Ta réponse', exact=True).fill(value)
+            s.get_by_label('Ta réponse', exact=True).press('Enter')
+        s.get_by_role('button', name='Je calcule 8 moins 5', exact=True).click()
+        s.get_by_role('button', name='Valider ma réponse').click()
+        expect(s.get_by_test_id('pedagogical-correction')).to_contain_text('change le calcul')
+        capture('pourquoi')
         s.get_by_role('button', name='Voir la méthode sur l’opération').click()
-        expect(s.get_by_text('Démonstration TwoCards', exact=False)).to_be_visible()
-        expect(s.get_by_text('📘 Exercice', exact=True)).to_be_visible(timeout=15000)
-        capture('correction-method')
-        expect(s.get_by_test_id('twocards-learning-surface')).to_be_visible()
-        expect(s.get_by_role('button', name='Valider ma réponse')).to_be_visible()
-        expect(s.get_by_test_id('active-question')).to_contain_text('15 − 8')
-        expect(s.get_by_test_id('session-result-0')).to_be_empty()
-        capture('subtract-15-8')
-        answer('7')
-        expect(s.get_by_test_id('active-question')).to_contain_text('2 dizaines')
-        expect(s.get_by_test_id('session-result-0')).to_have_text('7')
-        capture('tens')
-        for value in ['1', '11', '7', '1']:
-            answer(value)
-        capture('assembled')
-        answer('177')
+        integrated = s.get_by_test_id('original-animation').locator(':scope > div')
+        expect(integrated).to_be_visible()
+        expect(s.get_by_label('Ta réponse', exact=True)).to_have_count(0)
+        expect(s.get_by_label('Opération posée', exact=True)).to_have_count(0)
+        capture('comment')
+        page.get_by_text('Outils développeur et comparaison des moteurs', exact=True).click()
+        reference_region = page.get_by_role('region', name='TwoCards original', exact=True)
+        reference = reference_region.locator(':scope > div').last
+        # Match the parent available width only; never change stepper internal styling.
+        reference_region.evaluate('(e,w) => { e.parentElement.style.display = "block"; e.parentElement.style.maxWidth = "none"; e.parentElement.style.width = (w + 34) + "px"; e.style.width = (w + 34) + "px"; }', integrated.bounding_box()['width'])
+        # Equal subpixel origin avoids font antialiasing differences from the two parent layouts.
+        delta = (integrated.bounding_box()['y'] % 1) - (reference.bounding_box()['y'] % 1)
+        reference_region.evaluate('(e,dy) => { e.style.position="relative"; e.style.top=dy+"px"; }', delta)
+        for step in range(6):
+            page.wait_for_timeout(650)
+            for label, element in [('original', reference), ('integrated', integrated)]:
+                element.get_by_role('button', name='Read Aloud', exact=True).click()
+                speech = page.evaluate('window.__spoken.at(-1)')
+                if label == 'original':
+                    original_speech = speech
+                else:
+                    assert speech == original_speech, (width, step, speech, original_speech)
+                page.mouse.move(0, 0)
+                page.wait_for_timeout(300)
+                element.screenshot(path=str(OUT / f'{width}-{label}-{step}.png'))
+            original = OUT / f'{width}-original-{step}.png'
+            actual = OUT / f'{width}-integrated-{step}.png'
+            assert visual.pixels_match(original, actual), f'Animation parity: {width}px step {step}'
+            a, b = Image.open(original), Image.open(actual)
+            pair = Image.new('RGB', (a.width + b.width, max(a.height,b.height)), 'white')
+            pair.paste(a, (0,0)); pair.paste(b, (a.width,0))
+            pair.save(OUT / f'{width}-comparison-{step}.png')
+            if step < 5:
+                for element in [reference, integrated]:
+                    element.locator('button').filter(has=page.locator('svg.lucide-chevron-right')).click()
+        # Original previous control still changes the step.
+        integrated.locator('button').filter(has=page.locator('svg.lucide-chevron-left')).click()
+        s.get_by_role('button', name='À moi d’essayer un autre calcul').click()
         expect(s.get_by_test_id('active-question')).to_contain_text('326 − 157')
-        capture('transfer')
-        # Transfer must survive hint, incorrect response, and retry.
-        s.get_by_role('button', name='Un indice', exact=True).click()
-        answer('111')
+        expect(s.get_by_test_id('original-animation')).to_have_count(0)
+        capture('a-toi')
+        answer('177')
+        expect(s.get_by_role('status')).to_contain_text('Pas encore')
+        capture('incorrect')
         s.get_by_role('button', name='Réessayer', exact=True).click()
+        s.get_by_role('button', name='Un indice', exact=True).click()
+        expect(s.get_by_role('status')).to_contain_text('1 dizaine en bas')
+        capture('hint')
         answer('169')
         expect(s.get_by_text('Séance terminée', exact=True)).to_be_visible()
         capture('complete')
-        reset()
-        wrong()
-        understand_correction()
-        answer('2')
-        s.get_by_role('button', name='Réessayer', exact=True).click()
-        expect(s.get_by_label('Ta réponse')).to_be_editable()
-        answer('2')
-        expect(s.get_by_text('Démonstration TwoCards', exact=False)).to_be_visible()
-        capture('twocards-fallback')
-        expect(s.get_by_test_id('twocards-learning-surface')).to_be_visible()
-        answer('2')
-        reset()
-        wrong()
-        understand_correction()
+        s.get_by_role('button', name='Nouvel exercice').click()
+        s.get_by_role('button', name='J’ajoute 10 unités en haut et 1 dizaine en bas', exact=True).click()
+        s.get_by_role('button', name='Valider ma réponse').click()
+        expect(s.get_by_test_id('original-animation')).to_be_visible()
+        s.get_by_role('button', name='À moi d’essayer un autre calcul').click()
         for _ in range(3):
             s.get_by_role('button', name='Un indice', exact=True).click()
-        expect(s.get_by_test_id('twocards-learning-surface')).to_be_visible()
-        answer('10')
-        print(f'PASS {name}: all eight requested journeys; fallback, bounded retry, keyboard and transfer help')
-        page.goto(URL + '#student-session')
-        expect(s.get_by_test_id('active-question')).to_be_in_viewport()
-        print(f'PASS {name}: direct student-session link')
+        expect(s.get_by_test_id('original-animation')).to_be_visible()
+        s.get_by_role('button', name='À moi d’essayer un autre calcul').click()
+        answer('169')
+        expect(s.get_by_text('Séance terminée', exact=True)).to_be_visible()
+        print(f'PASS {width}px: 6 exact animation/speech comparisons; correction, application, retry, hint, return and completion')
         page.close()
     browser.close()
