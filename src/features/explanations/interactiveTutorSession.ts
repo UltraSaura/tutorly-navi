@@ -21,6 +21,8 @@ export interface InteractiveTutorSession {
   correction?: PedagogicalCorrection;
   correctionCheckAttempts: number;
   correctionDemo: boolean;
+  canAdvance: boolean;
+  completedSteps: number[];
 }
 
 const stages = [
@@ -33,18 +35,21 @@ const stages = [
   { question: 'Combien font 12 − 5 ?', answer: '7', feedback: 'Oui, 7 dizaines.', hints: ['Enlève 5 aux 12 dizaines.', 'Calcule 12 − 5.'], demo: '325 - 148' },
   { question: 'En bas, 1 centaine plus la retenue font 2 centaines. Combien font 3 − 2 ?', answer: '1', feedback: 'Oui, 1 centaine.', hints: ['Les 3 centaines du haut restent inchangées.', 'Calcule 3 − 2.'], demo: '325 - 148' },
   { question: 'Lis les chiffres obtenus : 1 centaine, 7 dizaines et 7 unités. Quel est le résultat ?', answer: '177', feedback: 'Exact, 325 − 148 = 177. Essaie maintenant un calcul proche.', hints: ['Lis les centaines, puis les dizaines et les unités.', 'Assemble 100 + 70 + 7.'], demo: '170 + 7' },
-  { question: 'À toi maintenant : 326 − 157 = ?', answer: '169', feedback: 'Bravo, tu as terminé les deux calculs.', hints: ['Commence par les unités. Ajoute 10 unités en haut et 1 dizaine en bas : la différence reste la même.', 'Calcule 16 − 7. En bas, les 5 dizaines deviennent 6. Pour les dizaines, ajoute 10 en haut et 1 centaine en bas, puis calcule 12 − 6 et 3 − 2.'], demo: '16 - 7' },
+  { question: 'Unités : 6 − 7 ne suffit pas. On ajoute 10 unités en haut et 1 dizaine en bas pour conserver la différence. Combien font 16 − 7 ?', answer: '9', feedback: 'Oui ! Il reste 9 unités.', hints: ['La compensation transforme 6 en 16 unités.', 'Calcule 16 − 7.'], demo: '16 - 7' },
+  { question: 'La dizaine ajoutée en bas fait 5 + 1 = 6. On ajoute 10 dizaines en haut et 1 centaine en bas. Combien font 12 − 6 ?', answer: '6', feedback: 'Oui ! Il reste 6 dizaines.', hints: ['En bas, 5 dizaines et la retenue font 6 dizaines.', 'En haut, 2 dizaines deviennent 12. Calcule 12 − 6.'], demo: '12 - 6' },
+  { question: 'La centaine ajoutée en bas fait 1 + 1 = 2. Combien font 3 − 2 ?', answer: '1', feedback: 'Oui ! Il reste 1 centaine.', hints: ['La dizaine ajoutée en haut est compensée par une centaine en bas.', 'Calcule 3 − 2.'], demo: '3 - 2' },
+  { question: 'Assemble les chiffres des unités, dizaines et centaines. Quel est le résultat de 326 − 157 ?', answer: '169', feedback: 'Bravo ! 326 − 157 = 169. Tu as appliqué la compensation jusqu’au bout.', hints: ['Lis les chiffres obtenus de gauche à droite.', 'Tu as 1 centaine, 6 dizaines et 9 unités.'], demo: '100 + 60 + 9' },
 ] as const;
 
 export const regroupingPrompts = stages;
-export const isTransferStage = (session: InteractiveTutorSession) => session.step === 9;
+export const isTransferStage = (session: InteractiveTutorSession) => session.step >= 9;
 export const demonstrationExpression = (_session: InteractiveTutorSession) => '325 - 148';
 const normalize = (value: string) => value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const activeState = (session: InteractiveTutorSession): InteractiveTutorState => isTransferStage(session) ? 'transfer' : 'awaiting-response';
 const terminal = (session: InteractiveTutorSession) => session.state === 'complete' || session.state === 'needs-support';
 
 export function createInteractiveTutorSession(): InteractiveTutorSession {
-  return { state: 'awaiting-response', step: 0, hintLevel: 0, attempts: [], question: stages[0].question, feedback: '', assistanceLevel: 0, hintLevelsByStep: {}, demonstrationUsed: false, demonstratedSteps: [], criticalStepIndependent: false, transferAttempts: 0, prerequisite: false, correctionCheckAttempts: 0, correctionDemo: false };
+  return { state: 'awaiting-response', step: 0, hintLevel: 0, attempts: [], question: stages[0].question, feedback: '', assistanceLevel: 0, hintLevelsByStep: {}, demonstrationUsed: false, demonstratedSteps: [], criticalStepIndependent: false, transferAttempts: 0, prerequisite: false, correctionCheckAttempts: 0, correctionDemo: false, canAdvance: false, completedSteps: [] };
 }
 
 function prerequisite(session: InteractiveTutorSession): InteractiveTutorSession {
@@ -64,10 +69,10 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
   const correct = session.prerequisite ? numeric === '10' : session.step === 0 ? approach : numeric === stages[session.step].answer;
   const misconception: InteractiveMisconception | undefined = correct ? undefined : session.step === 0 && /8\s*(moins|-)\s*5/.test(normalized) ? 'reversed-subtraction' : session.step === 0 && normalized.includes('commence par les dizaines') ? 'skipped-units' : session.step === 0 ? 'insufficient-evidence' : 'incorrect-arithmetic-fact';
   const attempts = [...session.attempts, { step: session.step, prerequisite: session.prerequisite, answer, isCorrect: correct, misconception }];
-  const updated = { ...session, attempts, lastMisconception: misconception, transferAttempts: session.transferAttempts + (isTransferStage(session) && !session.prerequisite ? 1 : 0) };
+  const updated = { ...session, attempts, lastMisconception: misconception, canAdvance: false, transferAttempts: session.transferAttempts + (isTransferStage(session) && !session.prerequisite ? 1 : 0) };
   if (correct) {
     if (session.prerequisite) return { ...updated, prerequisite: false, state: activeState(session), question: stages[session.step].question, feedback: 'Oui, 5 + 5 font 10. Reprenons la question avec cette idée.' };
-    if (isTransferStage(session)) return { ...updated, state: 'complete', feedback: stages[9].feedback };
+    if (isTransferStage(session)) return { ...updated, state: 'feedback', canAdvance: true, completedSteps: [...new Set([...session.completedSteps, session.step])], feedback: stages[session.step].feedback };
     if (session.step === 0) return demonstrateTutorStep({ ...updated, feedback: stages[0].feedback, criticalStepIndependent: session.attempts.length === 0 && session.hintLevel === 0 });
     const step = session.step + 1;
     return { ...updated, step, state: step === 9 ? 'transfer' : 'awaiting-response', hintLevel: 0, question: stages[step].question, feedback: stages[session.step].feedback, criticalStepIndependent: session.criticalStepIndependent || (session.step === 0 && session.attempts.length === 0 && session.hintLevel === 0 && !session.demonstrationUsed) };
@@ -84,7 +89,15 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
     return prerequisite(updated);
   }
   if (!session.prerequisite && failures >= 2) return demonstrateTutorStep(updated);
-  return { ...updated, state: 'feedback', feedback: session.prerequisite ? 'Compte cinq objets, puis cinq autres. Tu peux réessayer ou demander un indice.' : 'Pas encore. Tu peux réessayer ou demander un indice pour cette question.' };
+  const wrongFeedback = session.step === 10 ? 'Vérifie les dizaines : en bas, 5 dizaines et la dizaine ajoutée font 6.' : session.step === 11 ? 'Vérifie les centaines : la compensation ajoute 1 centaine en bas.' : session.step === 12 ? 'Relis les chiffres obtenus dans l’ordre des centaines, dizaines et unités.' : 'Pas encore. Vérifie la compensation, puis essaie encore.';
+  return { ...updated, state: 'feedback', feedback: session.prerequisite ? 'Compte cinq objets, puis cinq autres. Tu peux réessayer ou demander un indice.' : wrongFeedback };
+}
+
+export function advanceTutorStep(session: InteractiveTutorSession): InteractiveTutorSession {
+  if (!session.canAdvance || !isTransferStage(session)) return session;
+  if (session.step === 12) return { ...session, state: 'complete', canAdvance: false, feedback: 'Bravo ! Tu as terminé les quatre étapes de 326 − 157.' };
+  const step = session.step + 1;
+  return { ...session, step, state: 'transfer', canAdvance: false, hintLevel: 0, question: stages[step].question, feedback: '' };
 }
 
 export function requestTutorHint(session: InteractiveTutorSession): InteractiveTutorSession {
@@ -119,6 +132,7 @@ export function demonstrateTutorStep(session: InteractiveTutorSession): Interact
 export function continueAfterDemonstration(session: InteractiveTutorSession): InteractiveTutorSession {
   if (session.state !== 'demonstrate') return session;
   if (session.prerequisite) return { ...session, state: 'awaiting-response', feedback: 'Reprenons le petit calcul de préparation.' };
+  if (isTransferStage(session)) return { ...session, state: 'transfer', feedback: 'À toi : reprends cette étape.' };
   return { ...session, state: 'transfer', correctionDemo: false, step: 9, question: stages[9].question, feedback: 'À toi ! Applique la même méthode à ce nouveau calcul.', demonstratedSteps: [...new Set([...session.demonstratedSteps, 9])] };
 }
 

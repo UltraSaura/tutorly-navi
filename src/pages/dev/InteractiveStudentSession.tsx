@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { continueAfterDemonstration, createInteractiveTutorSession, demonstrateCorrectionMethod, demonstrateTutorStep, isTransferStage, requestTutorHint, resumeWithSupport, retryTutorQuestion, submitTutorResponse } from '@/features/explanations/interactiveTutorSession';
+import { advanceTutorStep, continueAfterDemonstration, createInteractiveTutorSession, demonstrateCorrectionMethod, demonstrateTutorStep, isTransferStage, requestTutorHint, resumeWithSupport, retryTutorQuestion, submitTutorResponse } from '@/features/explanations/interactiveTutorSession';
 
 // Development-only parent: animation, narration and navigation belong to the original component.
 export function InteractiveStudentSession({ grade }: { grade: string }) {
@@ -35,8 +35,8 @@ export function InteractiveStudentSession({ grade }: { grade: string }) {
           <p>On ajoute 10 unités en haut et 1 dizaine en bas : on ajoute la même quantité aux deux nombres, donc leur différence ne change pas.</p>
           <Button className="h-auto min-h-11 w-full whitespace-normal" onClick={() => setSession(continueAfterDemonstration)}>À moi d’essayer un autre calcul</Button>
         </div> : <>
-          {session.feedback && <p role="status" aria-live="polite" className="mb-3">{session.feedback}</p>}
-          {session.state === 'complete' ? <><h4 className="font-bold">Séance terminée</h4><p>Tu as appliqué la compensation à un nouveau calcul. La différence reste la même quand on ajoute la même quantité aux deux nombres.</p></> : session.state === 'needs-support' ? <><p>{session.question}</p><Button className="h-auto whitespace-normal" onClick={() => setSession(resumeWithSupport)}>Reprendre avec mon accompagnant</Button></> : <form onSubmit={event => { event.preventDefault(); submit(); }}>
+          {session.feedback && !session.canAdvance && <p role="status" aria-live="polite" className="mb-3">{session.feedback}</p>}
+          {session.state === 'complete' ? <><h4 className="font-bold">Séance terminée</h4><p>Tu as appliqué la compensation à un nouveau calcul. La différence reste la même quand on ajoute la même quantité aux deux nombres.</p></> : session.state === 'needs-support' ? <><p>{session.question}</p><Button className="h-auto whitespace-normal" onClick={() => setSession(resumeWithSupport)}>Reprendre avec mon accompagnant</Button></> : session.canAdvance ? <div><p role="status">{session.feedback}</p><Button className="mt-3 min-h-11 w-full" onClick={() => setSession(advanceTutorStep)}>Suivant</Button></div> : <form onSubmit={event => { event.preventDefault(); submit(); }}>
             <h4 data-testid="active-question" className="font-semibold" aria-live="polite">{session.question}</h4>
             {session.step === 0 && <div className="mt-3 grid gap-2" role="group" aria-label="Réponses proposées">
               {['J’ajoute 10 unités en haut et 1 dizaine en bas', 'Je calcule 8 moins 5', 'Je commence par les dizaines'].map(choice => <Button key={choice} type="button" variant="outline" className="h-auto min-h-11 whitespace-normal text-left" onClick={() => setAnswer(choice)}>{choice}</Button>)}
