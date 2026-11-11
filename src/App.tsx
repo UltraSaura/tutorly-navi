@@ -43,6 +43,9 @@ const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
 const GraduatedNumberLinePage = lazy(() => import("./pages/practice/GraduatedNumberLinePage"));
+const AddUpTo100Page = lazy(() => import("./pages/practice/AddUpTo100Page"));
+const FlashcardPracticePage = lazy(() => import("./pages/practice/FlashcardPracticePage"));
+const NumbersAfterTenPage = lazy(() => import("./pages/practice/NumbersAfterTenPage"));
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
@@ -247,6 +250,9 @@ const App = () => {
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         <Route path="/practice" element={<MainLayout />}>
                           <Route index element={<PracticePage />} />
+                          <Route path="add-up-to-100" element={<AddUpTo100Page />} />
+                          <Route path="flashcards/numbers" element={<FlashcardPracticePage />} />
+                          <Route path="numbers-after-ten" element={<NumbersAfterTenPage />} />
                           <Route path="number-line" element={<GraduatedNumberLinePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />
