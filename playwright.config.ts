@@ -1,12 +1,13 @@
 import { defineConfig } from '@playwright/test';
 
+const snapshotProfile = process.env.PW_CHROMIUM_EXECUTABLE ? 'debian13-chromium154' : 'ubuntu24-playwright165';
 const port = Number(process.env.PW_PORT ?? 4173);
 if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid local browser test port');
 
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.pw.ts',
-  snapshotPathTemplate: '{testDir}/visual-baselines/{projectName}/{arg}{ext}',
+  snapshotPathTemplate: `{testDir}/visual-baselines/${snapshotProfile}/{projectName}/{arg}{ext}`,
   updateSnapshots: 'none',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),

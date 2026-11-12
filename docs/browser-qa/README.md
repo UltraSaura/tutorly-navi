@@ -56,7 +56,7 @@ This is browser functional/component integration against a production web bundle
 - Existing intended Poppins faces are pinned and self-hosted in the application; MathLive fonts use its existing local assets. All five Poppins weights must actually load. Tests do not replace font failures with synthetic successes.
 - Snapshot animations disabled, carets hidden, zero permitted differing pixels at a 0.15 color threshold; no broad screenshot masks.
 - `updateSnapshots: 'none'`, no retries, and `forbidOnly` in CI. CI never approves changed screenshots.
-- Ten initial images were inspected visually with image tools. See [review metadata and hashes](../../e2e/visual-baselines/review.json) and [baseline images](../../e2e/visual-baselines). Initial fallback-font candidates were discarded after detecting a fixture font URL error; final baselines use actual pinned fonts.
+- Twenty expectations (ten per renderer profile) were inspected visually with image tools. See [review metadata and hashes](../../e2e/visual-baselines/review.json) and [baseline images](../../e2e/visual-baselines). Initial fallback-font candidates were discarded after detecting a fixture font URL error; final baselines use actual pinned fonts.
 - For a future change, inspect expected/actual/diff images and the underlying behavior first. Obtain explicit review of the change before updating named expectations. Never resolve a regression merely by replacing its expected image.
 
 ## Defects found and corrected
@@ -110,3 +110,7 @@ Always-uploaded artifacts include HTML report, browser JUnit, screenshots for ev
 | `src/index.css`, `index.html` | Self-host intended fonts and remove missing-resource declarations |
 | `src/features/practice/numberLine/GraduatedNumberLineActivity.tsx` | Correct decorative marker hit testing while retaining dragging |
 | `docs/browser-qa/**` | Coverage, limitations, review policy and pilot evidence |
+
+## Renderer baseline review
+
+The first hosted run [43275138227](https://github.com/UltraSaura/tutorly-navi/actions/runs/43275138227) passed six journeys and failed ten screenshot checkpoints against Debian Chromium 154 expectations. The hosted PR merge tree was identical to branch commit `38870e8c`; Chromium 158 / Ubuntu 24.04 rendered fonts differently. All ten hosted actual images were inspected, including controls, diagrams and mobile wrapping. Separate reviewed profiles preserve both renderers without increasing tolerance or masking pixels. `PW_CHROMIUM_EXECUTABLE` selects the Debian profile; the default is canonical Ubuntu CI. The fixture requires the exact reviewed browser version and fails unsupported versions. OS/profile matching is the operator's responsibility. Human visual approval remains pending in draft PR #54. Baseline changes are explicit reviewed source changes, never automatic CI approval.

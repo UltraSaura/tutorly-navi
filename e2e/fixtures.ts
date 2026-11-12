@@ -5,6 +5,8 @@ export { expect };
 export const test = base.extend<{ browserHealth: void }>({
   browserHealth: [async ({ page, baseURL }, use, testInfo) => {
     if (!baseURL) throw new Error('Browser tests require a loopback application origin');
+    const expectedVersion = process.env.PW_CHROMIUM_EXECUTABLE ? '154.0.8037.57' : '158.0.8127.18';
+    expect(page.context().browser()?.version(), 'Reviewed renderer version; review baselines before upgrading').toBe(expectedVersion);
     const appOrigin = new URL(baseURL).origin;
     const errors: string[] = [];
     const requests: string[] = [];
