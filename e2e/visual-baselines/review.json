@@ -1,0 +1,81 @@
+{
+  "reviewDate": "2026-11-12",
+  "reviewer": "Codex visual inspection; final human approval remains in draft PR #54",
+  "sourceBaseline": "c48e2cbf5bc833a8d190f3d27fdc6f3e00d58799",
+  "font": "@fontsource/poppins 5.3.0, Latin 400/500/600/700/800; real application assets",
+  "candidateBrowser": "Chromium 154.0.8037.57 on Debian 13; hosted canonical browser supplied by Playwright 1.65.0",
+  "comparison": {
+    "maxDiffPixels": 0,
+    "threshold": 0.15,
+    "automaticUpdates": false
+  },
+  "review": [
+    "Home: language selector clear of environment badge; primary navigation visible.",
+    "Auth: labels, empty inputs, sign-in and reset controls visible.",
+    "Practice: line/ticks, fraction chips and submit button visible.",
+    "Wrong answer: three actual wrong placements, feedback, hint and retry visible.",
+    "Lesson: rectangle with vertices and side labels present; no clipping observed."
+  ],
+  "images": [
+    {
+      "file": "desktop/auth.png",
+      "width": 1280,
+      "height": 900,
+      "sha256": "8cde9b1d256d3795cb8806514ea2b2f5e1f3c17253bb82eb26ee19781e99a84b"
+    },
+    {
+      "file": "desktop/home.png",
+      "width": 1280,
+      "height": 1320,
+      "sha256": "a4258856e7f6201e5b77f26bbef912e5ee88e8e54cf06c2ca3e7df38e7f485c5"
+    },
+    {
+      "file": "desktop/lesson-diagram.png",
+      "width": 1248,
+      "height": 394,
+      "sha256": "c975ab3852c4c5f1558410c50976fc348cbc50eb573bcadecefd017cb623eda8"
+    },
+    {
+      "file": "desktop/practice-wrong-answer.png",
+      "width": 1280,
+      "height": 982,
+      "sha256": "306ef31e5e76c7cb5d534b8a8cef6a9b78b28f6ce2e84945478c8c1bcc40300b"
+    },
+    {
+      "file": "desktop/practice.png",
+      "width": 1280,
+      "height": 900,
+      "sha256": "82c9ef94db216b7e0c4e269913734e11e1070dea46b16396e580c94e3f20a958"
+    },
+    {
+      "file": "mobile/auth.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "1dfb1a339fbcc85caf4832e52713b1d2d6c499da12333715d2230b1aee63e4e9"
+    },
+    {
+      "file": "mobile/home.png",
+      "width": 390,
+      "height": 2297,
+      "sha256": "5b2a54a4db7bab0992521f62f71d5223ed9f270f4c9b5451c0448c7457323ffc"
+    },
+    {
+      "file": "mobile/lesson-diagram.png",
+      "width": 358,
+      "height": 338,
+      "sha256": "ad0b4061bec594ea5c43112615824efcfb01e59eb2c796a07478dc69242273e7"
+    },
+    {
+      "file": "mobile/practice-wrong-answer.png",
+      "width": 390,
+      "height": 1190,
+      "sha256": "c85e51bbeeb896531d3401bfe4de84c26319bc2b4f2cea90311a659c70b2d1da"
+    },
+    {
+      "file": "mobile/practice.png",
+      "width": 390,
+      "height": 910,
+      "sha256": "8aec36b65f00aea29fd372ed0403bd75dcc6e7107042bfd483cc4f948463ab16"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "mode": "temporary copied source; production build; synthetic backend reads",
+  "defect": "Home authentication link points to /qa-intentional-broken-auth",
+  "defectExit": 1,
+  "repairExit": 0,
+  "repairAttempts": 1,
+  "testsAndBaselinesUnchanged": true,
+  "sourceBeforeSha256": "b992cea9116ba1e9d43804f3ed68de9c9b0c2076e9e7c3c0212d8014ee14fcc8",
+  "restoredSourceSha256": "b992cea9116ba1e9d43804f3ed68de9c9b0c2076e9e7c3c0212d8014ee14fcc8",
+  "workingSourceUnchanged": true
+}

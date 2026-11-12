@@ -39,6 +39,11 @@ lint policy, CI evidence, dependency review and known limitations. npm and
 `package-lock.json` are the supported CI installation path; legacy Bun lockfiles
 are retained without being used by CI.
 
+Browser QA: after building, run `npm run browser:install -- --with-deps` and
+`npm run browser:test`. Desktop/mobile journeys and reviewed screenshot comparisons
+run against the production bundle with synthetic backend reads. See
+[browser QA coverage, evidence and limitations](docs/browser-qa/README.md).
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).

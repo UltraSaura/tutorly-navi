@@ -112,7 +112,7 @@ const isStagingSupabase = supabaseUrl === 'https://sibprjxhbxahouejygeu.supabase
 const EnvironmentIndicator = () => (isLocalSupabase || isStagingSupabase) ? (
   <div
     data-testid={isLocalSupabase ? 'local-environment-indicator' : 'staging-environment-indicator'}
-    className="fixed right-3 top-3 z-[10000] rounded-full border border-amber-700 bg-amber-300 px-3 py-1 text-xs font-bold tracking-wide text-amber-950 shadow-lg"
+    className="fixed right-3 top-0 z-[10000] rounded-full border border-amber-700 bg-amber-300 px-3 py-0.5 text-xs font-bold tracking-wide text-amber-950 shadow-lg"
   >
     {isLocalSupabase ? 'LOCAL · Supabase isolé' : 'STAGING · Supabase'}
   </div>

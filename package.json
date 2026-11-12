@@ -31,10 +31,13 @@
     "copy:mathlive": "mkdir -p public/mathlive/fonts public/mathlive/sounds && cp -R node_modules/mathlive/dist/fonts/* public/mathlive/fonts/ && cp -R node_modules/mathlive/dist/sounds/* public/mathlive/sounds/ && cp node_modules/mathlive/dist/mathlive-static.css public/mathlive/mathlive-static.css && cp node_modules/mathlive/dist/mathlive-fonts.css public/mathlive/mathlive-fonts.css",
     "postinstall": "npm run copy:mathlive",
     "test": "vitest",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.e2e.json",
     "lint:ci": "node scripts/ci/check-lint.mjs",
     "test:tooling": "node --test scripts/ci/*.node-test.mjs",
-    "test:ci": "mkdir -p artifacts && vitest run --reporter=default --reporter=junit --outputFile=artifacts/vitest.junit.xml"
+    "test:ci": "mkdir -p artifacts && vitest run --reporter=default --reporter=junit --outputFile=artifacts/vitest.junit.xml",
+    "browser:install": "playwright install chromium",
+    "browser:test": "playwright test",
+    "browser:pilot": "node scripts/ci/browser-pilot.mjs"
   },
   "dependencies": {
     "@capacitor/android": "7.6.10",
@@ -113,6 +116,8 @@
   "devDependencies": {
     "@capacitor/cli": "7.6.10",
     "@eslint/js": "^9.9.0",
+    "@fontsource/poppins": "5.3.0",
+    "@playwright/test": "1.65.0",
     "@tailwindcss/typography": "^0.5.15",
     "@types/katex": "^0.16.7",
     "@types/node": "^22.5.5",
