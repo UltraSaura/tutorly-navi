@@ -125,7 +125,7 @@ function extractStudentAnswerForFraction(text: string, questionFraction: string)
   
   // STEP 1: Look for the exact pattern "fraction = answer"
   const exactPattern = new RegExp(`${questionFraction.replace('/', '\\/')}\\s*=\\s*([\\d\\/]+)`, 'g');
-  let exactMatch = exactPattern.exec(text);
+  const exactMatch = exactPattern.exec(text);
   
   if (exactMatch && exactMatch[1] && exactMatch[1] !== questionFraction) {
     console.log(`✅ Exact pattern match found: ${exactMatch[1]}`);

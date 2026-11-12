@@ -40,7 +40,7 @@ export const parseMultipleExercises = (message: string): ParsedExercise[] => {
   
   // Try numbered format first (1. 2. 3. or 1) 2) 3))
   const numberedPattern = /(?:^|\n)\s*(\d+)[\.\)]\s*([^\n]+(?:\n(?!\s*\d+[\.\)]).*)*)/gm;
-  let numberedMatches = [...message.matchAll(numberedPattern)];
+  const numberedMatches = [...message.matchAll(numberedPattern)];
   
   if (numberedMatches.length >= 2) {
     numberedMatches.forEach((match, index) => {
@@ -68,7 +68,7 @@ export const parseMultipleExercises = (message: string): ParsedExercise[] => {
   
   // Try lettered format (a. b. c. or a) b) c))
   const letteredPattern = /(?:^|\n)\s*([a-z])[\.\)]\s*([^\n]+(?:\n(?!\s*[a-z][\.\)]).*)*)/gm;
-  let letteredMatches = [...message.matchAll(letteredPattern)];
+  const letteredMatches = [...message.matchAll(letteredPattern)];
   
   if (letteredMatches.length >= 2) {
     letteredMatches.forEach((match, index) => {
@@ -95,7 +95,7 @@ export const parseMultipleExercises = (message: string): ParsedExercise[] => {
   
   // Try bullet points or dashes
   const bulletPattern = /(?:^|\n)\s*[-•*]\s*([^\n]+(?:\n(?!\s*[-•*]).*)*)/gm;
-  let bulletMatches = [...message.matchAll(bulletPattern)];
+  const bulletMatches = [...message.matchAll(bulletPattern)];
   
   if (bulletMatches.length >= 2) {
     bulletMatches.forEach((match, index) => {
@@ -122,7 +122,7 @@ export const parseMultipleExercises = (message: string): ParsedExercise[] => {
   
   // Try exercise/problem/question keywords
   const exercisePattern = /(?:exercise|problem|question)\s*(\d+)[:\.]?\s*([^\n]+(?:\n(?!(?:exercise|problem|question)\s*\d+).*)*)/gi;
-  let exerciseMatches = [...message.matchAll(exercisePattern)];
+  const exerciseMatches = [...message.matchAll(exercisePattern)];
   
   if (exerciseMatches.length >= 2) {
     exerciseMatches.forEach((match) => {

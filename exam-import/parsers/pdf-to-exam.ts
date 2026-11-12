@@ -286,7 +286,7 @@ export function parseExercisePedagogical(rawText: string, title: string | null, 
   const { context, questions } = extractContextAndQuestions(body);
   const documents = extractLikelyStructuredDocuments(body);
 
-  let confidence = computeQuestionConfidence(context, questions);
+  const confidence = computeQuestionConfidence(context, questions);
   const questionsDup = [...questions];
   applyExerciseTotalPoints(questionsDup, headerPoints);
 

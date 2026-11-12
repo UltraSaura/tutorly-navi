@@ -50,7 +50,7 @@ describe('lesson version workflow', () => {
   });
 
   it('persists and recovers the server-selected staging topic kind', async () => {
-    const insert = vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: { id: 'version-decimal', ...buildDraftInsertPayload('07fe506e-71f4-44c9-bf7f-98c51a2ca68a', withStagingTopicKind(geometryDraftLesson, 'decimal'), 'admin-1') }, error: null }) })) }));
+    const insert = vi.fn((_payload: ReturnType<typeof buildDraftInsertPayload>) => ({ select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: { id: 'version-decimal', ...buildDraftInsertPayload('07fe506e-71f4-44c9-bf7f-98c51a2ca68a', withStagingTopicKind(geometryDraftLesson, 'decimal'), 'admin-1') }, error: null }) })) }));
     from.mockReturnValue({ insert });
     await saveDraftVersion('07fe506e-71f4-44c9-bf7f-98c51a2ca68a', geometryDraftLesson, '07fe506e-71f4-44c9-bf7f-98c51a2ca68a', null, 'decimal');
     const payload = insert.mock.calls[0][0] as { lesson_content: unknown };

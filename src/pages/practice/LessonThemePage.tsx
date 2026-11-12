@@ -3,9 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { LessonV21Path } from '@/components/learning/LessonV21Path';
 import { LegacyThemePath } from '@/components/learning/LegacyThemePath';
-import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
-import { usePracticeTopics } from '@/hooks/usePracticeTopics';
-import { buildThemeLessonPlan } from '@/features/practice/lessonThemes';
+import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
+import { buildThemeLessonPlan, groupPublishedLessonTopics } from '@/features/practice/lessonThemes';
 
 export default function LessonThemePage() {
   const navigate = useNavigate();
@@ -13,9 +12,17 @@ export default function LessonThemePage() {
   const { subject, subjectSlug, themeId } = useParams<{ subject?: string; subjectSlug?: string; themeId: string }>();
   const routeSubject = subject ?? subjectSlug ?? '';
   const learningRoute = location.pathname.startsWith('/learning/');
-  const activeSchoolLevel = useActiveSchoolLevel();
-  const { themeGroups, isLoading: topicsLoading } = usePracticeTopics(routeSubject, activeSchoolLevel.normalizedLevel ?? '');
-  const isLoading = topicsLoading || activeSchoolLevel.isLoading;
+  const { data, isLoading } = useSubjectDashboard(routeSubject);
+  const themeGroups = groupPublishedLessonTopics(
+    (data?.categories ?? []).flatMap((category) => (category.topics ?? []).map((topic) => ({
+      id: topic.id,
+      slug: topic.slug,
+      topicLabel: topic.name,
+      orderIndex: topic.order_index,
+      lessonContent: topic.lesson_content,
+      domainLabel: category.name,
+    }))),
+  );
   const theme = themeGroups.find((group) => group.id === themeId);
 
   if (isLoading) return <div className="p-8 text-center">Chargement…</div>;

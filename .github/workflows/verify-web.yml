@@ -1,0 +1,53 @@
+name: Verify web baseline
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Clean dependency installation
+        id: install
+        run: |
+          mkdir -p artifacts
+          set -o pipefail
+          npm ci 2>&1 | tee artifacts/install.log
+      - name: Application and build configuration types
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee artifacts/typecheck.log
+      - name: Lint regression gate and tooling tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          npm run test:tooling 2>&1 | tee artifacts/tooling-tests.log
+          npm run lint:ci 2>&1 | tee artifacts/lint.log
+      - name: Vitest
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          npm run test:ci 2>&1 | tee artifacts/vitest.log
+      - name: Web application build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee artifacts/build.log
+      - name: Retain verification evidence, including failures
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: web-baseline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14

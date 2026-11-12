@@ -23,12 +23,21 @@ git clone <YOUR_GIT_URL>
 # Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Step 3: Use the Node version in .nvmrc, then install the locked dependencies.
+nvm use
+npm ci
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
+
+Baseline checks: `npm run typecheck`, `npm run lint:ci`,
+`npm run test:tooling`, `npm run test:ci`, and `npm run build`.
+`npm run lint` still reports the complete legacy lint debt and currently fails.
+See [the development baseline](docs/development-baseline/README.md) for the
+lint policy, CI evidence, dependency review and known limitations. npm and
+`package-lock.json` are the supported CI installation path; legacy Bun lockfiles
+are retained without being used by CI.
 
 **Edit a file directly in GitHub**
 

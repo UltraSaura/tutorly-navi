@@ -212,7 +212,7 @@ const UserManagement = () => {
     
     try {
       // First, ensure the parent has a guardian profile
-      let guardianProfile = await supabase
+      const guardianProfile = await supabase
         .from('guardians')
         .select('id')
         .eq('user_id', selectedUser.id)

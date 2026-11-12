@@ -154,7 +154,7 @@ export async function generateSystemMessage(
     }
   }
   
-  let subject = variables?.subject;
+  const subject = variables?.subject;
 
   // Try to get active prompt from database
   let activeTemplate;
