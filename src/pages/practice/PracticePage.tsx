@@ -235,8 +235,8 @@ export default function PracticePage() {
 
         <section className="rounded-[24px] border border-[#D9DDF8] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
           <p className="text-xs font-bold uppercase tracking-wide text-[#5145B5]">Maths · nombres</p>
-          <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Add up to 100</h2>
-          <p className="mt-1 text-sm text-[#667085]">Count bundles of ten pens and single pens. The number changes each round.</p>
+          <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Count objects</h2>
+          <p className="mt-1 text-sm text-[#667085]">Practise counting different objects in groups of ten and ones.</p>
           <button type="button" onClick={() => navigate('/practice/add-up-to-100')} className="mt-4 min-h-11 w-full rounded-xl bg-[#5145B5] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Start counting</button>
         </section>
 
@@ -250,7 +250,7 @@ export default function PracticePage() {
         <section className="rounded-[24px] border border-[#D9DDF8] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
           <p className="text-xs font-bold uppercase tracking-wide text-[#5145B5]">Maths · tens and ones</p>
           <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Numbers after ten</h2>
-          <p className="mt-1 text-sm text-[#667085]">Build a number with one bundle of ten pens and extra single pens.</p>
+          <p className="mt-1 text-sm text-[#667085]">Build a number with one group of ten and extra single objects.</p>
           <button type="button" onClick={() => navigate('/practice/numbers-after-ten')} className="mt-4 min-h-11 w-full rounded-xl bg-[#5145B5] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Start numbers lesson</button>
         </section>
 

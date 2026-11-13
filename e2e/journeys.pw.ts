@@ -68,36 +68,55 @@ test('practice answer submission, incorrect feedback, retry and progress', async
   await expect(page.getByText('Placer des fractions supérieures à 1', { exact: true })).toBeVisible();
 });
 
-test('Count the pens adds bundles, then checks a varied count with answer choices', async ({ page }) => {
+test('reusable counting exercise adds groups, checks answers, and accepts another object', async ({ page }, testInfo) => {
   await ready(page, '/practice/add-up-to-100');
   const addingPrompt = await page.getByRole('heading', { level: 1 }).innerText();
-  const tapsRequired = Number(addingPrompt.match(/Tap \+ (\d+)/)?.[1]);
-  expect(tapsRequired).toBeGreaterThan(0);
-  const addBundle = page.getByRole('button', { name: 'Add one bundle of ten pens', exact: true });
-  await assertUsable(page, addBundle);
-  for (let tap = 0; tap < tapsRequired; tap += 1) await addBundle.click();
+  expect(addingPrompt).toMatch(/Start with \d+ \w+\. Add \d+ groups? of ten\./);
+  const tapsRequired = Number(addingPrompt.match(/Add (\d+) groups? of ten/)?.[1]);
+  const addGroup = page.getByRole('button', { name: /^Add one group of ten / });
+  await assertUsable(page, addGroup);
 
-  await expect(page.getByRole('heading', { name: 'How many pens are there altogether?', exact: true })).toBeVisible();
-  const model = page.getByRole('img', { name: 'Picture of pens arranged in bundles of ten and single pens' });
-  const bundleCount = await model.locator('[data-testid="pen-bundle"]').count();
-  const loosePenCount = await model.locator('[data-testid="single-pens"] svg').count();
-  const correctAnswer = bundleCount * 10 + loosePenCount;
-  const answers = page.getByRole('group', { name: 'Choose how many pens there are' });
+  const model = page.getByRole('img', { name: /^Picture of / });
+  const objectDescription = await model.getAttribute('aria-label') ?? '';
+  const object = objectDescription.match(/^Picture of (\w+)/)?.[1];
+  expect(object).toBeTruthy();
+  const initialGroupCount = await model.locator('[data-testid="countable-group"]').count();
+  const hint = page.getByRole('button', { name: 'Show hint', exact: true });
+  await hint.click();
+  await expect(page.getByText('Each outlined group has ten. Count the single ones, then count on the groups you added.')).toBeVisible();
+  await page.getByRole('button', { name: 'Hide hint', exact: true }).click();
+
+  await addGroup.focus();
+  await page.keyboard.press('Enter');
+  await expect(model.locator('[data-testid="countable-group"]')).toHaveCount(initialGroupCount + 1);
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.getByRole('img', { name: /^Picture of / }).locator('[data-testid="countable-group"]')).toHaveCount(initialGroupCount + 1);
+  const remainingGroups = tapsRequired - 1;
+  const continueAdding = page.getByRole('button', { name: /^Add one group of ten / });
+  for (let tap = 0; tap < remainingGroups; tap += 1) {
+    if (testInfo.project.name === 'mobile') await continueAdding.tap();
+    else await continueAdding.click();
+  }
+
+  const groupCount = await page.getByRole('img', { name: /^Picture of / }).locator('[data-testid="countable-group"]').count();
+  const looseCount = await page.getByRole('img', { name: /^Picture of / }).locator('[data-testid="single-objects"] svg').count();
+  const correctAnswer = groupCount * 10 + looseCount;
+  const answers = page.getByRole('group', { name: new RegExp(`Choose how many ${object}`) });
   const answerButtons = await answers.getByRole('button').all();
   expect(answerButtons).toHaveLength(4);
   const answerLabels = await answers.getByRole('button').evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label') ?? ''));
-  const wrongAnswer = Number(answerLabels.find((label) => Number(label.split(' ')[0]) !== correctAnswer)?.split(' ')[0]);
-  await answers.getByRole('button', { name: `${wrongAnswer} pens`, exact: true }).click();
+  const wrongLabel = answerLabels.find((label) => Number(label.split(' ')[0]) !== correctAnswer);
+  expect(wrongLabel).toBeTruthy();
+  await answers.getByRole('button', { name: new RegExp(`^${wrongLabel?.split(' ')[0]} `) }).click();
   await page.getByRole('button', { name: 'Check answer', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Not quite.');
   await page.getByRole('button', { name: 'Try another answer', exact: true }).click();
-  await answers.getByRole('button', { name: `${correctAnswer} pens`, exact: true }).click();
+  await answers.getByRole('button', { name: new RegExp(`^${correctAnswer} `) }).click();
   await page.getByRole('button', { name: 'Check answer', exact: true }).click();
-  await expect(page.getByRole('heading', { name: `You counted ${correctAnswer} pens.`, exact: true })).toBeVisible();
-  await expect(page.getByText(/pens plus/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: `You counted ${correctAnswer} ${object}.`, exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try another count', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Try another count', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Add one bundle of ten pens', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Add one group of ten / })).toBeVisible();
 });
 
 test('synthetic published lesson navigation and diagram rendering', async ({ page }) => {

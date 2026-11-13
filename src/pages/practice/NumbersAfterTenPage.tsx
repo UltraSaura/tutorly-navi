@@ -86,7 +86,7 @@ export default function NumbersAfterTenPage() {
             <h1 id="numbers-complete-title" className="mt-4 text-2xl font-extrabold">Lesson complete</h1>
             <p className="mt-2 text-[#667085]">A full group of ten plus extra ones makes a number after ten.</p>
             <div className="mt-6 flex flex-col items-center gap-2">
-              <button type="button" onClick={() => navigate('/practice/add-up-to-100')} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#5145B5] px-4 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Try Add up to 100 <ArrowRight className="h-4 w-4" aria-hidden="true" /></button>
+              <button type="button" onClick={() => navigate('/practice/add-up-to-100')} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#5145B5] px-4 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Try counting objects <ArrowRight className="h-4 w-4" aria-hidden="true" /></button>
               <button type="button" onClick={restart} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D0D5DD] px-4 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><RotateCcw className="h-4 w-4" aria-hidden="true" /> Try again</button>
             </div>
             <p className="mt-4 text-xs text-[#667085]">Your place is saved on this device.</p>

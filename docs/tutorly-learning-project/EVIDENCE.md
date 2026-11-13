@@ -27,24 +27,22 @@ Source: `references/development-instructions.md`, the checked-in evidence log. T
 ## Follow-up recording review and implementation (2026-11-13)
 
 - The video notes in `references/development-instructions.md` were checked against all 11 supplied recordings using sampled key frames. Prompt wording was taken from readable screen text. Repeated or illegible frames were not used to infer missing rules.
-- Tutorly's initial fixed recall/check flow was revised after visual review because “30 + 30” was paired with an image of only three tens (30), an unclear mismatch. The supplied recording shows dots, but Tutorly's counting exercise now uses original pen icons in groups of ten and single pens to establish a distinct Tutorly look.
-- The current exercise tells the learner how many pen bundles and single pens are shown, offers a visible + button to add one bundle per tap, then asks for the total with four selectable answers. The model, prompt, action, and choices share the same variable challenge state; hints, incorrect-answer feedback, retry, completion, and learner-scoped local resume are included. Counts stay at or below 100 and a new round changes the total.
-- The implementation does not claim to recreate the complete reference lesson sequence. The observed full order is recorded above; a mismatch in Tutorly's earlier attempt was product feedback, not evidence that the source sequence itself was unclear.
+- Tutorly's implementation is a reusable counting activity type, not an attempt to recreate the source lesson sequence. `CountingExercise` stores an object key, starting groups and ones, groups to add, and answer choices; its validator checks the generated/authored data before rendering. A shared model supports pencils, apples, books, and stars. This format can receive authored or generated exercise data, but no AI-generation endpoint is wired to it yet.
+- Current starter examples stay small to keep the task readable. One tap adds one group of ten, then four choices ask for the total. Prompt, visual model, answer labels, and feedback use the same exercise data. Hint, incorrect-answer feedback, retry, completion, and learner-scoped local resume are included; no mastery is awarded.
+- The previous screen's long “4 bundles and 4 singles; tap +5 times” prompt was user feedback that the example felt confusing and too specific. It is replaced with a short starting count and group-add instruction. The exercise type can later be populated with other counts and objects without changing the renderer.
 - The reference guided path's familiarity Yes/No branch was observed, but only the No outcome and first prompt are visible. Tutorly does not claim to reproduce the unseen Yes branch or later guided steps.
 - The existing Tutorly flashcards remain an original, untimed one-card-at-a-time practice mode. The recordings do not establish enough about timer, answer capture, race progress, scoring, or mastery to add those behaviors without inventing rules.
 - The other recordings document subtraction, Color Count, The Next 10, Add Across 10, word problems, an analog clock, and multiplication. Their sampled flows and open questions remain in the reference log; they were not implemented as new Tutorly activities in this follow-up.
 
 ### Current verification
 
-- `npm test -- --run`: full suite is running for the current pen-count revision; record final count after completion.
-- Focused pen-count logic and model tests: passed, 2 files / 7 tests.
-- `npm run typecheck`: passed for the current revision.
-- Focused ESLint on changed application and test files: passed, followed by `git diff --check` passing.
+- Focused counting contract and model tests: passed, 2 files / 6 tests.
 - `npm run build`: passed with existing mixed Supabase import and chunk-size warnings.
 - `npm run lint`: failed with 1,040 errors and 108 warnings across repository files outside this change; focused ESLint passed.
-- Chromium at desktop 1280×900 and mobile 390×844 reviewed the updated Add up to 100 page. The mobile run completed the recall check and guided Tutorly practice, verified hint toggle, incorrect feedback, retry, Enter submission, and guest learner-scoped local resume. No page errors occurred. No database schema or production learner data was touched.
-- Pen-count browser journey was tested in Chromium at desktop and mobile sizes. It exercised variable bundle taps, dynamic answer choices, wrong-answer feedback and retry, correct completion, and another count. Mobile control visibility and no horizontal overflow were checked; both browser journeys passed with no browser health errors.
-- Browser screenshots are local review artifacts under `/tmp/count-pens-*.png`, not repository assets.
+- Current full suite: `npm test -- --run` passed, 119 files / 1,136 tests.
+- `npm run typecheck`: passed. Focused ESLint on changed source and journey files passed; `git diff --check`: passed.
+- Chromium journey passed at desktop 1280×900 and mobile 390×844. It exercised the reusable count model, hint, keyboard activation, saved progress after reload, touch taps on mobile, answer choices, incorrect feedback, retry, completion, and starting another variable-object exercise. Mobile had no horizontal overflow or bottom-navigation overlap. Reduced-motion preference was enabled. No backend or production learner data was used.
+- Visual review screenshots are local artifacts under `/tmp/counting-exercise-desktop.png` and `/tmp/counting-exercise-mobile.png`.
 
 ## Local verification
 

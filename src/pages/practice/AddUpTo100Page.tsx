@@ -4,29 +4,29 @@ import { ArrowLeft, Check, Lightbulb, RotateCcw, Volume2 } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { useLearner } from '@/context/FamilyProfileContext';
 import { learnerStorageKey } from '@/features/family/profileRuntime';
-import { createDifferentPenCountChallenge, createPenCountChallenge, isValidPenCountChallenge, PenCountChallenge, PenCountPhase, penCountStartingValue, penCountTotal } from '@/features/practice/addUpTo100';
+import { countableObjectName, createDifferentCountingExercise, createCountingExercise, CountingExercise, CountingExercisePhase, countingExerciseStart, countingExerciseTotal, isValidCountingExercise } from '@/features/practice/countingExercise';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
-import { PenCountModel } from '@/components/practice/PenCountModel';
+import { CountableObjectModel } from '@/components/practice/CountableObjectModel';
 
-const KEY = 'tutorly:practice:count-the-pens:v1';
+const KEY = 'tutorly:practice:count-objects:v1';
 
-type SavedPenCount = {
-  challenge?: unknown;
-  addedTens?: number;
-  phase?: PenCountPhase;
+type SavedCountingExercise = {
+  exercise?: unknown;
+  addedGroups?: number;
+  phase?: CountingExercisePhase;
   selectedAnswer?: number | null;
 };
 
-const isPenCountPhase = (phase: unknown): phase is PenCountPhase => phase === 'adding' || phase === 'choosing' || phase === 'complete';
+const isCountingExercisePhase = (phase: unknown): phase is CountingExercisePhase => phase === 'adding' || phase === 'choosing' || phase === 'complete';
 
 export default function AddUpTo100Page() {
   const navigate = useNavigate();
   const learner = useLearner();
   const learnerId = learner?.learnerId ?? undefined;
   const storageKey = learnerStorageKey(KEY, learnerId);
-  const [challenge, setChallenge] = useState<PenCountChallenge>(() => createPenCountChallenge());
-  const [addedTens, setAddedTens] = useState(0);
-  const [phase, setPhase] = useState<PenCountPhase>('adding');
+  const [exercise, setExercise] = useState<CountingExercise>(() => createCountingExercise());
+  const [addedGroups, setAddedGroups] = useState(0);
+  const [phase, setPhase] = useState<CountingExercisePhase>('adding');
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<'incorrect' | null>(null);
   const [entryError, setEntryError] = useState<string | null>(null);
@@ -34,12 +34,13 @@ export default function AddUpTo100Page() {
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const { speak, stop, isSpeaking, isSupported } = useSpeechSynthesis({ lang: 'en' });
 
-  const startingValue = penCountStartingValue(challenge);
-  const currentValue = startingValue + addedTens * 10;
-  const total = penCountTotal(challenge);
+  const startingValue = countingExerciseStart(exercise);
+  const currentValue = startingValue + addedGroups * 10;
+  const total = countingExerciseTotal(exercise);
+  const objectName = countableObjectName(exercise.object, total);
   const prompt = phase === 'adding'
-    ? `There are ${challenge.startingTens} ${challenge.startingTens === 1 ? 'bundle' : 'bundles'} of ten pens${challenge.startingOnes ? ` and ${challenge.startingOnes} single ${challenge.startingOnes === 1 ? 'pen' : 'pens'}` : ''}. Tap + ${challenge.addedTens} ${challenge.addedTens === 1 ? 'time' : 'times'} to add more bundles.`
-    : 'How many pens are there altogether?';
+    ? `Start with ${startingValue} ${countableObjectName(exercise.object, startingValue)}. Add ${exercise.groupsToAdd} ${exercise.groupsToAdd === 1 ? 'group' : 'groups'} of ten.`
+    : `How many ${objectName} are there altogether?`;
 
   useEffect(() => { stop(); }, [phase, stop]);
 
@@ -49,9 +50,9 @@ export default function AddUpTo100Page() {
 
   useEffect(() => {
     setLoadedKey(null);
-    const freshChallenge = createPenCountChallenge();
-    setChallenge(freshChallenge);
-    setAddedTens(0);
+    const freshExercise = createCountingExercise();
+    setExercise(freshExercise);
+    setAddedGroups(0);
     setPhase('adding');
     setSelectedAnswer(null);
     setFeedback(null);
@@ -59,17 +60,17 @@ export default function AddUpTo100Page() {
     setHintOpen(false);
     try {
       const saved = localStorage.getItem(storageKey);
-      const parsed = saved ? JSON.parse(saved) as SavedPenCount : null;
-      if (parsed && isValidPenCountChallenge(parsed.challenge) && isPenCountPhase(parsed.phase)) {
-        const restoredAddedTens = Number.isInteger(parsed.addedTens)
-          ? Math.max(0, Math.min(parsed.challenge.addedTens, parsed.addedTens!))
+      const parsed = saved ? JSON.parse(saved) as SavedCountingExercise : null;
+      if (parsed && isValidCountingExercise(parsed.exercise) && isCountingExercisePhase(parsed.phase)) {
+        const restoredAddedGroups = Number.isInteger(parsed.addedGroups)
+          ? Math.max(0, Math.min(parsed.exercise.groupsToAdd, parsed.addedGroups!))
           : 0;
-        setChallenge(parsed.challenge);
-        setAddedTens(restoredAddedTens);
+        setExercise(parsed.exercise);
+        setAddedGroups(restoredAddedGroups);
         setPhase(parsed.phase);
         setSelectedAnswer(Number.isInteger(parsed.selectedAnswer) ? parsed.selectedAnswer! : null);
-        if (parsed.phase === 'choosing' && restoredAddedTens < parsed.challenge.addedTens) {
-          setAddedTens(parsed.challenge.addedTens);
+        if (parsed.phase === 'choosing' && restoredAddedGroups < parsed.exercise.groupsToAdd) {
+          setAddedGroups(parsed.exercise.groupsToAdd);
         }
       }
     } catch { /* local progress is optional */ }
@@ -79,15 +80,15 @@ export default function AddUpTo100Page() {
   useEffect(() => {
     if (loadedKey !== storageKey) return;
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ challenge, addedTens, phase, selectedAnswer }));
+      localStorage.setItem(storageKey, JSON.stringify({ exercise, addedGroups, phase, selectedAnswer }));
     } catch { /* the activity remains usable if storage is unavailable */ }
-  }, [addedTens, challenge, loadedKey, phase, selectedAnswer, storageKey]);
+  }, [addedGroups, exercise, loadedKey, phase, selectedAnswer, storageKey]);
 
   const addBundle = () => {
-    const nextAddedTens = Math.min(challenge.addedTens, addedTens + 1);
-    setAddedTens(nextAddedTens);
+    const nextAddedGroups = Math.min(exercise.groupsToAdd, addedGroups + 1);
+    setAddedGroups(nextAddedGroups);
     setEntryError(null);
-    if (nextAddedTens >= challenge.addedTens) setPhase('choosing');
+    if (nextAddedGroups >= exercise.groupsToAdd) setPhase('choosing');
   };
 
   const checkAnswer = () => {
@@ -111,8 +112,8 @@ export default function AddUpTo100Page() {
   };
 
   const nextChallenge = () => {
-    setChallenge(createDifferentPenCountChallenge(challenge));
-    setAddedTens(0);
+    setExercise(createDifferentCountingExercise(exercise));
+    setAddedGroups(0);
     setPhase('adding');
     setSelectedAnswer(null);
     setFeedback(null);
@@ -121,26 +122,26 @@ export default function AddUpTo100Page() {
   };
 
   if (loadedKey !== storageKey) {
-    return <main className="min-h-screen bg-[#F7F8FC] px-4 pt-8 text-[#475467]"><PageMeta title="Count the pens | Practice" description="Count bundles of ten pens and single pens." /><p role="status" className="mx-auto max-w-xl">Loading your saved place…</p></main>;
+    return <main className="min-h-screen bg-[#F7F8FC] px-4 pt-8 text-[#475467]"><PageMeta title="Count objects | Practice" description="Practise counting objects in groups of ten and ones." /><p role="status" className="mx-auto max-w-xl">Loading your saved place…</p></main>;
   }
 
   return (
     <main className="min-h-screen bg-[#F7F8FC] px-4 pb-32 pt-5 text-[#17213C] motion-reduce:scroll-auto sm:pb-10">
-      <PageMeta title="Count the pens | Practice" description="Count bundles of ten pens and single pens." />
+      <PageMeta title="Count objects | Practice" description="Practise counting objects in groups of ten and ones." />
       <div className="mx-auto max-w-xl">
         <button type="button" onClick={() => navigate('/practice')} className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-[#475467] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Practice
         </button>
         <header className="mb-5">
           <p className="text-sm font-bold text-[#5145B5]">Maths · Count to 100</p>
-          {phase !== 'complete' && <p className="mt-1 text-sm text-[#667085]">A new pen-count each time · No timer or score</p>}
+          {phase !== 'complete' && <p className="mt-1 text-sm text-[#667085]">Count objects in groups of ten · No timer or score</p>}
         </header>
 
         {phase === 'complete' ? (
           <section aria-labelledby="complete-title" className="rounded-3xl border border-[#D9DDF8] bg-white p-6 text-center shadow-sm sm:p-8">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F7F0] text-[#087F68]"><Check className="h-7 w-7" aria-hidden="true" /></div>
-            <h1 id="complete-title" className="mt-4 text-2xl font-extrabold">You counted {total} pens.</h1>
-            <p className="mt-2 text-[#667085]">{startingValue} pens plus {challenge.addedTens} {challenge.addedTens === 1 ? 'bundle' : 'bundles'} of ten makes {total}.</p>
+            <h1 id="complete-title" className="mt-4 text-2xl font-extrabold">You counted {total} {objectName}.</h1>
+            <p className="mt-2 text-[#667085]">{startingValue} plus {exercise.groupsToAdd} {exercise.groupsToAdd === 1 ? 'group' : 'groups'} of ten makes {total}.</p>
             <button type="button" onClick={nextChallenge} className="mt-6 min-h-12 rounded-xl bg-[#5145B5] px-5 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Try another count</button>
             <p className="mt-4 text-xs text-[#667085]">Your place is saved on this device. This practice does not award mastery.</p>
           </section>
@@ -150,17 +151,17 @@ export default function AddUpTo100Page() {
               <h1 className="text-xl font-extrabold leading-snug sm:text-2xl">{prompt}</h1>
               {isSupported && <button type="button" onClick={() => isSpeaking ? stop() : speak(prompt)} aria-label={isSpeaking ? 'Stop reading instruction' : 'Read instruction aloud'} className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><Volume2 className="h-5 w-5" aria-hidden="true" /></button>}
             </div>
-            <div className="mt-5"><PenCountModel value={currentValue} /></div>
+            <div className="mt-5"><CountableObjectModel object={exercise.object} value={currentValue} /></div>
 
             {phase === 'adding' ? (
-              <button type="button" aria-label="Add one bundle of ten pens" onClick={addBundle} className="mt-5 min-h-14 w-full rounded-xl border-2 border-[#5145B5] bg-white px-3 font-bold text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]">
+              <button type="button" aria-label={`Add one group of ten ${countableObjectName(exercise.object, 10)}`} onClick={addBundle} className="mt-5 min-h-14 w-full rounded-xl border-2 border-[#5145B5] bg-white px-3 font-bold text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]">
                 <span aria-hidden="true" className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#5145B5] text-xl text-white">+</span>
-                Add one bundle of ten pens
+                Add one group of ten
               </button>
             ) : (
-              <div role="group" aria-label="Choose how many pens there are" className="mt-5 grid grid-cols-2 gap-3">
-                {challenge.answerChoices.map((choice) => (
-                  <button key={choice} type="button" aria-label={`${choice} pens`} aria-pressed={selectedAnswer === choice} onClick={() => { setSelectedAnswer(choice); setEntryError(null); setFeedback(null); }} className={`min-h-14 rounded-xl border-2 px-4 text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] ${selectedAnswer === choice ? 'border-[#5145B5] bg-[#F0EEFF] text-[#40369B]' : 'border-[#D0D5DD] bg-white hover:bg-[#F6F5FF]'}`}>
+              <div role="group" aria-label={`Choose how many ${objectName} there are`} className="mt-5 grid grid-cols-2 gap-3">
+                {exercise.answerChoices.map((choice) => (
+                  <button key={choice} type="button" aria-label={`${choice} ${countableObjectName(exercise.object, choice)}`} aria-pressed={selectedAnswer === choice} onClick={() => { setSelectedAnswer(choice); setEntryError(null); setFeedback(null); }} className={`min-h-14 rounded-xl border-2 px-4 text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] ${selectedAnswer === choice ? 'border-[#5145B5] bg-[#F0EEFF] text-[#40369B]' : 'border-[#D0D5DD] bg-white hover:bg-[#F6F5FF]'}`}>
                     {choice}
                   </button>
                 ))}
@@ -169,13 +170,13 @@ export default function AddUpTo100Page() {
 
             {entryError && <p role="alert" className="mt-2 text-sm font-semibold text-[#8A4B08]">{entryError}</p>}
             {feedback === 'incorrect' && <div role="status" aria-live="polite" className="mt-4 rounded-xl bg-[#FFF4E5] p-3 text-sm font-semibold text-[#8A4B08]">
-              <p>Not quite. Count each outlined bundle as ten, then count the single pens.</p>
+              <p>Not quite. Count ten objects in each group, then count the single ones.</p>
               <button type="button" onClick={retryAnswer} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><RotateCcw className="h-4 w-4" aria-hidden="true" /> Try another answer</button>
             </div>}
             {phase === 'choosing' && feedback !== 'incorrect' && <button type="button" onClick={checkAnswer} className="mt-4 min-h-12 w-full rounded-xl bg-[#5145B5] px-4 font-bold text-white hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Check answer</button>}
             <div className="mt-3">
               <button type="button" aria-expanded={hintOpen} onClick={() => setHintOpen((open) => !open)} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><Lightbulb className="h-4 w-4" aria-hidden="true" /> {hintOpen ? 'Hide hint' : 'Show hint'}</button>
-              {hintOpen && <p className="mt-1 rounded-xl bg-[#F6F5FF] p-3 text-sm text-[#40369B]">Count ten pens in each outlined bundle. Add the single pens, then count on the extra bundles.</p>}
+              {hintOpen && <p className="mt-1 rounded-xl bg-[#F6F5FF] p-3 text-sm text-[#40369B]">Each outlined group has ten. Count the single ones, then count on the groups you added.</p>}
             </div>
           </section>
         )}
