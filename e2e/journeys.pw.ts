@@ -121,6 +121,7 @@ test('reusable counting exercise adds groups, checks answers, and accepts anothe
 });
 
 test('CE1 subtraction with bubbles adds, takes away, and checks the result', async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: testInfo.project.name === 'mobile' ? 'reduce' : 'no-preference' });
   await ready(page, '/practice');
   await expect(page.getByRole('heading', { name: 'Subtraction within ten', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Practice page should not overflow horizontally').toBe(true);
@@ -192,10 +193,18 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   await page.getByRole('button', { name: 'Try again', exact: true }).click();
   await equations.getByRole('button', { name: `${targetCount} − ${takeAway}`, exact: true }).click();
   await page.getByRole('button', { name: 'Check equation', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Good job' })).toBeVisible();
   const answers = page.getByRole('group', { name: `Choose how many remain after ${targetCount} minus ${takeAway}`, exact: true });
   await answers.getByRole('button', { name: String(answer), exact: true }).click();
   await page.getByRole('button', { name: 'Check answer', exact: true }).click();
   await expect(page.getByRole('heading', { name: `${targetCount} − ${takeAway} = ${answer}`, exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Good job' })).toBeVisible();
+  if (testInfo.project.name === 'desktop') {
+    await expect(page.getByTestId('subtraction-confetti')).toHaveCount(1);
+  } else {
+    await expect(page.getByTestId('subtraction-confetti')).toHaveCount(0);
+  }
+  await testInfo.attach('subtraction-correct-answer-feedback', { body: await page.screenshot({ fullPage: true, animations: 'disabled' }), contentType: 'image/png' });
   await expect(page.getByText('Score: 0.5 / 1 point', { exact: true })).toBeVisible();
   await page.reload({ waitUntil: 'networkidle' });
   await expect(page.getByRole('heading', { name: `${targetCount} − ${takeAway} = ${answer}`, exact: true })).toBeVisible();

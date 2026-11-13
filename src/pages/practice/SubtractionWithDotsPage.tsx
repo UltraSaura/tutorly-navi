@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Lightbulb, Minus, Plus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Lightbulb, Minus, Plus, RotateCcw } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { SubtractionWithDotsModel } from '@/components/practice/SubtractionWithDotsModel';
+import { PracticeFeedback } from '@/components/practice/PracticeFeedback';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { useLearner } from '@/context/FamilyProfileContext';
 import { learnerStorageKey } from '@/features/family/profileRuntime';
@@ -20,6 +22,38 @@ type SavedSubtraction = {
   selectedAnswer?: number | null;
   wrongAttempts?: number;
 };
+
+const CONFETTI_COLORS = ['#12C6A0', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444'];
+
+function SubtractionConfetti() {
+  const reduceMotion = useReducedMotion();
+  const pieces = useMemo(() => Array.from({ length: 18 }, (_, index) => ({
+    id: index,
+    left: 8 + Math.random() * 84,
+    drift: (Math.random() * 2 - 1) * 100,
+    fall: 100 + Math.random() * 130,
+    rotation: Math.random() * 360,
+    delay: Math.random() * 0.12,
+    color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
+    size: 5 + Math.random() * 5,
+  })), []);
+
+  if (reduceMotion) return null;
+  return (
+    <div data-testid="subtraction-confetti" aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-3xl">
+      {pieces.map((piece) => (
+        <motion.span
+          key={piece.id}
+          initial={{ opacity: 1, x: 0, y: 0, rotate: 0 }}
+          animate={{ opacity: 0, x: piece.drift, y: piece.fall, rotate: piece.rotation }}
+          transition={{ duration: 1.05, delay: piece.delay, ease: 'easeOut' }}
+          className="absolute top-[15%] block rounded-sm"
+          style={{ left: `${piece.left}%`, width: piece.size, height: piece.size * 0.65, backgroundColor: piece.color }}
+        />
+      ))}
+    </div>
+  );
+}
 
 function nextExercise(previous: SubtractionWithDotsExercise) {
   const previousObject = normalizeSubtractionObject(previous.object);
@@ -45,7 +79,8 @@ export default function SubtractionWithDotsPage() {
   const [selectedEquation, setSelectedEquation] = useState<string | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [wrongAttempts, setWrongAttempts] = useState(0);
-  const [feedback, setFeedback] = useState<'equation' | 'answer' | null>(null);
+  const [feedback, setFeedback] = useState<'equation' | 'answer' | 'equation-correct' | null>(null);
+  const [celebrateCompletion, setCelebrateCompletion] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
@@ -107,7 +142,7 @@ export default function SubtractionWithDotsPage() {
   const checkEquation = () => {
     if (!selectedEquation) return;
     if (selectedEquation === expressions[0]) {
-      setFeedback(null);
+      setFeedback('equation-correct');
       setSelectedAnswer(null);
       setPhase('answering');
     } else {
@@ -120,6 +155,7 @@ export default function SubtractionWithDotsPage() {
     if (selectedAnswer === null) return;
     if (selectedAnswer === total) {
       setFeedback(null);
+      setCelebrateCompletion(true);
       setPhase('complete');
     } else {
       setWrongAttempts((count) => count + 1);
@@ -142,6 +178,7 @@ export default function SubtractionWithDotsPage() {
     setSelectedAnswer(null);
     setWrongAttempts(0);
     setFeedback(null);
+    setCelebrateCompletion(false);
     setHintOpen(false);
   };
 
@@ -160,13 +197,16 @@ export default function SubtractionWithDotsPage() {
         </header>
 
         {phase === 'complete' ? (
-          <section aria-labelledby="complete-title" className="rounded-3xl border border-[#D9DDF8] bg-white p-6 text-center shadow-sm sm:p-8">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F7F0] text-[#087F68]"><Check className="h-7 w-7" aria-hidden="true" /></div>
+          <section aria-labelledby="complete-title" className="relative overflow-hidden rounded-3xl border border-[#D9DDF8] bg-white p-6 text-center shadow-sm sm:p-8">
+            {celebrateCompletion && <SubtractionConfetti />}
+            <div className="relative z-20">
+            <PracticeFeedback status="correct" language="en" points={scoreQuestionWithPenalty(1, Math.max(1, wrongAttempts + 1), true).awardedPoints} />
             <h1 id="complete-title" className="mt-4 text-2xl font-extrabold">{exercise.targetCount} − {exercise.takeAway} = {total}</h1>
             <p className="mt-2 text-[#667085]">You added {exercise.targetCount} {objectName}, then took away {exercise.takeAway}. {total} {subtractionObjectName(object, total)} {total === 1 ? 'remains' : 'remain'}.</p>
             <p className="mt-2 font-bold text-[#087F68]">Score: {scoreQuestionWithPenalty(1, Math.max(1, wrongAttempts + 1), true).awardedPoints} / 1 point</p>
             <button type="button" onClick={newExercise} className="mt-6 min-h-12 rounded-xl bg-[#5145B5] px-5 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Try another subtraction</button>
             <p className="mt-4 text-xs text-[#667085]">Your place is saved on this device. This practice does not award mastery.</p>
+            </div>
           </section>
         ) : (
           <section className="rounded-3xl border border-[#E4E7EC] bg-white p-4 shadow-sm sm:p-7">
@@ -197,7 +237,9 @@ export default function SubtractionWithDotsPage() {
 
             {(phase === 'equation' || phase === 'answering') && <button type="button" onClick={phase === 'equation' ? checkEquation : checkAnswer} disabled={phase === 'equation' ? selectedEquation === null : selectedAnswer === null} className="mt-4 min-h-12 w-full rounded-xl bg-[#5145B5] px-4 font-bold text-white hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{phase === 'equation' ? 'Check equation' : 'Check answer'}</button>}
 
-            {feedback && <div role="status" aria-live="polite" className="mt-4 rounded-xl bg-[#FFF4E5] p-3 text-sm font-semibold text-[#8A4B08]">
+            {feedback === 'equation-correct' && <PracticeFeedback status="correct" language="en" />}
+
+            {(feedback === 'equation' || feedback === 'answer') && <div role="status" aria-live="polite" className="mt-4 rounded-xl bg-[#FFF4E5] p-3 text-sm font-semibold text-[#8A4B08]">
                 <p>{feedback === 'equation' ? `Not quite. Think about the number of ${objectName} you started with and how many you took away.` : 'Not quite. Count what remains after taking some away.'}</p>
               <button type="button" onClick={retry} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><RotateCcw className="h-4 w-4" aria-hidden="true" />Try again</button>
             </div>}
