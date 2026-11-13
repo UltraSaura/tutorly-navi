@@ -68,6 +68,45 @@ test('practice answer submission, incorrect feedback, retry and progress', async
   await expect(page.getByText('Placer des fractions supérieures à 1', { exact: true })).toBeVisible();
 });
 
+test('Add up to 100 adds three groups, then offers selectable answers', async ({ page }) => {
+  await ready(page, '/practice/add-up-to-100');
+  await page.getByRole('button', { name: 'Start the check', exact: true }).click();
+
+  const addTen = page.getByRole('button', { name: 'Add one group of ten', exact: true });
+  await assertUsable(page, addTen);
+  for (let tap = 0; tap < 3; tap += 1) await addTen.click();
+
+  await expect(page.getByRole('heading', { name: 'What number is that?', exact: true })).toBeVisible();
+  await expect(page.locator('[role="img"][aria-label="Countable dots arranged as 3 groups of ten and 0 ones"]')).toBeVisible();
+  const answers = page.getByRole('group', { name: 'Choose an answer' });
+  await expect(answers.getByRole('button')).toHaveText(['30', '40', '50', '300']);
+  await answers.getByRole('button', { name: '40', exact: true }).click();
+  await page.getByRole('button', { name: 'Check answer', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Not quite yet.');
+
+  await page.getByRole('button', { name: 'Retry this step', exact: true }).click();
+  await answers.getByRole('button', { name: '30', exact: true }).click();
+  await page.getByRole('button', { name: 'Check answer', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Three groups of ten make 30.');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'What is 30 + 30?', exact: true })).toBeVisible();
+
+  for (const [prompt, answer] of [
+    ['What is 30 + 30?', '60'],
+    ['What number is 60 + 7?', '67'],
+    ['What do you add to 67 to make 100?', '33'],
+    ['Solve 45 + 7.', '52'],
+  ]) {
+    await expect(page.getByRole('heading', { name: prompt, exact: true })).toBeVisible();
+    const answerChoices = page.getByRole('group', { name: 'Choose an answer' });
+    await answerChoices.getByRole('button', { name: answer, exact: true }).click();
+    await page.getByRole('button', { name: 'Check answer', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('That’s right.');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  }
+  await expect(page.getByRole('heading', { name: 'Recall check complete', exact: true })).toBeVisible();
+});
+
 test('synthetic published lesson navigation and diagram rendering', async ({ page }) => {
   await ready(page, '/learning/mathematiques?focus=1');
   const theme = page.getByTestId('lesson-theme-tile');

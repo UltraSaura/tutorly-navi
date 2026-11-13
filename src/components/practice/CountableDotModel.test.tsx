@@ -18,4 +18,11 @@ describe('CountableDotModel', () => {
     expect(html).toContain('20 dots: 2 groups of ten and 0 ones');
     expect((html.match(/data-dot="true"/g) ?? []).length).toBe(20);
   });
+
+  it('can describe a question model without revealing the total', () => {
+    const html = renderToStaticMarkup(<CountableDotModel value={30} showTotal={false} />);
+    expect(html).toContain('Countable dots arranged as 3 groups of ten and 0 ones');
+    expect(html).not.toContain('aria-live="polite"');
+    expect(html).not.toContain('>30</span>');
+  });
 });

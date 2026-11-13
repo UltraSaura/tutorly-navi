@@ -8,7 +8,7 @@ import { ADD_UP_TO_100_STEPS, isCorrectAddUpAnswer, nextAddUpValue } from '@/fea
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { CountableDotModel } from '@/components/practice/CountableDotModel';
 
-const KEY = 'tutorly:practice:add-up-to-100:v2';
+const KEY = 'tutorly:practice:add-up-to-100:v3';
 
 export default function AddUpTo100Page() {
   const navigate = useNavigate();
@@ -83,6 +83,13 @@ export default function AddUpTo100Page() {
 
   const check = () => {
     let current = value;
+    if (step.mode === 'choice') {
+      if (!answer) {
+        setEntryError('Choose an answer before checking.');
+        return;
+      }
+      current = Number(answer);
+    }
     if (step.mode === 'answer') {
       const response = answer.trim();
       if (!response) {
@@ -98,6 +105,21 @@ export default function AddUpTo100Page() {
     setEntryError(null);
     if (isCorrectAddUpAnswer(step, current)) setFeedback('correct');
     else setFeedback('incorrect');
+  };
+
+  const addToModel = (amount: 1 | 10) => {
+    const nextValue = nextAddUpValue(value, amount, step.target);
+    setFeedback(null);
+    setEntryError(null);
+    if (step.mode === 'tens' && nextValue >= step.target && stepIndex + 1 < ADD_UP_TO_100_STEPS.length) {
+      const nextStep = ADD_UP_TO_100_STEPS[stepIndex + 1];
+      setStepIndex((index) => index + 1);
+      setValue(nextStep.start);
+      setAnswer('');
+      setHintOpen(false);
+      return;
+    }
+    setValue(nextValue);
   };
 
   const continueLesson = () => {
@@ -177,27 +199,35 @@ export default function AddUpTo100Page() {
               <h1 className="text-xl font-extrabold leading-snug sm:text-2xl">{step.prompt}</h1>
               {isSupported && <button type="button" onClick={() => isSpeaking ? stop() : speak(step.prompt)} aria-label={isSpeaking ? 'Stop reading instruction' : 'Read instruction aloud'} className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><Volume2 className="h-5 w-5" aria-hidden="true" /></button>}
             </div>
-            <div className="mt-5"><CountableDotModel value={value} /></div>
+            <div className="mt-5"><CountableDotModel value={value} showTotal={false} /></div>
 
             <div className="mt-5">
               {step.mode === 'answer' ? (
                 <label className="block text-sm font-semibold">Your answer
                   <input type="number" inputMode="numeric" value={answer} onChange={(event) => { setAnswer(event.target.value); setFeedback(null); setEntryError(null); }} onKeyDown={(event) => { if (event.key === 'Enter') check(); }} className="mt-2 min-h-12 w-full rounded-xl border border-[#D0D5DD] px-4 text-lg font-bold focus:border-[#5145B5] focus:outline-none focus:ring-2 focus:ring-[#5145B5]/25" aria-label="Your answer" aria-describedby={entryError ? 'lesson-entry-error' : undefined} />
                 </label>
+              ) : step.mode === 'choice' ? (
+                <div role="group" aria-label="Choose an answer" className="grid grid-cols-2 gap-3">
+                  {step.choices?.map((choice) => (
+                    <button key={choice} type="button" aria-pressed={answer === String(choice)} onClick={() => { setAnswer(String(choice)); setEntryError(null); setFeedback(null); }} className={`min-h-14 rounded-xl border-2 px-4 text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] ${answer === String(choice) ? 'border-[#5145B5] bg-[#F0EEFF] text-[#40369B]' : 'border-[#D0D5DD] bg-white hover:bg-[#F6F5FF]'}`}>
+                      {choice}
+                    </button>
+                  ))}
+                </div>
               ) : (
                 <div className="flex gap-3">
-                  {(step.mode === 'tens' || step.mode === 'both') && <button type="button" disabled={value >= step.target} onClick={() => { setValue((v) => nextAddUpValue(v, 10, step.target)); setFeedback(null); }} className="min-h-12 flex-1 rounded-xl border-2 border-[#5145B5] bg-white px-3 font-bold text-[#5145B5] hover:bg-[#F6F5FF] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]">Add 10</button>}
-                  {(step.mode === 'ones' || step.mode === 'both') && <button type="button" disabled={value >= step.target} onClick={() => { setValue((v) => nextAddUpValue(v, 1, step.target)); setFeedback(null); }} className="min-h-12 flex-1 rounded-xl border-2 border-[#D99A2B] bg-white px-3 font-bold text-[#8A5B09] hover:bg-[#FFF9EB] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D99A2B]">Add 1</button>}
+                  {(step.mode === 'tens' || step.mode === 'both') && <button type="button" aria-label="Add one group of ten" disabled={value >= step.target} onClick={() => addToModel(10)} className="min-h-14 flex-1 rounded-xl border-2 border-[#5145B5] bg-white px-3 font-bold text-[#5145B5] hover:bg-[#F6F5FF] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><span aria-hidden="true" className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#5145B5] text-xl text-white">+</span>Add 10</button>}
+                  {(step.mode === 'ones' || step.mode === 'both') && <button type="button" disabled={value >= step.target} onClick={() => addToModel(1)} className="min-h-12 flex-1 rounded-xl border-2 border-[#D99A2B] bg-white px-3 font-bold text-[#8A5B09] hover:bg-[#FFF9EB] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D99A2B]">Add 1</button>}
                 </div>
               )}
             </div>
 
             {entryError && <p id="lesson-entry-error" role="alert" className="mt-2 text-sm font-semibold text-[#8A4B08]">{entryError}</p>}
             {feedback && <div role="status" aria-live="polite" className={`mt-4 rounded-xl p-3 text-sm font-semibold ${feedback === 'correct' ? 'bg-[#E7F7F0] text-[#087F68]' : 'bg-[#FFF4E5] text-[#8A4B08]'}`}>
-              {feedback === 'correct' ? <><p>That’s right.</p><p className="mt-1 font-medium">{step.explanation}</p><button type="button" onClick={continueLesson} className="mt-3 min-h-11 rounded-lg bg-[#087F68] px-4 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">{stepIndex + 1 === ADD_UP_TO_100_STEPS.length && pathMode === 'guided' ? 'Finish lesson' : 'Continue'}</button></> : <><p>Not quite yet. {step.mode === 'answer' ? 'Check the dots and try another answer.' : 'Adjust the dots, then check again.'}</p><p className="mt-1 font-medium">{step.explanation}</p><button type="button" onClick={resetStep} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><RotateCcw className="h-4 w-4" aria-hidden="true" /> Retry this step</button></>}
+              {feedback === 'correct' ? <><p>That’s right.</p><p className="mt-1 font-medium">{step.explanation}</p><button type="button" onClick={continueLesson} className="mt-3 min-h-11 rounded-lg bg-[#087F68] px-4 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">{stepIndex + 1 === ADD_UP_TO_100_STEPS.length && pathMode === 'guided' ? 'Finish lesson' : 'Continue'}</button></> : <><p>Not quite yet. {step.mode === 'choice' ? 'Choose another answer, then check again.' : step.mode === 'answer' ? 'Check the dots and try another answer.' : 'Adjust the dots, then check again.'}</p><p className="mt-1 font-medium">{step.explanation}</p><button type="button" onClick={resetStep} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><RotateCcw className="h-4 w-4" aria-hidden="true" /> Retry this step</button></>}
             </div>}
 
-            {!feedback && <button type="button" onClick={check} className="mt-4 min-h-12 w-full rounded-xl bg-[#5145B5] px-4 font-bold text-white hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Check answer</button>}
+            {!feedback && step.mode !== 'tens' && <button type="button" onClick={check} className="mt-4 min-h-12 w-full rounded-xl bg-[#5145B5] px-4 font-bold text-white hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Check answer</button>}
             <div className="mt-3">
               <button type="button" aria-expanded={hintOpen} onClick={() => setHintOpen((open) => !open)} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><Lightbulb className="h-4 w-4" aria-hidden="true" /> {hintOpen ? 'Hide hint' : 'Show hint'}</button>
               {hintOpen && <p className="mt-1 rounded-xl bg-[#F6F5FF] p-3 text-sm text-[#40369B]">{step.hint}</p>}

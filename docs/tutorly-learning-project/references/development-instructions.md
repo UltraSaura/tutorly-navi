@@ -293,7 +293,7 @@ Source: `Screen Recording 2026-11-11 at 00.59.44-compressed.mp4` (2:02; 1150×72
 
 - The curriculum panel shows **Add up to 100**. The lesson uses countable dot groups and a bottom control for adding groups of ten or individual units.
 - The narration/text says: **“You've been adding numbers up to 100. Show me what you remember.”** A recall/check phase follows.
-- The learner is asked to tap the plus control three times to add three groups of ten, then identify the amount. Feedback describes three groups of ten as 30. The next item asks what results from adding 30 to 30. Feedback confirms **30 + 30 = 60**.
+- The learner is asked to tap the plus control three times to add three groups of ten, then identify the amount from choices sampled as **30, 40, 50, 300**. Feedback describes three groups of ten as 30. The next item asks what results from adding 30 to 30. Feedback confirms **30 + 30 = 60**.
 - The model then adds individual ones to the tens. A prompt asks what number is represented by `60 + 7`; feedback confirms **67**.
 - The learner is asked what must be added to 67 to make 100. Feedback confirms **67 + 33 = 100**. A subsequent symbolic prompt displays `45 + 7 = ?`; sampled choices include 42, 51, 52, and 53.
 - A reward/check card titled **Add to 100 Check** appears, then the curriculum panel is shown again.
