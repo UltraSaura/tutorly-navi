@@ -2,6 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { CountingQ } from '@/types/quiz-bank';
+import type { AdditionAcrossTenQ } from '@/types/quiz-bank';
 import { QuestionCard } from './QuestionCard';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -24,5 +25,23 @@ describe('counting quiz-bank question rendering', () => {
     expect(html).toContain('Add one group of ten');
     expect(html).toContain('data-testid="countable-group"');
     expect(html).not.toContain('aria-label="Choose how many apples there are"');
+  });
+});
+
+describe('addition across ten quiz-bank question rendering', () => {
+  it('shows the ten-frame model and move action before answer choices', () => {
+    const question: AdditionAcrossTenQ = {
+      id: 'bridge-247-8',
+      kind: 'addition-across-ten',
+      prompt: 'Start at 247. Add 8. Fill the next ten, then choose the total.',
+      startNumber: 247,
+      addend: 8,
+      answerChoices: [255, 254, 256, 265],
+    };
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain('data-testid="quiz-addition-across-ten-question"');
+    expect(html).toContain('Move one counter to the ten-frame');
+    expect(html).toContain('Fill the next ten: 250');
+    expect(html).not.toContain('Choose the total of 247 plus 8');
   });
 });

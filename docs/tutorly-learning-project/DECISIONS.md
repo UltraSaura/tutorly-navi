@@ -12,6 +12,14 @@ Updated 2026-11-13. Distinguish supplied observations from original Tutorly choi
 - **Designed:** Tutorly includes explanatory feedback and retry. No clock, score, reward, or mastery badge is shown. Optional system speech reads the current instruction when speech synthesis is available; the visible text remains canonical.
 - **Unknown:** The reference familiarity Yes branch, later guided prompts, error handling, completion threshold, mastery, and voice settings. No competitor copy/assets/voice are used. Tutorly's observed check completion is only local resume state, not mastery.
 
+## Addition across ten
+
+- **Source video:** `Screen Recording 2026-11-10 at 23.37.03-compressed.mp4` (1:56), summarized in `references/development-instructions.md` under **Add Across 10**. It shows square tiles made of unit cells, composing a quantity to match `4 + 7`, and answer choices. The complete sequence and error rules are not established.
+- **Curriculum category:** CE1 → Maths → Nombres et calcul → calcul mental → franchir la dizaine. Tutorly may also use “addition en ligne” as a product category; that is not the official programme heading. Treat this as review/fluency: the official Cycle 2 programme introduces making-ten strategies in CP and expects CE1 learners to reuse and automate them. This is distinct from column addition, which is a separate algorithmic operation.
+- **Designed:** Tutorly exposes a reusable `addition-across-ten` quiz-bank question. The learner moves counters to fill a ten-frame and then chooses the sum; exercise data provides the start number and one-digit addend. Practice generates varied two/three-digit examples up to 1000. The frame depicts counters as dots, with no competitor art or tile assets. It is a general activity type, not a copied fixed lesson sequence.
+- **Designed:** The CE1 Practice card opens this focused activity. It uses the existing retry-based Practice points policy, has no timer, and stores learner-scoped local resume state. It does not award curriculum mastery. Quiz banks can author it using the existing JSON payload; the admin topic generator supports the new type after the updated Edge Function source is deployed. No schema migration is needed.
+- **Unknown:** The recording does not establish an exact sequence, timer, scoring, retry, or mastery rule. Tutorly’s range, ten-frame interaction, and feedback are original product decisions and should be revisited with learner testing.
+
 ## Flashcards
 
 - **Observed:** The recordings show one arithmetic card at a time, with subtraction, addition, and make-ten blanks. One screen offers a microphone with “Tap the mic to speak”; a different screen shows a selected answer, but exact input method is unknown. Timed and race screens, one 9/10 result, and ten progress markers in one run are visible; general rules are unknown.

@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import type { Question } from '@/types/quiz-bank';
 import { CountableObjectModel } from '@/components/practice/CountableObjectModel';
 import { countingExerciseStart, countingExerciseTotal } from '@/features/practice/countingExercise';
+import { AdditionAcrossTenModel } from '@/components/practice/AdditionAcrossTenModel';
+import { additionAcrossTenTotal, countersToNextTen } from '@/features/practice/additionAcrossTen';
 
 // ── Per-type correct-answer display ─────────────────────────────────────────
 
@@ -83,6 +85,21 @@ function AnswerDisplay({ question }: { question: Question }) {
             ))}
           </div>
           <p className="text-xs text-muted-foreground">Starts at {countingExerciseStart(question)}; add {question.groupsToAdd} group(s) of ten.</p>
+        </div>
+      );
+    }
+
+    case 'addition-across-ten': {
+      const total = additionAcrossTenTotal(question);
+      return (
+        <div className="space-y-3">
+          <AdditionAcrossTenModel startNumber={question.startNumber} addend={question.addend} movedToTen={countersToNextTen(question.startNumber)} />
+          <div className="grid grid-cols-2 gap-2">
+            {question.answerChoices.map((choice) => <div key={choice} className={cn('rounded-lg border px-3 py-2 text-center font-bold', choice === total ? 'border-green-400 bg-green-50 text-green-800' : 'border-border text-muted-foreground')}>
+              {choice}{choice === total && <CheckCircle2 className="ml-2 inline h-4 w-4" />}
+            </div>)}
+          </div>
+          <p className="text-xs text-muted-foreground">Move {countersToNextTen(question.startNumber)} counter(s) to the next ten, then add what remains.</p>
         </div>
       );
     }

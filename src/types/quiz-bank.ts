@@ -35,6 +35,12 @@ export type CountingQ = BaseQ & {
   groupsToAdd: number;
   answerChoices: number[];
 };
+export type AdditionAcrossTenQ = BaseQ & {
+  kind: "addition-across-ten";
+  startNumber: number;
+  addend: number;
+  answerChoices: number[];
+};
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
 export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
 export type OperationPoseeQ = BaseQ & {
@@ -147,6 +153,7 @@ export type Question =
   | MultiQ
   | NumericQ
   | CountingQ
+  | AdditionAcrossTenQ
   | OrderingQ
   | VisualQ
   | OperationPoseeQ

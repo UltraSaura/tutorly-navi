@@ -11,7 +11,7 @@ export const test = base.extend<{ browserHealth: void }>({
     const errors: string[] = [];
     const requests: string[] = [];
     const cancelledSyntheticReads: string[] = [];
-    const fixtureTables = new Set(['objectives', 'school_levels', 'countries', 'domains', 'subdomains', 'ai_model_providers', 'ai_model_keys', 'prompt_templates', 'subject_prompt_assignments', 'subjects', 'learning_categories']);
+    const fixtureTables = new Set(['objectives', 'school_levels', 'countries', 'domains', 'subdomains', 'ai_model_providers', 'ai_model_keys', 'prompt_templates', 'subject_prompt_assignments', 'subjects', 'learning_categories', 'exam_papers', 'exam_training_items', 'topics']);
     page.on('pageerror', (error) => errors.push(`page: ${error.message}`));
     page.on('console', (message) => { if (message.type() === 'error' || /Failed to decode downloaded font|OTS parsing error/.test(message.text())) errors.push(`console: ${message.text()}`); });
     page.on('requestfailed', (request) => {
@@ -34,7 +34,7 @@ export const test = base.extend<{ browserHealth: void }>({
       if (url.origin === appOrigin) return route.continue();
       if (url.hostname === 'sibprjxhbxahouejygeu.supabase.co' && request.method() === 'GET' && url.pathname.startsWith('/rest/v1/')) {
         const table = url.pathname.slice('/rest/v1/'.length);
-        const emptyTables = ['objectives', 'school_levels', 'countries', 'domains', 'subdomains', 'ai_model_providers', 'ai_model_keys', 'prompt_templates', 'subject_prompt_assignments'];
+        const emptyTables = ['objectives', 'school_levels', 'countries', 'domains', 'subdomains', 'ai_model_providers', 'ai_model_keys', 'prompt_templates', 'subject_prompt_assignments', 'exam_papers', 'exam_training_items', 'topics'];
         let data: unknown;
         if (table === 'subjects') data = request.headers().accept?.includes('vnd.pgrst.object') ? subject : [subject];
         else if (table === 'learning_categories') data = categories;

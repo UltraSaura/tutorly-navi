@@ -9,11 +9,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ, CountingQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ, CountingQ, AdditionAcrossTenQ } from '@/types/quiz-bank';
 import type { SliderQuestion, MatchQuestion, FillExprQuestion } from '@/types/quiz-bank';
 import { buildColumnFillQuestion } from '@/lib/quiz/columnFillBuilder';
 import { countableObjectName, countingExerciseTotal, makeCountingAnswerChoices } from '@/features/practice/countingExercise';
 import { COUNTABLE_OBJECTS, type CountableObject } from '@/types/counting-exercise';
+import { additionAcrossTenTotal, countersToNextTen, makeAdditionAcrossTenChoices } from '@/features/practice/additionAcrossTen';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -58,6 +59,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [countingStartingGroups, setCountingStartingGroups] = useState(question?.kind === 'counting' ? question.startingGroups : 1);
   const [countingStartingOnes, setCountingStartingOnes] = useState(question?.kind === 'counting' ? question.startingOnes : 2);
   const [countingGroupsToAdd, setCountingGroupsToAdd] = useState(question?.kind === 'counting' ? question.groupsToAdd : 1);
+  const [additionStartNumber, setAdditionStartNumber] = useState(question?.kind === 'addition-across-ten' ? question.startNumber : 47);
+  const [additionAddend, setAdditionAddend] = useState(question?.kind === 'addition-across-ten' ? question.addend : 8);
 
   // Single/Multi choice state
   const [choices, setChoices] = useState<Array<{ id: string; label: string; correct?: boolean }>>(
@@ -189,6 +192,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setCountingStartingOnes(question.startingOnes);
         setCountingGroupsToAdd(question.groupsToAdd);
       }
+      if (question.kind === 'addition-across-ten') {
+        setAdditionStartNumber(question.startNumber);
+        setAdditionAddend(question.addend);
+      }
 
       if (question.kind === 'single' || question.kind === 'multi') {
         setChoices((question as SingleQ | MultiQ).choices);
@@ -249,6 +256,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setCountingStartingGroups(1);
       setCountingStartingOnes(2);
       setCountingGroupsToAdd(1);
+      setAdditionStartNumber(47);
+      setAdditionAddend(8);
       setChoices([{ id: 'c1', label: '', correct: false }, { id: 'c2', label: '', correct: false }]);
       setNumericAnswer(0);
       setNumericRange({});
@@ -338,7 +347,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   };
 
   const handleSave = () => {
-    if (kind !== 'counting' && !prompt.trim()) {
+    if (!['counting', 'addition-across-ten'].includes(kind) && !prompt.trim()) {
       alert('Please enter a question prompt');
       return;
     }
@@ -529,6 +538,25 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         groupsToAdd,
         answerChoices: makeCountingAnswerChoices(total),
       } satisfies CountingQ;
+    } else if (kind === 'addition-across-ten') {
+      const startNumber = Math.trunc(additionStartNumber);
+      const addend = Math.trunc(additionAddend);
+      const units = ((startNumber % 10) + 10) % 10;
+      const total = startNumber + addend;
+      if (!Number.isInteger(startNumber) || startNumber < 10 || startNumber > 999 || !Number.isInteger(addend) || addend < 1 || addend > 9 || units + addend <= 10 || total > 1000) {
+        alert('Choose a CE1 number and a one-digit addend that crosses the next ten.');
+        return;
+      }
+      questionData = {
+        id,
+        kind: 'addition-across-ten',
+        prompt: `Start at ${startNumber}. Add ${addend}. Fill the next ten first, then choose the total.`,
+        hint: hint || `How many more does ${startNumber} need to reach ${startNumber - units + 10}?`,
+        points,
+        startNumber,
+        addend,
+        answerChoices: makeAdditionAcrossTenChoices(additionAcrossTenTotal({ startNumber, addend })),
+      } satisfies AdditionAcrossTenQ;
     } else {
       alert('Unsupported question type');
       return;
@@ -564,6 +592,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
                 <SelectItem value="counting">Count objects in groups of ten</SelectItem>
+                <SelectItem value="addition-across-ten">Addition en ligne · franchir la dizaine (CE1)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -579,7 +608,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             />
           </div>
 
-          {kind !== 'counting' && <div>
+          {!['counting', 'addition-across-ten'].includes(kind) && <div>
             <Label htmlFor="prompt">{ui("Question Prompt")}</Label>
             <Textarea
               id="prompt"
@@ -609,6 +638,17 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <div><Label htmlFor="counting-groups-to-add">Groups to add</Label><Input id="counting-groups-to-add" type="number" min="1" max="10" value={countingGroupsToAdd} onChange={(event) => setCountingGroupsToAdd(Number(event.target.value))} /></div>
               </div>
               <p className="text-sm font-medium">Answer: {countingExerciseTotal({ startingGroups: countingStartingGroups, startingOnes: countingStartingOnes, groupsToAdd: countingGroupsToAdd })}</p>
+            </div>
+          )}
+
+          {kind === 'addition-across-ten' && (
+            <div className="space-y-3 rounded-xl border p-4">
+              <p className="text-sm text-muted-foreground">CE1 mental addition review: the learner fills the next ten, then adds the counters left. This is separate from column addition.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label htmlFor="addition-start">Starting number</Label><Input id="addition-start" type="number" min="10" max="999" value={additionStartNumber} onChange={(event) => setAdditionStartNumber(Number(event.target.value))} /></div>
+                <div><Label htmlFor="addition-addend">One-digit number to add</Label><Input id="addition-addend" type="number" min="1" max="9" value={additionAddend} onChange={(event) => setAdditionAddend(Number(event.target.value))} /></div>
+              </div>
+              <p className="text-sm font-medium">{additionStartNumber} needs {countersToNextTen(additionStartNumber)} to reach the next ten; total: {additionAcrossTenTotal({ startNumber: additionStartNumber, addend: additionAddend })}</p>
             </div>
           )}
 

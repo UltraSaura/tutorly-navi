@@ -21,6 +21,19 @@ const singleQuestion = (id: string, points = 1): Question => ({
 });
 
 describe("quiz penalty grading", () => {
+  it('grades an addition-across-ten question only after filling the ten and choosing the total', () => {
+    const question: Question = {
+      id: 'bridge-1', kind: 'addition-across-ten', prompt: 'Start at 247. Add 8.',
+      startNumber: 247, addend: 8, answerChoices: [255, 254, 256, 265], points: 1,
+    };
+    expect(isQuizAnswerComplete(question, { movedToTen: 0, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { movedToTen: 0, selectedAnswer: 255 })).toBe(false);
+    expect(isQuizAnswerComplete(question, { movedToTen: 3, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { movedToTen: 3, selectedAnswer: 254 })).toBe(true);
+    expect(evaluateQuestion(question, { movedToTen: 3, selectedAnswer: 254 })).toBe(false);
+    expect(evaluateQuestion(question, { movedToTen: 3, selectedAnswer: 255 })).toBe(true);
+  });
+
   it('scores a counting-bank question only after the required groups and correct choice', () => {
     const question: Question = {
       id: 'count-1', kind: 'counting', prompt: 'Start with 12 apples. Add one group of ten.',

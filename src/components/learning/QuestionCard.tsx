@@ -20,6 +20,8 @@ import { useLearningDragDrop } from "./useLearningDragDrop";
 import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
 import { CountableObjectModel } from "@/components/practice/CountableObjectModel";
 import { countableObjectName, countingExerciseStart, countingExerciseTotal } from "@/features/practice/countingExercise";
+import { AdditionAcrossTenModel } from "@/components/practice/AdditionAcrossTenModel";
+import { additionAcrossTenTotal, countersToNextTen } from "@/features/practice/additionAcrossTen";
 
 // Renders text that may contain $...$ inline or $$...$$ display LaTeX.
 function MathText({ text, style }: { text: string; style?: React.CSSProperties }) {
@@ -741,6 +743,7 @@ export function QuestionCard({
   const initialValue = useMemo(() => {
     if (question.kind === "multi") return [];
     if (question.kind === "counting") return { addedGroups: 0, selectedAnswer: null };
+    if (question.kind === "addition-across-ten") return { movedToTen: 0, selectedAnswer: null };
     if (question.kind === "visual") {
       return getInitialVisualValue(question.visual);
     }
@@ -892,6 +895,28 @@ export function QuestionCard({
                 ))}
               </div>
             )}
+          </div>
+        );
+      })()}
+
+      {question.kind === 'addition-across-ten' && (() => {
+        const movedToTen = Math.max(0, Math.min(countersToNextTen(question.startNumber), Number(value?.movedToTen) || 0));
+        const moveTarget = countersToNextTen(question.startNumber);
+        const total = additionAcrossTenTotal(question);
+        const readyForAnswer = movedToTen >= moveTarget;
+        return (
+          <div className="space-y-3" data-testid="quiz-addition-across-ten-question">
+            <AdditionAcrossTenModel startNumber={question.startNumber} addend={question.addend} movedToTen={movedToTen} />
+            {!readyForAnswer ? (
+              <button type="button" aria-label="Move one counter to fill the next ten" disabled={submittedAnswer !== undefined} onClick={() => setVal({ movedToTen: movedToTen + 1, selectedAnswer: null })} className="min-h-12 w-full rounded-xl border-2 border-primary px-4 font-bold text-primary disabled:opacity-50">Move one counter to the ten-frame</button>
+            ) : (
+              <div role="group" aria-label={`Choose the total of ${question.startNumber} plus ${question.addend}`} className="grid grid-cols-2 gap-2">
+                {question.answerChoices.map((choice) => (
+                  <button key={choice} type="button" aria-pressed={value?.selectedAnswer === choice} disabled={submittedAnswer !== undefined} onClick={() => setVal({ movedToTen, selectedAnswer: choice })} className={`min-h-12 rounded-xl border-2 px-3 font-bold disabled:opacity-50 ${value?.selectedAnswer === choice ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white'}`}>{choice}</button>
+                ))}
+              </div>
+            )}
+            <p className="sr-only" aria-live="polite">{readyForAnswer ? `The ten-frame is full. ${question.addend - movedToTen} counters are left. Choose the total.` : `${movedToTen} of ${moveTarget} counters moved to fill the ten.`}</p>
           </div>
         );
       })()}

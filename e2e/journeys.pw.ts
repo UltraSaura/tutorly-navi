@@ -120,6 +120,54 @@ test('reusable counting exercise adds groups, checks answers, and accepts anothe
   await expect(page.getByRole('button', { name: /^Add one group of ten / })).toBeVisible();
 });
 
+test('CE1 addition across ten builds to the next ten, scores retries, and resumes', async ({ page }, testInfo) => {
+  await ready(page, '/practice');
+  await expect(page.getByRole('heading', { name: 'Addition across ten', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Practice page should not overflow horizontally').toBe(true);
+  await page.getByRole('button', { name: 'Start addition practice', exact: true }).click();
+  await expect(page).toHaveURL(/\/practice\/addition-across-ten$/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Addition activity should not overflow horizontally').toBe(true);
+  const model = page.getByTestId('addition-across-ten-model');
+  const modelText = await model.innerText();
+  const startNumber = Number(modelText.match(/Start at\s+(\d+)/)?.[1]);
+  const addend = Number(modelText.match(/Add\s+(\d+)/)?.[1]);
+  const total = startNumber + addend;
+  const moves = 10 - (startNumber % 10);
+  expect(total).toBeGreaterThan(10);
+  await testInfo.attach('addition-across-ten-prompt', { body: await page.screenshot({ fullPage: true, animations: 'disabled' }), contentType: 'image/png' });
+  const move = page.getByRole('button', { name: 'Move one counter to fill the next ten', exact: true });
+  if (testInfo.project.name === 'mobile') {
+    const buttonBottom = await move.evaluate((element) => element.getBoundingClientRect().bottom);
+    expect(buttonBottom, 'First action remains above the fixed bottom navigation').toBeLessThanOrEqual(754);
+  }
+
+  await page.getByRole('button', { name: 'Show hint', exact: true }).click();
+  await expect(page.getByText(new RegExp(`How many more does ${startNumber} need`))).toBeVisible();
+  await page.getByRole('button', { name: 'Hide hint', exact: true }).click();
+  await assertUsable(page, move);
+  if (testInfo.project.name === 'desktop') {
+    await move.focus();
+    await page.keyboard.press('Enter');
+  }
+  for (let index = testInfo.project.name === 'desktop' ? 1 : 0; index < moves; index += 1) {
+    if (testInfo.project.name === 'mobile') await move.tap();
+    else await move.click();
+  }
+  await expect(page.getByRole('group', { name: `Choose the total of ${startNumber} plus ${addend}` })).toBeVisible();
+  const choices = page.getByRole('group', { name: `Choose the total of ${startNumber} plus ${addend}` });
+  await choices.getByRole('button', { name: String(total + 1), exact: true }).click();
+  await page.getByRole('button', { name: 'Check answer', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Not quite');
+  await page.getByRole('button', { name: 'Try another answer', exact: true }).click();
+  await choices.getByRole('button', { name: String(total), exact: true }).click();
+  await page.getByRole('button', { name: 'Check answer', exact: true }).click();
+  await expect(page.getByRole('heading', { name: `${startNumber} + ${addend} = ${total}`, exact: true })).toBeVisible();
+  await expect(page.getByText('Score: 0.5 / 1 point', { exact: true })).toBeVisible();
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.getByRole('heading', { name: `${startNumber} + ${addend} = ${total}`, exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try another addition', exact: true })).toBeEnabled();
+});
+
 test('synthetic published lesson navigation and diagram rendering', async ({ page }) => {
   await ready(page, '/learning/mathematiques?focus=1');
   const theme = page.getByTestId('lesson-theme-tile');
