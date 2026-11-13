@@ -3,13 +3,14 @@ type CountableDotModelProps = {
   maximum?: number;
 };
 
-/** A responsive dot model where each full row represents ten countable dots. */
+/** Countable dots shown as distinct groups of ten plus loose ones. */
 export function CountableDotModel({ value, maximum = 100 }: CountableDotModelProps) {
   const safeValue = Math.max(0, Math.min(maximum, Math.floor(value)));
   const tens = Math.floor(safeValue / 10);
   const ones = safeValue % 10;
   const tensLabel = tens === 1 ? 'group of ten' : 'groups of ten';
-  const dots = Array.from({ length: safeValue }, (_, index) => index);
+  const groups = Array.from({ length: tens }, (_, index) => index);
+  const onesDots = Array.from({ length: ones }, (_, index) => index);
 
   return (
     <div role="img" className="rounded-2xl bg-[#F7F8FC] p-4 sm:p-5" aria-label={`${safeValue} dots: ${tens} ${tensLabel} and ${ones} ones`}>
@@ -17,8 +18,13 @@ export function CountableDotModel({ value, maximum = 100 }: CountableDotModelPro
         <span className="text-sm font-semibold text-[#475467]">{tens} {tensLabel}{ones > 0 ? ` and ${ones} ones` : ''}</span>
         <span className="rounded-full bg-white px-3 py-1 text-lg font-extrabold tabular-nums" aria-live="polite">{safeValue}</span>
       </div>
-      <div className="grid grid-cols-10 justify-items-center gap-1.5 sm:gap-2" aria-hidden="true">
-        {dots.map((dot) => <span key={dot} data-dot="true" className={`h-4 w-4 rounded-full sm:h-5 sm:w-5 ${dot < tens * 10 ? 'bg-[#5145B5]' : 'bg-[#E7A841]'}`} />)}
+      <div className="flex flex-wrap items-start gap-2" aria-hidden="true">
+        {groups.map((group) => <div key={`ten-${group}`} className="grid grid-cols-5 gap-1 rounded-xl border-2 border-[#5145B5] bg-[#F0EEFF] p-2" aria-label="Group of ten">
+          {Array.from({ length: 10 }, (_, dot) => <span key={dot} data-dot="true" className="h-3.5 w-3.5 rounded-full bg-[#5145B5] sm:h-4 sm:w-4" />)}
+        </div>)}
+        {onesDots.length > 0 && <div className="flex max-w-40 flex-wrap content-start gap-1.5 rounded-xl border border-dashed border-[#D99A2B] bg-[#FFF9EB] p-2">
+          {onesDots.map((dot) => <span key={`one-${dot}`} data-dot="true" className="h-3.5 w-3.5 rounded-full bg-[#E7A841] sm:h-4 sm:w-4" />)}
+        </div>}
       </div>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-[#667085]">
         <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-[#5145B5]" />Each group of 10</span>

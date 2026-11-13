@@ -6,7 +6,8 @@ describe('CountableDotModel', () => {
   it('communicates a full ten and extra ones with countable dots', () => {
     const html = renderToStaticMarkup(<CountableDotModel value={12} />);
     expect(html).toContain('12 dots: 1 group of ten and 2 ones');
-    expect(html).toContain('grid-cols-10');
+    expect(html).toContain('grid-cols-5');
+    expect(html).toContain('border-[#5145B5]');
     expect((html.match(/data-dot="true"/g) ?? []).length).toBe(12);
     expect(html).toContain('Each group of 10');
     expect(html).toContain('Extra ones');

@@ -33,7 +33,7 @@ Use this document as the shared implementation brief for the video walkthroughs 
 
 ## Initial video evidence log
 
-Source: `Screen Recording 2026-11-10 at 21.07.52.mov` (2:38; 3248×2036; 120 fps; stereo AAC). This walkthrough visibly includes completion/reward UI and a subtraction lesson. It does **not** show the Color Count lesson.
+Source: `Screen Recording 2026-11-10 at 21.07.52-compressed.mp4` (2:38; 1150×720; H.264/AAC). This walkthrough visibly includes completion/reward UI and a subtraction lesson. It does **not** show the Color Count lesson.
 
 ### Observed sequence (approximate)
 
@@ -114,7 +114,7 @@ Source: `Screen Recording 2026-11-10 at 21.43.15.mov` (11:29; 3248×2036; 120 fp
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-10 at 23.28.25.mov` (4:11; 3160×1948; 120 fps; stereo AAC). The recording shows the **The Next 10** lesson (`/exploration/the_next_ten`) and demonstrates place-value composition of numbers after ten using a ten-frame-like tile model.
+Source: `Screen Recording 2026-11-10 at 23.28.25-compressed.mp4` (4:11; 1168×720; H.264/AAC). The recording shows the **The Next 10** lesson (`/exploration/the_next_ten`) and demonstrates place-value composition of numbers after ten using a ten-frame-like tile model.
 
 ### Observed sequence
 
@@ -139,7 +139,7 @@ Represent a number from 10 to 20 as a fixed group of ten plus a variable group o
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-10 at 23.32.52.mov` (1:17; 3248×2036; 120 fps; stereo AAC). The visible route is `/exploration/flashcards_1_mastery_test`. It demonstrates a timed, voice-enabled arithmetic flashcard assessment and its end transition.
+Source: `Screen Recording 2026-11-10 at 23.32.52-compressed.mp4` (1:17; 1150×720; H.264/AAC). The visible route is `/exploration/flashcards_1_mastery_test`. It demonstrates a timed, voice-enabled arithmetic flashcard assessment and its end transition.
 
 ### Observed sequence
 
@@ -167,7 +167,7 @@ Source: `Screen Recording 2026-11-10 at 23.32.52.mov` (1:17; 3248×2036; 120 fps
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-10 at 23.34.34.mov` (1:08; 3248×2036; 120 fps; stereo AAC). This recording shows a **Flashcards 1** run, a timed arithmetic-card sequence, a win screen, and the related reward prompt.
+Source: `Screen Recording 2026-11-10 at 23.34.34-compressed.mp4` (1:08; 1150×720; H.264/AAC). This recording shows a **Flashcards 1** run, a timed arithmetic-card sequence, a win screen, and the related reward prompt.
 
 ### Observed sequence
 
@@ -185,7 +185,7 @@ Source: `Screen Recording 2026-11-10 at 23.34.34.mov` (1:08; 3248×2036; 120 fps
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-10 at 23.35.52.mov` (56 seconds; 3248×2036; 120 fps; stereo AAC). This recording shows a **Subtract to 10** assessment/practice flow associated with the Flashcards 1 curriculum panel.
+Source: `Screen Recording 2026-11-10 at 23.35.52-compressed.mp4` (56 seconds; 1150×720; H.264/AAC). This recording shows a **Subtract to 10** assessment/practice flow associated with the Flashcards 1 curriculum panel.
 
 ### Observed sequence
 
@@ -203,7 +203,7 @@ Source: `Screen Recording 2026-11-10 at 23.35.52.mov` (56 seconds; 3248×2036; 1
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-10 at 23.37.03.mov` (1:56; 3248×2036; 120 fps; stereo AAC). The visible lesson route is `/exploration/adding_across_ten` (**Add Across 10**).
+Source: `Screen Recording 2026-11-10 at 23.37.03-compressed.mp4` (1:56; 1150×720; H.264/AAC). The visible lesson route is `/exploration/adding_across_ten` (**Add Across 10**).
 
 ### Observed sequence
 
@@ -221,7 +221,7 @@ Source: `Screen Recording 2026-11-10 at 23.37.03.mov` (1:56; 3248×2036; 120 fps
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-10 at 23.39.25.mov` (8:24; 3248×2036; 120 fps; stereo AAC). The visible lesson route is `/exploration/small_problems`. It demonstrates contextual word problems, operation choice, visual representations, and guided support.
+Source: `Screen Recording 2026-11-10 at 23.39.25.mp4` (8:24; 3248×2036; H.264/AAC). The visible lesson route is `/exploration/small_problems`. It demonstrates contextual word problems, operation choice, visual representations, and guided support.
 
 ### Observed sequence
 
@@ -242,25 +242,13 @@ For each word problem, first ask the learner to identify the operation from the 
 - Provide a staged hint path from operation identification to concrete model to symbolic equation, while letting confident learners continue without hints.
 - The exact answer-validation rules, number of retries, hints after wrong choices, progression between the three examples, and whether the video reaches lesson completion are not fully established. The recording ends while the flowers scaffold is still in progress.
 
-## Additional video evidence log
+## Clock recording correction
 
-Source: `Screen Recording 2026-11-10 at 23.48.31.mov` (6:47; 3248×2036; 120 fps; stereo AAC). The reward card at the end identifies the lesson as **The Counting Clock**.
-
-### Observed sequence
-
-- The lesson uses the navy canvas and a large digital-style clock display centered on the screen. The display includes hours and minutes separated by a colon; sampled values include `3:00`, `7:00`, `7:01`, `7:08`, `7:09`, `7:10`, `7:59`, `8:00`, `9:00`, `9:03`, `9:30`, `9:45`, `7:30`, `3:20`, `9:10`, `3:05`, `11:02`, `1:04`, `5:00`, and `12:59`.
-- Left-side prompts change between short teaching statements and multiple-choice questions. A small control beneath the display uses up/down arrows to change a digit; the selected digit is highlighted. A progress bar appears beneath the clock during some manipulation steps.
-- The activity appears to teach reading and setting digital time, including hour/minute values and transitions across hour boundaries. Some prompts ask the learner to identify or adjust a time; a few states show answer choices.
-- The lesson concludes with a reward card titled **The Counting Clock**.
-
-### Implementation implications and unknowns
-
-- Represent time as integer minutes since midnight, but render hour/minute fields with the observed formatting. Keep digit-level controls synchronized to a valid time value, including carry/borrow across `:59` and hour transitions.
-- The video does not make every instruction legible enough to determine the complete skill sequence, the intended meaning of the arrows (increment/decrement or digit navigation), accepted answer formats, or whether the lesson includes analog-clock concepts. Confirm these details from a closer recording before locking the flow.
+The uploaded file `Screen Recording 2026-11-10 at 23.55.48-compressed.mp4` (4:53; 1150×720; H.264/AAC) shows an **analog clock** activity. An earlier note in this document attributed a digital clock lesson called “The Counting Clock” to `23.48.31.mov`; that file was not part of the supplied recordings reviewed for this evidence log. Treat that earlier attribution and its digital-clock details as unverified and do not implement them from this document. The supplied 23.55 recording shows a large analog clock face, two colored hands, a number line labeled 1–12, prompts about hour/minute hands and reading time, and a final reward card that appears to read “Hour Hand Hunt.” The recording does not establish the full step sequence, error rules, or mastery criteria.
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-10 at 23.55.48.mov` (4:53; 3248×2036; 120 fps; stereo AAC). The activity demonstrates an analog clock with movable hands and hour/minute concepts.
+Source: `Screen Recording 2026-11-10 at 23.55.48-compressed.mp4` (4:53; 1150×720; H.264/AAC). The activity demonstrates an analog clock with hour/minute concepts.
 
 ### Observed sequence
 
@@ -277,7 +265,7 @@ Source: `Screen Recording 2026-11-10 at 23.55.48.mov` (4:53; 3248×2036; 120 fps
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-11 at 00.01.04.mov` (6:30; 3248×2036; 120 fps; stereo AAC). The lesson introduces multiplication by connecting equal groups, repeated addition, and multiplication notation.
+Source: `Screen Recording 2026-11-11 at 00.01.04 (1).mov` (6:30; 3248×2036; H.264/AAC). The lesson introduces multiplication by connecting equal groups, repeated addition, and multiplication notation.
 
 ### Observed sequence
 
@@ -299,18 +287,22 @@ Teach multiplication as equal groups: show one group, replicate it, count the re
 
 ## Additional video evidence log
 
-Source: `Screen Recording 2026-11-11 at 00.59.44.mov` (2:02; 3248×2036; 120 fps; stereo AAC). The recording demonstrates **Add up to 100** concepts and transitions into guided practice.
+Source: `Screen Recording 2026-11-11 at 00.59.44-compressed.mp4` (2:02; 1150×720; H.264/AAC). This upload demonstrates part of the **Add up to 100** recall/check flow and the beginning of a guided path. The accompanying `00.01.04 (1).mov` is a separate multiplication recording; it is not a later segment of the Add up to 100 video.
 
 ### Observed sequence
 
 - The curriculum panel shows **Add up to 100**. The lesson uses countable dot groups and a bottom control for adding groups of ten or individual units.
 - The narration/text says: **“You've been adding numbers up to 100. Show me what you remember.”** A recall/check phase follows.
-- The learner identifies three groups of ten, then is asked **“What number is that?”** The next item asks what results from adding 30 to 30. Feedback confirms **30 + 30 = 60**.
+- The learner is asked to tap the plus control three times to add three groups of ten, then identify the amount. Feedback describes three groups of ten as 30. The next item asks what results from adding 30 to 30. Feedback confirms **30 + 30 = 60**.
 - The model then adds individual ones to the tens. A prompt asks what number is represented by `60 + 7`; feedback confirms **67**.
-- The learner is asked what must be added to 67 to make 100. Feedback confirms **67 + 33 = 100**. A subsequent symbolic prompt displays `45 + 7 = ?`.
+- The learner is asked what must be added to 67 to make 100. Feedback confirms **67 + 33 = 100**. A subsequent symbolic prompt displays `45 + 7 = ?`; sampled choices include 42, 51, 52, and 53.
 - A reward/check card titled **Add to 100 Check** appears, then the curriculum panel is shown again.
 - The flow then starts a guided **Add up to 100** lesson. It asks whether adding numbers up to 100 is already familiar, with **Yes** and **No** choices. The selected path says, **“No problem. Let's start from the beginning and work through the lessons together.”**
-- A following prompt asks the learner to inspect a set of dot groups and identify the represented number. Numeric answer choices are shown. The video ends during this guided practice.
+- Choosing “No” leads to an invitation to start from the beginning. The first visible guided prompt shows two groups of ten and asks what number they make, with numeric choices and an “I’m not sure” choice. The recording ends here. The full guided sequence is unknown.
+
+### Scope and confidence
+
+The contact-sheet review samples key frames rather than every frame. Prompt text quoted above was read from visible on-screen text where legible; sequence and controls are observed, while the complete assessment policy, scoring, timer, retry behavior, and mastery criteria remain unknown. The current Tutorly version is an original untimed exercise using dot groups and numeric answers. It should not claim to reproduce the unseen remainder of the reference lesson or grant mastery.
 
 ### Reusable instructional pattern
 

@@ -8,7 +8,7 @@ import { ADD_UP_TO_100_STEPS, isCorrectAddUpAnswer, nextAddUpValue } from '@/fea
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { CountableDotModel } from '@/components/practice/CountableDotModel';
 
-const KEY = 'tutorly:practice:add-up-to-100';
+const KEY = 'tutorly:practice:add-up-to-100:v2';
 
 export default function AddUpTo100Page() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function AddUpTo100Page() {
   const storageKey = learnerStorageKey(KEY, learnerId);
   const { speak, stop, isSpeaking, isSupported } = useSpeechSynthesis({ lang: 'en' });
   const [stepIndex, setStepIndex] = useState(0);
-  const [value, setValue] = useState(30);
+  const [value, setValue] = useState(ADD_UP_TO_100_STEPS[0].start);
   const [answer, setAnswer] = useState('');
   const [entryError, setEntryError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
@@ -39,7 +39,7 @@ export default function AddUpTo100Page() {
   useEffect(() => {
     setLoadedKey(null);
     setStepIndex(0);
-    setValue(30);
+    setValue(ADD_UP_TO_100_STEPS[0].start);
     setPathMode(null);
     setShowGuidedOffer(false);
     setAnswer('');
@@ -121,7 +121,7 @@ export default function AddUpTo100Page() {
 
   const restart = () => {
     setStepIndex(0);
-    setValue(30);
+    setValue(ADD_UP_TO_100_STEPS[0].start);
     setPathMode('guided');
     setShowGuidedOffer(false);
     setAnswer('');
@@ -149,12 +149,9 @@ export default function AddUpTo100Page() {
         {!pathMode ? (
           <section aria-labelledby="start-title" className="rounded-3xl border border-[#D9DDF8] bg-white p-6 shadow-sm sm:p-8">
             <h1 id="start-title" className="text-2xl font-extrabold">Add up to 100</h1>
-            <p className="mt-2 text-[#667085]">Choose how you’d like to begin. Both paths use the same dot model.</p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button type="button" onClick={() => { setPathMode('recall'); setShowGuidedOffer(false); }} className="min-h-14 rounded-xl border-2 border-[#5145B5] px-4 py-3 text-left font-bold text-[#40369B] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]">Show what I remember</button>
-              <button type="button" onClick={() => { setPathMode('guided'); setShowGuidedOffer(false); }} className="min-h-14 rounded-xl bg-[#5145B5] px-4 py-3 text-left font-bold text-white hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]">Start from the beginning</button>
-            </div>
-            <p className="mt-4 text-xs text-[#667085]">No timer or score. You can use a hint whenever you need one.</p>
+            <p className="mt-2 text-[#667085]">First, try a short check using grouped dots. You can ask for help at any step.</p>
+            <button type="button" onClick={() => { setPathMode('recall'); setShowGuidedOffer(false); }} className="mt-6 min-h-14 w-full rounded-xl bg-[#5145B5] px-4 py-3 text-left font-bold text-white hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]">Start the check</button>
+            <p className="mt-4 text-xs text-[#667085]">This check is untimed and does not award mastery.</p>
           </section>
         ) : showGuidedOffer ? (
           <section aria-labelledby="recall-complete-title" className="rounded-3xl border border-[#D9DDF8] bg-white p-6 text-center shadow-sm sm:p-8">
