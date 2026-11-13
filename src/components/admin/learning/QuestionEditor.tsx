@@ -9,9 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ, CountingQ } from '@/types/quiz-bank';
 import type { SliderQuestion, MatchQuestion, FillExprQuestion } from '@/types/quiz-bank';
 import { buildColumnFillQuestion } from '@/lib/quiz/columnFillBuilder';
+import { countableObjectName, countingExerciseTotal, makeCountingAnswerChoices } from '@/features/practice/countingExercise';
+import { COUNTABLE_OBJECTS, type CountableObject } from '@/types/counting-exercise';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -52,6 +54,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [hint, setHint] = useState(question?.hint || '');
   const [points, setPoints] = useState(question?.points || 1);
   const [id, setId] = useState(question?.id || `q-${Date.now()}`);
+  const [countingObject, setCountingObject] = useState<CountableObject>(question?.kind === 'counting' ? question.object : 'pencil');
+  const [countingStartingGroups, setCountingStartingGroups] = useState(question?.kind === 'counting' ? question.startingGroups : 1);
+  const [countingStartingOnes, setCountingStartingOnes] = useState(question?.kind === 'counting' ? question.startingOnes : 2);
+  const [countingGroupsToAdd, setCountingGroupsToAdd] = useState(question?.kind === 'counting' ? question.groupsToAdd : 1);
 
   // Single/Multi choice state
   const [choices, setChoices] = useState<Array<{ id: string; label: string; correct?: boolean }>>(
@@ -177,6 +183,13 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setPoints(question.points || 1);
       setId(question.id);
 
+      if (question.kind === 'counting') {
+        setCountingObject(question.object);
+        setCountingStartingGroups(question.startingGroups);
+        setCountingStartingOnes(question.startingOnes);
+        setCountingGroupsToAdd(question.groupsToAdd);
+      }
+
       if (question.kind === 'single' || question.kind === 'multi') {
         setChoices((question as SingleQ | MultiQ).choices);
       } else if (question.kind === 'numeric') {
@@ -232,6 +245,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setHint('');
       setPoints(1);
       setId(`q-${Date.now()}`);
+      setCountingObject('pencil');
+      setCountingStartingGroups(1);
+      setCountingStartingOnes(2);
+      setCountingGroupsToAdd(1);
       setChoices([{ id: 'c1', label: '', correct: false }, { id: 'c2', label: '', correct: false }]);
       setNumericAnswer(0);
       setNumericRange({});
@@ -321,7 +338,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   };
 
   const handleSave = () => {
-    if (!prompt.trim()) {
+    if (kind !== 'counting' && !prompt.trim()) {
       alert('Please enter a question prompt');
       return;
     }
@@ -483,12 +500,35 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       const blanksArr = fillBlanks.split(',').map(s => s.trim()).filter(Boolean);
       const chipsArr = fillChips.split(',').map(s => s.trim()).filter(Boolean);
       let answersObj: Record<string,string> = {};
-      try { answersObj = JSON.parse(fillAnswers); } catch {}
+      try { answersObj = JSON.parse(fillAnswers); } catch { /* keep an empty answer map for invalid JSON */ }
       questionData = {
         id, kind: 'fill-expr', prompt, hint: hint || undefined,
         points, template: fillTemplate,
         blanks: blanksArr, chips: chipsArr, answers: answersObj,
       } satisfies FillExprQuestion;
+    } else if (kind === 'counting') {
+      const groups = Math.trunc(countingStartingGroups);
+      const ones = Math.trunc(countingStartingOnes);
+      const groupsToAdd = Math.trunc(countingGroupsToAdd);
+      const total = groups * 10 + ones + groupsToAdd * 10;
+      if (!Number.isInteger(groups) || groups < 0 || groups > 10 || !Number.isInteger(ones) || ones < 0 || ones > 9 || !Number.isInteger(groupsToAdd) || groupsToAdd < 1 || groupsToAdd > 10 || !Number.isInteger(total) || total > 100) {
+        alert('Use groups and ones that make a total between 1 and 100.');
+        return;
+      }
+      const objectName = countableObjectName(countingObject, total);
+      const generatedPrompt = `Start with ${groups * 10 + ones} ${countableObjectName(countingObject, groups * 10 + ones)}. Add ${groupsToAdd} ${groupsToAdd === 1 ? 'group' : 'groups'} of ten. How many ${objectName} are there altogether?`;
+      questionData = {
+        id,
+        kind: 'counting',
+        prompt: generatedPrompt,
+        hint: hint || undefined,
+        points,
+        object: countingObject,
+        startingGroups: groups,
+        startingOnes: ones,
+        groupsToAdd,
+        answerChoices: makeCountingAnswerChoices(total),
+      } satisfies CountingQ;
     } else {
       alert('Unsupported question type');
       return;
@@ -523,6 +563,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="slider">{ui("Slider")}</SelectItem>
                 <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
+                <SelectItem value="counting">Count objects in groups of ten</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -538,7 +579,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             />
           </div>
 
-          <div>
+          {kind !== 'counting' && <div>
             <Label htmlFor="prompt">{ui("Question Prompt")}</Label>
             <Textarea
               id="prompt"
@@ -548,7 +589,28 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               rows={3}
               required
             />
-          </div>
+          </div>}
+
+          {kind === 'counting' && (
+            <div className="space-y-3 rounded-xl border p-4">
+              <p className="text-sm text-muted-foreground">The instruction and answer are built from these values so the picture and question stay in sync.</p>
+              <div>
+                <Label htmlFor="counting-object">Objects</Label>
+                <Select value={countingObject} onValueChange={(value: CountableObject) => setCountingObject(value)}>
+                  <SelectTrigger id="counting-object"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {COUNTABLE_OBJECTS.map((object) => <SelectItem key={object} value={object}>{object[0].toUpperCase() + object.slice(1)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label htmlFor="counting-start-groups">Starting groups of ten</Label><Input id="counting-start-groups" type="number" min="0" max="10" value={countingStartingGroups} onChange={(event) => setCountingStartingGroups(Number(event.target.value))} /></div>
+                <div><Label htmlFor="counting-start-ones">Starting single objects</Label><Input id="counting-start-ones" type="number" min="0" max="9" value={countingStartingOnes} onChange={(event) => setCountingStartingOnes(Number(event.target.value))} /></div>
+                <div><Label htmlFor="counting-groups-to-add">Groups to add</Label><Input id="counting-groups-to-add" type="number" min="1" max="10" value={countingGroupsToAdd} onChange={(event) => setCountingGroupsToAdd(Number(event.target.value))} /></div>
+              </div>
+              <p className="text-sm font-medium">Answer: {countingExerciseTotal({ startingGroups: countingStartingGroups, startingOnes: countingStartingOnes, groupsToAdd: countingGroupsToAdd })}</p>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="hint">{ui("Hint (optional)")}</Label>

@@ -84,6 +84,8 @@ function buildTypeInstructions(questionTypes: string[]): string {
     - multiplication: second operand must be ONE digit only
     - division: use whole numbers only; divisor must be non-zero; prefer cases with a remainder when relevant
   - Keep prompts short and concrete, for example: "Complète l'addition posée." or "Complète les chiffres manquants dans cette division."`;
+      case 'counting':
+        return `- "counting": A scored Practice question about counting objects grouped in bundles of ten. Use only object: "pencil", "apple", "book", or "star". Include integer fields "startingGroups" (0-10), "startingOnes" (0-9), and "groupsToAdd" (1-10), with the final total no greater than 100. The app draws the groups and creates four answer choices, so do not provide answerChoices or another visual. The prompt must tell the student how many groups and single objects are shown, how many bundles of ten to add with the + button, and ask for the final number. Keep the prompt and hint appropriate for the selected language. Example: {"id":"q-1","kind":"counting","prompt":"There are 2 bundles of ten pencils and 3 single pencils. Add 2 bundles of ten, then choose the total number of pencils.","hint":"Count the pencils in tens, then add the single pencils.","points":1,"object":"pencil","startingGroups":2,"startingOnes":3,"groupsToAdd":2}`;
       case 'visual_pie':
         return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. The prompt must clearly refer to the pie/chart the student sees. TWO MODES:
 
@@ -211,7 +213,7 @@ function buildLearningFriendlyGuidance(): string {
 - For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
-- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, visual, slider, match, fill-expr.
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, counting, visual, slider, match, fill-expr.
 - For column-fill: include operation, operands, and optional instructions only. Do NOT include a layout object.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
 - If a "single", "multi", or "numeric" prompt references a visual ("ce gâteau", "cette figure", "ce triangle", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
@@ -228,6 +230,7 @@ function buildBatchSchemaGuidance(questionTypes: string[]): string {
       case 'numeric': return 'numeric: id, kind, prompt, hint, points, numeric answer; include answerUnit for measured quantities.';
       case 'ordering': return 'ordering: id, kind, prompt, hint, points, items[], correctOrder[] containing the same items.';
       case 'column-fill': return 'column-fill: id, kind, prompt, hint, points, operation, operands[2], instructions.';
+      case 'counting': return 'counting: id, kind, prompt, hint, points, object (pencil/apple/book/star), startingGroups, startingOnes, groupsToAdd; final total <= 100. The app derives four answer choices.';
       case 'visual': return 'visual: id, kind, prompt, hint, points, visual with a supported subtype and complete data.';
       case 'slider': return 'slider: id, kind, prompt, hint, points, min, max, step, answer, tolerance.';
       case 'match': return 'match: id, kind, prompt, hint, points, pairs[] of plain strings and answers.';
@@ -448,7 +451,7 @@ function repairContextVisual(question: any) {
 }
 
 function validateQuestions(questions: any[]): any[] {
-  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'visual', 'slider', 'match', 'fill-expr']);
+  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'counting', 'visual', 'slider', 'match', 'fill-expr']);
   const validVisualSubtypes = new Set(['pie', 'angle']);
 
   return questions.filter((q, idx) => {
@@ -456,6 +459,30 @@ function validateQuestions(questions: any[]): any[] {
     if (!q.id) q.id = `q-${idx + 1}`;
     if (!q.prompt) return false;
     if (!validKinds.has(q.kind)) return false;
+
+    if (q.kind === 'counting') {
+      const objects = ['pencil', 'apple', 'book', 'star'];
+      q.startingGroups = Number(q.startingGroups);
+      q.startingOnes = Number(q.startingOnes);
+      q.groupsToAdd = Number(q.groupsToAdd);
+      if (!objects.includes(q.object)
+        || !Number.isInteger(q.startingGroups) || q.startingGroups < 0 || q.startingGroups > 10
+        || !Number.isInteger(q.startingOnes) || q.startingOnes < 0 || q.startingOnes > 9
+        || !Number.isInteger(q.groupsToAdd) || q.groupsToAdd < 1 || q.groupsToAdd > 10) return false;
+      const total = q.startingGroups * 10 + q.startingOnes + q.groupsToAdd * 10;
+      if (total > 100) return false;
+      const distractors = [...new Set([total - 10, total + 10, total - 1, total + 1, total - 9, total + 9]
+        .filter((value) => value >= 0 && value <= 100 && value !== total))];
+      for (let offset = 2; distractors.length < 3; offset += 1) {
+        const candidate = (total + offset) % 101;
+        if (candidate !== total && !distractors.includes(candidate)) distractors.push(candidate);
+      }
+      // Rotate the right answer so generated items do not always put it first.
+      const choices = [total, ...distractors.slice(0, 3)];
+      const hash = Array.from(String(q.id)).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      q.answerChoices = choices.slice(hash % choices.length).concat(choices.slice(0, hash % choices.length));
+      delete q.choices;
+    }
 
     if (q.kind === "single" || q.kind === "multi" || q.kind === "numeric") {
       repairContextVisual(q);

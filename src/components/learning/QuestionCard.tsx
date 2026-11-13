@@ -18,6 +18,8 @@ import { FillExprQuestionView } from "./FillExprQuestion";
 import { ColumnFillQuestionView } from "./ColumnFillQuestion";
 import { useLearningDragDrop } from "./useLearningDragDrop";
 import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
+import { CountableObjectModel } from "@/components/practice/CountableObjectModel";
+import { countableObjectName, countingExerciseStart, countingExerciseTotal } from "@/features/practice/countingExercise";
 
 // Renders text that may contain $...$ inline or $$...$$ display LaTeX.
 function MathText({ text, style }: { text: string; style?: React.CSSProperties }) {
@@ -738,6 +740,7 @@ export function QuestionCard({
   const ui = useInterfaceTranslation();
   const initialValue = useMemo(() => {
     if (question.kind === "multi") return [];
+    if (question.kind === "counting") return { addedGroups: 0, selectedAnswer: null };
     if (question.kind === "visual") {
       return getInitialVisualValue(question.visual);
     }
@@ -767,6 +770,7 @@ export function QuestionCard({
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const onChangeRef = useRef(onChange);
   const inferredPromptFigure = useMemo(() => {
+    if (question.kind === 'counting') return null;
     if ((question as any).context_visual) return null;
     return inferPromptFigure(question);
   }, [question]);
@@ -866,6 +870,31 @@ export function QuestionCard({
       <h3 className="text-lg font-semibold mb-3">
         <InlineMathText text={question.prompt} />
       </h3>
+
+      {question.kind === 'counting' && (() => {
+        const addedGroups = Math.max(0, Math.min(question.groupsToAdd, Number(value?.addedGroups) || 0));
+        const total = countingExerciseTotal(question);
+        const readyForAnswer = addedGroups >= question.groupsToAdd;
+        return (
+          <div className="space-y-3" data-testid="quiz-counting-question">
+            <CountableObjectModel object={question.object} value={countingExerciseStart(question) + addedGroups * 10} />
+            {!readyForAnswer ? (
+              <>
+                <p className="text-center text-sm font-semibold text-muted-foreground">Groups added: {addedGroups} of {question.groupsToAdd}</p>
+                <button type="button" aria-label="Add one group of ten" disabled={submittedAnswer !== undefined} onClick={() => setVal({ addedGroups: addedGroups + 1, selectedAnswer: null })} className="min-h-12 w-full rounded-xl border-2 border-primary px-4 font-bold text-primary disabled:opacity-50">+ Add one group of ten</button>
+              </>
+            ) : (
+              <div role="group" aria-label={`Choose how many ${countableObjectName(question.object, total)} there are`} className="grid grid-cols-2 gap-2">
+                {question.answerChoices.map((choice) => (
+                  <button key={choice} type="button" aria-pressed={value?.selectedAnswer === choice} disabled={submittedAnswer !== undefined} onClick={() => setVal({ addedGroups, selectedAnswer: choice })} className={`min-h-12 rounded-xl border-2 px-3 font-bold disabled:opacity-50 ${value?.selectedAnswer === choice ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white'}`}>
+                    {choice}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {question.kind === "single" && (
         <div className={question.choices.length === 4 ? "grid grid-cols-2 gap-3 mt-4" : "space-y-2 mt-3"}>

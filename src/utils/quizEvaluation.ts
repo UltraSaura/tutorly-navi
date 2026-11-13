@@ -22,6 +22,10 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
     const yours = Array.isArray(answer) ? [...answer].sort().join(",") : "";
     return correct === yours;
   }
+  if (q.kind === 'counting') {
+    return Number(answer?.addedGroups) === q.groupsToAdd
+      && Number(answer?.selectedAnswer) === q.startingGroups * 10 + q.startingOnes + q.groupsToAdd * 10;
+  }
   if (q.kind === "numeric") {
     const numQ = q as any;
     if (numQ.answerFormat === "fraction" && numQ.fractionAnswer) {
@@ -80,6 +84,15 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
     );
   }
   return false;
+}
+
+export function isQuizAnswerComplete(q: Question, answer: any): boolean {
+  if (q.kind === 'counting') {
+    return answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
+      && Number(answer?.addedGroups) >= q.groupsToAdd
+      && Number.isInteger(Number(answer?.selectedAnswer));
+  }
+  return true;
 }
 
 export function gradeQuiz(questions: Question[], answers: Record<string, any>) {

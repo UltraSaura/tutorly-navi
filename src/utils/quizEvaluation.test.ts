@@ -3,6 +3,7 @@ import type { Question } from "@/types/quiz-bank";
 import { buildColumnFillQuestion } from "@/lib/quiz/columnFillBuilder";
 import {
   evaluateQuestion,
+  isQuizAnswerComplete,
   getPenaltyFactorForAttempt,
   gradeQuizWithDetails,
   scoreQuestionWithPenalty,
@@ -20,6 +21,20 @@ const singleQuestion = (id: string, points = 1): Question => ({
 });
 
 describe("quiz penalty grading", () => {
+  it('scores a counting-bank question only after the required groups and correct choice', () => {
+    const question: Question = {
+      id: 'count-1', kind: 'counting', prompt: 'Start with 12 apples. Add one group of ten.',
+      object: 'apple', startingGroups: 1, startingOnes: 2, groupsToAdd: 1,
+      answerChoices: [22, 12, 32, 23], points: 2,
+    };
+    expect(isQuizAnswerComplete(question, { addedGroups: 0, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { addedGroups: 1, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { addedGroups: 1, selectedAnswer: 12 })).toBe(true);
+    expect(evaluateQuestion(question, { addedGroups: 0, selectedAnswer: 22 })).toBe(false);
+    expect(evaluateQuestion(question, { addedGroups: 1, selectedAnswer: 12 })).toBe(false);
+    expect(evaluateQuestion(question, { addedGroups: 1, selectedAnswer: 22 })).toBe(true);
+  });
+
   it("uses the 100/50/25/0 penalty curve", () => {
     expect(getPenaltyFactorForAttempt(1)).toBe(1);
     expect(getPenaltyFactorForAttempt(2)).toBe(0.5);

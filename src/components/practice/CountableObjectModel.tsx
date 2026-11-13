@@ -1,5 +1,5 @@
 import { Apple, BookOpen, Pencil, Star } from 'lucide-react';
-import { CountableObject } from '@/features/practice/countingExercise';
+import { CountableObject } from '@/types/counting-exercise';
 
 const objectDetails = {
   pencil: { singular: 'pencil', plural: 'pencils', Icon: Pencil },

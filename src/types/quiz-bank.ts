@@ -1,4 +1,5 @@
 import type { VisualUnion } from "@/lib/quiz/visual-types";
+import type { CountableObject } from "@/types/counting-exercise";
 
 export type Choice = { id: string; label: string; correct?: boolean };
 
@@ -25,6 +26,14 @@ export type NumericQ = BaseQ & {
   timeAnswer?: { days?: number; hours: number; minutes: number; seconds?: number };
   answerUnit?: string;
   dragOptions?: number[];
+};
+export type CountingQ = BaseQ & {
+  kind: "counting";
+  object: CountableObject;
+  startingGroups: number;
+  startingOnes: number;
+  groupsToAdd: number;
+  answerChoices: number[];
 };
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
 export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
@@ -137,6 +146,7 @@ export type Question =
   | SingleQ
   | MultiQ
   | NumericQ
+  | CountingQ
   | OrderingQ
   | VisualQ
   | OperationPoseeQ

@@ -62,6 +62,7 @@ const QUESTION_TYPES = [
   { value: 'numeric',      label: 'Numeric',                 description: 'Type a number as the answer' },
   { value: 'ordering',     label: 'Ordering',                description: 'Arrange items in the correct sequence' },
   { value: 'column-fill',  label: '🧮 Column method',         description: 'Fill missing digits in an arithmetic column layout' },
+  { value: 'counting',     label: '🔢 Count in groups of ten', description: 'Count grouped objects, add bundles, then choose the total' },
   { value: 'slider',       label: '🎚️ Slider',               description: 'Drag a slider to the correct value — great for estimating quantities' },
   { value: 'match',        label: '🔗 Match pairs',           description: 'Connect left-column items to their right-column matches' },
   { value: 'fill_expr',    label: '🧩 Fill the expression',  description: 'Drag number chips into blanks to complete a formula' },

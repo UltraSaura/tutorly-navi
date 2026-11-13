@@ -114,6 +114,7 @@ test('reusable counting exercise adds groups, checks answers, and accepts anothe
   await answers.getByRole('button', { name: new RegExp(`^${correctAnswer} `) }).click();
   await page.getByRole('button', { name: 'Check answer', exact: true }).click();
   await expect(page.getByRole('heading', { name: `You counted ${correctAnswer} ${object}.`, exact: true })).toBeVisible();
+  await expect(page.getByText('Score: 0.5 / 1 point', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try another count', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Try another count', exact: true }).click();
   await expect(page.getByRole('button', { name: /^Add one group of ten / })).toBeVisible();

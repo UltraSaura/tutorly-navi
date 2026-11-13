@@ -7,12 +7,14 @@ import { learnerStorageKey } from '@/features/family/profileRuntime';
 import { countableObjectName, createDifferentCountingExercise, createCountingExercise, CountingExercise, CountingExercisePhase, countingExerciseStart, countingExerciseTotal, isValidCountingExercise } from '@/features/practice/countingExercise';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { CountableObjectModel } from '@/components/practice/CountableObjectModel';
+import { scoreQuestionWithPenalty } from '@/utils/quizEvaluation';
 
 const KEY = 'tutorly:practice:count-objects:v1';
 
 type SavedCountingExercise = {
   exercise?: unknown;
   addedGroups?: number;
+  attemptCount?: number;
   phase?: CountingExercisePhase;
   selectedAnswer?: number | null;
 };
@@ -26,6 +28,7 @@ export default function AddUpTo100Page() {
   const storageKey = learnerStorageKey(KEY, learnerId);
   const [exercise, setExercise] = useState<CountingExercise>(() => createCountingExercise());
   const [addedGroups, setAddedGroups] = useState(0);
+  const [attemptCount, setAttemptCount] = useState(0);
   const [phase, setPhase] = useState<CountingExercisePhase>('adding');
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<'incorrect' | null>(null);
@@ -53,6 +56,7 @@ export default function AddUpTo100Page() {
     const freshExercise = createCountingExercise();
     setExercise(freshExercise);
     setAddedGroups(0);
+    setAttemptCount(0);
     setPhase('adding');
     setSelectedAnswer(null);
     setFeedback(null);
@@ -67,6 +71,7 @@ export default function AddUpTo100Page() {
           : 0;
         setExercise(parsed.exercise);
         setAddedGroups(restoredAddedGroups);
+        setAttemptCount(Number.isInteger(parsed.attemptCount) ? Math.max(0, parsed.attemptCount!) : 0);
         setPhase(parsed.phase);
         setSelectedAnswer(Number.isInteger(parsed.selectedAnswer) ? parsed.selectedAnswer! : null);
         if (parsed.phase === 'choosing' && restoredAddedGroups < parsed.exercise.groupsToAdd) {
@@ -80,9 +85,9 @@ export default function AddUpTo100Page() {
   useEffect(() => {
     if (loadedKey !== storageKey) return;
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ exercise, addedGroups, phase, selectedAnswer }));
+      localStorage.setItem(storageKey, JSON.stringify({ exercise, addedGroups, attemptCount, phase, selectedAnswer }));
     } catch { /* the activity remains usable if storage is unavailable */ }
-  }, [addedGroups, exercise, loadedKey, phase, selectedAnswer, storageKey]);
+  }, [addedGroups, attemptCount, exercise, loadedKey, phase, selectedAnswer, storageKey]);
 
   const addBundle = () => {
     const nextAddedGroups = Math.min(exercise.groupsToAdd, addedGroups + 1);
@@ -97,6 +102,7 @@ export default function AddUpTo100Page() {
       return;
     }
     setEntryError(null);
+    setAttemptCount((count) => count + 1);
     if (selectedAnswer === total) {
       setFeedback(null);
       setPhase('complete');
@@ -114,6 +120,7 @@ export default function AddUpTo100Page() {
   const nextChallenge = () => {
     setExercise(createDifferentCountingExercise(exercise));
     setAddedGroups(0);
+    setAttemptCount(0);
     setPhase('adding');
     setSelectedAnswer(null);
     setFeedback(null);
@@ -134,7 +141,7 @@ export default function AddUpTo100Page() {
         </button>
         <header className="mb-5">
           <p className="text-sm font-bold text-[#5145B5]">Maths · Count to 100</p>
-          {phase !== 'complete' && <p className="mt-1 text-sm text-[#667085]">Count objects in groups of ten · No timer or score</p>}
+          {phase !== 'complete' && <p className="mt-1 text-sm text-[#667085]">Count objects in groups of ten · Scored practice · No timer</p>}
         </header>
 
         {phase === 'complete' ? (
@@ -142,6 +149,7 @@ export default function AddUpTo100Page() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F7F0] text-[#087F68]"><Check className="h-7 w-7" aria-hidden="true" /></div>
             <h1 id="complete-title" className="mt-4 text-2xl font-extrabold">You counted {total} {objectName}.</h1>
             <p className="mt-2 text-[#667085]">{startingValue} plus {exercise.groupsToAdd} {exercise.groupsToAdd === 1 ? 'group' : 'groups'} of ten makes {total}.</p>
+            <p className="mt-2 font-bold text-[#087F68]">Score: {scoreQuestionWithPenalty(1, Math.max(1, attemptCount), true).awardedPoints} / 1 point</p>
             <button type="button" onClick={nextChallenge} className="mt-6 min-h-12 rounded-xl bg-[#5145B5] px-5 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Try another count</button>
             <p className="mt-4 text-xs text-[#667085]">Your place is saved on this device. This practice does not award mastery.</p>
           </section>

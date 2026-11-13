@@ -1,5 +1,6 @@
-export const COUNTABLE_OBJECTS = ['pencil', 'apple', 'book', 'star'] as const;
-export type CountableObject = typeof COUNTABLE_OBJECTS[number];
+import { COUNTABLE_OBJECTS, CountableObject } from '@/types/counting-exercise';
+export { COUNTABLE_OBJECTS } from '@/types/counting-exercise';
+export type { CountableObject } from '@/types/counting-exercise';
 
 /** Data contract for one instance of Tutorly's reusable count-in-groups exercise. */
 export type CountingExercise = {
@@ -45,7 +46,7 @@ export function countingExerciseTotal(exercise: Pick<CountingExercise, 'starting
   return countingExerciseStart(exercise) + exercise.groupsToAdd * 10;
 }
 
-function answerChoicesFor(total: number, random: () => number) {
+export function makeCountingAnswerChoices(total: number, random: () => number = Math.random) {
   const candidates = [total - 10, total + 10, total - 1, total + 1, total - 9, total + 9]
     .filter((n) => n >= 0 && n <= 100 && n !== total);
   const distractors = [...new Set(candidates)];
@@ -71,7 +72,7 @@ export function createCountingExercise(random: () => number = Math.random): Coun
     startingGroups,
     startingOnes,
     groupsToAdd,
-    answerChoices: answerChoicesFor(total, random),
+    answerChoices: makeCountingAnswerChoices(total, random),
   };
 }
 
@@ -100,7 +101,7 @@ export function createDifferentCountingExercise(previous: CountingExercise, rand
   if (countingExerciseTotal(next) !== countingExerciseTotal(previous)) return next;
   const startingOnes = (previous.startingOnes + 1) % 10;
   const total = previous.startingGroups * 10 + startingOnes + previous.groupsToAdd * 10;
-  return { ...previous, id: `count-${Math.floor(random() * 1_000_000)}`, startingOnes, answerChoices: answerChoicesFor(total, random) };
+  return { ...previous, id: `count-${Math.floor(random() * 1_000_000)}`, startingOnes, answerChoices: makeCountingAnswerChoices(total, random) };
 }
 
 /** Shared bounded counter increment used by the separate Numbers after ten activity. */
