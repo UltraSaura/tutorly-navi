@@ -1,27 +1,94 @@
-export type AddUpStep = {
-  id: string;
-  prompt: string;
-  start: number;
-  target: number;
-  mode: 'tens' | 'ones' | 'both' | 'answer' | 'choice';
-  choices?: number[];
-  hint: string;
-  explanation: string;
+export type PenCountChallenge = {
+  startingTens: number;
+  startingOnes: number;
+  addedTens: number;
+  answerChoices: number[];
 };
 
-export const ADD_UP_TO_100_STEPS: AddUpStep[] = [
-  { id: 'count-groups', prompt: 'Tap + three times to add three groups of ten.', start: 0, target: 30, mode: 'tens', hint: 'Each tap adds one group of 10.', explanation: 'Three groups of ten make 30 dots.' },
-  { id: 'name-30', prompt: 'What number is that?', start: 30, target: 30, mode: 'choice', choices: [30, 40, 50, 300], hint: 'Count the groups by tens: 10, 20, 30.', explanation: 'Three groups of ten make 30.' },
-  { id: 'add-30', prompt: 'What is 30 + 30?', start: 30, target: 60, mode: 'choice', choices: [33, 50, 60, 70], hint: 'Three tens plus three tens make six tens.', explanation: '30 + 30 = 60.' },
-  { id: 'name-67', prompt: 'What number is 60 + 7?', start: 67, target: 67, mode: 'choice', choices: [57, 67, 77, 607], hint: 'Keep the six tens, then count seven ones.', explanation: '60 and 7 ones make 67.' },
-  { id: 'make-100', prompt: 'What do you add to 67 to make 100?', start: 67, target: 33, mode: 'choice', choices: [3, 23, 33, 43], hint: '67 + 3 reaches 70. How much more to 100?', explanation: '67 + 33 = 100.' },
-  { id: 'symbolic', prompt: 'Solve 45 + 7.', start: 45, target: 52, mode: 'choice', choices: [42, 51, 52, 53], hint: 'Add 5 to reach 50. How many of the 7 are left?', explanation: '45 + 7 = 52.' },
-];
+export type PenCountPhase = 'adding' | 'choosing' | 'complete';
 
-export function isCorrectAddUpAnswer(step: AddUpStep, value: number): boolean {
-  return Number.isFinite(value) && value === step.target;
+const randomInteger = (minimum: number, maximum: number, random: () => number) =>
+  minimum + Math.floor(random() * (maximum - minimum + 1));
+
+function shuffle(values: number[], random: () => number): number[] {
+  const shuffled = [...values];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }
 
+export function penCountStartingValue(challenge: Pick<PenCountChallenge, 'startingTens' | 'startingOnes'>): number {
+  return challenge.startingTens * 10 + challenge.startingOnes;
+}
+
+export function penCountTotal(challenge: Pick<PenCountChallenge, 'startingTens' | 'startingOnes' | 'addedTens'>): number {
+  return penCountStartingValue(challenge) + challenge.addedTens * 10;
+}
+
+function makeAnswerChoices(total: number, random: () => number): number[] {
+  const distractors = [total - 10, total + 10, total + 1, total - 1]
+    .filter((choice) => choice >= 0 && choice <= 100 && choice !== total);
+  const uniqueDistractors = [...new Set(distractors)];
+  while (uniqueDistractors.length < 3) {
+    const fallback = Math.max(0, total - 10 * (uniqueDistractors.length + 1));
+    if (!uniqueDistractors.includes(fallback) && fallback !== total) uniqueDistractors.push(fallback);
+  }
+  return shuffle([total, ...uniqueDistractors.slice(0, 3)], random);
+}
+
+export function createPenCountChallenge(random: () => number = Math.random): PenCountChallenge {
+  const startingTens = randomInteger(1, 5, random);
+  const startingOnes = randomInteger(0, 9, random);
+  const startingValue = startingTens * 10 + startingOnes;
+  const maximumAddedTens = Math.min(5, Math.floor((100 - startingValue) / 10));
+  const addedTens = randomInteger(1, maximumAddedTens, random);
+  const total = startingValue + addedTens * 10;
+  return {
+    startingTens,
+    startingOnes,
+    addedTens,
+    answerChoices: makeAnswerChoices(total, random),
+  };
+}
+
+export function createDifferentPenCountChallenge(previous: PenCountChallenge, random: () => number = Math.random): PenCountChallenge {
+  const next = createPenCountChallenge(random);
+  if (penCountTotal(next) !== penCountTotal(previous)) return next;
+
+  const startingOnes = (previous.startingOnes + 1) % 10;
+  const startingValue = previous.startingTens * 10 + startingOnes;
+  const maximumAddedTens = Math.min(5, Math.floor((100 - startingValue) / 10));
+  const addedTens = Math.min(previous.addedTens, maximumAddedTens);
+  const total = startingValue + addedTens * 10;
+  return {
+    startingTens: previous.startingTens,
+    startingOnes,
+    addedTens,
+    answerChoices: makeAnswerChoices(total, random),
+  };
+}
+
+export function isValidPenCountChallenge(value: unknown): value is PenCountChallenge {
+  if (!value || typeof value !== 'object') return false;
+  const challenge = value as Partial<PenCountChallenge>;
+  if (!Number.isInteger(challenge.startingTens) || (challenge.startingTens ?? 0) < 1 || (challenge.startingTens ?? 0) > 5) return false;
+  if (!Number.isInteger(challenge.startingOnes) || (challenge.startingOnes ?? -1) < 0 || (challenge.startingOnes ?? 10) > 9) return false;
+  if (!Number.isInteger(challenge.addedTens) || (challenge.addedTens ?? 0) < 1 || (challenge.addedTens ?? 6) > 5) return false;
+  if (penCountTotal(challenge as PenCountChallenge) > 100) return false;
+  return Array.isArray(challenge.answerChoices)
+    && challenge.answerChoices.length === 4
+    && challenge.answerChoices.every((choice) => Number.isInteger(choice) && choice >= 0 && choice <= 100)
+    && new Set(challenge.answerChoices).size === 4
+    && challenge.answerChoices.includes(penCountTotal(challenge as PenCountChallenge));
+}
+
+export function nextPenCountValue(current: number, target: number): number {
+  return Math.min(target, current + 10);
+}
+
+/** Shared bounded counter increment used by the separate Numbers after ten activity. */
 export function nextAddUpValue(current: number, increment: 1 | 10, target: number): number {
   return Math.min(target, current + increment);
 }

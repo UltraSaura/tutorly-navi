@@ -5,9 +5,9 @@ Updated 2026-11-13. Distinguish supplied observations from original Tutorly choi
 ## Add up to 100
 
 - **Observed:** The supplied recording shows recall/check first: tap + three times to add three tens, identify 30, answer 30 + 30, identify 60 + 7, find the amount to add to 67 to reach 100, then solve 45 + 7. The check/reward card appears before the later guided path. That guided path asks whether the learner is familiar; only the No branch and its first prompt (two groups of ten) are visible.
-- **Designed:** Tutorly uses original wording and a static dot model with outlined groups of ten and separate loose ones. The same deterministic numeric state drives the model, controls, and answer check. There are no animated or draggable pieces.
-- **Designed:** The learner taps a visible + Add 10 button three times; after the third group, Tutorly shows selectable answer buttons instead of asking the learner to type or merely confirm the only available number. The first answer set follows the recorded choices 30, 40, 50, and 300. The numeric total is omitted from the visual model and its accessible description on choice screens. Later question choice sets are presented as Tutorly answer controls and should be revised if a clearer recording shows different options.
-- **Designed:** Tutorly starts with the recall/check and then offers a start-from-the-beginning practice. The later Tutorly practice reuses known arithmetic ideas as a short original exercise; it is not claimed to reproduce the reference's unseen guided sequence.
+- **Designed:** Tutorly's first slice is a counting exercise using original pen icons arranged in outlined bundles of ten plus loose pens. The model has no printed total; prompt, model, + control, and multiple-choice answers all use the same challenge state. This avoids presenting an equation that does not match the picture and gives Tutorly a distinct visual identity.
+- **Designed:** A challenge starts with one to five bundles and zero to nine single pens. A visible + button adds the requested number of bundles; then four answer choices ask for the total. Counts vary each round, stay at or below 100, and the next round has a different total. Hint, explanatory wrong-answer feedback, retry, completion, and local learner-scoped resume are provided.
+- **Designed:** This first Tutorly exercise focuses on counting grouped objects. It does not claim to reproduce the reference's recall/check or unseen guided sequence. There are no animated or draggable pieces, timer, score, reward, or mastery badge.
 - **Designed:** Tutorly includes explanatory feedback and retry. No clock, score, reward, or mastery badge is shown. Optional system speech reads the current instruction when speech synthesis is available; the visible text remains canonical.
 - **Unknown:** The reference familiarity Yes branch, later guided prompts, error handling, completion threshold, mastery, and voice settings. No competitor copy/assets/voice are used. Tutorly's observed check completion is only local resume state, not mastery.
 
@@ -21,7 +21,7 @@ Updated 2026-11-13. Distinguish supplied observations from original Tutorly choi
 ## Numbers after ten expansion
 
 - **Observed:** The evidence log for **The Next 10** describes a fixed group of ten plus individually added units, with visible examples 11 and 12 and a ten-and-ones number legend. The full sequence and all error paths are unknown.
-- **Designed:** A short original Tutorly activity asks the learner to build 11, 12, and 15 from one full ten and single dots. It reuses the shared countable-dot model, and derives the displayed total from the same state used by its Add 1 control.
+- **Designed:** A short original Tutorly activity asks the learner to build 11, 12, and 15 from one full ten and single dots. It derives the displayed total from the same state used by its Add 1 control.
 - **Unknown:** This three-step activity is not asserted to match the reference sequence. It has no score, timer, mastered state, or reward.
 
 ## Progress and data

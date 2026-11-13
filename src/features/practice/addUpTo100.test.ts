@@ -1,24 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { ADD_UP_TO_100_STEPS, isCorrectAddUpAnswer, nextAddUpValue } from './addUpTo100';
+import { createDifferentPenCountChallenge, createPenCountChallenge, isValidPenCountChallenge, nextPenCountValue, penCountTotal } from './addUpTo100';
 
-describe('Add up to 100 lesson logic', () => {
-  it('checks the observed lesson answers without treating nearby values as correct', () => {
-    expect(ADD_UP_TO_100_STEPS.map((step) => step.target)).toEqual([30, 30, 60, 67, 33, 52]);
-    expect(ADD_UP_TO_100_STEPS.map((step) => step.id)).toEqual(['count-groups', 'name-30', 'add-30', 'name-67', 'make-100', 'symbolic']);
-    expect(ADD_UP_TO_100_STEPS[0].mode).toBe('tens');
-    expect(ADD_UP_TO_100_STEPS[1].mode).toBe('choice');
-    expect(ADD_UP_TO_100_STEPS[1].choices).toEqual([30, 40, 50, 300]);
-    expect(ADD_UP_TO_100_STEPS[1].choices).toContain(ADD_UP_TO_100_STEPS[1].target);
-    expect(isCorrectAddUpAnswer(ADD_UP_TO_100_STEPS[4], 33)).toBe(true);
-    expect(isCorrectAddUpAnswer(ADD_UP_TO_100_STEPS[4], 100)).toBe(false);
-    expect(isCorrectAddUpAnswer(ADD_UP_TO_100_STEPS[5], 52)).toBe(true);
+describe('Count the pens challenge', () => {
+  it('builds a varied count from bundles and single pens', () => {
+    const challenge = createPenCountChallenge(() => 0.5);
+    expect(challenge).toMatchObject({ startingTens: 3, startingOnes: 5, addedTens: 3 });
+    expect(penCountTotal(challenge)).toBe(65);
+    expect(challenge.answerChoices).toHaveLength(4);
+    expect(new Set(challenge.answerChoices).size).toBe(4);
+    expect(challenge.answerChoices).toContain(65);
   });
 
-  it('adds one or ten dots without overshooting the step target', () => {
-    expect(nextAddUpValue(0, 10, 30)).toBe(10);
-    expect(nextAddUpValue(10, 10, 30)).toBe(20);
-    expect(nextAddUpValue(20, 10, 30)).toBe(30);
-    expect(nextAddUpValue(30, 10, 60)).toBe(40);
-    expect(nextAddUpValue(97, 10, 100)).toBe(100);
+  it('keeps every generated total at or below 100, including the edge of the range', () => {
+    const challenge = createPenCountChallenge(() => 0.999999);
+    expect(penCountTotal(challenge)).toBe(99);
+    expect(isValidPenCountChallenge(challenge)).toBe(true);
+    expect(penCountTotal(createPenCountChallenge(() => 0))).toBe(20);
+  });
+
+  it('ensures the next round uses a different total', () => {
+    const previous = createPenCountChallenge(() => 0.5);
+    const next = createDifferentPenCountChallenge(previous, () => 0.5);
+    expect(penCountTotal(next)).not.toBe(penCountTotal(previous));
+    expect(isValidPenCountChallenge(next)).toBe(true);
+  });
+
+  it('rejects saved challenge data with invalid choices or totals', () => {
+    expect(isValidPenCountChallenge({ startingTens: 6, startingOnes: 0, addedTens: 1, answerChoices: [70, 60, 80, 71] })).toBe(false);
+    expect(isValidPenCountChallenge({ startingTens: 3, startingOnes: 5, addedTens: 2, answerChoices: [55, 55, 45, 65] })).toBe(false);
+  });
+
+  it('adds one bundle at a time and stops at the target', () => {
+    expect(nextPenCountValue(35, 55)).toBe(45);
+    expect(nextPenCountValue(45, 55)).toBe(55);
+    expect(nextPenCountValue(55, 55)).toBe(55);
   });
 });
