@@ -32,7 +32,8 @@ Source: `references/development-instructions.md`, the checked-in evidence log. T
 - The previous screen's long “4 bundles and 4 singles; tap +5 times” prompt was user feedback that the example felt confusing and too specific. It is replaced with a short starting count and group-add instruction. The exercise type can later be populated with other counts and objects without changing the renderer.
 - The reference guided path's familiarity Yes/No branch was observed, but only the No outcome and first prompt are visible. Tutorly does not claim to reproduce the unseen Yes branch or later guided steps.
 - The existing Tutorly flashcards remain an original, untimed one-card-at-a-time practice mode. The recordings do not establish enough about timer, answer capture, race progress, scoring, or mastery to add those behaviors without inventing rules.
-- The other recordings document subtraction, Color Count, The Next 10, Add Across 10, word problems, an analog clock, and multiplication. Their sampled flows and open questions remain in the reference log; they were not implemented as new Tutorly activities in this follow-up.
+- **Subtract Within 10 implementation:** the 21.07.52 recording shows the learner adding bubbles to reach 8, using the lightning control to remove 5, identifying `8 − 5`, and then solving it. Tutorly now has a separate reusable bubble-subtraction activity and bank question type. It is categorized as CP foundation / CE1 review, not as the larger-number written subtraction category. The source does not establish timer, scoring, mastery, or complete error behavior.
+- The other recordings document Color Count, The Next 10, Add Across 10, word problems, an analog clock, and multiplication. Their sampled flows and open questions remain in the reference log; the Add Across 10 activity remains a separate content type.
 
 ## Addition across ten: CE1
 
@@ -44,6 +45,14 @@ Source: `references/development-instructions.md`, the checked-in evidence log. T
 - **Verification:** `npm run test:ci` passed all 121 files / 1,144 tests; `npm run typecheck`, `npm run build`, and the two-viewport browser journey passed. The browser run used desktop 1280×900 and mobile 390×844, enabled reduced motion, checked the first action is visible above the mobile bottom navigation without scrolling, and exercised hint, keyboard/touch input, incorrect feedback, retry scoring, completion, and learner-scoped resume after reload. No learner/backend data was written.
 - **Lint:** focused ESLint passed for the new model, exercise contract/tests, Practice page, and E2E files. Focused lint across all modified legacy files reports existing `no-explicit-any` violations in the broader quiz/admin/evaluation/Edge Function files; the repository already has substantial recorded lint debt. The changed files also pass with those existing `no-explicit-any` diagnostics and the existing React hook dependency lint rule disabled. No new lint errors were introduced in the new standalone files.
 - **Build warnings:** existing mixed static/dynamic Supabase import and oversized chunk warnings remain. The updated AI topic generator is source-only and was not deployed.
+
+## Subtraction within ten with bubbles
+
+- **Source video:** `Screen Recording 2026-11-10 at 21.07.52-compressed.mp4` (2:38). It demonstrates reaching 8 dots with +, removing 5 with the lightning control, choosing the matching equation, and answering the subtraction. It does not establish the full lesson sequence or scoring rules.
+- **Classification:** CP foundation → mental subtraction within ten, used as CE1 review/fluency. This concrete counter activity is not the same category as written/line subtraction with larger numbers.
+- **Implemented:** a dedicated bubble model and Practice route. The + button adds one dot per tap. Only after reaching the requested count does the lightning button appear; it removes one dot per tap. Students then identify the subtraction and choose the result. The bank editor and AI generator source support a reusable `subtraction-with-dots` question using existing JSON payload, without schema changes. Learner progress resumes locally; no mastery is awarded.
+- **Unknown:** complete source sequence, later difference representation, error handling, score/timer behavior, and mastery remain unknown. The values, points and two answer stages are Tutorly choices.
+- **Verification:** `npm run test:ci` passed (122 files / 1,150 tests); `npm run typecheck`, `npm run build`, focused ESLint on the new lesson files, `git diff --check`, and the desktop/mobile subtraction browser journey passed. Full `npm run lint` reports 1,040 errors and 108 warnings both on this work and on a clean worktree at the starting commit (`f2680d8b`), so those findings predate this correction. No production learner data was used.
 
 ### Current verification
 

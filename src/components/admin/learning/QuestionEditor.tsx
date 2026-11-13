@@ -9,12 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ, CountingQ, AdditionAcrossTenQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ, CountingQ, AdditionAcrossTenQ, SubtractionWithDotsQ } from '@/types/quiz-bank';
 import type { SliderQuestion, MatchQuestion, FillExprQuestion } from '@/types/quiz-bank';
 import { buildColumnFillQuestion } from '@/lib/quiz/columnFillBuilder';
 import { countableObjectName, countingExerciseTotal, makeCountingAnswerChoices } from '@/features/practice/countingExercise';
 import { COUNTABLE_OBJECTS, type CountableObject } from '@/types/counting-exercise';
 import { additionAcrossTenTotal, countersToNextTen, makeAdditionAcrossTenChoices } from '@/features/practice/additionAcrossTen';
+import { makeSubtractionWithDotsChoices } from '@/features/practice/subtractionWithDots';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -61,6 +62,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [countingGroupsToAdd, setCountingGroupsToAdd] = useState(question?.kind === 'counting' ? question.groupsToAdd : 1);
   const [additionStartNumber, setAdditionStartNumber] = useState(question?.kind === 'addition-across-ten' ? question.startNumber : 47);
   const [additionAddend, setAdditionAddend] = useState(question?.kind === 'addition-across-ten' ? question.addend : 8);
+  const [subtractionTarget, setSubtractionTarget] = useState(question?.kind === 'subtraction-with-dots' ? question.targetCount : 8);
+  const [subtractionTakeAway, setSubtractionTakeAway] = useState(question?.kind === 'subtraction-with-dots' ? question.takeAway : 5);
 
   // Single/Multi choice state
   const [choices, setChoices] = useState<Array<{ id: string; label: string; correct?: boolean }>>(
@@ -196,6 +199,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setAdditionStartNumber(question.startNumber);
         setAdditionAddend(question.addend);
       }
+      if (question.kind === 'subtraction-with-dots') {
+        setSubtractionTarget(question.targetCount);
+        setSubtractionTakeAway(question.takeAway);
+      }
 
       if (question.kind === 'single' || question.kind === 'multi') {
         setChoices((question as SingleQ | MultiQ).choices);
@@ -258,6 +265,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setCountingGroupsToAdd(1);
       setAdditionStartNumber(47);
       setAdditionAddend(8);
+      setSubtractionTarget(8);
+      setSubtractionTakeAway(5);
       setChoices([{ id: 'c1', label: '', correct: false }, { id: 'c2', label: '', correct: false }]);
       setNumericAnswer(0);
       setNumericRange({});
@@ -347,7 +356,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   };
 
   const handleSave = () => {
-    if (!['counting', 'addition-across-ten'].includes(kind) && !prompt.trim()) {
+    if (!['counting', 'addition-across-ten', 'subtraction-with-dots'].includes(kind) && !prompt.trim()) {
       alert('Please enter a question prompt');
       return;
     }
@@ -557,6 +566,23 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         addend,
         answerChoices: makeAdditionAcrossTenChoices(additionAcrossTenTotal({ startNumber, addend })),
       } satisfies AdditionAcrossTenQ;
+    } else if (kind === 'subtraction-with-dots') {
+      const targetCount = Math.trunc(subtractionTarget);
+      const takeAway = Math.trunc(subtractionTakeAway);
+      if (!Number.isInteger(targetCount) || targetCount < 2 || targetCount > 10 || !Number.isInteger(takeAway) || takeAway < 1 || takeAway >= targetCount) {
+        alert('Choose a number of bubbles from 2 to 10, then a smaller number to take away.');
+        return;
+      }
+      questionData = {
+        id,
+        kind: 'subtraction-with-dots',
+        prompt: `Add ${targetCount} bubbles, then take away ${takeAway}. Choose how many are left.`,
+        hint: hint || `Start with ${targetCount} bubbles and count what remains after taking away ${takeAway}.`,
+        points,
+        targetCount,
+        takeAway,
+        answerChoices: makeSubtractionWithDotsChoices(targetCount - takeAway),
+      } satisfies SubtractionWithDotsQ;
     } else {
       alert('Unsupported question type');
       return;
@@ -593,6 +619,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
                 <SelectItem value="counting">Count objects in groups of ten</SelectItem>
                 <SelectItem value="addition-across-ten">Addition en ligne · franchir la dizaine (CE1)</SelectItem>
+                <SelectItem value="subtraction-with-dots">Subtraction with bubbles · within ten (CE1 review)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -608,7 +635,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             />
           </div>
 
-          {!['counting', 'addition-across-ten'].includes(kind) && <div>
+          {!['counting', 'addition-across-ten', 'subtraction-with-dots'].includes(kind) && <div>
             <Label htmlFor="prompt">{ui("Question Prompt")}</Label>
             <Textarea
               id="prompt"
@@ -649,6 +676,17 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <div><Label htmlFor="addition-addend">One-digit number to add</Label><Input id="addition-addend" type="number" min="1" max="9" value={additionAddend} onChange={(event) => setAdditionAddend(Number(event.target.value))} /></div>
               </div>
               <p className="text-sm font-medium">{additionStartNumber} needs {countersToNextTen(additionStartNumber)} to reach the next ten; total: {additionAcrossTenTotal({ startNumber: additionStartNumber, addend: additionAddend })}</p>
+            </div>
+          )}
+
+          {kind === 'subtraction-with-dots' && (
+            <div className="space-y-3 rounded-xl border p-4">
+              <p className="text-sm text-muted-foreground">Subtraction practice with dots: add bubbles until the group is ready, then use the take-away step. CE1 review of within-ten mental subtraction.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label htmlFor="subtraction-target">Bubbles to add</Label><Input id="subtraction-target" type="number" min="2" max="10" value={subtractionTarget} onChange={(event) => setSubtractionTarget(Number(event.target.value))} /></div>
+                <div><Label htmlFor="subtraction-take-away">Bubbles to take away</Label><Input id="subtraction-take-away" type="number" min="1" max="9" value={subtractionTakeAway} onChange={(event) => setSubtractionTakeAway(Number(event.target.value))} /></div>
+              </div>
+              <p className="text-sm font-medium">{subtractionTarget} − {subtractionTakeAway} = {subtractionTarget - subtractionTakeAway}</p>
             </div>
           )}
 

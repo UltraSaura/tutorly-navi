@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { CountingQ } from '@/types/quiz-bank';
 import type { AdditionAcrossTenQ } from '@/types/quiz-bank';
+import type { SubtractionWithDotsQ } from '@/types/quiz-bank';
 import { QuestionCard } from './QuestionCard';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -43,5 +44,19 @@ describe('addition across ten quiz-bank question rendering', () => {
     expect(html).toContain('Move one counter to the ten-frame');
     expect(html).toContain('Fill the next ten: 250');
     expect(html).not.toContain('Choose the total of 247 plus 8');
+  });
+});
+
+describe('subtraction with bubbles quiz-bank rendering', () => {
+  it('shows the add-bubble action before the lightning take-away step', () => {
+    const question: SubtractionWithDotsQ = {
+      id: 'subtract-8-5', kind: 'subtraction-with-dots', prompt: 'Add 8 bubbles, then take away 5.',
+      targetCount: 8, takeAway: 5, answerChoices: [3, 2, 4, 5],
+    };
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain('data-testid="quiz-subtraction-with-dots-question"');
+    expect(html).toContain('Add one bubble');
+    expect(html).not.toContain('Take away one bubble');
+    expect(html).not.toContain('8 − 5');
   });
 });

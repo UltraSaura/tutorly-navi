@@ -34,6 +34,19 @@ describe("quiz penalty grading", () => {
     expect(evaluateQuestion(question, { movedToTen: 3, selectedAnswer: 255 })).toBe(true);
   });
 
+  it('grades a bubble subtraction only after adding, removing, identifying the equation, and choosing the result', () => {
+    const question: Question = {
+      id: 'subtract-8-5', kind: 'subtraction-with-dots', prompt: 'Add 8 bubbles, then take away 5.',
+      targetCount: 8, takeAway: 5, answerChoices: [3, 2, 4, 5], points: 1,
+    };
+    expect(isQuizAnswerComplete(question, { dotsAdded: 0, dotsRemoved: 0, selectedEquation: null, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { dotsAdded: 8, dotsRemoved: 5, selectedEquation: '8 − 5', selectedAnswer: null })).toBe(false);
+    const answer = { dotsAdded: 8, dotsRemoved: 5, selectedEquation: '8 − 5', selectedAnswer: 3 };
+    expect(isQuizAnswerComplete(question, answer)).toBe(true);
+    expect(evaluateQuestion(question, { ...answer, selectedEquation: '8 + 5' })).toBe(false);
+    expect(evaluateQuestion(question, answer)).toBe(true);
+  });
+
   it('scores a counting-bank question only after the required groups and correct choice', () => {
     const question: Question = {
       id: 'count-1', kind: 'counting', prompt: 'Start with 12 apples. Add one group of ten.',

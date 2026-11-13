@@ -47,6 +47,7 @@ const AddUpTo100Page = lazy(() => import("./pages/practice/AddUpTo100Page"));
 const FlashcardPracticePage = lazy(() => import("./pages/practice/FlashcardPracticePage"));
 const NumbersAfterTenPage = lazy(() => import("./pages/practice/NumbersAfterTenPage"));
 const AdditionAcrossTenPage = lazy(() => import("./pages/practice/AdditionAcrossTenPage"));
+const SubtractionWithDotsPage = lazy(() => import("./pages/practice/SubtractionWithDotsPage"));
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
@@ -255,6 +256,7 @@ const App = () => {
                           <Route path="flashcards/numbers" element={<FlashcardPracticePage />} />
                           <Route path="numbers-after-ten" element={<NumbersAfterTenPage />} />
                           <Route path="addition-across-ten" element={<AdditionAcrossTenPage />} />
+                          <Route path="subtraction-within-ten" element={<SubtractionWithDotsPage />} />
                           <Route path="number-line" element={<GraduatedNumberLinePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />

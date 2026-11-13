@@ -41,6 +41,12 @@ export type AdditionAcrossTenQ = BaseQ & {
   addend: number;
   answerChoices: number[];
 };
+export type SubtractionWithDotsQ = BaseQ & {
+  kind: "subtraction-with-dots";
+  targetCount: number;
+  takeAway: number;
+  answerChoices: number[];
+};
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
 export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
 export type OperationPoseeQ = BaseQ & {
@@ -154,6 +160,7 @@ export type Question =
   | NumericQ
   | CountingQ
   | AdditionAcrossTenQ
+  | SubtractionWithDotsQ
   | OrderingQ
   | VisualQ
   | OperationPoseeQ

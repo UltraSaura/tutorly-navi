@@ -86,6 +86,8 @@ function buildTypeInstructions(questionTypes: string[]): string {
   - Keep prompts short and concrete, for example: "Complète l'addition posée." or "Complète les chiffres manquants dans cette division."`;
       case 'addition-across-ten':
         return `- "addition-across-ten": A CE1 mental addition question using the bridge-to-the-next-ten strategy, separate from column addition. Include integer "startNumber" (10-999) and one-digit "addend" (1-9). The units digit of startNumber plus addend must be greater than 10, and the total must be at most 1000. The app renders the ten-frame model and derives four answer choices, so omit answerChoices and visuals. The prompt must ask the learner to fill the next ten first, then choose the total. Include a helpful hint that nudges without giving away the answer. Example: {"id":"q-1","kind":"addition-across-ten","prompt":"Start at 247. Add 8. Fill the next ten first, then choose the total.","hint":"How many more does 247 need to reach 250?","points":1,"startNumber":247,"addend":8}`;
+      case 'subtraction-with-dots':
+        return `- "subtraction-with-dots": A within-ten mental subtraction exercise designed as CE1 review. Include integer "targetCount" (2-10) and integer "takeAway" (1 to targetCount-1). Tutorly renders original bubble dots and + then lightning controls, and derives four answer choices. The prompt should say to add the target number of bubbles, then take away the specified number; include a short hint about counting what remains. Example: {"id":"q-1","kind":"subtraction-with-dots","prompt":"Add 8 bubbles, then take away 5. Choose how many are left.","hint":"Count the bubbles left after taking away 5.","points":1,"targetCount":8,"takeAway":5}`;
       case 'counting':
         return `- "counting": A scored Practice question about counting objects grouped in bundles of ten. Use only object: "pencil", "apple", "book", or "star". Include integer fields "startingGroups" (0-10), "startingOnes" (0-9), and "groupsToAdd" (1-10), with the final total no greater than 100. The app draws the groups and creates four answer choices, so do not provide answerChoices or another visual. The prompt must tell the student how many groups and single objects are shown, how many bundles of ten to add with the + button, and ask for the final number. Keep the prompt and hint appropriate for the selected language. Example: {"id":"q-1","kind":"counting","prompt":"There are 2 bundles of ten pencils and 3 single pencils. Add 2 bundles of ten, then choose the total number of pencils.","hint":"Count the pencils in tens, then add the single pencils.","points":1,"object":"pencil","startingGroups":2,"startingOnes":3,"groupsToAdd":2}`;
       case 'visual_pie':
@@ -215,7 +217,7 @@ function buildLearningFriendlyGuidance(): string {
 - For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
-- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, counting, addition-across-ten, visual, slider, match, fill-expr.
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, counting, addition-across-ten, subtraction-with-dots, visual, slider, match, fill-expr.
 - For column-fill: include operation, operands, and optional instructions only. Do NOT include a layout object.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
 - If a "single", "multi", or "numeric" prompt references a visual ("ce gâteau", "cette figure", "ce triangle", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
@@ -234,6 +236,7 @@ function buildBatchSchemaGuidance(questionTypes: string[]): string {
       case 'column-fill': return 'column-fill: id, kind, prompt, hint, points, operation, operands[2], instructions.';
       case 'counting': return 'counting: id, kind, prompt, hint, points, object (pencil/apple/book/star), startingGroups, startingOnes, groupsToAdd; final total <= 100. The app derives four answer choices.';
       case 'addition-across-ten': return 'addition-across-ten: id, kind, prompt, hint, points, startNumber, addend; ones digit + addend > 10 and total <= 1000. App derives four answer choices.';
+      case 'subtraction-with-dots': return 'subtraction-with-dots: id, kind, prompt, hint, points, targetCount (2-10), takeAway (1 to targetCount-1). App derives four answer choices.';
       case 'visual': return 'visual: id, kind, prompt, hint, points, visual with a supported subtype and complete data.';
       case 'slider': return 'slider: id, kind, prompt, hint, points, min, max, step, answer, tolerance.';
       case 'match': return 'match: id, kind, prompt, hint, points, pairs[] of plain strings and answers.';
@@ -454,7 +457,7 @@ function repairContextVisual(question: any) {
 }
 
 function validateQuestions(questions: any[]): any[] {
-  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'counting', 'addition-across-ten', 'visual', 'slider', 'match', 'fill-expr']);
+  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'visual', 'slider', 'match', 'fill-expr']);
   const validVisualSubtypes = new Set(['pie', 'angle']);
 
   return questions.filter((q, idx) => {
@@ -501,6 +504,23 @@ function validateQuestions(questions: any[]): any[] {
         if (candidate !== total && !distractors.includes(candidate)) distractors.push(candidate);
       }
       const choices = [total, ...distractors.slice(0, 3)];
+      const hash = Array.from(String(q.id)).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      const shift = hash % choices.length;
+      q.answerChoices = choices.slice(shift).concat(choices.slice(0, shift));
+      delete q.choices;
+    }
+    if (q.kind === 'subtraction-with-dots') {
+      q.targetCount = Number(q.targetCount);
+      q.takeAway = Number(q.takeAway);
+      if (!Number.isInteger(q.targetCount) || q.targetCount < 2 || q.targetCount > 10
+        || !Number.isInteger(q.takeAway) || q.takeAway < 1 || q.takeAway >= q.targetCount) return false;
+      const answer = q.targetCount - q.takeAway;
+      const distractors = [...new Set([answer - 1, answer + 1, answer + 2, answer + 3, answer + 4]
+        .filter((value) => value >= 0 && value <= 10 && value !== answer))];
+      for (let value = 0; distractors.length < 3 && value <= 10; value += 1) {
+        if (value !== answer && !distractors.includes(value)) distractors.push(value);
+      }
+      const choices = [answer, ...distractors.slice(0, 3)];
       const hash = Array.from(String(q.id)).reduce((sum, char) => sum + char.charCodeAt(0), 0);
       const shift = hash % choices.length;
       q.answerChoices = choices.slice(shift).concat(choices.slice(0, shift));

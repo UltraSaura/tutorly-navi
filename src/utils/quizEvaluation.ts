@@ -1,6 +1,7 @@
 import type { Question } from '@/types/quiz-bank';
 import { evaluateVisual } from '@/lib/quiz/visual-evaluate';
 import { additionAcrossTenTotal, countersToNextTen } from '@/features/practice/additionAcrossTen';
+import { subtractionWithDotsTotal } from '@/features/practice/subtractionWithDots';
 
 export type QuizQuestionGradeDetail = {
   questionId: string;
@@ -30,6 +31,13 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
   if (q.kind === 'addition-across-ten') {
     return Number(answer?.movedToTen) === countersToNextTen(q.startNumber)
       && Number(answer?.selectedAnswer) === additionAcrossTenTotal(q);
+  }
+  if (q.kind === 'subtraction-with-dots') {
+    const equation = `${q.targetCount} − ${q.takeAway}`;
+    return Number(answer?.dotsAdded) === q.targetCount
+      && Number(answer?.dotsRemoved) === q.takeAway
+      && answer?.selectedEquation === equation
+      && Number(answer?.selectedAnswer) === subtractionWithDotsTotal(q);
   }
   if (q.kind === "numeric") {
     const numQ = q as any;
@@ -100,6 +108,13 @@ export function isQuizAnswerComplete(q: Question, answer: any): boolean {
   if (q.kind === 'addition-across-ten') {
     return answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
       && Number(answer?.movedToTen) >= countersToNextTen(q.startNumber)
+      && Number.isInteger(Number(answer?.selectedAnswer));
+  }
+  if (q.kind === 'subtraction-with-dots') {
+    return answer?.selectedEquation !== null && answer?.selectedEquation !== undefined
+      && answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
+      && Number(answer?.dotsAdded) >= q.targetCount
+      && Number(answer?.dotsRemoved) >= q.takeAway
       && Number.isInteger(Number(answer?.selectedAnswer));
   }
   return true;
