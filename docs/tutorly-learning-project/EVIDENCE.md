@@ -1,6 +1,6 @@
 # Evidence and verification log
 
-Updated 2026-11-11. Evidence is labeled as source observation, supplied-recording notes, or local verification. The original recordings are not in the Cloud workspace; no claim is made that they were watched here.
+Updated 2026-11-13. Evidence is labeled as source observation, supplied-recording notes, or local verification. The recordings supplied in this conversation were reviewed from sampled key frames and visible on-screen text; this was not a frame-by-frame review. The attachment files are available in the task workspace but are not checked into the repository.
 
 ## Repository and product observations
 
@@ -18,11 +18,30 @@ Updated 2026-11-11. Evidence is labeled as source observation, supplied-recordin
 
 Source: `references/development-instructions.md`, the checked-in evidence log. The note package says the original recording media is not stored in the repo. These are transcribed observations from the project evidence package, not observations made by this implementation run.
 
-**Observed for Add up to 100:** Countable dots grouped by ten; a control to add tens and single units; identify three groups of ten; 30 + 30 = 60; 60 + 7 = 67; 67 + 33 = 100; a later 45 + 7 prompt; a recall/check phase followed by a guided path that asks whether the student is familiar and offers to start from the beginning.
+**Observed for Add up to 100:** The recall/check first asks the learner to tap + three times to add three tens, then identify the amount; feedback confirms 30. It continues with 30 + 30 = 60, 60 + 7 = 67, the amount needed to add to 67 to reach 100 (33), and 45 + 7. The 45 + 7 prompt is still in the recall/check, before its reward/check card and the later guided path. The guided path asks if the learner is familiar; the selected No branch offers a start from the beginning, then shows two groups of ten and asks their value with answer choices and “I’m not sure.” The recording ends during this first guided prompt.
 
-**Observed for flashcards:** One arithmetic question card at a time, with sampled addition/subtraction within ten and make-ten blanks; one recording shows numeric selection and another a spoken-answer affordance. A timed assessment, race presentation, and 9/10 result are also noted, but exact timer, timeout/error behavior, score criteria, race mechanics, and mastery rules are explicitly unknown. The written note describes ten progress indicators in one run; it does not establish a general deck size.
+**Observed for flashcards:** One arithmetic question card at a time, with sampled addition/subtraction within ten and make-ten blanks. One recording shows a mic and “Tap the mic to speak”; another shows a selected answer beneath a prompt, but the exact answer-input method is not established. Timed assessment and race screens are visible; one run has ten progress indicators, and one Subtract to 10 run reports 9/10. These do not establish a general deck size, score threshold, win rule, timing policy, speech recognition behavior, or mastery criteria.
 
 **Unknown:** Complete prompt sequences, answer branching, wrong-answer policy, timing, retry limits, scoring thresholds, mastery criteria, and cross-device persistence. No values are inferred from the unverified inspection report.
+
+## Follow-up recording review and implementation (2026-11-13)
+
+- The video notes in `references/development-instructions.md` were checked against all 11 supplied recordings using sampled key frames. Prompt wording was taken from readable screen text. Repeated or illegible frames were not used to infer missing rules.
+- The Add up to 100 Tutorly flow now follows the observed recall/check ordering and examples. Its dot model is static, uses outlined groups of ten plus separate ones, and has no rods, animated pieces, or draggable manipulative. The full reference guided sequence is unknown; Tutorly's later practice path remains an original short exercise and does not award mastery.
+- The reference guided path's familiarity Yes/No branch was observed, but only the No outcome and first prompt are visible. Tutorly does not claim to reproduce the unseen Yes branch or later guided steps.
+- The existing Tutorly flashcards remain an original, untimed one-card-at-a-time practice mode. The recordings do not establish enough about timer, answer capture, race progress, scoring, or mastery to add those behaviors without inventing rules.
+- The other recordings document subtraction, Color Count, The Next 10, Add Across 10, word problems, an analog clock, and multiplication. Their sampled flows and open questions remain in the reference log; they were not implemented as new Tutorly activities in this follow-up.
+
+### Current verification
+
+- `npm test -- --run`: passed, 118 files / 1,131 tests.
+- Focused Add up to 100 and dot-model tests after the final code correction: passed, 2 files / 4 tests.
+- `npm run typecheck`: passed.
+- Focused ESLint on changed application and test files: passed.
+- `npm run build`: passed with existing mixed Supabase import and chunk-size warnings.
+- `npm run lint`: failed with 1,040 errors and 108 warnings across repository files outside this change; focused ESLint passed.
+- Chromium at desktop 1280×900 and mobile 390×844 reviewed the updated Add up to 100 page. The mobile run completed the recall check and guided Tutorly practice, verified hint toggle, incorrect feedback, retry, Enter submission, and guest learner-scoped local resume. No page errors occurred. No database schema or production learner data was touched.
+- Browser screenshots are local review artifacts under `/tmp/add100-*.png`, not repository assets.
 
 ## Local verification
 

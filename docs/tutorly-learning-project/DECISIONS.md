@@ -1,19 +1,19 @@
 # Product and implementation decisions
 
-Updated 2026-11-11. Distinguish supplied observations from original Tutorly choices and unresolved questions.
+Updated 2026-11-13. Distinguish supplied observations from original Tutorly choices and unresolved questions.
 
 ## Add up to 100
 
-- **Observed:** The written project log reports dot groups of ten, tens/ones controls, the arithmetic examples 30 + 30, 60 + 7, 67 + 33, and 45 + 7, plus a recall/check phase and a later guided path offering a restart from the beginning.
-- **Designed:** Tutorly uses original wording and a responsive 10-column dot field: full tens are purple, remaining ones gold, with number and count labels so color is not the only cue. It reuses the same deterministic state in the dots, controls, and answer check.
-- **Designed:** A learner can choose “Show what I remember” or “Start from the beginning.” Recall completion leads to an explicit guided-start offer. This choice is informed by the evidence but the exact branch order and complete exercise sequence are not established.
+- **Observed:** The supplied recording shows recall/check first: tap + three times to add three tens, identify 30, answer 30 + 30, identify 60 + 7, find the amount to add to 67 to reach 100, then solve 45 + 7. The check/reward card appears before the later guided path. That guided path asks whether the learner is familiar; only the No branch and its first prompt (two groups of ten) are visible.
+- **Designed:** Tutorly uses original wording and a static dot model with outlined groups of ten and separate loose ones. The same deterministic numeric state drives the model, controls, and answer check. There are no animated or draggable pieces.
+- **Designed:** Tutorly starts with the recall/check and then offers a start-from-the-beginning practice. The later Tutorly practice reuses known arithmetic ideas as a short original exercise; it is not claimed to reproduce the reference's unseen guided sequence.
 - **Designed:** Tutorly includes explanatory feedback and retry. No clock, score, reward, or mastery badge is shown. Optional system speech reads the current instruction when speech synthesis is available; the visible text remains canonical.
-- **Unknown:** Full sequence, alternate diagnostic branching, error taxonomy, completion threshold, mastery, and voice settings. No competitor copy/assets/voice are used.
+- **Unknown:** The reference familiarity Yes branch, later guided prompts, error handling, completion threshold, mastery, and voice settings. No competitor copy/assets/voice are used. Tutorly's observed check completion is only local resume state, not mastery.
 
 ## Flashcards
 
-- **Observed:** The project notes describe single arithmetic cards, prompts including subtraction, make-ten blanks, and simple addition; sample feedback/progress and typed/tap/spoken interaction affordances are recorded, but input behavior varies by mode.
-- **Designed:** A separate Tutorly “Number flashcards” mode presents one typed-answer card at a time from a fixed original ten-card within-ten deck. It validates whole numbers deterministically, shows a short hint, gives a targeted retry cue, reveals a concise explanation on a correct answer, and requires an explicit next-card action.
+- **Observed:** The recordings show one arithmetic card at a time, with subtraction, addition, and make-ten blanks. One screen offers a microphone with “Tap the mic to speak”; a different screen shows a selected answer, but exact input method is unknown. Timed and race screens, one 9/10 result, and ten progress markers in one run are visible; general rules are unknown.
+- **Designed:** A separate Tutorly “Number flashcards” mode presents one typed-answer card at a time from a fixed original ten-card within-ten deck. It validates whole numbers deterministically, shows a short hint, gives a targeted retry cue, reveals a concise explanation on a correct answer, and requires an explicit next-card action. The input method, deck composition, and untimed practice rules are Tutorly choices, not claims about the source.
 - **Designed:** This is untimed practice. It has no race, score, pass threshold, reward, speech-recognition permission, or mastery claim. The number ten is the Tutorly deck size for this first slice, not a claim about a general source-product rule.
 - **Unknown:** Competitor timer behavior, timeout rules, scoring, answer recognition, and mastery remain unknown and are intentionally not recreated.
 
