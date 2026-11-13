@@ -47,7 +47,7 @@ describe('addition across ten quiz-bank question rendering', () => {
   });
 });
 
-describe('subtraction with bubbles quiz-bank rendering', () => {
+describe('subtraction with countable objects quiz-bank rendering', () => {
   it('shows the add-bubble action before the lightning take-away step', () => {
     const question: SubtractionWithDotsQ = {
       id: 'subtract-8-5', kind: 'subtraction-with-dots', prompt: 'Add 8 bubbles, then take away 5.',
@@ -58,5 +58,15 @@ describe('subtraction with bubbles quiz-bank rendering', () => {
     expect(html).toContain('Add one bubble');
     expect(html).not.toContain('Take away one bubble');
     expect(html).not.toContain('8 − 5');
+  });
+
+  it('uses an authored object for the model and action label', () => {
+    const question: SubtractionWithDotsQ = {
+      id: 'subtract-stars', kind: 'subtraction-with-dots', prompt: 'Add 6 stars, then take away 2.',
+      object: 'star', targetCount: 6, takeAway: 2, answerChoices: [4, 3, 5, 2],
+    };
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain('Add one star');
+    expect(html).toContain('stars added');
   });
 });

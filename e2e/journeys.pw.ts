@@ -127,16 +127,21 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   await page.getByRole('button', { name: 'Start subtraction practice', exact: true }).click();
   await expect(page).toHaveURL(/\/practice\/subtraction-within-ten$/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Subtraction activity should not overflow horizontally').toBe(true);
-  const prompt = page.getByRole('heading', { name: /^Add \d+ bubbles\.$/ });
-  const targetCount = Number((await prompt.innerText()).match(/Add (\d+) bubbles/)?.[1]);
+  const prompt = page.getByRole('heading', { name: /^Add \d+ (bubbles|pencils|apples|books|stars)\.$/ });
+  const promptText = await prompt.innerText();
+  const targetCount = Number(promptText.match(/Add (\d+)/)?.[1]);
+  const pluralObject = promptText.match(/Add \d+ (\w+)\./)?.[1];
+  const singularObjects: Record<string, string> = { bubbles: 'bubble', pencils: 'pencil', apples: 'apple', books: 'book', stars: 'star' };
+  const object = singularObjects[pluralObject ?? ''];
+  expect(object).toBeTruthy();
   await testInfo.attach('subtraction-with-bubbles-prompt', { body: await page.screenshot({ fullPage: true, animations: 'disabled' }), contentType: 'image/png' });
-  const add = page.getByRole('button', { name: 'Add one bubble', exact: true });
+  const add = page.getByRole('button', { name: `Add one ${object}`, exact: true });
   if (testInfo.project.name === 'mobile') {
     const buttonBottom = await add.evaluate((element) => element.getBoundingClientRect().bottom);
     expect(buttonBottom, 'First action remains above the fixed bottom navigation').toBeLessThanOrEqual(754);
   }
   await page.getByRole('button', { name: 'Show hint', exact: true }).click();
-  await expect(page.getByText(new RegExp(`First make the group of ${targetCount}`))).toBeVisible();
+  await expect(page.getByText(new RegExp(`First count ${targetCount} ${pluralObject}`))).toBeVisible();
   await page.getByRole('button', { name: 'Hide hint', exact: true }).click();
   await assertUsable(page, add);
   if (testInfo.project.name === 'desktop') {
@@ -147,17 +152,18 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
     if (testInfo.project.name === 'mobile') await add.tap();
     else await add.click();
   }
-  const removalPrompt = page.getByRole('heading', { name: /^Now take away \d+ bubbles\.$/ });
-  const takeAway = Number((await removalPrompt.innerText()).match(/take away (\d+) bubbles/)?.[1]);
+  await testInfo.attach('subtraction-scattered-object-model', { body: await page.screenshot({ fullPage: true, animations: 'disabled' }), contentType: 'image/png' });
+  const removalPrompt = page.getByRole('heading', { name: /^Now take away \d+ (bubbles|pencils|apples|books|stars)\.$/ });
+  const takeAway = Number((await removalPrompt.innerText()).match(/take away (\d+)/)?.[1]);
   const answer = targetCount - takeAway;
-  const remove = page.getByRole('button', { name: 'Take away one bubble', exact: true });
+  const remove = page.getByRole('button', { name: `Take away one ${object}`, exact: true });
   if (testInfo.project.name === 'mobile') {
     const buttonBottom = await remove.evaluate((element) => element.getBoundingClientRect().bottom);
     expect(buttonBottom, 'Lightning action remains above the fixed bottom navigation').toBeLessThanOrEqual(754);
   }
   await assertUsable(page, remove);
   await expect(remove).toBeVisible();
-  expect(await page.getByRole('button', { name: 'Add one bubble', exact: true }).count()).toBe(0);
+  expect(await page.getByRole('button', { name: `Add one ${object}`, exact: true }).count()).toBe(0);
   let removedBeforeReload = 0;
   if (takeAway > 1) {
     if (testInfo.project.name === 'mobile') await remove.tap();
@@ -165,7 +171,7 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
     removedBeforeReload = 1;
     await expect(page.getByText('Taken away: 1', { exact: true })).toBeVisible();
     await page.reload({ waitUntil: 'networkidle' });
-    await expect(page.getByRole('button', { name: 'Take away one bubble', exact: true })).toBeVisible();
+    await expect(remove).toBeVisible();
     await expect(page.getByText('Taken away: 1', { exact: true })).toBeVisible();
   }
   if (testInfo.project.name === 'desktop' && takeAway === 1) {
@@ -192,6 +198,11 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   await page.reload({ waitUntil: 'networkidle' });
   await expect(page.getByRole('heading', { name: `${targetCount} − ${takeAway} = ${answer}`, exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try another subtraction', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Try another subtraction', exact: true }).click();
+  const nextPrompt = page.getByRole('heading', { name: /^Add \d+ (bubbles|pencils|apples|books|stars)\.$/ });
+  const nextPluralObject = (await nextPrompt.innerText()).match(/Add \d+ (\w+)\./)?.[1];
+  expect(nextPluralObject).not.toBe(pluralObject);
+  await expect(page.getByRole('button', { name: `Add one ${singularObjects[nextPluralObject ?? '']}`, exact: true })).toBeVisible();
 });
 
 test('synthetic published lesson navigation and diagram rendering', async ({ page }) => {

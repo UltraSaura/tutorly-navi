@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSubtractionWithDotsExercise, isValidSubtractionWithDotsExercise, makeSubtractionWithDotsChoices, makeSubtractionWithDotsEquationChoices, subtractionWithDotsTotal } from './subtractionWithDots';
+import { createSubtractionWithDotsExercise, isValidSubtractionWithDotsExercise, makeScatteredObjectPositions, makeSubtractionWithDotsChoices, makeSubtractionWithDotsEquationChoices, subtractionObjectName, subtractionWithDotsTotal } from './subtractionWithDots';
 
 describe('subtraction with bubbles', () => {
   it('creates a valid within-ten subtraction and four unique answers', () => {
@@ -11,8 +11,30 @@ describe('subtraction with bubbles', () => {
     expect(isValidSubtractionWithDotsExercise(exercise)).toBe(true);
   });
 
+  it('varies countable objects and uses correct singular and plural names', () => {
+    expect(createSubtractionWithDotsExercise(() => 0.99).object).toBe('star');
+    expect(subtractionObjectName('pencil', 1)).toBe('pencil');
+    expect(subtractionObjectName('pencil', 3)).toBe('pencils');
+    expect(subtractionObjectName(undefined, 2)).toBe('bubbles');
+  });
+
+  it('makes stable scattered positions across the model area', () => {
+    const positions = makeScatteredObjectPositions(10, 'exercise-one');
+    expect(makeScatteredObjectPositions(10, 'exercise-one')).toEqual(positions);
+    expect(new Set(positions.map(({ left, top }) => `${left},${top}`)).size).toBe(10);
+    expect(new Set(positions.map(({ top }) => top)).size).toBeGreaterThan(2);
+    expect(positions.every(({ left, top }) => left >= 10 && left <= 90 && top >= 15 && top <= 85)).toBe(true);
+    expect(makeScatteredObjectPositions(10, 'exercise-two')).not.toEqual(positions);
+  });
+
   it('rejects an impossible take-away amount', () => {
     expect(isValidSubtractionWithDotsExercise({ id: 'bad', targetCount: 6, takeAway: 6, answerChoices: [0, 1, 2, 3] })).toBe(false);
+  });
+
+  it('keeps older bubble exercises valid while rejecting unknown object types', () => {
+    const legacyExercise = { id: 'legacy-bubble', targetCount: 6, takeAway: 1, answerChoices: [5, 4, 3, 2] };
+    expect(isValidSubtractionWithDotsExercise(legacyExercise)).toBe(true);
+    expect(isValidSubtractionWithDotsExercise({ ...legacyExercise, object: 'unknown' })).toBe(false);
   });
 
   it('keeps answer options in the count-to-ten range', () => {

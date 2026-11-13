@@ -15,7 +15,7 @@ import { buildColumnFillQuestion } from '@/lib/quiz/columnFillBuilder';
 import { countableObjectName, countingExerciseTotal, makeCountingAnswerChoices } from '@/features/practice/countingExercise';
 import { COUNTABLE_OBJECTS, type CountableObject } from '@/types/counting-exercise';
 import { additionAcrossTenTotal, countersToNextTen, makeAdditionAcrossTenChoices } from '@/features/practice/additionAcrossTen';
-import { makeSubtractionWithDotsChoices } from '@/features/practice/subtractionWithDots';
+import { makeSubtractionWithDotsChoices, normalizeSubtractionObject, SUBTRACTION_OBJECTS, subtractionObjectName, type SubtractionObject } from '@/features/practice/subtractionWithDots';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -64,6 +64,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [additionAddend, setAdditionAddend] = useState(question?.kind === 'addition-across-ten' ? question.addend : 8);
   const [subtractionTarget, setSubtractionTarget] = useState(question?.kind === 'subtraction-with-dots' ? question.targetCount : 8);
   const [subtractionTakeAway, setSubtractionTakeAway] = useState(question?.kind === 'subtraction-with-dots' ? question.takeAway : 5);
+  const [subtractionObject, setSubtractionObject] = useState<SubtractionObject>(question?.kind === 'subtraction-with-dots' ? normalizeSubtractionObject(question.object) : 'bubble');
 
   // Single/Multi choice state
   const [choices, setChoices] = useState<Array<{ id: string; label: string; correct?: boolean }>>(
@@ -202,6 +203,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       if (question.kind === 'subtraction-with-dots') {
         setSubtractionTarget(question.targetCount);
         setSubtractionTakeAway(question.takeAway);
+        setSubtractionObject(normalizeSubtractionObject(question.object));
       }
 
       if (question.kind === 'single' || question.kind === 'multi') {
@@ -569,16 +571,18 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
     } else if (kind === 'subtraction-with-dots') {
       const targetCount = Math.trunc(subtractionTarget);
       const takeAway = Math.trunc(subtractionTakeAway);
+      const objectName = subtractionObjectName(subtractionObject, targetCount);
       if (!Number.isInteger(targetCount) || targetCount < 2 || targetCount > 10 || !Number.isInteger(takeAway) || takeAway < 1 || takeAway >= targetCount) {
-        alert('Choose a number of bubbles from 2 to 10, then a smaller number to take away.');
+        alert('Choose a number of objects from 2 to 10, then a smaller number to take away.');
         return;
       }
       questionData = {
         id,
         kind: 'subtraction-with-dots',
-        prompt: `Add ${targetCount} bubbles, then take away ${takeAway}. Choose how many are left.`,
-        hint: hint || `Start with ${targetCount} bubbles and count what remains after taking away ${takeAway}.`,
+        prompt: `Add ${targetCount} ${objectName}, then take away ${takeAway}. Choose how many are left.`,
+        hint: hint || `Start with ${targetCount} ${objectName} and count what remains after taking away ${takeAway}.`,
         points,
+        object: subtractionObject,
         targetCount,
         takeAway,
         answerChoices: makeSubtractionWithDotsChoices(targetCount - takeAway),
@@ -619,7 +623,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
                 <SelectItem value="counting">Count objects in groups of ten</SelectItem>
                 <SelectItem value="addition-across-ten">Addition en ligne · franchir la dizaine (CE1)</SelectItem>
-                <SelectItem value="subtraction-with-dots">Subtraction with bubbles · within ten (CE1 review)</SelectItem>
+                <SelectItem value="subtraction-with-dots">Subtraction with countable objects · within ten (CE1 review)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -681,10 +685,22 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
           {kind === 'subtraction-with-dots' && (
             <div className="space-y-3 rounded-xl border p-4">
-              <p className="text-sm text-muted-foreground">Subtraction practice with dots: add bubbles until the group is ready, then use the take-away step. CE1 review of within-ten mental subtraction.</p>
+              <p className="text-sm text-muted-foreground">Subtraction practice within ten: add countable objects, then use the take-away step. The objects are scattered in the picture. CE1 review of mental subtraction.</p>
+              <div>
+                <Label htmlFor="subtraction-object">Objects</Label>
+                <Select value={subtractionObject} onValueChange={(value: SubtractionObject) => setSubtractionObject(value)}>
+                  <SelectTrigger id="subtraction-object"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SUBTRACTION_OBJECTS.map((object) => {
+                      const plural = subtractionObjectName(object, 2);
+                      return <SelectItem key={object} value={object}>{plural[0].toUpperCase() + plural.slice(1)}</SelectItem>;
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label htmlFor="subtraction-target">Bubbles to add</Label><Input id="subtraction-target" type="number" min="2" max="10" value={subtractionTarget} onChange={(event) => setSubtractionTarget(Number(event.target.value))} /></div>
-                <div><Label htmlFor="subtraction-take-away">Bubbles to take away</Label><Input id="subtraction-take-away" type="number" min="1" max="9" value={subtractionTakeAway} onChange={(event) => setSubtractionTakeAway(Number(event.target.value))} /></div>
+                <div><Label htmlFor="subtraction-target">Objects to add</Label><Input id="subtraction-target" type="number" min="2" max="10" value={subtractionTarget} onChange={(event) => setSubtractionTarget(Number(event.target.value))} /></div>
+                <div><Label htmlFor="subtraction-take-away">Objects to take away</Label><Input id="subtraction-take-away" type="number" min="1" max="9" value={subtractionTakeAway} onChange={(event) => setSubtractionTakeAway(Number(event.target.value))} /></div>
               </div>
               <p className="text-sm font-medium">{subtractionTarget} − {subtractionTakeAway} = {subtractionTarget - subtractionTakeAway}</p>
             </div>

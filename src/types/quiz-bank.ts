@@ -43,6 +43,7 @@ export type AdditionAcrossTenQ = BaseQ & {
 };
 export type SubtractionWithDotsQ = BaseQ & {
   kind: "subtraction-with-dots";
+  object?: import('@/features/practice/subtractionWithDots').SubtractionObject;
   targetCount: number;
   takeAway: number;
   answerChoices: number[];
