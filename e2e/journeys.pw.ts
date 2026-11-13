@@ -157,6 +157,8 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   const takeAway = Number((await removalPrompt.innerText()).match(/take away (\d+)/)?.[1]);
   const answer = targetCount - takeAway;
   const remove = page.getByRole('button', { name: `Take away one ${object}`, exact: true });
+  await expect(page.getByText(new RegExp(`Tap the minus button to remove one ${object} at a time\\.`))).toBeVisible();
+  await expect(remove.locator('svg.lucide-minus')).toHaveCount(1);
   if (testInfo.project.name === 'mobile') {
     const buttonBottom = await remove.evaluate((element) => element.getBoundingClientRect().bottom);
     expect(buttonBottom, 'Lightning action remains above the fixed bottom navigation').toBeLessThanOrEqual(754);

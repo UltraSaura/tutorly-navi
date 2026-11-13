@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Lightbulb, Plus, RotateCcw, Zap } from 'lucide-react';
+import { ArrowLeft, Check, Lightbulb, Minus, Plus, RotateCcw } from 'lucide-react';
 import { SubtractionWithDotsModel } from '@/components/practice/SubtractionWithDotsModel';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { useLearner } from '@/context/FamilyProfileContext';
@@ -179,7 +179,7 @@ export default function SubtractionWithDotsPage() {
               </h1>
               <p className="mt-1 text-sm text-[#667085]">
                 {phase === 'building' && `Tap + to add one ${subtractionObjectName(object, 1)} at a time.`}
-                {phase === 'removing' && `Tap the lightning button to remove one ${subtractionObjectName(object, 1)} at a time.`}
+                {phase === 'removing' && `Tap the minus button to remove one ${subtractionObjectName(object, 1)} at a time.`}
                 {phase === 'equation' && `${exercise.targetCount} ${objectName} were there. You took away ${exercise.takeAway}.`}
                 {phase === 'answering' && `${exercise.targetCount} − ${exercise.takeAway} = ?`}
               </p>
@@ -189,7 +189,7 @@ export default function SubtractionWithDotsPage() {
 
             {phase === 'building' && <button type="button" aria-label={`Add one ${subtractionObjectName(object, 1)}`} onClick={addBubble} className="mt-4 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#5145B5] bg-white px-3 font-bold text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><span aria-hidden="true" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#5145B5] text-white"><Plus className="h-5 w-5" /></span>Add one {subtractionObjectName(object, 1)}</button>}
 
-            {phase === 'removing' && <button type="button" aria-label={`Take away one ${subtractionObjectName(object, 1)}`} onClick={removeBubble} className="mt-4 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#E6A70A] bg-white px-3 font-bold text-[#8A5A00] hover:bg-[#FFF8E6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><span aria-hidden="true" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#F2B824] text-[#3B2A00]"><Zap className="h-5 w-5 fill-current" /></span>Take away one {subtractionObjectName(object, 1)}</button>}
+            {phase === 'removing' && <button type="button" aria-label={`Take away one ${subtractionObjectName(object, 1)}`} onClick={removeBubble} className="mt-4 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#E6A70A] bg-white px-3 font-bold text-[#8A5A00] hover:bg-[#FFF8E6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><span aria-hidden="true" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#F2B824] text-[#3B2A00]"><Minus className="h-5 w-5" /></span>Take away one {subtractionObjectName(object, 1)}</button>}
 
             {phase === 'equation' && <div role="group" aria-label="Choose the subtraction equation" className="mt-4 grid grid-cols-2 gap-3">{expressions.map((expression) => <button key={expression} type="button" aria-pressed={selectedEquation === expression} onClick={() => { setSelectedEquation(expression); setFeedback(null); }} className={`min-h-12 rounded-xl border-2 px-3 text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] ${selectedEquation === expression ? 'border-[#5145B5] bg-[#F0EEFF] text-[#40369B]' : 'border-[#D0D5DD] bg-white hover:bg-[#F6F5FF]'}`}>{expression}</button>)}</div>}
 
