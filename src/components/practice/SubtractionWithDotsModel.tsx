@@ -55,12 +55,10 @@ export function SubtractionWithDotsModel({ targetCount, dotsAdded, dotsRemoved, 
 
   return (
     <div className="rounded-2xl bg-[#F6F5FF] p-4" data-testid="subtraction-with-dots-model">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-bold text-[#344054]">{removed > 0
-          ? revealAnswerCount ? `${plural[0].toUpperCase()}${plural.slice(1)} left: ${remaining}` : `${plural[0].toUpperCase()}${plural.slice(1)} in the picture`
-          : `${plural[0].toUpperCase()}${plural.slice(1)}: ${totalVisible} of ${targetCount}`}</p>
+      {revealAnswerCount && <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-bold text-[#344054]">{removed > 0 ? `${plural[0].toUpperCase()}${plural.slice(1)} left: ${remaining}` : `${plural[0].toUpperCase()}${plural.slice(1)}: ${totalVisible} of ${targetCount}`}</p>
         {showAllRemoved && <p className="text-sm font-semibold text-[#667085]">Taken away: {removed}</p>}
-      </div>
+      </div>}
       <div role={revealAnswerCount ? 'img' : 'group'} aria-label={revealAnswerCount
         ? `${remaining} ${subtractionObjectName(object, remaining)} left; ${removed} taken away${countColor ? `; ${colorCount} ${SUBTRACTION_COLOR_STYLES[countColor].label} ${subtractionObjectName(object, colorCount)} left` : ''}`
         : `Count the ${countColor ? `${SUBTRACTION_COLOR_STYLES[countColor].label} ` : ''}${plural}. Objects marked with a cross have been taken away.`} className="relative mt-3 aspect-[1.65/1] min-h-40 overflow-hidden rounded-xl border border-[#E4E7EC] bg-white">
@@ -69,9 +67,9 @@ export function SubtractionWithDotsModel({ targetCount, dotsAdded, dotsRemoved, 
         {totalVisible === 0 && <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-[#667085]">No {plural} yet</span>}
       </div>
       {countColor && <p className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-[#475467]"><span aria-hidden="true" className="h-4 w-4 rounded-full border" style={{ backgroundColor: SUBTRACTION_COLOR_STYLES[countColor].fill, borderColor: SUBTRACTION_COLOR_STYLES[countColor].stroke }} />Count the {SUBTRACTION_COLOR_STYLES[countColor].label} {plural}</p>}
-      <p className="mt-3 text-center text-sm font-semibold text-[#475467]" aria-live="polite">
+      {revealAnswerCount && <p className="mt-3 text-center text-sm font-semibold text-[#475467]" aria-live="polite">
         {removed > 0 ? `${removed} of ${targetCount} ${plural} taken away` : `${totalVisible} of ${targetCount} ${plural} added`}
-      </p>
+      </p>}
     </div>
   );
 }

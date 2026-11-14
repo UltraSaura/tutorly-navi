@@ -175,10 +175,10 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
     if (testInfo.project.name === 'mobile') await remove.tap();
     else await remove.click();
     removedBeforeReload = 1;
-    await expect(page.getByText('Taken away: 1', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('subtraction-with-dots-model').getByTestId('subtraction-object-taken')).toHaveCount(1);
     await page.reload({ waitUntil: 'networkidle' });
     await expect(remove).toBeVisible();
-    await expect(page.getByText('Taken away: 1', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('subtraction-with-dots-model').getByTestId('subtraction-object-taken')).toHaveCount(1);
   }
   if (testInfo.project.name === 'desktop' && takeAway === 1) {
     await remove.focus();
@@ -189,6 +189,8 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
     if (testInfo.project.name === 'mobile') await remove.tap();
     else await remove.click();
   }
+  await expect(page.getByTestId('subtraction-with-dots-model').getByTestId('subtraction-object-taken')).toHaveCount(takeAway);
+  await expect(page.getByTestId('subtraction-with-dots-model')).not.toContainText(/(?:Bubbles|Apples|Pencils|Books|Stars): \d|Taken away: \d|\d of \d (?:bubbles?|apples?|pencils?|books?|stars?) (?:added|taken away)/);
   const equations = page.getByRole('group', { name: 'Choose the subtraction equation', exact: true });
   await equations.getByRole('button', { name: `${targetCount} + ${takeAway}`, exact: true }).click();
   await page.getByRole('button', { name: 'Check equation', exact: true }).click();
@@ -198,7 +200,6 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   await page.getByRole('button', { name: 'Check equation', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Good job' })).toBeVisible();
   const subtractionModel = page.getByTestId('subtraction-with-dots-model');
-  await expect(subtractionModel).toContainText('in the picture');
   await expect(subtractionModel).not.toContainText(`${pluralObjectLabel} left: ${answer}`);
   const answers = page.getByRole('group', { name: `Choose how many remain after ${targetCount} minus ${takeAway}`, exact: true });
   await answers.getByRole('button', { name: String(answer), exact: true }).click();

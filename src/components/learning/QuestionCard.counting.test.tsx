@@ -68,7 +68,8 @@ describe('subtraction with countable objects quiz-bank rendering', () => {
     };
     const html = renderToStaticMarkup(<QuestionCard question={question} />);
     expect(html).toContain('Add one star');
-    expect(html).toContain('stars added');
+    expect(html).toContain('No stars yet');
+    expect(html).not.toContain('stars added');
   });
 
   it('shows the selected color cue when color counting is enabled', () => {
