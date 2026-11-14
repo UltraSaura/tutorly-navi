@@ -243,7 +243,7 @@ export default function PracticePage() {
         <section className="rounded-[24px] border border-[#CBE7DE] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
           <p className="text-xs font-bold uppercase tracking-wide text-[#087F68]">Maths · Calcul mental</p>
           <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Calculation race</h2>
-          <p className="mt-1 text-sm text-[#667085]">Practise addition, subtraction, multiplication, and division. Review missed calculations after the race.</p>
+          <p className="mt-1 text-sm text-[#667085]">For every level, from school arithmetic to interview preparation. Choose the digit size and practise all four operations.</p>
           <button type="button" onClick={() => navigate('/practice/mental-calculation-race')} className="mt-4 min-h-11 w-full rounded-xl bg-[#087F68] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#066B58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68] focus-visible:ring-offset-2">Start calculation race</button>
         </section>
 

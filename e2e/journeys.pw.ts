@@ -235,7 +235,8 @@ test('mental calculation race defers missed-question help until review', async (
     await expect(option).toHaveAttribute('aria-pressed', 'false');
   }
   await expect(division).toHaveAttribute('aria-pressed', 'true');
-  await page.getByLabel('Largest answer').selectOption('100');
+  await page.getByLabel('Digits in first number').selectOption('3');
+  await page.getByLabel('Digits in second number').selectOption('2');
   const start = page.getByRole('button', { name: 'Start race', exact: true });
   await assertUsable(page, start);
   if (testInfo.project.name === 'mobile') await start.tap();
@@ -249,6 +250,8 @@ test('mental calculation race defers missed-question help until review', async (
     expect(values, `Division prompt is visible: ${prompt}`).toBeTruthy();
     const dividend = Number(values?.[1]);
     const divisor = Number(values?.[2]);
+    expect(String(dividend)).toHaveLength(3);
+    expect(String(divisor)).toHaveLength(2);
     const correctAnswer = dividend / divisor;
     const choices = page.getByRole('group', { name: 'Choose an answer' }).getByRole('button');
     const choiceValues = await choices.allTextContents();
@@ -268,11 +271,12 @@ test('mental calculation race defers missed-question help until review', async (
   await expect(page.getByRole('heading', { name: 'Race complete', exact: true })).toBeVisible();
   await expect(page.getByText('9 of 10 correct')).toBeVisible();
   const showExplanation = page.getByRole('button', { name: 'Show explanation', exact: true });
+  await showExplanation.evaluate((element) => element.scrollIntoView({ block: 'center' }));
   await assertUsable(page, showExplanation);
   await showExplanation.click();
-  await expect(page.getByText(/Use the \d+ times table/)).toBeVisible();
-  await expect(page.getByText(/shared into groups/)).toBeVisible();
-  await expect(page.getByText(/The \d+ times table/)).toBeVisible();
+  await expect(page.getByText(/Use the inverse operation/)).toBeVisible();
+  await expect(page.getByText(/because \d+ × \d+ = \d+/)).toBeVisible();
+  await expect(page.getByText('Related multiplication fact', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Browse maths lessons', exact: true })).toHaveAttribute('href', '/learning/mathematiques');
   await testInfo.attach('mental-calculation-race-review', { body: await page.screenshot({ fullPage: true, animations: 'disabled' }), contentType: 'image/png' });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Race review should not overflow horizontally').toBe(true);

@@ -13,18 +13,24 @@ import {
 } from './mentalCalculationRace';
 
 describe('mental calculation race', () => {
-  it('generates valid calculations for each operation within the selected answer range', () => {
-    for (const operation of MENTAL_OPERATIONS) {
-      const calculation = createMentalCalculation(operation, 100);
-      expect(Number.isInteger(calculation.answer)).toBe(true);
-      expect(calculation.answer).toBeGreaterThanOrEqual(0);
-      expect(calculation.answer).toBeLessThanOrEqual(100);
-      expect(calculation.operation).toBe(operation);
+  it('generates the chosen operand digit lengths for all operations', () => {
+    for (let leftDigits = 1; leftDigits <= 7; leftDigits += 1) {
+      for (const rightDigits of [1, Math.min(7, leftDigits)]) {
+        for (const operation of MENTAL_OPERATIONS) {
+          const calculation = createMentalCalculation(operation, leftDigits, rightDigits);
+          const digitLength = (value: number) => Math.abs(value).toString().length;
+          expect(digitLength(calculation.left)).toBe(leftDigits);
+          expect(digitLength(calculation.right)).toBe(rightDigits);
+          expect(Number.isSafeInteger(calculation.answer)).toBe(true);
+          if (operation === 'division') expect(calculation.left % calculation.right).toBe(0);
+          expect(calculation.operation).toBe(operation);
+        }
+      }
     }
   });
 
   it('creates a ten-question race using only the chosen operations', () => {
-    const race = createMentalCalculationRace(['multiplication', 'division'], 100, () => 0.7);
+    const race = createMentalCalculationRace(['multiplication', 'division'], 3, 2, () => 0.7);
     expect(race).toHaveLength(10);
     expect(new Set(race.map((calculation) => calculation.id)).size).toBe(10);
     expect(race.every((calculation) => ['multiplication', 'division'].includes(calculation.operation))).toBe(true);
@@ -33,7 +39,7 @@ describe('mental calculation race', () => {
   });
 
   it('does not create a race when no operation is selected', () => {
-    expect(createMentalCalculationRace([], 10)).toEqual([]);
+    expect(createMentalCalculationRace([])).toEqual([]);
   });
 
   it('checks whole-number answers and formats operation prompts', () => {
@@ -45,10 +51,18 @@ describe('mental calculation race', () => {
   });
 
   it('offers four distinct choices including the answer', () => {
-    const choices = createAnswerChoices(8, 10, () => 0.5);
+    const choices = createAnswerChoices(800_001, () => 0.5);
     expect(choices).toHaveLength(4);
     expect(new Set(choices).size).toBe(4);
-    expect(choices).toContain(8);
+    expect(choices).toContain(800_001);
+  });
+
+  it('accepts negative subtraction answers and avoids unsupported division digit pairs', () => {
+    const randomValues = [0.1, 0.99, 0];
+    const subtraction = createMentalCalculation('subtraction', 1, 1, () => randomValues.shift() ?? 0);
+    expect(subtraction.answer).toBeLessThan(0);
+    expect(isCorrectMentalCalculation(subtraction, String(subtraction.answer))).toBe(true);
+    expect(() => createMentalCalculation('division', 2, 3)).toThrow(/first number must have at least as many digits/);
   });
 
   it('provides learning hints and explanations for multiplication and division', () => {

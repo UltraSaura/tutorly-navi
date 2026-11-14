@@ -23,7 +23,7 @@ import {
   type MentalOperation,
 } from '@/features/practice/mentalCalculationRace';
 
-const STORAGE_KEY = 'tutorly:practice:mental-calculation-race:v1';
+const STORAGE_KEY = 'tutorly:practice:mental-calculation-race:v2';
 const RACE_LENGTH = 10;
 type RaceStage = 'setup' | 'racing' | 'review';
 type AnswerResult = 'correct' | 'incorrect' | null;
@@ -31,7 +31,8 @@ type AnswerResult = 'correct' | 'incorrect' | null;
 type SavedRace = {
   stage: RaceStage;
   operations: MentalOperation[];
-  maximum: number;
+  leftDigits: number;
+  rightDigits: number;
   calculations: MentalCalculation[];
   currentIndex: number;
   results: Array<boolean | null>;
@@ -47,7 +48,7 @@ function isCalculation(value: unknown): value is MentalCalculation {
   if (!value || typeof value !== 'object') return false;
   const calculation = value as MentalCalculation;
   if (typeof calculation.id !== 'string' || !isOperation(calculation.operation)) return false;
-  if (!Number.isInteger(calculation.left) || !Number.isInteger(calculation.right) || !Number.isInteger(calculation.answer)) return false;
+  if (!Number.isSafeInteger(calculation.left) || !Number.isSafeInteger(calculation.right) || !Number.isSafeInteger(calculation.answer)) return false;
   if (calculation.operation === 'addition') return calculation.left + calculation.right === calculation.answer;
   if (calculation.operation === 'subtraction') return calculation.left - calculation.right === calculation.answer;
   if (calculation.operation === 'multiplication') return calculation.left * calculation.right === calculation.answer;
@@ -66,7 +67,8 @@ export default function MentalCalculationRacePage() {
   const curriculum = useStudentCurriculum();
   const [stage, setStage] = useState<RaceStage>('setup');
   const [operations, setOperations] = useState<MentalOperation[]>([...MENTAL_OPERATIONS]);
-  const [maximum, setMaximum] = useState(10);
+  const [leftDigits, setLeftDigits] = useState(1);
+  const [rightDigits, setRightDigits] = useState(1);
   const [calculations, setCalculations] = useState<MentalCalculation[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [results, setResults] = useState<Array<boolean | null>>([]);
@@ -108,7 +110,7 @@ export default function MentalCalculationRacePage() {
   ) as Record<MentalOperation, ReturnType<typeof findMentalOperationLesson>>, [lessonCandidates]);
 
   const currentCalculation = calculations[currentIndex];
-  const answerChoices = useMemo(() => currentCalculation ? createAnswerChoices(currentCalculation.answer, maximum) : [], [currentCalculation, maximum]);
+  const answerChoices = useMemo(() => currentCalculation ? createAnswerChoices(currentCalculation.answer) : [], [currentCalculation]);
   const correctCount = results.filter((result) => result === true).length;
   const missedCalculations = calculations.filter((_, index) => results[index] === false);
 
@@ -126,7 +128,8 @@ export default function MentalCalculationRacePage() {
         const safeResponses = Array.isArray(saved.responses) ? saved.responses.slice(0, RACE_LENGTH) : [];
         setStage(saved.stage!);
         setOperations(Array.isArray(saved.operations) ? saved.operations.filter(isOperation) : [...MENTAL_OPERATIONS]);
-        setMaximum([10, 20, 100].includes(Number(saved.maximum)) ? Number(saved.maximum) : 10);
+        setLeftDigits(Number.isInteger(saved.leftDigits) && Number(saved.leftDigits) >= 1 && Number(saved.leftDigits) <= 7 ? Number(saved.leftDigits) : 1);
+        setRightDigits(Number.isInteger(saved.rightDigits) && Number(saved.rightDigits) >= 1 && Number(saved.rightDigits) <= 7 ? Number(saved.rightDigits) : 1);
         setCalculations(saved.calculations);
         setCurrentIndex(Math.max(0, Math.min(RACE_LENGTH - 1, Number(saved.currentIndex) || 0)));
         setResults(Array.from({ length: RACE_LENGTH }, (_, index) => typeof safeResults[index] === 'boolean' ? safeResults[index]! : null));
@@ -147,12 +150,13 @@ export default function MentalCalculationRacePage() {
 
   useEffect(() => {
     if (loadedKey !== storageKey) return;
-    const saved: SavedRace = { stage, operations, maximum, calculations, currentIndex, results, responses, elapsedSeconds };
+    const saved: SavedRace = { stage, operations, leftDigits, rightDigits, calculations, currentIndex, results, responses, elapsedSeconds };
     try { localStorage.setItem(storageKey, JSON.stringify(saved)); }
     catch { /* the race remains playable if local storage is unavailable */ }
-  }, [calculations, currentIndex, elapsedSeconds, loadedKey, maximum, operations, responses, results, stage, storageKey]);
+  }, [calculations, currentIndex, elapsedSeconds, leftDigits, loadedKey, operations, responses, results, rightDigits, stage, storageKey]);
 
   const toggleOperation = (operation: MentalOperation) => {
+    if (!operations.includes(operation) && operation === 'division' && rightDigits > leftDigits) setLeftDigits(rightDigits);
     setOperations((current) => current.includes(operation)
       ? current.filter((item) => item !== operation)
       : [...current, operation]);
@@ -160,7 +164,7 @@ export default function MentalCalculationRacePage() {
 
   const startRace = () => {
     if (!operations.length) return;
-    const nextRace = createMentalCalculationRace(operations, maximum, Math.random, RACE_LENGTH);
+    const nextRace = createMentalCalculationRace(operations, leftDigits, rightDigits, Math.random, RACE_LENGTH);
     setCalculations(nextRace);
     setCurrentIndex(0);
     setResults(Array.from({ length: RACE_LENGTH }, () => null));
@@ -212,14 +216,14 @@ export default function MentalCalculationRacePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F8FC] px-4 pb-10 pt-5 text-[#17213C] motion-reduce:scroll-auto">
+    <main className="min-h-screen bg-[#F7F8FC] px-4 pb-32 pt-5 text-[#17213C] motion-reduce:scroll-auto">
       <PageMeta title="Mental calculation race | Practice" description="Practise addition, subtraction, multiplication, and division." />
       <div className="mx-auto max-w-xl">
         <button type="button" onClick={() => navigate('/practice')} className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-[#475467] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68]"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Practice</button>
         <header className="mb-4">
           <p className="text-sm font-bold text-[#087F68]">Maths · Mental calculation</p>
           <h1 className="mt-1 text-2xl font-extrabold">Calculation race</h1>
-          <p className="mt-1 text-sm text-[#667085]">One calculation at a time. Any missed answers can be reviewed after the race.</p>
+          <p className="mt-1 text-sm text-[#667085]">Open to every school level. Choose how many digits to practise; missed answers can be reviewed after the race.</p>
         </header>
 
         {stage === 'setup' && (
@@ -231,11 +235,23 @@ export default function MentalCalculationRacePage() {
                 return <button key={operation} type="button" aria-pressed={selected} onClick={() => toggleOperation(operation)} className={`min-h-12 rounded-xl border-2 px-3 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68] ${selected ? 'border-[#087F68] bg-[#E8F8F3] text-[#075B4B]' : 'border-[#D0D5DD] bg-white text-[#475467]'}`}>{MENTAL_OPERATION_LABELS[operation]}</button>;
               })}
             </div>
-            <label className="mt-4 block text-sm font-semibold" htmlFor="calculation-range">Largest answer
-              <select id="calculation-range" value={maximum} onChange={(event) => setMaximum(Number(event.target.value))} className="mt-1 min-h-12 w-full rounded-xl border border-[#D0D5DD] bg-white px-3 focus:border-[#087F68] focus:outline-none focus:ring-2 focus:ring-[#087F68]/25">
-                <option value={10}>Up to 10</option><option value={20}>Up to 20</option><option value={100}>Up to 100</option>
-              </select>
-            </label>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <label className="block text-sm font-semibold" htmlFor="first-number-digits">Digits in first number
+                <select id="first-number-digits" value={leftDigits} onChange={(event) => {
+                  const nextDigits = Number(event.target.value);
+                  setLeftDigits(nextDigits);
+                  if (operations.includes('division') && rightDigits > nextDigits) setRightDigits(nextDigits);
+                }} className="mt-1 min-h-12 w-full rounded-xl border border-[#D0D5DD] bg-white px-3 focus:border-[#087F68] focus:outline-none focus:ring-2 focus:ring-[#087F68]/25">
+                  {[1, 2, 3, 4, 5, 6, 7].map((digits) => <option key={digits} value={digits}>{digits} {digits === 1 ? 'digit' : 'digits'}</option>)}
+                </select>
+              </label>
+              <label className="block text-sm font-semibold" htmlFor="second-number-digits">Digits in second number
+                <select id="second-number-digits" value={rightDigits} onChange={(event) => setRightDigits(Number(event.target.value))} className="mt-1 min-h-12 w-full rounded-xl border border-[#D0D5DD] bg-white px-3 focus:border-[#087F68] focus:outline-none focus:ring-2 focus:ring-[#087F68]/25">
+                  {[1, 2, 3, 4, 5, 6, 7].map((digits) => <option key={digits} value={digits} disabled={operations.includes('division') && digits > leftDigits}>{digits} {digits === 1 ? 'digit' : 'digits'}</option>)}
+                </select>
+              </label>
+            </div>
+            {operations.includes('division') && <p className="mt-2 text-xs text-[#667085]">For division, the first number stays at least as long as the second so the answer is a whole number.</p>}
             {!operations.length && <p role="alert" className="mt-3 text-sm font-semibold text-[#A12B2B]">Choose at least one operation.</p>}
             <p className="mt-3 text-xs text-[#667085]">Each race has 10 questions. Your time is shown, but it does not change how many answers are correct.</p>
             <button type="button" disabled={!operations.length} onClick={startRace} className="mt-5 min-h-12 w-full rounded-xl bg-[#087F68] px-4 font-bold text-white hover:bg-[#066B58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68] focus-visible:ring-offset-2 disabled:opacity-50">Start race</button>
@@ -290,7 +306,7 @@ export default function MentalCalculationRacePage() {
                     {isOpen && <div className="mt-2 space-y-3 rounded-xl bg-[#F2F8F6] p-3 text-sm text-[#075B4B]">
                       <p><strong>Hint:</strong> {getCalculationHint(calculation)}</p>
                       <p><strong>How it works:</strong> {getCalculationExplanation(calculation)}</p>
-                      {relatedFacts.length > 0 && <div><p className="font-bold">The {calculation.right} times table</p><div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">{relatedFacts.map(({ multiplier, product, isRelevant }) => <span key={multiplier} className={isRelevant ? 'rounded bg-white px-1 font-bold' : ''}>{calculation.right} × {multiplier} = {product}</span>)}</div><p className="mt-2">For division, use the matching multiplication fact to find how many equal groups fit.</p></div>}
+                      {relatedFacts.length > 0 && <div><p className="font-bold">{calculation.operation === 'division' && (calculation.right > 12 || calculation.answer > 12) ? 'Related multiplication fact' : `The ${calculation.right} times table`}</p><div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">{relatedFacts.map(({ multiplier, product, isRelevant }) => <span key={multiplier} className={isRelevant ? 'rounded bg-white px-1 font-bold' : ''}>{calculation.right} × {multiplier} = {product}</span>)}</div>{calculation.operation === 'division' && <p className="mt-2">Use the matching multiplication fact to find how many equal groups fit.</p>}</div>}
                       {lesson ? <Link to={`/learning/${lesson.subjectSlug}/${lesson.topicSlug}`} className="inline-flex min-h-11 items-center font-bold text-[#087F68] underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68]">Open the {MENTAL_OPERATION_LABELS[calculation.operation].toLowerCase()} lesson</Link> : <Link to="/learning/mathematiques" className="inline-flex min-h-11 items-center font-bold text-[#087F68] underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68]">Browse maths lessons</Link>}
                     </div>}
                   </article>;
