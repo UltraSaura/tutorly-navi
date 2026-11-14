@@ -29,6 +29,7 @@ export function SubtractionWithDotsModel({ targetCount, dotsAdded, dotsRemoved, 
   const positions = makeScatteredObjectPositions(totalVisible, seed);
   const Icon = objectIcons[object];
   const colorCount = countColor ? countSubtractionObjectsByColor(remaining, seed, countColor) : null;
+  const sizeClass = totalVisible > 50 ? 'h-3 w-3' : totalVisible > 24 ? 'h-4 w-4' : totalVisible > 12 ? 'h-6 w-6' : 'h-8 w-8 sm:h-9 sm:w-9';
 
   const renderObject = (index: number, takenAway = false) => {
     const position = positions[index];
@@ -42,12 +43,12 @@ export function SubtractionWithDotsModel({ targetCount, dotsAdded, dotsRemoved, 
         role={revealAnswerCount ? undefined : 'img'}
         aria-label={revealAnswerCount ? undefined : `${palette.label} ${subtractionObjectName(object, 1)}${takenAway ? ', crossed out' : ', still here'}`}
         aria-hidden={revealAnswerCount ? 'true' : undefined}
-        className={`absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center sm:h-10 sm:w-10 ${takenAway ? 'opacity-40 grayscale' : 'drop-shadow-sm'}`}
+        className={`absolute flex ${sizeClass} -translate-x-1/2 -translate-y-1/2 items-center justify-center ${takenAway ? 'opacity-40 grayscale' : 'drop-shadow-sm'}`}
         style={{ left: `${position.left}%`, top: `${position.top}%` }}
       >
         {object === 'bubble'
-          ? <span className="h-8 w-8 rounded-full border-2 sm:h-9 sm:w-9" style={{ backgroundColor: takenAway ? '#F2F4F7' : palette.fill, borderColor: takenAway ? '#98A2B3' : palette.stroke }} />
-          : Icon && <Icon className="h-8 w-8 sm:h-9 sm:w-9" stroke={takenAway ? '#98A2B3' : palette.stroke} strokeWidth={2.4} fill={takenAway ? '#E4E7EC' : palette.fill} />}
+          ? <span className={`${sizeClass} rounded-full border-2`} style={{ backgroundColor: takenAway ? '#F2F4F7' : palette.fill, borderColor: takenAway ? '#98A2B3' : palette.stroke }} />
+          : Icon && <Icon className={sizeClass} stroke={takenAway ? '#98A2B3' : palette.stroke} strokeWidth={2.4} fill={takenAway ? '#E4E7EC' : palette.fill} />}
         {takenAway && <span className="absolute text-lg font-bold leading-none text-[#667085]">×</span>}
       </span>
     );

@@ -45,6 +45,7 @@ const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
 const GraduatedNumberLinePage = lazy(() => import("./pages/practice/GraduatedNumberLinePage"));
 const AddUpTo100Page = lazy(() => import("./pages/practice/AddUpTo100Page"));
 const FlashcardPracticePage = lazy(() => import("./pages/practice/FlashcardPracticePage"));
+const MentalCalculationRacePage = lazy(() => import("./pages/practice/MentalCalculationRacePage"));
 const NumbersAfterTenPage = lazy(() => import("./pages/practice/NumbersAfterTenPage"));
 const AdditionAcrossTenPage = lazy(() => import("./pages/practice/AdditionAcrossTenPage"));
 const SubtractionWithDotsPage = lazy(() => import("./pages/practice/SubtractionWithDotsPage"));
@@ -254,6 +255,7 @@ const App = () => {
                           <Route index element={<PracticePage />} />
                           <Route path="add-up-to-100" element={<AddUpTo100Page />} />
                           <Route path="flashcards/numbers" element={<FlashcardPracticePage />} />
+                          <Route path="mental-calculation-race" element={<MentalCalculationRacePage />} />
                           <Route path="numbers-after-ten" element={<NumbersAfterTenPage />} />
                           <Route path="addition-across-ten" element={<AdditionAcrossTenPage />} />
                           <Route path="subtraction-within-ten" element={<SubtractionWithDotsPage />} />

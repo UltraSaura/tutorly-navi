@@ -123,7 +123,7 @@ test('reusable counting exercise adds groups, checks answers, and accepts anothe
 test('CE1 subtraction with bubbles adds, takes away, and checks the result', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: testInfo.project.name === 'mobile' ? 'reduce' : 'no-preference' });
   await ready(page, '/practice');
-  await expect(page.getByRole('heading', { name: 'Subtraction within ten', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Subtract with objects', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Practice page should not overflow horizontally').toBe(true);
   await page.getByRole('button', { name: 'Start subtraction practice', exact: true }).click();
   await expect(page).toHaveURL(/\/practice\/subtraction-within-ten$/);
@@ -223,6 +223,60 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   const nextPluralObject = (await nextPrompt.innerText()).match(/Add \d+ (\w+)\./)?.[1];
   expect(nextPluralObject).not.toBe(pluralObject);
   await expect(page.getByRole('button', { name: `Add one ${singularObjects[nextPluralObject ?? '']}`, exact: true })).toBeVisible();
+});
+
+test('mental calculation race defers missed-question help until review', async ({ page }, testInfo) => {
+  await ready(page, '/practice/mental-calculation-race');
+  await expect(page.getByRole('heading', { name: 'Calculation race', exact: true })).toBeVisible();
+  const division = page.getByRole('button', { name: 'Division', exact: true });
+  for (const operation of ['Addition', 'Subtraction', 'Multiplication']) {
+    const option = page.getByRole('button', { name: operation, exact: true });
+    await option.click();
+    await expect(option).toHaveAttribute('aria-pressed', 'false');
+  }
+  await expect(division).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Largest answer').selectOption('100');
+  const start = page.getByRole('button', { name: 'Start race', exact: true });
+  await assertUsable(page, start);
+  if (testInfo.project.name === 'mobile') await start.tap();
+  else await start.click();
+  await expect(page.getByText('Calculation 1 of 10', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Show explanation/ })).toHaveCount(0);
+
+  for (let index = 0; index < 10; index += 1) {
+    const prompt = await page.getByRole('heading', { level: 2 }).innerText();
+    const values = prompt.match(/(\d+) ÷ (\d+) = \?/);
+    expect(values, `Division prompt is visible: ${prompt}`).toBeTruthy();
+    const dividend = Number(values?.[1]);
+    const divisor = Number(values?.[2]);
+    const response = index === 0 ? '0' : String(dividend / divisor);
+    const answerInput = page.getByLabel('Your answer');
+    await answerInput.fill(response);
+    const check = page.getByRole('button', { name: 'Check answer', exact: true });
+    if (testInfo.project.name === 'mobile') await check.tap();
+    else await check.click();
+    if (index === 0) {
+      await expect(page.getByText('We’ll save this calculation for your review after the race.')).toBeVisible();
+      await expect(page.getByRole('button', { name: /Show explanation/ })).toHaveCount(0);
+    } else {
+      await expect(page.getByRole('status').filter({ hasText: 'Good job' })).toBeVisible();
+    }
+    const next = page.getByRole('button', { name: index === 9 ? 'Finish race' : 'Next calculation', exact: true });
+    if (testInfo.project.name === 'mobile') await next.tap();
+    else await next.click();
+  }
+
+  await expect(page.getByRole('heading', { name: 'Race complete', exact: true })).toBeVisible();
+  await expect(page.getByText('9 of 10 correct')).toBeVisible();
+  const showExplanation = page.getByRole('button', { name: 'Show explanation', exact: true });
+  await assertUsable(page, showExplanation);
+  await showExplanation.click();
+  await expect(page.getByText(/Use the \d+ times table/)).toBeVisible();
+  await expect(page.getByText(/shared into groups/)).toBeVisible();
+  await expect(page.getByText(/The \d+ times table/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Browse maths lessons', exact: true })).toHaveAttribute('href', '/learning/mathematiques');
+  await testInfo.attach('mental-calculation-race-review', { body: await page.screenshot({ fullPage: true, animations: 'disabled' }), contentType: 'image/png' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Race review should not overflow horizontally').toBe(true);
 });
 
 test('synthetic published lesson navigation and diagram rendering', async ({ page }) => {

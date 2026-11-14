@@ -37,4 +37,10 @@ describe('SubtractionWithDotsModel', () => {
     expect(html.match(/apple, still here/g)).toHaveLength(7);
     expect(html.match(/apple, crossed out/g)).toHaveLength(1);
   });
+
+  it('renders all objects for larger authored counts with smaller icons', () => {
+    const html = renderToStaticMarkup(<SubtractionWithDotsModel targetCount={100} dotsAdded={100} dotsRemoved={0} object="apple" seed="hundred" revealAnswerCount={false} />);
+    expect(html.match(/data-testid="subtraction-object-left"/g)).toHaveLength(100);
+    expect(html).toContain('h-3 w-3');
+  });
 });

@@ -559,8 +559,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       const addend = Math.trunc(additionAddend);
       const units = ((startNumber % 10) + 10) % 10;
       const total = startNumber + addend;
-      if (!Number.isInteger(startNumber) || startNumber < 10 || startNumber > 999 || !Number.isInteger(addend) || addend < 1 || addend > 9 || units + addend <= 10 || total > 1000) {
-        alert('Choose a CE1 number and a one-digit addend that crosses the next ten.');
+      if (!Number.isInteger(startNumber) || startNumber < 10 || startNumber > 999 || !Number.isInteger(addend) || addend < 1 || addend > 999 || units + addend <= 10 || total > 1000) {
+        alert('Choose numbers from 10 to 999 and 1 to 999 so the addition crosses the next ten and stays at or below 1000.');
         return;
       }
       questionData = {
@@ -577,8 +577,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       const targetCount = Math.trunc(subtractionTarget);
       const takeAway = Math.trunc(subtractionTakeAway);
       const objectName = subtractionObjectName(subtractionObject, targetCount);
-      if (!Number.isInteger(targetCount) || targetCount < 2 || targetCount > 10 || !Number.isInteger(takeAway) || takeAway < 1 || takeAway >= targetCount) {
-        alert('Choose a number of objects from 2 to 10, then a smaller number to take away.');
+      if (!Number.isInteger(targetCount) || targetCount < 2 || targetCount > 100 || !Number.isInteger(takeAway) || takeAway < 1 || takeAway >= targetCount) {
+        alert('Choose a number of objects from 2 to 100, then a smaller number to take away.');
         return;
       }
       const countByColor = subtractionCountByColor;
@@ -601,7 +601,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         countByColor,
         targetCount,
         takeAway,
-        answerChoices: makeSubtractionWithDotsChoices(answer),
+        answerChoices: makeSubtractionWithDotsChoices(answer, Math.random, targetCount),
       } satisfies SubtractionWithDotsQ;
     } else {
       alert('Unsupported question type');
@@ -632,14 +632,14 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="numeric">{ui("Numeric Answer")}</SelectItem>
                 <SelectItem value="ordering">{ui("Ordering")}</SelectItem>
                 <SelectItem value="visual">{ui("Visual")}</SelectItem>
-                <SelectItem value="operation-posee">{ui("Pose et calcule")}</SelectItem>
+                <SelectItem value="operation-posee">Addition / subtraction · choose any numbers</SelectItem>
                 <SelectItem value="column-fill">{ui("Méthode en colonnes")}</SelectItem>
                 <SelectItem value="slider">{ui("Slider")}</SelectItem>
                 <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
                 <SelectItem value="counting">Count objects in groups of ten</SelectItem>
-                <SelectItem value="addition-across-ten">Addition en ligne · franchir la dizaine (CE1)</SelectItem>
-                <SelectItem value="subtraction-with-dots">Subtraction with countable objects · within ten (CE1 review)</SelectItem>
+                <SelectItem value="addition-across-ten">Addition · cross the next ten</SelectItem>
+                <SelectItem value="subtraction-with-dots">Subtraction · countable objects</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -690,10 +690,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
           {kind === 'addition-across-ten' && (
             <div className="space-y-3 rounded-xl border p-4">
-              <p className="text-sm text-muted-foreground">CE1 mental addition review: the learner fills the next ten, then adds the counters left. This is separate from column addition.</p>
+              <p className="text-sm text-muted-foreground">Choose the starting number and addend. The learner fills the next ten, then adds the counters left. Use any values that cross the next ten; totals can be up to 1000.</p>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label htmlFor="addition-start">Starting number</Label><Input id="addition-start" type="number" min="10" max="999" value={additionStartNumber} onChange={(event) => setAdditionStartNumber(Number(event.target.value))} /></div>
-                <div><Label htmlFor="addition-addend">One-digit number to add</Label><Input id="addition-addend" type="number" min="1" max="9" value={additionAddend} onChange={(event) => setAdditionAddend(Number(event.target.value))} /></div>
+                <div><Label htmlFor="addition-addend">Number to add</Label><Input id="addition-addend" type="number" min="1" max="999" value={additionAddend} onChange={(event) => setAdditionAddend(Number(event.target.value))} /></div>
               </div>
               <p className="text-sm font-medium">{additionStartNumber} needs {countersToNextTen(additionStartNumber)} to reach the next ten; total: {additionAcrossTenTotal({ startNumber: additionStartNumber, addend: additionAddend })}</p>
             </div>
@@ -701,7 +701,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
           {kind === 'subtraction-with-dots' && (
             <div className="space-y-3 rounded-xl border p-4">
-              <p className="text-sm text-muted-foreground">Subtraction practice within ten: add countable objects, then use the take-away step. The objects are scattered in the picture. CE1 review of mental subtraction.</p>
+              <p className="text-sm text-muted-foreground">Choose any subtraction from 2 to 100. Students add the objects, take some away, identify the subtraction, then choose the answer.</p>
               <div>
                 <Label htmlFor="subtraction-object">Objects</Label>
                 <Select value={subtractionObject} onValueChange={(value: SubtractionObject) => setSubtractionObject(value)}>
@@ -715,8 +715,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label htmlFor="subtraction-target">Objects to add</Label><Input id="subtraction-target" type="number" min="2" max="10" value={subtractionTarget} onChange={(event) => setSubtractionTarget(Number(event.target.value))} /></div>
-                <div><Label htmlFor="subtraction-take-away">Objects to take away</Label><Input id="subtraction-take-away" type="number" min="1" max="9" value={subtractionTakeAway} onChange={(event) => setSubtractionTakeAway(Number(event.target.value))} /></div>
+                <div><Label htmlFor="subtraction-target">Starting amount (2–100)</Label><Input id="subtraction-target" type="number" min="2" max="100" value={subtractionTarget} onChange={(event) => setSubtractionTarget(Number(event.target.value))} /></div>
+                <div><Label htmlFor="subtraction-take-away">Amount to take away</Label><Input id="subtraction-take-away" type="number" min="1" max="99" value={subtractionTakeAway} onChange={(event) => setSubtractionTakeAway(Number(event.target.value))} /></div>
               </div>
               <div className="flex items-start gap-2">
                 <Checkbox id="subtraction-count-by-color" checked={subtractionCountByColor} onCheckedChange={(checked) => setSubtractionCountByColor(checked === true)} />
@@ -1058,6 +1058,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
           {kind === 'operation-posee' && (
             <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Use this general operation format for addition or subtraction with any chosen operands, including within ten or with larger numbers.</p>
               <div>
                 <Label>{ui("Operation")}</Label>
                 <Select value={operation} onValueChange={(value: 'addition' | 'subtraction') => setOperation(value)}>

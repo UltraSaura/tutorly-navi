@@ -18,6 +18,17 @@ describe('addition across ten exercise contract', () => {
     expect(additionAcrossTenTotal(exercise)).toBeLessThanOrEqual(1000);
   });
 
+  it('accepts multi-digit addends when they cross the next ten', () => {
+    const exercise = {
+      id: 'bridge-to-100',
+      startNumber: 47,
+      addend: 53,
+      answerChoices: [99, 100, 101, 110],
+    };
+    expect(isValidAdditionAcrossTenExercise(exercise)).toBe(true);
+    expect(additionAcrossTenTotal(exercise)).toBe(100);
+  });
+
   it('rejects additions that do not cross the next ten or have inconsistent answers', () => {
     const valid = { id: 'valid-1', startNumber: 247, addend: 8, answerChoices: [255, 254, 256, 265] };
     expect(isValidAdditionAcrossTenExercise(valid)).toBe(true);

@@ -192,8 +192,8 @@ export default function SubtractionWithDotsPage() {
       <div className="mx-auto max-w-xl">
         <button type="button" onClick={() => navigate('/practice')} className="mb-3 inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-[#475467] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Practice</button>
         <header className="mb-3">
-          <p className="text-sm font-bold text-[#5145B5]">CE1 · Maths · Calcul mental</p>
-          <p className="mt-1 text-sm text-[#667085]">Review and fluency · Subtract within ten · Scored practice · No timer</p>
+          <p className="text-sm font-bold text-[#5145B5]">Maths · Numbers and calculation</p>
+          <p className="mt-1 text-sm text-[#667085]">Subtract with objects · Scored practice · No timer</p>
         </header>
 
         {phase === 'complete' ? (

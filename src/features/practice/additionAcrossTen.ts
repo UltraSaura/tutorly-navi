@@ -59,7 +59,7 @@ export function isValidAdditionAcrossTenExercise(value: unknown): value is Addit
   const exercise = value as Partial<AdditionAcrossTenExercise>;
   if (typeof exercise.id !== 'string' || !exercise.id.trim()) return false;
   if (!Number.isInteger(exercise.startNumber) || (exercise.startNumber ?? -1) < 10 || (exercise.startNumber ?? 1001) > 999) return false;
-  if (!Number.isInteger(exercise.addend) || (exercise.addend ?? -1) < 1 || (exercise.addend ?? 10) > 9) return false;
+  if (!Number.isInteger(exercise.addend) || (exercise.addend ?? -1) < 1 || (exercise.addend ?? 1000) > 999) return false;
   const total = additionAcrossTenTotal(exercise as AdditionAcrossTenExercise);
   if (total > 1000 || getUnitsDigit(exercise.startNumber!) + exercise.addend <= 10) return false;
   return Array.isArray(exercise.answerChoices)

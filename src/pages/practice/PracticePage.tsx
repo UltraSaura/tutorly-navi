@@ -241,6 +241,13 @@ export default function PracticePage() {
         </section>
 
         <section className="rounded-[24px] border border-[#CBE7DE] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#087F68]">Maths · Calcul mental</p>
+          <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Calculation race</h2>
+          <p className="mt-1 text-sm text-[#667085]">Practise addition, subtraction, multiplication, and division. Review missed calculations after the race.</p>
+          <button type="button" onClick={() => navigate('/practice/mental-calculation-race')} className="mt-4 min-h-11 w-full rounded-xl bg-[#087F68] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#066B58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68] focus-visible:ring-offset-2">Start calculation race</button>
+        </section>
+
+        <section className="rounded-[24px] border border-[#CBE7DE] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
           <p className="text-xs font-bold uppercase tracking-wide text-[#087F68]">Maths · quick practice</p>
           <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Number flashcards</h2>
           <p className="mt-1 text-sm text-[#667085]">Practise one small addition or subtraction at a time.</p>
@@ -248,9 +255,9 @@ export default function PracticePage() {
         </section>
 
         <section className="rounded-[24px] border border-[#D9DDF8] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#5145B5]">CE1 · Maths · Calcul mental</p>
-          <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Subtraction within ten</h2>
-          <p className="mt-1 text-sm text-[#667085]">Add scattered objects, take some away, and count what remains.</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-[#5145B5]">Maths · Numbers and calculation</p>
+          <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Subtract with objects</h2>
+          <p className="mt-1 text-sm text-[#667085]">Add scattered objects, take some away, identify the subtraction, and count what remains.</p>
           <button type="button" onClick={() => navigate('/practice/subtraction-within-ten')} className="mt-4 min-h-11 w-full rounded-xl bg-[#5145B5] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Start subtraction practice</button>
         </section>
 

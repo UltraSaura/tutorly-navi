@@ -40,15 +40,24 @@ describe('subtraction with bubbles', () => {
     expect(isValidSubtractionWithDotsExercise({ id: 'bad', targetCount: 6, takeAway: 6, answerChoices: [0, 1, 2, 3] })).toBe(false);
   });
 
+  it('supports authored exercises up to 100 and generates choices inside that range', () => {
+    const answerChoices = makeSubtractionWithDotsChoices(75, () => 0.5, 100);
+    const exercise = { id: 'subtract-100', targetCount: 100, takeAway: 25, answerChoices };
+    expect(isValidSubtractionWithDotsExercise(exercise)).toBe(true);
+    expect(answerChoices).toContain(75);
+    expect(answerChoices.every((choice) => choice >= 0 && choice <= 100)).toBe(true);
+    expect(makeScatteredObjectPositions(100, 'hundred-objects')).toHaveLength(100);
+  });
+
   it('keeps older bubble exercises valid while rejecting unknown object types', () => {
     const legacyExercise = { id: 'legacy-bubble', targetCount: 6, takeAway: 1, answerChoices: [5, 4, 3, 2] };
     expect(isValidSubtractionWithDotsExercise(legacyExercise)).toBe(true);
     expect(isValidSubtractionWithDotsExercise({ ...legacyExercise, object: 'unknown' })).toBe(false);
   });
 
-  it('keeps answer options in the count-to-ten range', () => {
+  it('keeps answer options inside the configured number range', () => {
     for (const answer of [1, 2, 5, 9]) {
-      const choices = makeSubtractionWithDotsChoices(answer, () => 0.5);
+      const choices = makeSubtractionWithDotsChoices(answer, () => 0.5, 10);
       expect(choices).toHaveLength(4);
       expect(choices).toContain(answer);
       expect(new Set(choices).size).toBe(4);
