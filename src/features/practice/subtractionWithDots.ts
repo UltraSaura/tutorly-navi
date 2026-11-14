@@ -3,6 +3,42 @@ import { COUNTABLE_OBJECTS, type CountableObject } from '@/types/counting-exerci
 export const SUBTRACTION_OBJECTS = ['bubble', ...COUNTABLE_OBJECTS] as const;
 export type SubtractionObject = typeof SUBTRACTION_OBJECTS[number];
 
+export const SUBTRACTION_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'] as const;
+export type SubtractionColor = typeof SUBTRACTION_COLORS[number];
+
+export const SUBTRACTION_COLOR_STYLES: Record<SubtractionColor, { fill: string; stroke: string; label: string }> = {
+  red: { fill: '#F87171', stroke: '#BE3434', label: 'red' },
+  orange: { fill: '#FDBA74', stroke: '#C65D16', label: 'orange' },
+  yellow: { fill: '#FDE047', stroke: '#A16207', label: 'yellow' },
+  green: { fill: '#86EFAC', stroke: '#25834B', label: 'green' },
+  blue: { fill: '#7DD3FC', stroke: '#2563A6', label: 'blue' },
+  purple: { fill: '#C4B5FD', stroke: '#6542B7', label: 'purple' },
+};
+
+function stableHash(value: string) {
+  let hash = 2166136261;
+  for (const character of value) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+  return hash >>> 0;
+}
+
+/** Stable color assignment keeps the same objects consistent across every lesson phase. */
+export function subtractionObjectColor(index: number, seed: string): SubtractionColor {
+  const start = stableHash(seed) % SUBTRACTION_COLORS.length;
+  const step = stableHash(`${seed}:step`) % 2 === 0 ? 1 : SUBTRACTION_COLORS.length - 1;
+  return SUBTRACTION_COLORS[(start + Math.max(0, Math.floor(index)) * step) % SUBTRACTION_COLORS.length];
+}
+
+export function subtractionColorToCount(seed: string, remainingCount = 10): SubtractionColor {
+  const safeCount = Math.max(1, Math.min(10, Math.floor(remainingCount)));
+  const selectedIndex = stableHash(`${seed}:target`) % safeCount;
+  return subtractionObjectColor(selectedIndex, seed);
+}
+
+export function countSubtractionObjectsByColor(count: number, seed: string, color: SubtractionColor) {
+  return Array.from({ length: Math.max(0, Math.min(10, Math.floor(count))) }, (_, index) => subtractionObjectColor(index, seed))
+    .filter((itemColor) => itemColor === color).length;
+}
+
 const objectNames: Record<SubtractionObject, { singular: string; plural: string }> = {
   bubble: { singular: 'bubble', plural: 'bubbles' },
   pencil: { singular: 'pencil', plural: 'pencils' },

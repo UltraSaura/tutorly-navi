@@ -1,7 +1,7 @@
 import type { Question } from '@/types/quiz-bank';
 import { evaluateVisual } from '@/lib/quiz/visual-evaluate';
 import { additionAcrossTenTotal, countersToNextTen } from '@/features/practice/additionAcrossTen';
-import { subtractionWithDotsTotal } from '@/features/practice/subtractionWithDots';
+import { countSubtractionObjectsByColor, subtractionColorToCount, subtractionWithDotsTotal } from '@/features/practice/subtractionWithDots';
 
 export type QuizQuestionGradeDetail = {
   questionId: string;
@@ -34,10 +34,14 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
   }
   if (q.kind === 'subtraction-with-dots') {
     const equation = `${q.targetCount} − ${q.takeAway}`;
+    const totalRemaining = subtractionWithDotsTotal(q);
+    const expectedAnswer = q.countByColor
+      ? countSubtractionObjectsByColor(totalRemaining, q.id, subtractionColorToCount(q.id, totalRemaining))
+      : totalRemaining;
     return Number(answer?.dotsAdded) === q.targetCount
       && Number(answer?.dotsRemoved) === q.takeAway
       && answer?.selectedEquation === equation
-      && Number(answer?.selectedAnswer) === subtractionWithDotsTotal(q);
+      && Number(answer?.selectedAnswer) === expectedAnswer;
   }
   if (q.kind === "numeric") {
     const numQ = q as any;

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CountingQ } from '@/types/quiz-bank';
 import type { AdditionAcrossTenQ } from '@/types/quiz-bank';
 import type { SubtractionWithDotsQ } from '@/types/quiz-bank';
+import { subtractionColorToCount } from '@/features/practice/subtractionWithDots';
 import { QuestionCard } from './QuestionCard';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -68,5 +69,17 @@ describe('subtraction with countable objects quiz-bank rendering', () => {
     const html = renderToStaticMarkup(<QuestionCard question={question} />);
     expect(html).toContain('Add one star');
     expect(html).toContain('stars added');
+  });
+
+  it('shows the selected color cue when color counting is enabled', () => {
+    const color = subtractionColorToCount('subtract-color-count', 5);
+    const question: SubtractionWithDotsQ = {
+      id: 'subtract-color-count', kind: 'subtraction-with-dots', prompt: `Add 8 apples, then take away 3. How many ${color} apples remain?`,
+      object: 'apple', countByColor: true, targetCount: 8, takeAway: 3, answerChoices: [0, 1, 2, 3],
+    };
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain(`Count the ${color} apples`);
+    expect(html).toContain(`${color} apples left`);
+    expect(html).toContain(`How many ${color} apples remain?`);
   });
 });

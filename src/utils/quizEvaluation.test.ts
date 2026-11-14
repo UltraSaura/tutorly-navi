@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Question } from "@/types/quiz-bank";
 import { buildColumnFillQuestion } from "@/lib/quiz/columnFillBuilder";
+import { countSubtractionObjectsByColor, subtractionColorToCount, subtractionWithDotsTotal } from '@/features/practice/subtractionWithDots';
 import {
   evaluateQuestion,
   isQuizAnswerComplete,
@@ -45,6 +46,19 @@ describe("quiz penalty grading", () => {
     expect(isQuizAnswerComplete(question, answer)).toBe(true);
     expect(evaluateQuestion(question, { ...answer, selectedEquation: '8 + 5' })).toBe(false);
     expect(evaluateQuestion(question, answer)).toBe(true);
+  });
+
+  it('grades an optional color-count subtraction by the selected color subset', () => {
+    const question: Extract<Question, { kind: 'subtraction-with-dots' }> = {
+      id: 'subtract-color-count', kind: 'subtraction-with-dots', prompt: 'Count the red apples left.',
+      object: 'apple', countByColor: true, targetCount: 8, takeAway: 3,
+      answerChoices: [0, 1, 2, 3], points: 1,
+    };
+    const totalRemaining = subtractionWithDotsTotal(question);
+    const answer = countSubtractionObjectsByColor(totalRemaining, question.id, subtractionColorToCount(question.id, totalRemaining));
+    const response = { dotsAdded: 8, dotsRemoved: 3, selectedEquation: '8 − 3', selectedAnswer: answer };
+    expect(evaluateQuestion(question, response)).toBe(true);
+    expect(evaluateQuestion(question, { ...response, selectedAnswer: (answer + 1) % 6 })).toBe(false);
   });
 
   it('scores a counting-bank question only after the required groups and correct choice', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSubtractionWithDotsExercise, isValidSubtractionWithDotsExercise, makeScatteredObjectPositions, makeSubtractionWithDotsChoices, makeSubtractionWithDotsEquationChoices, subtractionObjectName, subtractionWithDotsTotal } from './subtractionWithDots';
+import { countSubtractionObjectsByColor, createSubtractionWithDotsExercise, isValidSubtractionWithDotsExercise, makeScatteredObjectPositions, makeSubtractionWithDotsChoices, makeSubtractionWithDotsEquationChoices, SUBTRACTION_COLORS, subtractionColorToCount, subtractionObjectColor, subtractionObjectName, subtractionWithDotsTotal } from './subtractionWithDots';
 
 describe('subtraction with bubbles', () => {
   it('creates a valid within-ten subtraction and four unique answers', () => {
@@ -25,6 +25,15 @@ describe('subtraction with bubbles', () => {
     expect(new Set(positions.map(({ top }) => top)).size).toBeGreaterThan(2);
     expect(positions.every(({ left, top }) => left >= 10 && left <= 90 && top >= 15 && top <= 85)).toBe(true);
     expect(makeScatteredObjectPositions(10, 'exercise-two')).not.toEqual(positions);
+  });
+
+  it('assigns a stable, varied color to every object for color-count questions', () => {
+    const colors = Array.from({ length: SUBTRACTION_COLORS.length }, (_, index) => subtractionObjectColor(index, 'color-count-test'));
+    expect(new Set(colors).size).toBe(SUBTRACTION_COLORS.length);
+    expect(subtractionObjectColor(2, 'color-count-test')).toBe(colors[2]);
+    expect(countSubtractionObjectsByColor(6, 'color-count-test', colors[0])).toBe(1);
+    const requestedColor = subtractionColorToCount('color-count-test', 3);
+    expect(countSubtractionObjectsByColor(3, 'color-count-test', requestedColor)).toBeGreaterThan(0);
   });
 
   it('rejects an impossible take-away amount', () => {

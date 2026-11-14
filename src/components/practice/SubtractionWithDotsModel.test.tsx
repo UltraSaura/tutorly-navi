@@ -18,4 +18,12 @@ describe('SubtractionWithDotsModel', () => {
     expect(html).toContain('No apples yet');
     expect(html).toContain('0 apples left; 0 taken away');
   });
+
+  it('renders full color objects and a clear color-count cue when requested', () => {
+    const html = renderToStaticMarkup(<SubtractionWithDotsModel targetCount={6} dotsAdded={6} dotsRemoved={2} object="apple" seed="color-count-test" countColor="red" />);
+    expect(html).toContain('data-object-color=');
+    expect(html).toContain('Count the red apples');
+    expect(html).toMatch(/\d red apples? left/);
+    expect(html).toContain('fill="#');
+  });
 });

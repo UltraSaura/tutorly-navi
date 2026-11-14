@@ -44,6 +44,8 @@ export type AdditionAcrossTenQ = BaseQ & {
 export type SubtractionWithDotsQ = BaseQ & {
   kind: "subtraction-with-dots";
   object?: import('@/features/practice/subtractionWithDots').SubtractionObject;
+  /** When enabled, the final answer asks for the remaining count of a generated color. */
+  countByColor?: boolean;
   targetCount: number;
   takeAway: number;
   answerChoices: number[];

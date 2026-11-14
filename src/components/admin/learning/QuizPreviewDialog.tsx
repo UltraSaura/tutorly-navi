@@ -11,7 +11,7 @@ import { countingExerciseStart, countingExerciseTotal } from '@/features/practic
 import { AdditionAcrossTenModel } from '@/components/practice/AdditionAcrossTenModel';
 import { additionAcrossTenTotal, countersToNextTen } from '@/features/practice/additionAcrossTen';
 import { SubtractionWithDotsModel } from '@/components/practice/SubtractionWithDotsModel';
-import { normalizeSubtractionObject, subtractionObjectName } from '@/features/practice/subtractionWithDots';
+import { countSubtractionObjectsByColor, normalizeSubtractionObject, subtractionColorToCount, subtractionObjectName } from '@/features/practice/subtractionWithDots';
 
 // ── Per-type correct-answer display ─────────────────────────────────────────
 
@@ -107,17 +107,19 @@ function AnswerDisplay({ question }: { question: Question }) {
     }
 
     case 'subtraction-with-dots': {
-      const answer = question.targetCount - question.takeAway;
+      const remaining = question.targetCount - question.takeAway;
+      const countColor = question.countByColor ? subtractionColorToCount(question.id, remaining) : undefined;
+      const answer = countColor ? countSubtractionObjectsByColor(remaining, question.id, countColor) : remaining;
       const object = normalizeSubtractionObject(question.object);
       return (
         <div className="space-y-3">
-          <SubtractionWithDotsModel targetCount={question.targetCount} dotsAdded={question.targetCount} dotsRemoved={question.takeAway} object={object} seed={question.id} />
+          <SubtractionWithDotsModel targetCount={question.targetCount} dotsAdded={question.targetCount} dotsRemoved={question.takeAway} object={object} seed={question.id} countColor={countColor} />
           <div className="grid grid-cols-2 gap-2">
             {question.answerChoices.map((choice) => <div key={choice} className={cn('rounded-lg border px-3 py-2 text-center font-bold', choice === answer ? 'border-green-400 bg-green-50 text-green-800' : 'border-border text-muted-foreground')}>
               {choice}{choice === answer && <CheckCircle2 className="ml-2 inline h-4 w-4" />}
             </div>)}
           </div>
-          <p className="text-xs text-muted-foreground">Add {question.targetCount} {subtractionObjectName(object, question.targetCount)}, then take away {question.takeAway}.</p>
+          <p className="text-xs text-muted-foreground">Add {question.targetCount} {subtractionObjectName(object, question.targetCount)}, then take away {question.takeAway}. {countColor ? `Ask how many ${countColor} ${subtractionObjectName(object, question.targetCount)} remain.` : 'Count how many remain.'}</p>
         </div>
       );
     }
