@@ -79,7 +79,7 @@ describe('subtraction with countable objects quiz-bank rendering', () => {
     };
     const html = renderToStaticMarkup(<QuestionCard question={question} />);
     expect(html).toContain(`Count the ${color} apples`);
-    expect(html).toContain(`${color} apples left`);
+    expect(html).not.toContain(`${color} apples left`);
     expect(html).toContain(`How many ${color} apples remain?`);
   });
 });

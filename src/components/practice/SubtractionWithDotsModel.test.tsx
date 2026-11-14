@@ -26,4 +26,13 @@ describe('SubtractionWithDotsModel', () => {
     expect(html).toMatch(/\d red apples? left/);
     expect(html).toContain('fill="#');
   });
+
+  it('does not reveal the result in a learner prompt before an answer is chosen', () => {
+    const html = renderToStaticMarkup(<SubtractionWithDotsModel targetCount={8} dotsAdded={8} dotsRemoved={1} object="apple" revealAnswerCount={false} />);
+    expect(html).toContain('Apples in the picture');
+    expect(html).not.toContain('Apples left: 7');
+    expect(html).toContain('Count the apples. Objects marked with a cross have been taken away.');
+    expect(html.match(/apple, still here/g)).toHaveLength(7);
+    expect(html.match(/apple, crossed out/g)).toHaveLength(1);
+  });
 });

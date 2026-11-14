@@ -132,6 +132,7 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   const promptText = await prompt.innerText();
   const targetCount = Number(promptText.match(/Add (\d+)/)?.[1]);
   const pluralObject = promptText.match(/Add \d+ (\w+)\./)?.[1];
+  const pluralObjectLabel = pluralObject ? `${pluralObject[0].toUpperCase()}${pluralObject.slice(1)}` : '';
   const singularObjects: Record<string, string> = { bubbles: 'bubble', pencils: 'pencil', apples: 'apple', books: 'book', stars: 'star' };
   const object = singularObjects[pluralObject ?? ''];
   expect(object).toBeTruthy();
@@ -194,6 +195,9 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   await equations.getByRole('button', { name: `${targetCount} − ${takeAway}`, exact: true }).click();
   await page.getByRole('button', { name: 'Check equation', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Good job' })).toBeVisible();
+  const subtractionModel = page.getByTestId('subtraction-with-dots-model');
+  await expect(subtractionModel).toContainText('in the picture');
+  await expect(subtractionModel).not.toContainText(`${pluralObjectLabel} left: ${answer}`);
   const answers = page.getByRole('group', { name: `Choose how many remain after ${targetCount} minus ${takeAway}`, exact: true });
   await answers.getByRole('button', { name: String(answer), exact: true }).click();
   await page.getByRole('button', { name: 'Check answer', exact: true }).click();

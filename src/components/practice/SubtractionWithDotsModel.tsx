@@ -9,6 +9,8 @@ type SubtractionWithDotsModelProps = {
   seed?: string;
   showAllRemoved?: boolean;
   countColor?: SubtractionColor;
+  /** Hide computed totals while the learner is still answering. */
+  revealAnswerCount?: boolean;
 };
 
 const objectIcons: Partial<Record<SubtractionObject, LucideIcon>> = {
@@ -18,7 +20,7 @@ const objectIcons: Partial<Record<SubtractionObject, LucideIcon>> = {
   star: Star,
 };
 
-export function SubtractionWithDotsModel({ targetCount, dotsAdded, dotsRemoved, object: objectValue, seed = 'subtraction', showAllRemoved = true, countColor }: SubtractionWithDotsModelProps) {
+export function SubtractionWithDotsModel({ targetCount, dotsAdded, dotsRemoved, object: objectValue, seed = 'subtraction', showAllRemoved = true, countColor, revealAnswerCount = true }: SubtractionWithDotsModelProps) {
   const object = normalizeSubtractionObject(objectValue);
   const plural = subtractionObjectName(object, targetCount);
   const totalVisible = Math.min(targetCount, Math.max(0, dotsAdded));
@@ -37,7 +39,9 @@ export function SubtractionWithDotsModel({ targetCount, dotsAdded, dotsRemoved, 
         key={`${takenAway ? 'taken' : 'left'}-${index}`}
         data-testid={takenAway ? 'subtraction-object-taken' : 'subtraction-object-left'}
         data-object-color={color}
-        aria-hidden="true"
+        role={revealAnswerCount ? undefined : 'img'}
+        aria-label={revealAnswerCount ? undefined : `${palette.label} ${subtractionObjectName(object, 1)}${takenAway ? ', crossed out' : ', still here'}`}
+        aria-hidden={revealAnswerCount ? 'true' : undefined}
         className={`absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center sm:h-10 sm:w-10 ${takenAway ? 'opacity-40 grayscale' : 'drop-shadow-sm'}`}
         style={{ left: `${position.left}%`, top: `${position.top}%` }}
       >
@@ -52,10 +56,14 @@ export function SubtractionWithDotsModel({ targetCount, dotsAdded, dotsRemoved, 
   return (
     <div className="rounded-2xl bg-[#F6F5FF] p-4" data-testid="subtraction-with-dots-model">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-bold text-[#344054]">{removed > 0 ? `${plural[0].toUpperCase()}${plural.slice(1)} left: ${remaining}` : `${plural[0].toUpperCase()}${plural.slice(1)}: ${totalVisible} of ${targetCount}`}</p>
+        <p className="text-sm font-bold text-[#344054]">{removed > 0
+          ? revealAnswerCount ? `${plural[0].toUpperCase()}${plural.slice(1)} left: ${remaining}` : `${plural[0].toUpperCase()}${plural.slice(1)} in the picture`
+          : `${plural[0].toUpperCase()}${plural.slice(1)}: ${totalVisible} of ${targetCount}`}</p>
         {showAllRemoved && <p className="text-sm font-semibold text-[#667085]">Taken away: {removed}</p>}
       </div>
-      <div role="img" aria-label={`${remaining} ${subtractionObjectName(object, remaining)} left; ${removed} taken away${countColor ? `; ${colorCount} ${SUBTRACTION_COLOR_STYLES[countColor].label} ${subtractionObjectName(object, colorCount)} left` : ''}`} className="relative mt-3 aspect-[1.65/1] min-h-40 overflow-hidden rounded-xl border border-[#E4E7EC] bg-white">
+      <div role={revealAnswerCount ? 'img' : 'group'} aria-label={revealAnswerCount
+        ? `${remaining} ${subtractionObjectName(object, remaining)} left; ${removed} taken away${countColor ? `; ${colorCount} ${SUBTRACTION_COLOR_STYLES[countColor].label} ${subtractionObjectName(object, colorCount)} left` : ''}`
+        : `Count the ${countColor ? `${SUBTRACTION_COLOR_STYLES[countColor].label} ` : ''}${plural}. Objects marked with a cross have been taken away.`} className="relative mt-3 aspect-[1.65/1] min-h-40 overflow-hidden rounded-xl border border-[#E4E7EC] bg-white">
         {Array.from({ length: remaining }, (_, index) => renderObject(index))}
         {showAllRemoved && Array.from({ length: removed }, (_, index) => renderObject(remaining + index, true))}
         {totalVisible === 0 && <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-[#667085]">No {plural} yet</span>}

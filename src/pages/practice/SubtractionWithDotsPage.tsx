@@ -225,7 +225,7 @@ export default function SubtractionWithDotsPage() {
               </p>
             </div>
 
-            <div className="mt-4"><SubtractionWithDotsModel targetCount={exercise.targetCount} dotsAdded={dotsAdded} dotsRemoved={dotsRemoved} object={object} seed={exercise.id} showAllRemoved={phase !== 'building'} /></div>
+            <div className="mt-4"><SubtractionWithDotsModel targetCount={exercise.targetCount} dotsAdded={dotsAdded} dotsRemoved={dotsRemoved} object={object} seed={exercise.id} showAllRemoved={phase !== 'building'} revealAnswerCount={false} /></div>
 
             {phase === 'building' && <button type="button" aria-label={`Add one ${subtractionObjectName(object, 1)}`} onClick={addBubble} className="mt-4 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#5145B5] bg-white px-3 font-bold text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><span aria-hidden="true" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#5145B5] text-white"><Plus className="h-5 w-5" /></span>Add one {subtractionObjectName(object, 1)}</button>}
 
