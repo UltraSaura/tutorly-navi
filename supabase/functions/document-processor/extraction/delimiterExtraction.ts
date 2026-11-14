@@ -79,7 +79,7 @@ function validateMathematicalContent(content: string): {
   issues: string[];
 } {
   const issues: string[] = [];
-  let enhancedContent = content;
+  const enhancedContent = content;
   
   // Check for mathematical elements
   const hasMathSymbols = /[+\-×÷=<>%]/.test(content);

@@ -205,7 +205,7 @@ export function analyzeExerciseProfile(expression: string): ExerciseProfile {
     const rightDigits = `${rightParsed.intPart.padStart(integerWidth, '0')}${rightParsed.fracPart.padEnd(fractionalWidth, '0')}`.split('').map(Number);
     let borrow = 0;
     for (let i = leftDigits.length - 1; i >= 0; i--) {
-      let top = leftDigits[i] - borrow;
+      const top = leftDigits[i] - borrow;
       const bottom = rightDigits[i];
       if (top < bottom) {
         requiresBorrow = true;

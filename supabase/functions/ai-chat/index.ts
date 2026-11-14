@@ -446,7 +446,7 @@ JSON shape:
     }
     
     // Extract structured fields from AI response (handles markdown-wrapped JSON)
-    let parsedFields: Record<string, any> = {};
+    const parsedFields: Record<string, unknown> = {};
     try {
       const jsonMatch = responseContent.match(/```json\s*\n([\s\S]*?)\n\s*```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : responseContent;
@@ -490,7 +490,7 @@ JSON shape:
     });
     
     // Enhanced error response with more details
-    let errorMessage = (error as Error).message || String(error);
+    const errorMessage = (error as Error).message || String(error);
     let statusCode = 500;
     
     // Categorize errors for better user experience

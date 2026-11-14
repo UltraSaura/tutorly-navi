@@ -6,7 +6,7 @@ export function enhancedWorksheetPreprocessing(text: string): string {
   console.log('Original text length:', text.length);
   console.log('Original preview:', text.substring(0, 200));
   
-  let processed = text
+  const processed = text
     // STEP 1: Remove obvious OCR garbage patterns
     .replace(/c{10,}/g, ' ') // Remove long strings of 'c' characters
     .replace(/[^a-zA-Z0-9\s\(\)\/\\\.\=\-\+\&\^\~\{\}]/g, ' ') // Keep only relevant characters

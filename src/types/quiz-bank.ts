@@ -1,4 +1,5 @@
 import type { VisualUnion } from "@/lib/quiz/visual-types";
+import type { CountableObject } from "@/types/counting-exercise";
 
 export type Choice = { id: string; label: string; correct?: boolean };
 
@@ -25,6 +26,29 @@ export type NumericQ = BaseQ & {
   timeAnswer?: { days?: number; hours: number; minutes: number; seconds?: number };
   answerUnit?: string;
   dragOptions?: number[];
+};
+export type CountingQ = BaseQ & {
+  kind: "counting";
+  object: CountableObject;
+  startingGroups: number;
+  startingOnes: number;
+  groupsToAdd: number;
+  answerChoices: number[];
+};
+export type AdditionAcrossTenQ = BaseQ & {
+  kind: "addition-across-ten";
+  startNumber: number;
+  addend: number;
+  answerChoices: number[];
+};
+export type SubtractionWithDotsQ = BaseQ & {
+  kind: "subtraction-with-dots";
+  object?: import('@/features/practice/subtractionWithDots').SubtractionObject;
+  /** When enabled, the final answer asks for the remaining count of a generated color. */
+  countByColor?: boolean;
+  targetCount: number;
+  takeAway: number;
+  answerChoices: number[];
 };
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
 export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
@@ -137,6 +161,9 @@ export type Question =
   | SingleQ
   | MultiQ
   | NumericQ
+  | CountingQ
+  | AdditionAcrossTenQ
+  | SubtractionWithDotsQ
   | OrderingQ
   | VisualQ
   | OperationPoseeQ

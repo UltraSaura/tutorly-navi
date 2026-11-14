@@ -1,0 +1,18 @@
+name: Development baseline
+
+on:
+  pull_request:
+    # These targets run the same reusable checks in private-beta-android.yml.
+    branches-ignore: [development, practice]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-baseline-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    uses: ./.github/workflows/verify-web.yml

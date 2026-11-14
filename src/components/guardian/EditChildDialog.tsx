@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { errorMessage } from '@/lib/errorMessage';
 
 function isProfileAuthorizationAbort(error: unknown) {
   if (!error) return false;
@@ -130,7 +131,7 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
         title: isProfileAuthorizationAbort(err) ? ui('family.expired') : 'Error',
         description: isProfileAuthorizationAbort(err)
           ? ui('family.expired')
-          : err.message || ui("Failed to update"),
+          : errorMessage(err, ui("Failed to update")),
         variant: 'destructive',
       });
     } finally {
@@ -260,7 +261,7 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
                     title: isProfileAuthorizationAbort(err) ? ui('family.expired') : 'Error',
                     description: isProfileAuthorizationAbort(err)
                       ? ui('family.expired')
-                      : err.message || ui("Failed to delete"),
+                      : errorMessage(err, ui("Failed to delete")),
                     variant: 'destructive',
                   });
                 } finally {

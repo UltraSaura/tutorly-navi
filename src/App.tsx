@@ -43,6 +43,12 @@ const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
 const GraduatedNumberLinePage = lazy(() => import("./pages/practice/GraduatedNumberLinePage"));
+const AddUpTo100Page = lazy(() => import("./pages/practice/AddUpTo100Page"));
+const FlashcardPracticePage = lazy(() => import("./pages/practice/FlashcardPracticePage"));
+const MentalCalculationRacePage = lazy(() => import("./pages/practice/MentalCalculationRacePage"));
+const NumbersAfterTenPage = lazy(() => import("./pages/practice/NumbersAfterTenPage"));
+const AdditionAcrossTenPage = lazy(() => import("./pages/practice/AdditionAcrossTenPage"));
+const SubtractionWithDotsPage = lazy(() => import("./pages/practice/SubtractionWithDotsPage"));
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
@@ -112,7 +118,7 @@ const isStagingSupabase = supabaseUrl === 'https://sibprjxhbxahouejygeu.supabase
 const EnvironmentIndicator = () => (isLocalSupabase || isStagingSupabase) ? (
   <div
     data-testid={isLocalSupabase ? 'local-environment-indicator' : 'staging-environment-indicator'}
-    className="fixed right-3 top-3 z-[10000] rounded-full border border-amber-700 bg-amber-300 px-3 py-1 text-xs font-bold tracking-wide text-amber-950 shadow-lg"
+    className="fixed right-3 top-0 z-[10000] rounded-full border border-amber-700 bg-amber-300 px-3 py-0.5 text-xs font-bold tracking-wide text-amber-950 shadow-lg"
   >
     {isLocalSupabase ? 'LOCAL · Supabase isolé' : 'STAGING · Supabase'}
   </div>
@@ -247,6 +253,12 @@ const App = () => {
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         <Route path="/practice" element={<MainLayout />}>
                           <Route index element={<PracticePage />} />
+                          <Route path="add-up-to-100" element={<AddUpTo100Page />} />
+                          <Route path="flashcards/numbers" element={<FlashcardPracticePage />} />
+                          <Route path="mental-calculation-race" element={<MentalCalculationRacePage />} />
+                          <Route path="numbers-after-ten" element={<NumbersAfterTenPage />} />
+                          <Route path="addition-across-ten" element={<AdditionAcrossTenPage />} />
+                          <Route path="subtraction-within-ten" element={<SubtractionWithDotsPage />} />
                           <Route path="number-line" element={<GraduatedNumberLinePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />

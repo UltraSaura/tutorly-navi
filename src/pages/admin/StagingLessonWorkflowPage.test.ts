@@ -30,7 +30,7 @@ describe('independent staging lesson-version workflow', () => {
 
   it('keeps the bulk workflow limited to topics without a published or staging version', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/BulkLessonGenerator.tsx'), 'utf8');
-    expect(source).toContain("if (statusForTopic(t) !== 'none') return false;");
+    expect(source).toContain("if (onlyMissing && statusForTopic(t) !== 'none') return false;");
     expect(source).toContain("curriculum_country_code, curriculum_level_code");
     expect(source).toContain('filterCurriculum');
     expect(source).toContain('runBulkStagingGeneration');

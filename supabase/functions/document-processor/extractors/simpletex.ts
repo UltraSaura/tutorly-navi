@@ -227,7 +227,7 @@ export async function extractTextWithSimpleTexOCR(fileData: string): Promise<str
 function convertLatexToReadableText(latex: string): string {
   console.log('Converting LaTeX to readable text:', latex);
   
-  let text = latex
+  const text = latex
     // Fractions
     .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
     .replace(/\{([^}]+)\}\/\{([^}]+)\}/g, '($1)/($2)')

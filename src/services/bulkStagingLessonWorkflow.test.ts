@@ -225,3 +225,14 @@ describe('bulk staging lesson workflow', () => {
     expect(save).toHaveBeenCalledTimes(1);
   });
 });
+
+
+it('retains sanitized provider diagnostics on a bulk failure without saving or retrying', async () => {
+  const providerDiagnostics = { httpStatus: 200, parseState: 'malformed_json', syntaxError: { position: 12 } };
+  const generate = vi.fn(async () => { throw { code: 'provider_malformed_json', providerDiagnostics }; });
+  const save = vi.fn();
+  const results = await runBulkStagingGeneration([{ id: 'fixture-topic', name: 'Fixture' }], undefined, { generate, save });
+  expect(results[0].failure?.providerDiagnostics).toEqual(providerDiagnostics);
+  expect(generate).toHaveBeenCalledTimes(1);
+  expect(save).not.toHaveBeenCalled();
+});

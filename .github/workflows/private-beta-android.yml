@@ -6,14 +6,17 @@ on:
 permissions:
   contents: read
 jobs:
+  validation:
+    uses: ./.github/workflows/verify-web.yml
   android:
+    needs: validation
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
       - uses: actions/setup-java@v4
         with:
@@ -24,8 +27,6 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
           log-accepted-android-sdk-licenses: false
       - run: npm ci
-      - run: npx tsc --noEmit
-      - run: npx vitest run
       - run: npm run build:beta
       # Validate the existing Google Play listing package before staging flavor sync.
       - run: npx cap sync android

@@ -71,9 +71,9 @@ function stringValue(value: unknown): string | undefined {
 
 function safeProviderDiagnostics(value: unknown): ProviderDiagnostics | undefined {
   if (!isRecord(value)) return undefined;
-  const syntax = isRecord(value.syntaxError) ? {
+  const syntax: ProviderDiagnostics['syntaxError'] = isRecord(value.syntaxError) ? {
     ...(typeof value.syntaxError.message === 'string' ? { message: value.syntaxError.message.slice(0, 200) } : {}),
-    ...(value.syntaxError.position === null || typeof value.syntaxError.position === 'number' ? { position: value.syntaxError.position } : {}),
+    ...(value.syntaxError.position === null ? { position: null } : typeof value.syntaxError.position === 'number' ? { position: value.syntaxError.position } : {}),
   } : undefined;
   const details: ProviderDiagnostics = {
     ...(finiteNumber(value.httpStatus) !== undefined ? { httpStatus: finiteNumber(value.httpStatus) } : {}),

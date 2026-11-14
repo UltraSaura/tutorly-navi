@@ -9,6 +9,7 @@ import {
   shuffle,
   evaluateQuestion,
   scoreQuestionWithPenalty,
+  isQuizAnswerComplete,
   type QuizQuestionGradeDetail,
 } from '@/utils/quizEvaluation';
 import { useSubmitBankAttempt } from '@/hooks/useQuizBank';
@@ -130,6 +131,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
   const [submitted, setSubmitted] = useState(false);
   const [startTs] = useState<number>(Date.now());
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [retryKey, setRetryKey] = useState(0);
   const [questionSubmitted, setQuestionSubmitted] = useState(false);
   const [questionResult, setQuestionResult] = useState<boolean | null>(null);
   const [showXpPill, setShowXpPill] = useState(false);
@@ -165,6 +167,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
   }, [bank]);
 
   const currentQuestion = questions[currentIndex];
+  const currentAnswerReady = currentQuestion ? isQuizAnswerComplete(currentQuestion, answers[currentQuestion.id]) : false;
   const gradedQuiz = useMemo(
     () => gradeQuizWithDetails(questions, questionGrades),
     [questions, questionGrades],
@@ -211,7 +214,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
   };
 
   const handleQuestionSubmit = () => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || !currentAnswerReady) return;
     const currentAnswer = answers[currentQuestion.id];
     const correct = evaluateQuestion(currentQuestion, currentAnswer);
     const attemptNumber = (questionAttemptCountsRef.current[currentQuestion.id] || 0) + 1;
@@ -370,6 +373,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
   }, [answers, bank, currentQuestion, language, teaching, userContext?.learning_style, userContext?.student_level, userId]);
 
   const handleRetry = useCallback(() => {
+    setRetryKey((key) => key + 1);
     setQuestionSubmitted(false);
     setQuestionResult(null);
     setShowXpPill(false);
@@ -579,7 +583,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
           >
             <AnimatePresence mode="wait">
               <motion.div
-                key={currentQuestion.id}
+                key={`${currentQuestion.id}-${retryKey}`}
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -40 }}
@@ -602,14 +606,14 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
         {!questionSubmitted ? (
           <button
             onClick={handleQuestionSubmit}
-            disabled={questions.length === 0}
+            disabled={questions.length === 0 || !currentAnswerReady}
             className="w-full rounded-2xl py-4 text-sm font-bold"
             style={{
-              background: questions.length === 0 ? '#EAECEF' : '#12C6A0',
-              color: questions.length === 0 ? '#B4B2A9' : '#0F172A',
+              background: questions.length === 0 || !currentAnswerReady ? '#EAECEF' : '#12C6A0',
+              color: questions.length === 0 || !currentAnswerReady ? '#B4B2A9' : '#0F172A',
               border: 'none',
               fontFamily: 'Poppins, sans-serif',
-              cursor: questions.length === 0 ? 'not-allowed' : 'pointer',
+              cursor: questions.length === 0 || !currentAnswerReady ? 'not-allowed' : 'pointer',
               fontSize: '15px',
             }}
           >

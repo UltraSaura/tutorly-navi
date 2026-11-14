@@ -1,5 +1,7 @@
 import type { Question } from '@/types/quiz-bank';
 import { evaluateVisual } from '@/lib/quiz/visual-evaluate';
+import { additionAcrossTenTotal, countersToNextTen } from '@/features/practice/additionAcrossTen';
+import { countSubtractionObjectsByColor, subtractionColorToCount, subtractionWithDotsTotal } from '@/features/practice/subtractionWithDots';
 
 export type QuizQuestionGradeDetail = {
   questionId: string;
@@ -21,6 +23,25 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
     const correct = q.choices.filter(c => c.correct).map(c => c.id).sort().join(",");
     const yours = Array.isArray(answer) ? [...answer].sort().join(",") : "";
     return correct === yours;
+  }
+  if (q.kind === 'counting') {
+    return Number(answer?.addedGroups) === q.groupsToAdd
+      && Number(answer?.selectedAnswer) === q.startingGroups * 10 + q.startingOnes + q.groupsToAdd * 10;
+  }
+  if (q.kind === 'addition-across-ten') {
+    return Number(answer?.movedToTen) === countersToNextTen(q.startNumber)
+      && Number(answer?.selectedAnswer) === additionAcrossTenTotal(q);
+  }
+  if (q.kind === 'subtraction-with-dots') {
+    const equation = `${q.targetCount} − ${q.takeAway}`;
+    const totalRemaining = subtractionWithDotsTotal(q);
+    const expectedAnswer = q.countByColor
+      ? countSubtractionObjectsByColor(totalRemaining, q.id, subtractionColorToCount(q.id, totalRemaining))
+      : totalRemaining;
+    return Number(answer?.dotsAdded) === q.targetCount
+      && Number(answer?.dotsRemoved) === q.takeAway
+      && answer?.selectedEquation === equation
+      && Number(answer?.selectedAnswer) === expectedAnswer;
   }
   if (q.kind === "numeric") {
     const numQ = q as any;
@@ -80,6 +101,27 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
     );
   }
   return false;
+}
+
+export function isQuizAnswerComplete(q: Question, answer: any): boolean {
+  if (q.kind === 'counting') {
+    return answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
+      && Number(answer?.addedGroups) >= q.groupsToAdd
+      && Number.isInteger(Number(answer?.selectedAnswer));
+  }
+  if (q.kind === 'addition-across-ten') {
+    return answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
+      && Number(answer?.movedToTen) >= countersToNextTen(q.startNumber)
+      && Number.isInteger(Number(answer?.selectedAnswer));
+  }
+  if (q.kind === 'subtraction-with-dots') {
+    return answer?.selectedEquation !== null && answer?.selectedEquation !== undefined
+      && answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
+      && Number(answer?.dotsAdded) >= q.targetCount
+      && Number(answer?.dotsRemoved) >= q.takeAway
+      && Number.isInteger(Number(answer?.selectedAnswer));
+  }
+  return true;
 }
 
 export function gradeQuiz(questions: Question[], answers: Record<string, any>) {

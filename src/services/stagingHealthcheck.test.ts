@@ -6,7 +6,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invo
 import { runStagingHealthcheck } from './stagingHealthcheck';
 
 describe('staging healthcheck', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('uses healthcheck mode and returns safe observability metadata without provider or database writes', async () => {
     const headers = new Headers({ 'x-request-id': 'req-health-1' });
