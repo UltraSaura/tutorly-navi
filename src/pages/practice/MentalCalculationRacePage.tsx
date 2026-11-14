@@ -10,6 +10,7 @@ import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
 import { supabase } from '@/integrations/supabase/client';
 import {
   createMentalCalculationRace,
+  createAnswerChoices,
   findMentalOperationLesson,
   formatMentalCalculation,
   getCalculationExplanation,
@@ -36,8 +37,6 @@ type SavedRace = {
   results: Array<boolean | null>;
   responses: Array<string | null>;
   elapsedSeconds: number;
-  answer?: string;
-  answerResult?: AnswerResult;
 };
 
 function isOperation(value: unknown): value is MentalOperation {
@@ -72,9 +71,7 @@ export default function MentalCalculationRacePage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [results, setResults] = useState<Array<boolean | null>>([]);
   const [responses, setResponses] = useState<Array<string | null>>([]);
-  const [answer, setAnswer] = useState('');
-  const [answerResult, setAnswerResult] = useState<AnswerResult>(null);
-  const [entryError, setEntryError] = useState<string | null>(null);
+  const [feedbackResult, setFeedbackResult] = useState<AnswerResult>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [raceStartedAt, setRaceStartedAt] = useState<number | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
@@ -111,6 +108,7 @@ export default function MentalCalculationRacePage() {
   ) as Record<MentalOperation, ReturnType<typeof findMentalOperationLesson>>, [lessonCandidates]);
 
   const currentCalculation = calculations[currentIndex];
+  const answerChoices = useMemo(() => currentCalculation ? createAnswerChoices(currentCalculation.answer, maximum) : [], [currentCalculation, maximum]);
   const correctCount = results.filter((result) => result === true).length;
   const missedCalculations = calculations.filter((_, index) => results[index] === false);
 
@@ -134,8 +132,7 @@ export default function MentalCalculationRacePage() {
         setResults(Array.from({ length: RACE_LENGTH }, (_, index) => typeof safeResults[index] === 'boolean' ? safeResults[index]! : null));
         setResponses(Array.from({ length: RACE_LENGTH }, (_, index) => typeof safeResponses[index] === 'string' ? safeResponses[index]! : null));
         setElapsedSeconds(Math.max(0, Number(saved.elapsedSeconds) || 0));
-        setAnswer(typeof saved.answer === 'string' ? saved.answer : '');
-        setAnswerResult(saved.answerResult === 'correct' || saved.answerResult === 'incorrect' ? saved.answerResult : null);
+        setFeedbackResult(null);
         if (saved.stage === 'racing') setRaceStartedAt(Date.now() - Math.max(0, Number(saved.elapsedSeconds) || 0) * 1000);
       }
     } catch { /* a saved race is optional */ }
@@ -150,10 +147,10 @@ export default function MentalCalculationRacePage() {
 
   useEffect(() => {
     if (loadedKey !== storageKey) return;
-    const saved: SavedRace = { stage, operations, maximum, calculations, currentIndex, results, responses, elapsedSeconds, answer, answerResult };
+    const saved: SavedRace = { stage, operations, maximum, calculations, currentIndex, results, responses, elapsedSeconds };
     try { localStorage.setItem(storageKey, JSON.stringify(saved)); }
     catch { /* the race remains playable if local storage is unavailable */ }
-  }, [answer, answerResult, calculations, currentIndex, elapsedSeconds, loadedKey, maximum, operations, responses, results, stage, storageKey]);
+  }, [calculations, currentIndex, elapsedSeconds, loadedKey, maximum, operations, responses, results, stage, storageKey]);
 
   const toggleOperation = (operation: MentalOperation) => {
     setOperations((current) => current.includes(operation)
@@ -168,41 +165,32 @@ export default function MentalCalculationRacePage() {
     setCurrentIndex(0);
     setResults(Array.from({ length: RACE_LENGTH }, () => null));
     setResponses(Array.from({ length: RACE_LENGTH }, () => null));
-    setAnswer('');
-    setAnswerResult(null);
-    setEntryError(null);
+    setFeedbackResult(null);
     setElapsedSeconds(0);
     setRaceStartedAt(Date.now());
     setOpenHints([]);
     setStage('racing');
   };
 
-  const checkAnswer = () => {
+  const chooseAnswer = (selected: number) => {
     if (!currentCalculation) return;
-    if (!/^\d+$/.test(answer.trim())) {
-      setEntryError('Enter a whole-number answer to continue.');
-      return;
-    }
-    const correct = isCorrectMentalCalculation(currentCalculation, answer);
+    if (feedbackResult !== null) return;
+    const response = String(selected);
+    const correct = isCorrectMentalCalculation(currentCalculation, response);
     setResults((current) => current.map((result, index) => index === currentIndex ? correct : result));
-    setResponses((current) => current.map((response, index) => index === currentIndex ? answer.trim() : response));
-    setAnswerResult(correct ? 'correct' : 'incorrect');
-    setEntryError(null);
-  };
-
-  const continueRace = () => {
-    if (answerResult === null) return;
-    if (currentIndex + 1 >= calculations.length) {
-      setElapsedSeconds(raceStartedAt === null ? elapsedSeconds : Math.floor((Date.now() - raceStartedAt) / 1000));
-      setRaceStartedAt(null);
-      setStage('review');
-      setAnswerResult(null);
-      return;
-    }
-    setCurrentIndex((index) => index + 1);
-    setAnswer('');
-    setAnswerResult(null);
-    setEntryError(null);
+    setResponses((current) => current.map((value, index) => index === currentIndex ? response : value));
+    setFeedbackResult(correct ? 'correct' : 'incorrect');
+    window.setTimeout(() => {
+      if (currentIndex + 1 >= calculations.length) {
+        setElapsedSeconds((current) => raceStartedAt === null ? current : Math.floor((Date.now() - raceStartedAt) / 1000));
+        setRaceStartedAt(null);
+        setStage('review');
+        setFeedbackResult(null);
+        return;
+      }
+      setCurrentIndex(currentIndex + 1);
+      setFeedbackResult(null);
+    }, 650);
   };
 
   const restart = () => {
@@ -211,8 +199,7 @@ export default function MentalCalculationRacePage() {
     setCurrentIndex(0);
     setResults([]);
     setResponses([]);
-    setAnswer('');
-    setAnswerResult(null);
+    setFeedbackResult(null);
     setElapsedSeconds(0);
     setRaceStartedAt(null);
     setOpenHints([]);
@@ -267,13 +254,11 @@ export default function MentalCalculationRacePage() {
             <div className="mt-6 flex min-h-36 items-center justify-center rounded-2xl bg-[#F2F8F6] px-4 py-7 text-center">
               <h2 id="race-calculation" className="text-4xl font-extrabold tracking-wide tabular-nums sm:text-5xl">{formatMentalCalculation(currentCalculation)}</h2>
             </div>
-            <label htmlFor="race-answer" className="mt-5 block text-sm font-semibold">Your answer
-              <input id="race-answer" type="number" inputMode="numeric" autoComplete="off" value={answer} onChange={(event) => { setAnswer(event.target.value); setEntryError(null); }} onKeyDown={(event) => { if (event.key !== 'Enter') return; if (answerResult) continueRace(); else checkAnswer(); }} disabled={answerResult !== null} className="mt-2 min-h-12 w-full rounded-xl border border-[#D0D5DD] px-4 text-lg font-bold focus:border-[#087F68] focus:outline-none focus:ring-2 focus:ring-[#087F68]/25 disabled:bg-[#F7F8FC]" />
-            </label>
-            {entryError && <p role="alert" className="mt-2 text-sm font-semibold text-[#A12B2B]">{entryError}</p>}
-            {answerResult === 'correct' && <div className="mt-4"><PracticeFeedback status="correct" language="en" points={1} /><button type="button" onClick={continueRace} className="min-h-11 w-full rounded-xl bg-[#087F68] px-4 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68]">{currentIndex + 1 === calculations.length ? 'Finish race' : 'Next calculation'}</button></div>}
-            {answerResult === 'incorrect' && <div className="mt-4 rounded-xl bg-[#FFF4E5] p-3 text-sm text-[#8A4B08]" role="status" aria-live="polite"><p className="font-bold">We’ll save this calculation for your review after the race.</p><button type="button" onClick={continueRace} className="mt-2 min-h-11 w-full rounded-lg font-bold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68]">{currentIndex + 1 === calculations.length ? 'Finish race' : 'Next calculation'}</button></div>}
-            {answerResult === null && <button type="button" onClick={checkAnswer} disabled={!answer.trim()} className="mt-4 min-h-12 w-full rounded-xl bg-[#087F68] px-4 font-bold text-white hover:bg-[#066B58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68] focus-visible:ring-offset-2 disabled:opacity-50">Check answer</button>}
+            <div className="mt-5 grid grid-cols-2 gap-3" role="group" aria-label="Choose an answer">
+              {answerChoices.map((choice) => <button key={choice} type="button" disabled={feedbackResult !== null} onClick={() => chooseAnswer(choice)} className={`min-h-14 rounded-xl border-2 px-4 text-xl font-extrabold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68] ${feedbackResult !== null && choice === currentCalculation.answer ? 'border-[#12A879] bg-[#E7F7F0] text-[#087F68]' : feedbackResult !== null && responses[currentIndex] === String(choice) ? 'border-[#D04444] bg-[#FFF0F0] text-[#A12B2B]' : 'border-[#D0D5DD] bg-white text-[#17213C] hover:border-[#087F68]'}`}>{choice}</button>)}
+            </div>
+            {feedbackResult === 'correct' && <div className="mt-3" role="status" aria-live="polite"><PracticeFeedback status="correct" language="en" points={1} /></div>}
+            {feedbackResult === 'incorrect' && <p className="mt-3 rounded-xl bg-[#FFF4E5] p-3 text-sm font-semibold text-[#8A4B08]" role="status" aria-live="polite">We’ll save this calculation for your review after the race.</p>}
           </section>
         )}
 

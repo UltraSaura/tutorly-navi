@@ -69,6 +69,24 @@ export function isCorrectMentalCalculation(calculation: MentalCalculation, respo
   return /^\d+$/.test(normalized) && Number(normalized) === calculation.answer;
 }
 
+export function createAnswerChoices(answer: number, maximum = 100, random: () => number = Math.random): number[] {
+  const choices = new Set<number>([answer]);
+  const limit = Math.max(3, Math.min(100, Math.floor(maximum)));
+  const candidates = new Set<number>();
+  for (let offset = 1; offset <= 4; offset += 1) {
+    candidates.add(Math.max(0, answer - offset));
+    candidates.add(Math.min(limit, answer + offset));
+  }
+  while (choices.size < 4) {
+    const candidate = int(random, 0, limit);
+    if (candidate !== answer) candidates.add(candidate);
+    if (candidates.size === 0) candidates.add((answer + 1) % (limit + 1));
+    const pool = [...candidates].filter((value) => !choices.has(value));
+    if (pool.length) choices.add(pool[Math.floor(random() * pool.length)]);
+  }
+  return [...choices].sort(() => random() - 0.5);
+}
+
 export function formatMentalCalculation(calculation: MentalCalculation) {
   const symbol = calculation.operation === 'addition' ? '+'
     : calculation.operation === 'subtraction' ? '−'

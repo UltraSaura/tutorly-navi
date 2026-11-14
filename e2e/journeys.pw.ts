@@ -249,21 +249,20 @@ test('mental calculation race defers missed-question help until review', async (
     expect(values, `Division prompt is visible: ${prompt}`).toBeTruthy();
     const dividend = Number(values?.[1]);
     const divisor = Number(values?.[2]);
-    const response = index === 0 ? '0' : String(dividend / divisor);
-    const answerInput = page.getByLabel('Your answer');
-    await answerInput.fill(response);
-    const check = page.getByRole('button', { name: 'Check answer', exact: true });
-    if (testInfo.project.name === 'mobile') await check.tap();
-    else await check.click();
+    const correctAnswer = dividend / divisor;
+    const choices = page.getByRole('group', { name: 'Choose an answer' }).getByRole('button');
+    const choiceValues = await choices.allTextContents();
+    const selected = index === 0 ? choiceValues.find((value) => Number(value) !== correctAnswer) : String(correctAnswer);
+    const choice = page.getByRole('button', { name: selected!, exact: true });
+    if (testInfo.project.name === 'mobile') await choice.tap();
+    else await choice.click();
     if (index === 0) {
       await expect(page.getByText('We’ll save this calculation for your review after the race.')).toBeVisible();
       await expect(page.getByRole('button', { name: /Show explanation/ })).toHaveCount(0);
     } else {
-      await expect(page.getByRole('status').filter({ hasText: 'Good job' })).toBeVisible();
+      await expect(page.getByRole('status').filter({ hasText: 'Good job' }).first()).toBeVisible();
     }
-    const next = page.getByRole('button', { name: index === 9 ? 'Finish race' : 'Next calculation', exact: true });
-    if (testInfo.project.name === 'mobile') await next.tap();
-    else await next.click();
+    if (index < 9) await expect(page.getByText(`Calculation ${index + 2} of 10`, { exact: true })).toBeVisible({ timeout: 3000 });
   }
 
   await expect(page.getByRole('heading', { name: 'Race complete', exact: true })).toBeVisible();
@@ -277,6 +276,24 @@ test('mental calculation race defers missed-question help until review', async (
   await expect(page.getByRole('link', { name: 'Browse maths lessons', exact: true })).toHaveAttribute('href', '/learning/mathematiques');
   await testInfo.attach('mental-calculation-race-review', { body: await page.screenshot({ fullPage: true, animations: 'disabled' }), contentType: 'image/png' });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Race review should not overflow horizontally').toBe(true);
+});
+
+test('number flashcards use choices and show elapsed time', async ({ page }, testInfo) => {
+  await ready(page, '/practice/flashcards/numbers');
+  await expect(page.getByText(/Card 1 of 10/)).toBeVisible();
+  await expect(page.getByLabel(/Elapsed time/)).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Choose an answer' }).getByRole('button')).toHaveCount(4);
+  const wrongChoice = page.getByRole('button', { name: '3', exact: true });
+  if (testInfo.project.name === 'mobile') await wrongChoice.tap();
+  else await wrongChoice.click();
+  await expect(page.getByText(/Subtracting 1 means one fewer/)).toBeVisible();
+  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  const correctChoice = page.getByRole('button', { name: '2', exact: true });
+  if (testInfo.project.name === 'mobile') await correctChoice.tap();
+  else await correctChoice.click();
+  await expect(page.getByText('That’s right.')).toBeVisible();
+  await page.getByRole('button', { name: 'Next card', exact: true }).click();
+  await expect(page.getByText(/Card 2 of 10/)).toBeVisible();
 });
 
 test('synthetic published lesson navigation and diagram rendering', async ({ page }) => {

@@ -5,10 +5,21 @@ export type ArithmeticFlashcard = {
   hint: string;
   explanation: string;
   retryFeedback: string;
+  choices: number[];
 };
 
+function choices(answer: number) {
+  const options = new Set([answer]);
+  for (let distance = 1; options.size < 4; distance += 1) {
+    options.add(Math.max(0, answer - distance));
+    if (options.size >= 4) break;
+    options.add(answer + distance);
+  }
+  return [...options].sort((a, b) => ((a * 7 + answer) % 11) - ((b * 7 + answer) % 11));
+}
+
 // Original Tutorly practice deck built from observed arithmetic forms.
-export const ARITHMETIC_FLASHCARDS: ArithmeticFlashcard[] = [
+const deck: Omit<ArithmeticFlashcard, 'choices'>[] = [
   { id: 'subtract-3-1', prompt: '3 − 1 = ?', answer: 2, hint: 'Count back one from 3.', explanation: 'One less than 3 is 2.', retryFeedback: 'Subtracting 1 means one fewer than 3. Try again.' },
   { id: 'make-ten-2', prompt: '2 + ___ = 10', answer: 8, hint: 'How many more does 2 need to reach 10?', explanation: '2 and 8 make 10.', retryFeedback: 'Think about the distance from 2 to 10.' },
   { id: 'subtract-5-2', prompt: '5 − 2 = ?', answer: 3, hint: 'Count back two steps from 5.', explanation: 'Counting back two from 5 lands on 3.', retryFeedback: 'Take away two, one step at a time.' },
@@ -20,6 +31,8 @@ export const ARITHMETIC_FLASHCARDS: ArithmeticFlashcard[] = [
   { id: 'add-1-4', prompt: '1 + 4 = ?', answer: 5, hint: 'Start at 1 and count on four.', explanation: 'Four more than 1 is 5.', retryFeedback: 'Start at 1, then count on four more.' },
   { id: 'add-2-2', prompt: '2 + 2 = ?', answer: 4, hint: 'Start at 2 and count on two.', explanation: 'Two more than 2 is 4.', retryFeedback: 'Start at 2, then count on two more.' },
 ];
+
+export const ARITHMETIC_FLASHCARDS: ArithmeticFlashcard[] = deck.map((card) => ({ ...card, choices: choices(card.answer) }));
 
 export function isCorrectFlashcardAnswer(card: ArithmeticFlashcard, response: string): boolean {
   const normalized = response.trim();

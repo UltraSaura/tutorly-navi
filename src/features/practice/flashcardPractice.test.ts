@@ -15,4 +15,12 @@ describe('arithmetic flashcard practice', () => {
     expect(isCorrectFlashcardAnswer(card, '')).toBe(false);
     expect(isCorrectFlashcardAnswer(card, '8.0')).toBe(false);
   });
+
+  it('provides four distinct response choices for every card, including its answer', () => {
+    for (const card of ARITHMETIC_FLASHCARDS) {
+      expect(card.choices).toHaveLength(4);
+      expect(new Set(card.choices).size).toBe(4);
+      expect(card.choices).toContain(card.answer);
+    }
+  });
 });

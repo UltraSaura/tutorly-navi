@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createMentalCalculation,
   createMentalCalculationRace,
+  createAnswerChoices,
   findMentalOperationLesson,
   formatMentalCalculation,
   getCalculationExplanation,
@@ -41,6 +42,13 @@ describe('mental calculation race', () => {
     expect(isCorrectMentalCalculation(calculation, ' 10 ')).toBe(true);
     expect(isCorrectMentalCalculation(calculation, '10.0')).toBe(false);
     expect(formatMentalCalculation(calculation)).toBe('4 + 6 = ?');
+  });
+
+  it('offers four distinct choices including the answer', () => {
+    const choices = createAnswerChoices(8, 10, () => 0.5);
+    expect(choices).toHaveLength(4);
+    expect(new Set(choices).size).toBe(4);
+    expect(choices).toContain(8);
   });
 
   it('provides learning hints and explanations for multiplication and division', () => {
