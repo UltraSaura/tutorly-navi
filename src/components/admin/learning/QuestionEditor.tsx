@@ -594,8 +594,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         kind: 'subtraction-with-dots',
         prompt: `Add ${targetCount} ${objectName}, then take away ${takeAway}. ${requestedCount}`,
         hint: hint || (colorToCount
-          ? `First work out how many objects remain. Then count only the ${colorToCount} ones.`
-          : `Start with ${targetCount} ${objectName} and count what remains after taking away ${takeAway}.`),
+          ? `Ignore objects marked as taken away. Count only the ${colorToCount} objects that remain.`
+          : 'Point to each object once as you count. After taking some away, count the ones that are still there.'),
         points,
         object: subtractionObject,
         countByColor,

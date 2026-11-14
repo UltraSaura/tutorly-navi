@@ -246,7 +246,7 @@ export default function SubtractionWithDotsPage() {
 
             <div className="mt-3">
               <button type="button" aria-expanded={hintOpen} onClick={() => setHintOpen((open) => !open)} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-[#5145B5] hover:bg-[#F6F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5]"><Lightbulb className="h-4 w-4" aria-hidden="true" />{hintOpen ? 'Hide hint' : 'Show hint'}</button>
-              {hintOpen && <p className="mt-2 rounded-xl bg-[#FFF8E6] p-3 text-sm text-[#694A00]">First count {exercise.targetCount} {objectName}. Then count what is left after you take away {exercise.takeAway}.</p>}
+              {hintOpen && <p data-testid="subtraction-hint" className="mt-2 rounded-xl bg-[#FFF8E6] p-3 text-sm text-[#694A00]">Point to each {subtractionObjectName(object, 1)} once as you count. After taking some away, count the ones that are still there.</p>}
             </div>
           </section>
         )}

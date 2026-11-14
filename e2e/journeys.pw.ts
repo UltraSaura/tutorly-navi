@@ -143,7 +143,9 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
     expect(buttonBottom, 'First action remains above the fixed bottom navigation').toBeLessThanOrEqual(754);
   }
   await page.getByRole('button', { name: 'Show hint', exact: true }).click();
-  await expect(page.getByText(new RegExp(`First count ${targetCount} ${pluralObject}`))).toBeVisible();
+  const subtractionHint = page.getByTestId('subtraction-hint');
+  await expect(subtractionHint).toHaveText(`Point to each ${object} once as you count. After taking some away, count the ones that are still there.`);
+  expect(await subtractionHint.innerText()).not.toMatch(/\d/);
   await page.getByRole('button', { name: 'Hide hint', exact: true }).click();
   await assertUsable(page, add);
   if (testInfo.project.name === 'desktop') {
