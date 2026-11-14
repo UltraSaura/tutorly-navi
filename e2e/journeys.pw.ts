@@ -144,8 +144,10 @@ test('CE1 subtraction with bubbles adds, takes away, and checks the result', asy
   }
   await page.getByRole('button', { name: 'Show hint', exact: true }).click();
   const subtractionHint = page.getByTestId('subtraction-hint');
-  await expect(subtractionHint).toHaveText(`Point to each ${object} once as you count. After taking some away, count the ones that are still there.`);
+  await expect(subtractionHint).toHaveText('Taking objects away means subtraction, so look for a minus sign. Then count the objects still showing to check the result.');
   expect(await subtractionHint.innerText()).not.toMatch(/\d/);
+  await expect(subtractionHint).toContainText('subtraction');
+  await expect(subtractionHint).toContainText('minus sign');
   await page.getByRole('button', { name: 'Hide hint', exact: true }).click();
   await assertUsable(page, add);
   if (testInfo.project.name === 'desktop') {
