@@ -1,0 +1,1461 @@
+{
+  "version": 1,
+  "sourceCommit": "35ac0a1557b1bfde79819ef945f7d22b6b043b2e",
+  "entries": {
+    "exam-import/parsers/parse-corrections.ts": {
+      "b2bb89958ac0c111c52c583cfaaeb67f595b2a692a26cd27679a0fb6f20ff3bf": 1,
+      "bccf13144224fef022b427bbb235c5159b1e5e85d56ae16706eb548dfe8e7aa1": 1
+    },
+    "exam-import/parsers/parse-latex-exam.ts": {
+      "683f4f2f6b53669283b428215e153224079d85ba7908f0d92ef90aa1efdafa75": 1
+    },
+    "exam-import/parsers/pdf-to-exam.ts": {
+      "bebd977a8e6c2c04373a1eb07eacdfe3c75641050abe2791f4f5e07bd80dcc9d": 1,
+      "d62e98f97625511e9fe6f635022f690ed88481eb60ff4961cdc3040895a25f4a": 1,
+      "145b0fa4d4cdf0b1e316130f88b6b17a9cfd5c429d4392b0368059a01f49cb9f": 1,
+      "534ebde5630d2a40fd541fba7974add22932f8d384953857c007daf2bb37aab5": 1,
+      "4a2b3b04b6623b77a14ffc2f9569213551474f88215d4121683fed2a7d541f6f": 1,
+      "496324a3c963841ac70f5c2b92617f962a3b2494fe927c2e4365407723293e18": 1,
+      "ff77183e55699ff087475650d127c072ea36aff16e8ecb1f7c0e1b36475827ba": 1,
+      "cb56bbdd858c6aad428b2fae001868e447581a0be86cb464fc743aea395f9938": 1,
+      "7a9034556d09e5783cadb51fba50305385b7af4e4e951b534349be9ee417d32d": 1,
+      "d0c129f7d43349a8cc032254d18031cbed2ce4dd3f6bf35c79eb24750dc529a5": 1
+    },
+    "exam-import/scripts/pdf-crop-assets.ts": {
+      "ce0afaf7978f93e9158258c773c32ab88762bc4654333f4f9974214db3bbd28c": 1
+    },
+    "exam-import/scripts/qa-compare.ts": {
+      "b242dd04e4e59b70fc460ff6d8131379590ddadc1481a054c51bce3d4d07b8be": 1
+    },
+    "exam-import/utils/cleanText.ts": {
+      "c2a9c08d0b902b4f0990bcae9ecb9ac2f189e7ca4ee6f7eed51748e405e62beb": 1
+    },
+    "src/components/ErrorBoundary.tsx": {
+      "88f7620c8d3f707da222aaf45b3c923c97ace7d017f93df8cbc7715fbec9f687": 1
+    },
+    "src/components/GaugeScore.tsx": {
+      "16b58f173915284d92359fd34d63a2d598acc2fc2a138162d27b496dcf6a058a": 3
+    },
+    "src/components/admin/AdminSettings.tsx": {
+      "68e22cdd8a4e8276630936775e9d50b264a4d5a7918c95c48a0347f2a7118bde": 1
+    },
+    "src/components/admin/ConnectionDiagnostics.tsx": {
+      "79162be0b00c205fcdd801c75dd02ece94a1dada43f6ad899a563e1707801fb1": 1,
+      "672fa524afd93ec31ce3adda67aa53747d37c6f97c307f71392db1bb22d20827": 1
+    },
+    "src/components/admin/CurriculumManager.tsx": {
+      "50a36c4ba20568ebc97d480e94dfbec008b9e69408bb300f1190ff8b4b53dae4": 1,
+      "864f1eae558cc91f434fbb8f6b4879f043d67d4a01e6cf7b08ddb85ce987c7d3": 1,
+      "d8510748dd72a69d6ce7eda50b9b86315abc01335b58fce593198d9637eefffd": 1,
+      "672fa524afd93ec31ce3adda67aa53747d37c6f97c307f71392db1bb22d20827": 1,
+      "be08d6a8abcc934392bedf60f42f161730be7a982eb5c626fdc612ce06cc4b2d": 1,
+      "001900132ad31fda449ab05a433af91b4a496c0574cf6c4a39f25d162ce1eb78": 1
+    },
+    "src/components/admin/UserManagement.tsx": {
+      "71af90508f97f87e12149fd42b6c96302b3727daaef69308638e70e638c1f76f": 1
+    },
+    "src/components/admin/VisualQuestionBuilder.tsx": {
+      "2a2c1b698348b45dfcfffcf19a5636060505710d445f3dedfa89c85997effb37": 1,
+      "c5d478be8c370a899de90592cac8a445b8133e911ecbcd6593e80c02a368500d": 1
+    },
+    "src/components/admin/learning/AssignmentEditor.tsx": {
+      "60cc3aabc22ab2f067484addee2df12352f9e2d78417f6aeb276da14790e6d54": 1,
+      "734feac3a5bf192e8e97506b95215b8f21ddb92305c219d8db9f9375ee336f7e": 1
+    },
+    "src/components/admin/learning/BankManager.tsx": {
+      "871529281ebc55f1ba31003dbd1efc0093a687f5dd70f0ef7977402e05873340": 1,
+      "50e8247df69d29d9b468533e3ef19631961d5bbe54e889abf0c2390fa5ade96e": 1,
+      "3113bd7300567dde11ab7ef96ecea536d6613272df1ab6f5435d86d3ac901f92": 1,
+      "89e2df29c38875fd034eb63859d49bb566ce2f077ebe6cfd4da07d33f4312f3c": 2,
+      "f8625e3f36f4bb0ae0ef7f63c135f8e445d71dfffb02f6c6c128921bd451338c": 2,
+      "a03a7e2fd2397a4d8c7734150c61e8c0a82aa511a94b32f3ad2b0f208399edb3": 2,
+      "3e5a0a840732fb36791e114826a148d3eea23059091455aa59f7efed61a4c352": 1,
+      "13305325306ee76d209184dd3be0e21e7472994a0207bc0c7ec15787a00fb3ea": 1,
+      "7a8343771278d9cc316c0bba515634f1be541292e90c10f7d5279ac9f5c7942c": 1,
+      "93302b9e62afcecb648598b6013fc8ef896302064c41aa2c7af63d7fa02729d8": 1,
+      "00db83cd8652a80abf6698eef1a4cef717872c573a2749a7d0fcfafc946a8c7b": 1,
+      "8af58d9f6f6ab1f83d28c449ab79e62fab9277d4d5645d45a1459ac8f46b4e60": 1,
+      "68e22cdd8a4e8276630936775e9d50b264a4d5a7918c95c48a0347f2a7118bde": 3,
+      "a090bbd5b9896267953e5c39f2b7b13fca66a7dd7013b112b7e0108f04584ab0": 1,
+      "532a127f00dc17dc3b45e27630c20974a3c89df4b7de4515f3bc9e09647e6881": 2,
+      "3914ce07f8dd882d51dcbad453fbef3fa688c5cec141f127c37070caf96ca8e5": 1,
+      "23d1e075d212c5cd71224853cd02c28b5d9e135a0423b034f8486ca394021235": 1,
+      "278ac94326c31507692eda93d81aa22e1972b39342c26aa2ca05a8973d91df6f": 1,
+      "0d71ca0397f92cd0da32114e46c52965055f0ef970acee1d2f2edf4a5ae1b597": 1,
+      "4b58362dbcd347f6f420eb4c9fa06d8012d8ae6af8e89e02ed2284ed54ad7bb9": 1,
+      "a77577110429cb3cb38f620314b3b6e2e869f2136be0a38c2cf0af755ff57080": 1,
+      "8a5631407bef96b318997f304ce213841d84499a0a63aa94592d337a70939856": 2,
+      "b19cd0f6f535ad26037bf79e5cc877cd65c1ebabf4381f72511d89d196874b64": 2,
+      "15a79172ed42b53f3ba90b1c6e09d42f7a0f792ba72bf5077ce57f1c5c01c35a": 1,
+      "bb717ef1236e2517be598dbc65f54e6c4e7f02e5c5ddbbaf799d5675c466e681": 1
+    },
+    "src/components/admin/learning/BulkLessonGenerator.tsx": {
+      "4632fb23477efbb029e15a122a3411fcdff555bcaa92bf0c4e773402c9373c8d": 1
+    },
+    "src/components/admin/learning/GenerateTopicsFromObjectivesDialog.tsx": {
+      "9460450b10def078aeaa57a8dafa2c6beebb2086fb1daf5db8fc45e2ac72afd2": 1,
+      "f044e0a6a4255fa865e3a4c9bc5c9df872dc3919bccf6b863dfb91f2322c043d": 1,
+      "8d5caaf1cb8be370b4b7d565d2481b0eb58a792bcdd0aa7707976c2b69e537bb": 1,
+      "4f284b16e6c979073aaa69e797b2190b6ebe0648011b2931dc745f39d5125533": 2
+    },
+    "src/components/admin/learning/GeneratedLessonsPage.tsx": {
+      "f50c3a50c8372609c46854e1bc3818ebdecbac873dc77a1bbf5f395ec3afdd74": 1,
+      "372551b0737480addc4da5997453660f24579d634769004fd36bb4c187b7f649": 1,
+      "67a71d689732eaf19da7d642f0555ced1ac29fffac33ae4f5001cab8c9e3e018": 1,
+      "e6c91b3c0095fe02382563f8d8ec2c194e6a92dee556d84f80b537a662b62565": 1,
+      "bf61f6dd79c7d17517e5e0ec198de10d7c001ed91729195510e6d85f294e92c0": 1,
+      "39bfeb99ed89a9c337f0be8c61126f079ca7b6e9b9e9ff4b6a7624c1bbd4d231": 1,
+      "93a616f28aa08dd7cee02c43e73e5b7cc5f5d8052c989271492bfcc2e0137be5": 2
+    },
+    "src/components/admin/learning/MultiVariantVideoEditor.tsx": {
+      "59a55fc7d481822a645f6b2a1bdf1f7059fea6ec985283f60325b075a4fa1bf7": 1
+    },
+    "src/components/admin/learning/QuestionEditor.tsx": {
+      "eb27f694de83e894433867dd171afcb33b0e7fe451a794630aef55b86d2e831b": 1
+    },
+    "src/components/admin/learning/QuizPreviewDialog.tsx": {
+      "db80d7f46729d1964f1f2a4785ddcbd71879649171337c199990df83ae474c78": 1,
+      "824be9bc70e4eea71dd6ce3fca096c816a4bbc8e1306df481b38fba4c16ef6d1": 1,
+      "84795c50731ad895b9d3af8089ad3795a5d13a76d306897a8ba88b66af8fd814": 1,
+      "e0caf88a0eaee21b0ac870d662b25af240c3a13ef546cd324c6d0409486de8d4": 1
+    },
+    "src/components/admin/learning/StagingLessonVersionPanel.tsx": {
+      "23b61c37455e6e1c53e8fc6a0bfae7ccea5dee26f0870669bafaef63329699f2": 1,
+      "6107213b1399cfcbb0cc70d38a2273d8072b3ba2798f690a54771b658f6b1b5a": 1
+    },
+    "src/components/admin/learning/TopicManager.tsx": {
+      "69e79f246bc5e396a62b759c003bbf72612b37c939656d065be2188872868fc6": 1
+    },
+    "src/components/admin/learning/TopicQuizGenerator.tsx": {
+      "7668835461bf10feecb6ce52fdbb78d4bda4ca744e4f9c59a217f5370e48c900": 1,
+      "1e64d996eb2150818d8f3d6de81d901a0c7282685e75706ba195c059cb5193c9": 1,
+      "f95f032c8306bb14d9a0a53c7f7f541d12148b252ff5bd42f6a7231d66b8b668": 1,
+      "c757fc30de134e9f5b20c40f9b94737946dbaf471d44716ddf4588c79de650cf": 1,
+      "1a0ab88dfd9e36a40bdbb112bc269f36a982e902d2450a0f3494dc952740ec07": 1,
+      "f7e2a944dd2693f720e4e79642167c10ab8f0732eadf70e76a658103c5f1478f": 1,
+      "d970c733b6fbc6d1129d83ad305c0152eee37f8ea6bae8a016a221eb46d24024": 2,
+      "e66a07bff5017bc17de2ee60f8ade4224c154625420e810e47206f860e8e3a92": 1
+    },
+    "src/components/admin/learning/TranscriptQuizGenerator.tsx": {
+      "7e3c7172d11ba0c7e776f7f8b8553fc8ed561f913018e02544128496287106c5": 1
+    },
+    "src/components/admin/learning/VideoManager.tsx": {
+      "81e477eb7dd580bd65257af152f067e7a08499a6afe01a76e19a2ed4bdc24ff1": 1,
+      "ae9f8f08adaf47e29916257bf7ddf235b73ddec9fe97b1c9ebe95b1faa81e95a": 1
+    },
+    "src/components/admin/learning/geometryDraft.ts": {
+      "77af5048bf94d25b84c5634f48fabb03166df31092f91999f6829461b1c76252": 1
+    },
+    "src/components/admin/recent/RecentTable.tsx": {
+      "e9508cdb1ddd0597ba9cc420a96269078efcedc9e37869e04437c00b283178c8": 1,
+      "04ae8771ac64ae77882fd39cf9e2e27a2a9a463f826cddf8c6651769d6a7bb92": 1,
+      "ef901157d6c34501dbd896cf8542f4d84ef7841b1033e3fb85c37b5177126ab8": 1,
+      "3de5604e4ebdcfa48a8aeb70e7c10151b420dce9c362173b79053dbe8cd82eb8": 1
+    },
+    "src/components/admin/recent/RowDetailDrawer.tsx": {
+      "0199ec270d4af3e9fc2551546ad411bc3d87918d615c9126ffead91ca2fd222b": 1
+    },
+    "src/components/admin/subjects/DraggableSubject.tsx": {
+      "be1961d466e8258f1f5255e7afec367ab5f2fe7598c35dda13aff59eb4107cd3": 1
+    },
+    "src/components/admin/subjects/DynamicIcon.tsx": {
+      "49312603895b36898390c383818c891b05fe0faf4684e2ea78c70697fc0aef48": 1
+    },
+    "src/components/admin/visual-editors/AngleEditor.tsx": {
+      "2a2c1b698348b45dfcfffcf19a5636060505710d445f3dedfa89c85997effb37": 1,
+      "c2976e4567a6622465c12104cf16992382ce192918a5517e5e5448da9261b969": 1
+    },
+    "src/components/admin/visual-editors/GridEditor.tsx": {
+      "2a2c1b698348b45dfcfffcf19a5636060505710d445f3dedfa89c85997effb37": 1
+    },
+    "src/components/admin/visual-editors/LineEditor.tsx": {
+      "2a2c1b698348b45dfcfffcf19a5636060505710d445f3dedfa89c85997effb37": 1
+    },
+    "src/components/admin/visual-editors/PieEditor.tsx": {
+      "2a2c1b698348b45dfcfffcf19a5636060505710d445f3dedfa89c85997effb37": 1
+    },
+    "src/components/admin/visual-editors/ShapeEditor.tsx": {
+      "2a2c1b698348b45dfcfffcf19a5636060505710d445f3dedfa89c85997effb37": 1,
+      "22dd4cabecd5456a7d10cd93510119b44cf1caafa1c6913803073d2ff19a8df6": 1
+    },
+    "src/components/game/XpToast.tsx": {
+      "37c1d7fd6235f5c11937dd48937362fb6e34f8829c344e4c4de5fed1e491c29a": 1
+    },
+    "src/components/guardian/ExerciseRow.tsx": {
+      "898365adf42a3da188814d64339027499b612346069ede2fc1dfac95cde4a703": 2,
+      "642ec1c7ce9aa0377d1b814fe2ce1f80ef4f963f750c77f873494f5838f944fc": 1
+    },
+    "src/components/learning/ColumnFillQuestion.tsx": {
+      "7908764adbb770be04ae0a3593fcd070ff74b34cd21ce535cb80a1c17b94f7ee": 1,
+      "f42d2c8d2eb56a69cb330b955a82963840ad9f2080a1d5638fe913167a30090c": 1
+    },
+    "src/components/learning/FillExprQuestion.tsx": {
+      "ac1f816a8e2adcfce1980fffa64f842db98b2514605182bf9247e674664dcf31": 1
+    },
+    "src/components/learning/InlineVideoPlayer.tsx": {
+      "740e510d4663e3db9f923b0903f1fc6ec013a0c87fffede0de702de018c2e07f": 1,
+      "5ca3b01f66729b842aa17ac60afa7819e5d1ea84b254dc48fd420db78999670b": 1,
+      "302a6e7077ef1f00f903f03069a546117105d630f9d10f75369ebda1c109a960": 1,
+      "16296dd41e9850b1997a5ae7eb8052a3397c4f95e9e62368b9bfcfc35dc22b2e": 1,
+      "c705e77927235840fb2acfe073e197adec9499520cec239be6fb6c98376ec49b": 1,
+      "988aaa8425fcb10a968741cce00829b31725fa99b5014fb2cfc0b47c7e376b76": 1,
+      "077b4dbbaf788248757c34c5d0dae83293426f63daf182d83924c844bcd6299d": 1,
+      "6a75a581bc4868a8c5c855935dc2ab56a2f79f0694f0cd716d5f1e59c31e34c3": 1,
+      "112bc9ddc0706c097143ef154b9570d999524779c321528300025b4de9f45c25": 1
+    },
+    "src/components/learning/LessonCardPlayer.tsx": {
+      "9380532e1eb41332088492825e035ed22ec6f8e6a7edb1eae8d07e3690d755cf": 1,
+      "d1416b51029f0ca8b6e1acdb6af6cde8174ac45f92b50bf144a66e5f1fcf4989": 1,
+      "61d1c8296b2ede9ce4b50d8d2cba34c160145d2160b8cf50a8e20bbd834c1c21": 1,
+      "e235821016f87b635e779177e69e2b38398f7e9183b5629bda1ed33fb177d672": 1,
+      "f65edc61b8c561321888b225b35e24520b9e52f01ceccc97d145e94132018f55": 1,
+      "87ebace37d516eb8fe31df0b8e35c5cf93cbf7c6dfa652c58a5b671214143e5b": 1
+    },
+    "src/components/learning/LessonContentStudent.tsx": {
+      "5499467c0738ae21742048ca6a364ed752ae6f9b351fb21c7dfec2deec1faf98": 1
+    },
+    "src/components/learning/LessonStepper.tsx": {
+      "5dd8171dcd123ada5e5d95e0cc6dd885af57bcfd3fcda5637379e674194a4904": 1,
+      "49d0a9a270752016a65f58962f89e6a5bcc3e3fee43901748da37aca2632828e": 1
+    },
+    "src/components/learning/LessonV21Path.tsx": {
+      "a965eaaa01c55cf3eb8bea4f64ec05a20ab5c403f69f85715a7adce421b3b6a6": 1,
+      "5ec6546d4be475ceaacfd3f8915ee419a8f3106518a6b6a0215503dd3505cc23": 1
+    },
+    "src/components/learning/LessonV2Player.tsx": {
+      "1666ab5d8796740d2d50418bcb6fc7fe133559193ced4696413b33a259fc7a6b": 1,
+      "56f9069d70bab5046390929384a3ca231546d0b08fd46228799bb28a87c58e02": 1,
+      "f14659d8abd902df79305d8c6cb6ba32ac1502b545ec7c8ad6f4f0adf959dbc3": 1,
+      "8be14f8216951594eb939f51b69dacb003f7d449208032ed515f61f618b3c682": 2,
+      "ffd1b03f1dd2a13928f03a8c90929fa39df2f994357a846f1704be3ac0b1d85e": 1,
+      "b8f9d7f42b8021eace8077d5c4ee1651505f7574670893ca1add32d392636c4c": 1,
+      "370e7399738a875b77b199c7da70d8a787ae0b10082f80f98f958e76f3238e82": 1
+    },
+    "src/components/learning/PedagogicalVisual.tsx": {
+      "4b2ba5d1e1246918b7d58288f5fa5d730309615e6a720a5f16adff9a59b6b620": 1,
+      "32a6f80ac71354c2490673410bdad2e01092b2b6e2f287fa9b138b928ba607f8": 1,
+      "d28974b7ac4649d52811e4b70067349ddf37859f3b57c42d63ae09fd17011e90": 1,
+      "efd17d8d36e13990c81c93687e0be387fd2bf7c477e9b7ae072316d07e0d6379": 1,
+      "79678bd5bf810a48a173ccebb593d23cdafaee731eb386ce91af37e899fc2158": 1,
+      "6500f927792b014ceb2eadfbadcb8f45c73bb37b6d525f8dc9cb87ad6fd9ba9a": 1,
+      "904abc4d8f2c33e90dabf1dde3884807b52c16c96d1a13883b714ad747ee06d3": 1,
+      "5c922905506d21618595627a64d8d22ec36fdf76cce76d38c6b5df6782fa30f0": 1,
+      "e224f8f38cb4bf323ae000337a25197782d70fe3ec356d713346ffcdd8556cd2": 1,
+      "918227e1cbef6854f6dfa6cc731ee945ef6b96e3739f4538493ce5a5f6408042": 1,
+      "5acb1adf473ab02d3d4416b6fd715d351d14631053843d98650156c982fd2110": 2,
+      "5f9e5f22ae39ce1a2c4bae2f2a9d3142a767cca9ec77ff7ce18af444ff0b9b60": 1
+    },
+    "src/components/learning/QuestionCard.tsx": {
+      "91baa9cf8c8f3e8986f46564e656d02e37d84d1f818c1ab9b4a885b90f6f8ae5": 1,
+      "246e9cf6bd7909b16df31f1101375d8e179896b100d802ef468cf83246698868": 1,
+      "33da482859ff4de1d07dec126425031bedc23621d1490b0b8e6894ab3bb439d8": 1,
+      "23bd71dff82e269ca6a635488b505770bae8505910330930f1b93fbe1bbf30c6": 1,
+      "5ce616754a6bb238ce9cbc69c42ac796417b8b493111f1b07c72c1059e8da596": 1,
+      "668039394174787b0ffdc85ff4096fc140a14f11705dd3ee075a07c7dde8adcc": 1,
+      "72f18793b3fab19546102605818cabb7373f45fdc6eedc26691b167a7bdd7b35": 1,
+      "2f5d29f8efd2242162f3dac0c2f38d0dc3bd26adf084564982c1bdf1bc8e2711": 1,
+      "8f2a78055aef093cb8aada2b4ab79b17c1d59940156e7762a9d3d9716ac8ef77": 1,
+      "644808d0af03b969cf153a13de84693b3d07fbad1f3ccfc95d9d569926a00eb3": 1,
+      "92cc3470fe1ee5ee2177584cc746e1f001d5cacdbfba94d0f13cec6df505ae89": 1,
+      "648d7cd465db8cc774e9efe58f4d0c41ca2ebc2b770f22c871e50e7fad3cf65a": 1,
+      "5c3aac737ec3c5afd7cb58aead6c45a887642b585cc584f557567013dfb87f3f": 1,
+      "7a13189ebc0c93152303cade7c0f34844644f7acd1ff32af72a14964475309f7": 1,
+      "4c72f547e7f355f17a71b8ab5a0ed70489723dd7fafd40db68cc17e370225a72": 1,
+      "972811a33caea81efdf372eccae413bbcb32d5241dd6b8eee02aba0fe7a7440e": 1,
+      "964ec4a7a92f95239cd35690f0069e68f9cfae325316e6916eb276537fcedc30": 1,
+      "34e721b8efeb349fef8812f6c2dabbf7014d49cc1eaa9ddec80903a7318ae638": 1,
+      "889d4a916f6cfeccff7698bcf97e15b0fc92ddf96bacd08fbd6e89ab51b5ef91": 1,
+      "bb71fc7e0283e958eb0df31faf9d27e21d7d58c94b7dc6fa486ba77c1ae4da9a": 1,
+      "d4a75926b7e11747feae2e8ed3463fb888dcfb53bd27811dbbf9d82de5974a49": 1,
+      "962a0ea308568ab714fabd985349ecb163ce3a44513ed47371d77eb99e51a825": 1,
+      "e4f8a4634fd45c07fb311591b34011c1195ac3d6c4d4b43d444f59ea7385c536": 4,
+      "98fde93807294a21775de0700cab150e9b70d3418c1f0bdb8dcf22d85559ac6a": 1,
+      "3430b751988cf8c3fcc53cc2d7eb45ca65975d93abe172461b9fb2af24507177": 1,
+      "2e1759b01ded133fe022804cb983d5f2ecffa669cb1f8e0c7c3c6f76bbbd5ca2": 1,
+      "23d74d8834eae101932db2f2392dd1e58fcfd044adafaffd3d8c55841e4e342a": 1,
+      "70e7bf0be4e0178a3684fff0ab7196950f1bb51b9ce522f42cebd9eb42f8580d": 1,
+      "1371a0de823692055bc04126f756a00daace2f4ebcb79d3827e6f6ce72a24f87": 1,
+      "71dcd6c3020ace91c70c609ae9fb5cc6c96c443c40344e90b0060174c6efbcdc": 1,
+      "0e287cdc8fa3403663a405c2f8040e21b8d02ea2b674cd72669fa9a3231fa3b5": 2,
+      "5dd7214057db26dc2082f0bacb74bc34e691a27092eac2429f3a942e509d95c9": 1,
+      "0f991ee110f40d5db43c4799300d162f24263b0bcd5cf99aeeba4798715433b1": 1,
+      "aed956559750e4f0e35a5ae3384cb66d09eabfa9d95c93357be0833f49e6d276": 1,
+      "f1223539cd0692be496b7bf7f28d53016937a53699cf26c93f03d2c375f6e501": 1,
+      "8c0b103b2a825b7f130b4fba12313928585bd9328200926960ff299237a7c4ba": 1,
+      "b7feeac89610a682a8baac77c9aa1c4b93bb43e07bc5f83a5c1f90b2b0040bc3": 1,
+      "346997aea8d19a7cc071285cb4719c5efbdb32937947b6a2b7a815eab5a239f0": 1,
+      "987e16672593456aa479a2c9d7c3435421aa71a83a65fdb8bddf68bd13ad5ad2": 1,
+      "597cfa2a1cd4fa08686a5706dcfdb940505a7371a0611204942c88a1b51ee9a3": 2,
+      "bd27b5e01e413811bc7f044319e8f60358c6915d47abc2ddeeed8bcebff88046": 2
+    },
+    "src/components/learning/QuizOverlay.tsx": {
+      "d2ba8651d9175f612eebe526860b156adae927efcf6120daaac11a00a8a0a942": 1,
+      "5016b95945a01f5865ecb672765f86d3ae481a16bde1ab86a6f9bc2940df68a0": 1,
+      "1e9286ed712fdbaf6705255680ccd4d820b255fb23a3c7b39d575431175e0862": 2,
+      "c2ea6a2a6dd4e81050e8aa81951e293f9eb9d4c875ea030edf814deedab66dd1": 4,
+      "3efe94f233c825754d01a22b9d4a4e2148005d9a1f8375a1084c1de4393140e2": 1,
+      "3ac985a47b8b99fce5435ab44cc3f3e02d207c7e62bc1765f67c35766fdb82ab": 1,
+      "0550466dea1463093e7b2407fa398e9a12cd4c080f08b4cbdf47ec31011c1674": 1,
+      "beb79e5d638bcb71ba206881f2027d1a99354efd1af9c66f55055a613843acf4": 1
+    },
+    "src/components/learning/QuizOverlayController.tsx": {
+      "d23ce1097e0b433aa0625b7e5e9e16eba076e0079ce655e8fb318d13502f13c7": 1
+    },
+    "src/components/learning/VideoPlayerBox.tsx": {
+      "ee117482174d50a42e2665ce22728786dab61cc274d6e68670aaa645723ed2b8": 1,
+      "740e510d4663e3db9f923b0903f1fc6ec013a0c87fffede0de702de018c2e07f": 1,
+      "e9ba5a3acfab011f7fd52a35a80cfb953565ada01e284524e3437726e7840ba0": 1,
+      "81b46907d5d0a7d260c565cc3d4e70749b2ffc74394f8d786b1bbde794a41f37": 1,
+      "16296dd41e9850b1997a5ae7eb8052a3397c4f95e9e62368b9bfcfc35dc22b2e": 1,
+      "c4037f4a9fa356e4cf998689e7e1f6c66f5e0892263f1b1c8739d2d48423e02e": 1,
+      "22f2aaf436a5af161a7dc515da301b159f8db06481b96e2ec7418661086863a8": 1
+    },
+    "src/components/math/ChatMathField.tsx": {
+      "883685bb4765d8eb2606a88bcd6f3ef9a8f68dff806dcfa374e27d9130603658": 1,
+      "dabde66219257e8e5fdcc7c64e16011e9ad01dd2771b79a886cc274baff8f123": 1,
+      "10abcd994ca231142f39edfa2573c2525d99ca0d196479e26070a825b556e907": 1
+    },
+    "src/components/math/CompactMathStepper.tsx": {
+      "2186fb63c8e42f5d5e709bc2600dbb5edd9705e2419369918e170b862cd58a28": 1,
+      "e6a9984560196c55fb641d138964204a1d001655550ca99f732f3285ba65f1a0": 1,
+      "d93e5dac3ad2e3f5828fe9e62721f22649318dffa199e0f634b2e46e610235c4": 1,
+      "df15c86d15564ce57232ea74c213802842c382a7da8ae61410e1330e86d7ffe2": 1,
+      "d074a11f0fdc42f95020285af0bbba8ccd480f7a27fa3e981d66a17eb7a82e4e": 1,
+      "39f067489d89e940700f4c01ef7d114ad3dfec59f0037b0186be35a7fba57655": 1,
+      "5690469077cda4fd635e3ec6fab9dd9fb0a2052cbfa3d970fd338ffeab977c87": 1,
+      "5e2332b3a70307d1f716b8e53b80915d08f31dffdb9bc6ab7c93b4b08d29e7cd": 1,
+      "57e8386f7937ff7c3d7ed593bdb3849081c2f4ac2fcb42cf4fdbbd722a36685b": 1,
+      "c88cb60652f481cc7ea5663f24c101134b256549acc78b0ffd09621297229076": 2,
+      "1bc0ed9195d177147d699778987a3b67f0b3276b4cff1fa090d618ed3a59f4aa": 1,
+      "cb0f1b5b765525f5ec7bd75168a048dd1414aaf5373d97cd933010caecf7a61f": 1
+    },
+    "src/components/math/MathLiveInput.tsx": {
+      "22436257641fe9976a285a62011a3e5ce038554fc55ecff4ffb3d42736fd1783": 1,
+      "9823c7d7807baf7b98ae149b6a01795e80782fecffb4ea5276a557b2c0012a0f": 1,
+      "1a0764f63791ea0c905f9bd93ebc4d7c8ea1d64254031dcee89973571ad21428": 1,
+      "ffe9986680271ffae33cc564f5e7343c1add9b130d5776138c3f2f15b269dbea": 1
+    },
+    "src/components/practice/ParsedExerciseViewer.tsx": {
+      "349330af431ee6c4228513f549e1112a67a64bad4c1fbca3d748b726dc0d41e3": 1
+    },
+    "src/components/ui/badge.tsx": {
+      "73e15a3259062fe3ac2cbe4f36cf32e02ad9bd6d8766834498ac4377b271e27c": 1
+    },
+    "src/components/ui/button.tsx": {
+      "0bb5b6d3f296bf48036f8d1a7ee7236d3596d86ce02f5057779eb8fb997d5953": 1
+    },
+    "src/components/ui/command.tsx": {
+      "bba896a7f621ef8a1ad464b4148c8c219f6b9d84e1159f485a2e5371e736ab65": 1
+    },
+    "src/components/ui/form.tsx": {
+      "4ca698fce1aa2569c1e325d0bab3c461849cf861c71644acfd37c528ca88935e": 1
+    },
+    "src/components/ui/navigation-menu.tsx": {
+      "aa0094164a0c5b0c85efba6e0841053e324d978d588dd2ea61c41d7a72e1c563": 1
+    },
+    "src/components/ui/sidebar.tsx": {
+      "9c0cb46ad0de5b4b1ea3d6ace87fcbfe16b66a0ac6ad74da6a8006ad2f34648b": 1
+    },
+    "src/components/ui/textarea.tsx": {
+      "d7e951f5c3a0682992ec1ec31c2dcf2068f0cefb7c80c269c841046308a6936e": 1
+    },
+    "src/components/ui/toggle.tsx": {
+      "853621ad52431e46c5562f601a577e33aab88c889b8ee88cc1a2d8af6ceed3e4": 1
+    },
+    "src/components/user/chat/AIResponse.tsx": {
+      "50aa28a0455d6cfc643a2518e26db45ad35ffed262315487f6ff208c4d9473f0": 1,
+      "e46cdea5e0097ec4f68c73aaf4c0c2e43ac4690c1b560772ae16fbf17240b22f": 1,
+      "30ca30186ea873fe2c89d2439e3cf63c93caa79dfa76f9dc34b67e767c2196c3": 1
+    },
+    "src/components/user/chat/CameraCapture.tsx": {
+      "672fa524afd93ec31ce3adda67aa53747d37c6f97c307f71392db1bb22d20827": 1,
+      "774ac180637b96926ec76a5ded01fe9b673e1601d0d4ba14cd85fdc348159665": 1
+    },
+    "src/components/user/chat/ChatInput.tsx": {
+      "3e3b2e57ede377fc1fc0ff49db25adbb64a60b887b3649d986292f600eb8a854": 1,
+      "10abcd994ca231142f39edfa2573c2525d99ca0d196479e26070a825b556e907": 1
+    },
+    "src/components/user/chat/GroupedProblemExplanationModal.tsx": {
+      "9d0c5edda7f063aac58e4c7ea7a312873087b312a561f7ef51038f55404a8138": 1
+    },
+    "src/components/user/chat/Message.tsx": {
+      "746169bb9fbfe7d6639c4214f4f94683bc40dfcd33ab5a3e7472373e6fa3fe45": 1
+    },
+    "src/components/user/chat/MessageInput.tsx": {
+      "4194b24ee2039bdcdd23057e24f3434b2dd0d6e37043192e20fe47c782b0cd93": 1
+    },
+    "src/context/AdminContext.tsx": {
+      "dc017afafa2e8c6d22e969b3c2c95a57daebeb4c3e9f9d747e9ec85a4d1cfe0e": 1,
+      "a6567c83f90467ed95ba6ba8d42280756014ddb7428f4706158512fd0d1fa263": 1
+    },
+    "src/context/AuthContext.tsx": {
+      "7747dd68e8dc11bb646a4f177dc73a604110a21c5cb5a18f5157e508eec1a88c": 1,
+      "2c6c0f5ed7b57f25e6c13dfa98e7206c4f7a608b6df6da053dd280fd8afeffa1": 2,
+      "9d2a94267aa02d3e95dd1e95ada73ba4ff9145a04761fce491ec5a70b2528720": 1,
+      "5fab4da6218ba829d5afeead876101aeab5aa557bb65661b92bf48b6e7cac727": 1,
+      "5d379230dcc2d0b752c44730b08363979e3320a30848228f5e2f942425948abb": 1,
+      "05b98c6afeffd5a3dd90d3b59f7f25dbb92ee5a6474b30211e32b5d8e0897fd6": 1
+    },
+    "src/context/FamilyProfileContext.tsx": {
+      "3abb2c0bf5592be4dfc4249da8f928d4fab951114226e06e847b1012fb09ac07": 1,
+      "17d9b6cf93add18557e7eb12abf1bab8ceb5c1e2624c55bda7670c2c3947109d": 1
+    },
+    "src/context/LanguageContext.tsx": {
+      "606c26bfa2f94d26d06ba0c090f834f7953f05de13a7a0fe00d8fb9c642be296": 1
+    },
+    "src/context/LanguageProvider.tsx": {
+      "258a4e877f7115418a7b2215cf3ff0b58fc77b4ece8567283d4a0a00c7e92f82": 1
+    },
+    "src/context/OverlayContext.tsx": {
+      "19d96ba57e52f8952a24f0ea1998496d6da33f0f077f89c3576be7b172f799e8": 1
+    },
+    "src/context/SimpleLanguageContext.tsx": {
+      "3455dde7415a475b39b3831278f4a7189151b309e568091157375fc3aedfe9ae": 1,
+      "ac53b65bd6ef10357a0a5c1095cdc8eb0084d3d8bcbc5ca35d8bb9438ff857c6": 1,
+      "606c26bfa2f94d26d06ba0c090f834f7953f05de13a7a0fe00d8fb9c642be296": 1
+    },
+    "src/contexts/AdminPreviewContext.tsx": {
+      "1bc3af9cde0fc237d679f00238ea9123ebd0fd78d04744a989d65c289e4dea87": 1,
+      "70e50f5bc71764e67adfcd496a82cd0583612f4e9bf48a6ebba8c3956b9c1f7f": 1,
+      "45ecf3d22a35b76aa8eb5200f93c4c4dc31629c1f45c54d06b2d989d4b2a6060": 1
+    },
+    "src/domain/curriculum.ts": {
+      "ee64a37d63b375ccccf677cd9188900ad0e9c2c464a169cad266c1ad814720a6": 1,
+      "cc8db0e5ecd6487158f4a0235bc7f46a21bb831274ee06c7470b4a505a9f7edc": 1,
+      "c0eb679aea9c846bfd36995d8ebd6a978de9d18e607f5652807a70ff990ecd83": 1
+    },
+    "src/domain/schoolLevels.ts": {
+      "068e6164e5a78e0636761a0f11e09b100051b9c2763602e0be14e23430bc9d8a": 1,
+      "e1d03fc39730dd021f4e399ec0ca2a1eb9f90b469e00b6a20e6364bbc22ec3e1": 1,
+      "eecbe322108e475fe993c5c3ac8758c3b26625239036d7516a2c0d2b15cdb5e9": 1,
+      "c704919f5b061d2b89d0d0d3e83fccd27c17b88c5c948105099be2950ecf4904": 2
+    },
+    "src/features/explanations/ExplanationRenderer.tsx": {
+      "7d85f0fd8e5005d323b1dcee5a811d0c8e75f3dae608f14f49d61d281f44ec94": 1
+    },
+    "src/features/explanations/QuickExplanationFlow.tsx": {
+      "6c744445e3b171d43f443a0e04311753cbdda3b0e4f08982e6a25ab37ff811ea": 1,
+      "3ad66e5b5113a895aabcd2928b2d37ea2aeee4a2937123d77191420d4d32868c": 1
+    },
+    "src/features/explanations/TwoCards.tsx": {
+      "80dfabbf3b9942666e3b32402bbc2e59b103764417d7d4c5eafe2fc98e240f92": 1,
+      "f0ba14673cc71120bef2c11c44d3af2abc180481395df88d7060b2f284db0a99": 1
+    },
+    "src/features/explanations/useTwoCardTeaching.ts": {
+      "4cc74a328d3f5663935f9ab25e8c88a8b67a730c36989a8fed61c9a6138956cd": 1,
+      "5626952fd1fd4354a58c98665524c60e1a434c0afbe5f1ced460e5a0a8d80c5e": 1,
+      "a7533eabcffd7c8370e706109afac9ee9a143662ba2a4435379caec14f273270": 1,
+      "f194003f1a1c3e1d97dc1b498f6bcc6b86ed9540dc1def1040a71bcd55e11351": 1,
+      "28343a89c775eb6c21cd4dcc2f2bead19052378e6cb13d7bd14d01bf54df0ed8": 1,
+      "341ccf6d036f0672bcf5366d951330798dfe4ae71c3482f8f1443f1f8ddd65b0": 1,
+      "17528d2edf949b62b002218eb83b7073733bcf90da2e22d1840cd19f7b7bf2f0": 1,
+      "b3cb8cbe278cc0fdfa9d24a92f0668f7e51bdafbbfe989d74573a4fcb3c2828b": 1
+    },
+    "src/hooks/admin/useRecentUpdates.ts": {
+      "08ce0341bdb69f0769b378cdb30c0be391c3bedcab44b375686303fde1408154": 1,
+      "1618098ccaf10ccd71908c72dddf3c9b2238a8b38d395a9ec632b991bcc68f27": 1,
+      "36a6a548d79015cc23854de00da3ecdf57616fed98e293f2f0b51bd492c0a587": 1
+    },
+    "src/hooks/useAdminAudit.ts": {
+      "cb329f30cd764231f8860efef16f76fe97c3c66f98fae9c3290d9002a888cb57": 1
+    },
+    "src/hooks/useAiModelManagementSecure.ts": {
+      "eee1234fce47366a4c2f6c75c82948ff4e9c21647b05382d73b60a52332fa5a9": 2,
+      "672fa524afd93ec31ce3adda67aa53747d37c6f97c307f71392db1bb22d20827": 1
+    },
+    "src/hooks/useCoursePlaylist.ts": {
+      "59cee95d716507c05a3cb2c4bd4aec5b7cef03d793777b7e71ea4654c303cc03": 2,
+      "67dbdf8e33578c14caad4721f372bddefa553975d80fe7b6a6076e27e9d644eb": 1,
+      "75ae81cca856b663d24ad3046554f253ab17627677d2f445ecab67bee7de9fb1": 1,
+      "460c1067a8a1fa8d29bff62a7d8b4b11bd31fece512c3a4be3298f770cdd2bfb": 1,
+      "7de073abf3f35015e679af867ae892526e1bb15b302fee3f6ead297816feb95d": 1,
+      "fb34790e340038b3ac68c0b87c1253b2c5c74cfcfbabc09e26de77f171a8af4e": 1,
+      "feb3bc4a9f8ac9ff7a23db5af0292eeecd6f245f3fd0a8cee19772abec723672": 1,
+      "4ff28ecfce91dc2523a9e588d6be838307ec646559913ce04147a7218de9bc63": 1,
+      "48cfd673f4385375d5cd2c3a8f655dd57ce0618020ca26fe4bb18f3d1651ec02": 1,
+      "1f9fbd145a2be3cacf688e5e9e6ae785c9bfdc53a4fab9c35fe24618d28b3172": 1,
+      "a0843dcbad4d2ee85e11ed56847d37c4fd030c10eeecd5adcdd49f48343095dc": 1,
+      "a6fb822772f46f308dda93e5c51b06e84ae84c40e98e14006ab20c4fb756bf0c": 1,
+      "00d7a0f792e018ca200883bf91a8018bfa575a999fb220ad98242b850ebf0bde": 1,
+      "96d4f5daea101089c39255b408f4ffcce1f5a398c0a3249c7e6a7fba0f02b3f5": 1,
+      "b77faf1c3314ed6dc4eaa8c612885c5d5d15defce552f1ac5d30ff62425fb0af": 2,
+      "1d07beb15e01e12ff62c6c0cc608692054ecc245f406552cb701b33211c1206d": 2,
+      "3d8f382b41ffda855e9a7115f947873271f125b80b6bd2b3d2bb0a6c3530c982": 2,
+      "8b041e5bab63c4e7cf2b7179e0494c802f678a9dab95f975622a23af34add38a": 1,
+      "6c091f988085e0cd1e35f81286f18f01e2a8bc925c2121f978e73daf8ff4d3d4": 2,
+      "a46d286eb7d4ec903ad55677e1b2683738a8e4c299f89e8654f41b3d1488419f": 1,
+      "725fb2e55e76c224aaac8adde949794f0b72e923a4794cd44ed90ed960839ea5": 1
+    },
+    "src/hooks/useCurriculumBundle.ts": {
+      "af0abbed7a52ee99f4f8e7f0bc5ba431a4a131f552d036fb73e56638f62f38b9": 1,
+      "d9746327bc622b3b81600cf756d0122a8ff9148071e33c8e7e276c939e30c569": 2,
+      "7de56a1b7de61b8452f891d7f3ca417d999e04e9dd9119cc4cf1998f98485a79": 1,
+      "f70c8e448ae388724442a02b7f532a2bd1d6778978bf59c5bf9e761978140794": 1,
+      "5d42756d02f865eec91a2308d4065d694983d4fb15997e61828be62480bfc004": 1
+    },
+    "src/hooks/useCurriculumData.ts": {
+      "7ca84a055a52594689bdfefc588808b91b4655fce58c416a9608077bf6e4a90a": 1
+    },
+    "src/hooks/useCurriculumSelector.ts": {
+      "6d78f2d05ece8fb45100e436fefe27ab7bac8ed3bf1c191d9b1a01dd7000b28d": 1,
+      "da471be9e32b352681546e00ca36041014ecf80e3c623c4158f83ca5d9607307": 1,
+      "cc16a38f93977335b14141c1d1648826f6b0649402fdadcbf0e66e70c860e43b": 1,
+      "f908c8fbfb418f30ebcef02b80b3390f804084dffc7c8bd1b67119704daed42d": 1,
+      "facadba22bba68b630e65cf03f52330a12dc24394ee8d182367741b945fc737f": 1
+    },
+    "src/hooks/useExerciseHistory.ts": {
+      "7e927c24812932524a45a42f3d721dcd0b16942e73b6f7471c9d9adc4ced2333": 1
+    },
+    "src/hooks/useGuardianAuth.ts": {
+      "745f5fe160b21c1fa9d0c8bb1b21830d2c617d2b7604313093826282cf0c5556": 1
+    },
+    "src/hooks/useGuardianExerciseHistory.ts": {
+      "a0b21d12551782cb3ec478bf716e96ac23496befc5c9115f4cbcce0e01971166": 1,
+      "9a5beeb688c802e3609141bdd93b566828a465f509fd280531e98cd515d58d3d": 2
+    },
+    "src/hooks/useGuardianExplanations.ts": {
+      "78dcd98652a5ef5031972801bf3c52f0a3b46a05c277cee2b98cc5ed0d6b805a": 1,
+      "d9e594e8ba6ebf79ba2e40cd3d475483507b4bff834a846580cd703e73930a17": 2,
+      "cea1783e92c2a21accadb998dcf0fc7bced4b23cf502bcdeaedf4f2260ec37a7": 1,
+      "f432ddbfc600b93c5c540377866c4a531b441ee70617c056255649311e171441": 1,
+      "47592e8ba95976ebd3c9ecb092fdaeb2cf51f8ad6f8fa7fd93b5691513a8f5da": 2
+    },
+    "src/hooks/useGuardianHomeData.ts": {
+      "eaef61864cab381ba52de5cc741c8094a3e3372ab7b9175cd9087da0e82fd315": 1
+    },
+    "src/hooks/useGuardianLessonData.ts": {
+      "9daafa71e970b3ac94dc49a3b8db982b3d9ec2865c4d37709592bf391165e4c5": 1,
+      "41c270ef5f5738ff793b330a44eaa0f3b838a70c8e331de69d79c28d5ca4890c": 1
+    },
+    "src/hooks/useGuardianProgress.ts": {
+      "508aaf3c4a7e32fecfbee041acc49c081dbc61574f1a15026cfb1d84d5865e5b": 1
+    },
+    "src/hooks/useLearningSubjects.ts": {
+      "0956615a779646917ec700cc334859e94f6dd489a88cc7538d56c135c6358cb5": 1,
+      "48cfd673f4385375d5cd2c3a8f655dd57ce0618020ca26fe4bb18f3d1651ec02": 1,
+      "bae8c428e7102d31a9234e3af4f8ca091f4d7cd7af4756304b9af0673683864d": 1
+    },
+    "src/hooks/useLessonHistory.ts": {
+      "2eeb4a646f1f0a3ea43ac3290944855bc6d03113573ad8ea27849204532b4734": 1,
+      "0f24d8ed8a65357b52054a03f9e4b96d61010532240e5fd12efaf51439ab3131": 1,
+      "4f468c306aab290148c76b41ab11bd20b7643db805f582d992d6b5d11e0583be": 1
+    },
+    "src/hooks/useManageLearningContent.ts": {
+      "b674592d602903c861e4ac45e23a45668ee73a1f47befdd75bfa948caafb6d9e": 1,
+      "aedb8b417fd05c00e39168a46e1b95f397b2efaded1a5976a50761efb6228d94": 1,
+      "bae8c428e7102d31a9234e3af4f8ca091f4d7cd7af4756304b9af0673683864d": 2,
+      "9a53cca3db183653f5a49722c65cabbcb56d5ff2200f988683bc0f308d5eb609": 1,
+      "e902e9e2554efd3d114f8d01c71d913b203c0ca4804691f6e14e4bf57cb13972": 1
+    },
+    "src/hooks/useManageQuizBanks.ts": {
+      "d1d35f9e5f4db9a6caf738e003d0eaa9fc4d245b2a19162ccaa79a8726c749b2": 1,
+      "7ca95b06eb70846e258625d84f17646542cba6a864f3f5e7814e23d8c5045688": 2,
+      "9d309778996d1cb40bb405dbdad1e574e75e60e319b34cefa9c040d2c3c4cb5f": 1
+    },
+    "src/hooks/useMastery.ts": {
+      "7ed51090b1d05c322002ee57e3f698e79493b68c9aadf70184f31f34e31ad4e6": 1
+    },
+    "src/hooks/useMathField.ts": {
+      "7cd57587589b177e7362466a290ed90a4b396e24658de5ad4bbf803eef035d95": 1,
+      "3ad66f78f3d21dc797423b30de046923d42cdccde0d1913bac519a7cb3027f50": 1,
+      "884a0191f51ad09a1fab3ef1058a0a2a7ee0327c60cea3e2ef3071ef2f61135e": 1,
+      "04cd52379e4b300ec24123a8cdb9d9af5c91ffa4e1dca40c07f8fbf07d025976": 1,
+      "043be975baf1ceae36a9afdf393a5172b4e30b5ed5c04b52f0d01c4974b8c11d": 2,
+      "e40c073710d83e8fc926170844117263078c6ff42b92a978ea903b54cbb84cb0": 2,
+      "49a961daeb675ea3f902de59304a878ad3edf1fdb7bc8d02e663173cfacfb59c": 2,
+      "66f5f40f7ea290b454bb2e02d07e65378f719c4b8a8dfae0667a21af1391c137": 1,
+      "8ae804ac12c30c670c09b12780e671cac5d290bc71fd1356088dddacf2d5b0df": 2,
+      "91278636c22b350d77dd21a192245f5925777440ee604419145823dd16780ad7": 2
+    },
+    "src/hooks/useObjectiveMastery.ts": {
+      "a75e71dc86bfab6e2eb842dbf319faa5eb98d32a58bb1c989c45a06cfd828fe3": 1,
+      "49b871922350e7f34b57844a721edaba573377390aeda4737fc70f5ec4adc662": 1,
+      "6087b7657b08a0990367089ea884c29478d6e4f91514d4191cce27e6b83a955f": 1,
+      "7da90d4d1e91a0881fa7d0b69f73a3313770c495a916aac13c46e8e8bc2cd47a": 1,
+      "5776846ddaf0e6e042796580d0ef19e9f349aa5ceaebfce5a30b89107964eaa9": 1,
+      "86923b6e4435da41378c6a36e7b14eb3f23c1f55ab0b8bca5e5f09750e5b2f0f": 1,
+      "723f02f950a524d2991f028e7d0e65b233f5213453349dc331764472a35ea65f": 1,
+      "1b92a55dcd78e096f4ae22cb42df9781bf2a27e6d79dbc6476a50d6e01670477": 1,
+      "55613cd8e6a773fb1f43fa250a7f9982792bc43b0ef193b9911356fbf8391c14": 1
+    },
+    "src/hooks/useQuizBank.ts": {
+      "8a7bd2b5470e6f9fd6c3919842c6dee3cc9bda6392f9e6eaae5d432bb54abafb": 1,
+      "6416ce1eed2466e8a34a1cb4c19f7ea27fbc3bbac96d80b31137aa4c2cb0d8b6": 1,
+      "8e31a374d60f21b57ab17c72d0035cbf142953e83771dbd06b2666db4c9eb3dc": 1,
+      "a753fdfe62bcdd8dd527221de4782b912ffc90cf2a716881935f7b705b6c8cde": 1,
+      "73bae36a5ee6d44ede40930bb8cc14aad2d4684404180a8a4ca11a2dbf90e18d": 2,
+      "e6213fd7f229a288de0e713025142bb70b704fd14622967cd1396e06e7389e95": 1,
+      "025bd6e1b68c5fbeac3e431d10b5771eedcca0b225f5bbdb02a108504a687eb1": 1,
+      "f47a4757bab2bd0c118fec144c76b2f9bff2368a4f4b1fdb7e95afd8fde615b7": 1
+    },
+    "src/hooks/useResolveText.ts": {
+      "ec518da5da78b0c4af499a6aa42c0bc2322f10875646e9aca25a7a41d0acdf64": 1
+    },
+    "src/hooks/useStudentCurriculum.ts": {
+      "84dcfaa3055cbb8d774124b41450a27986c7520ac27061ebad28bb13cefa9ef0": 1,
+      "c87f77d5ffc8e3a2c29a04030354bf349b0f7a6cafe4366ea3e9c4bd735d642d": 1,
+      "218943be73d99a34ed63f6f4f89ca83427467f0b72781b3238c3eb3e2aff0e0a": 1,
+      "cddf842f42fb6f36baa29c70f53ad8efe83ee0052244562a3725c40b8848b879": 1,
+      "45de4a2ef8bc7a15239738144d14b33a5b553c13a46394b31850313571f52059": 1
+    },
+    "src/hooks/useSubjectDashboard.ts": {
+      "6e7b2f6c4b39b55a91884acaafcc6267177271d394bf832e887fd6c39ebaa1bd": 1,
+      "8293f8e7c3766fdb24fac388392d8b8a7521be9fcc9861421ffcba2ea3b5a202": 1,
+      "719a28341f37bef53bbd80c8e5b663ea7bb8a53ad5fd42aa2e66150b32fe93aa": 1,
+      "f0c145633796588e83a39035b49fdbef5e0a34533d79aad5650d239efcaabccb": 1,
+      "c9fc183dcce2247e4666b57424de046a86b21695702efcc80c4a9093ee9cb42a": 1,
+      "ed41bfd80a39493c5f33e7eac70f7e8d1a1d7efb29f067137b95e4bc1b7d1892": 1,
+      "1f5abdbae7b07c40f8859a1e3494ff9ab65e6bc1cd5495eba11cf9318f891e09": 1,
+      "c8f54bc8362827e6dfab74eae3bfe3544dcc3758de6704a88f665c0ab5a6d543": 1,
+      "361df2f93750edf49aadc80c454753fec02629ac5348c641b8d9f0570b5ea347": 1,
+      "e1dc2e0b3b58d34dd0db90853a8ba08b92f7532e5fc8b3ad70cbb2fcbbfda8ff": 1,
+      "47f265cff2b2b7a509f8ef7b798945c48959d3607f37665793fb2dd13b6fa17b": 1,
+      "865c3bd66a2f0ee7cedff77a6cd75c594ad99fae64bc807509be2325c36d086a": 1,
+      "f72f712ca99042efc6276eaef603f8a3bfc09e94c12e0d69d522cdaa6cff0dc1": 1,
+      "0f2822b7abb20fab0ec3a04f1777ef263340ecd539ed172ce69a4d33927df16d": 1,
+      "94bfc921234b16a953f1e6702ba9e5b2b0e4e4d408f4b8f2f441fca0627aa42a": 2,
+      "3b76b11beff08e5490982a4d162420e508f6ac22cccf497e7566a1914868c27f": 1,
+      "e87686fa3911d50d51a14950fb0a92b25eeccfc1402b2220465a91ae9f404531": 2,
+      "c2912e9177fbe0ab1ecd5fa047e6f019dacf95fe0c5a2f906c5c3f936ba4522a": 1,
+      "4e65a3b46865dab591c97f7bcd30b51ba03ec17098c272906046bff6a101b697": 1,
+      "cec9559251aa306c9cf2ab76cf531c385613799ad645f28446be3cc0f4667ff2": 1,
+      "3de437ed3d09d979a77cf517c534931be93a103f03701f33a7bf63f772758f47": 1,
+      "28009cd282a8e37c62268ebe29db84991f1596805ef6ca745bf3c6631757eb8e": 1
+    },
+    "src/hooks/useSuggestedVideos.ts": {
+      "4ff28ecfce91dc2523a9e588d6be838307ec646559913ce04147a7218de9bc63": 1
+    },
+    "src/hooks/useVideoPlayer.ts": {
+      "f28ebf8e0b0a146ef1cc70a7b6eeb2a29ba3333936c4d01728d69758fc6cb6b3": 1,
+      "faf6d511ba2ebb9146804d9c9fa91eedbd73f94a027ce867f37c0e80f6bbe88f": 1,
+      "2d73772d375bfc1b05f1a85c19886257ae8dedb359c582ce6db3542a7f5e0d59": 1,
+      "95398f03c30a081e94dd4f9b50ab4a94d5ae4ea2a34f94c5121b3b240d6a342d": 1,
+      "6ead292fc5630bf180f7cf9a5ce0b69ced0c2d29d4d69cbe11ef1cdc4fc8b87a": 1,
+      "f5cd278b886d17f137898f219fdc69e208da083bc3cb66a7cf68e5046270f152": 1,
+      "e902e9e2554efd3d114f8d01c71d913b203c0ca4804691f6e14e4bf57cb13972": 1,
+      "975835ba4795f8a1d6681b561faffb2b67da85ea27a0d7842ccdecd0c2afd31a": 1,
+      "d0d45502fdffcda19d272fc951606de80f17288e4771b8f4bda8b6476461d5fd": 1
+    },
+    "src/lib/admin/rowHealth.ts": {
+      "5f427c32641be4fea93cea1704a85e2a2514e728e52c9152ffb66fe761e3c6c0": 1,
+      "689ccf2c77e6b24857fda32490c747c83b335eb4ec776968459fdc0221474f40": 1,
+      "87ce293cce9a50a5a23f73b783758960093142edd76123500179bc9774b01762": 1,
+      "c52399e3c7eb93f9ec2640adbcd6bc95506ae72e74bf3a28f505ed449d77ae70": 1,
+      "15745c6fcf5acce377311bd6d2f38a424be886208034cc61b2e22a0b3aa10c89": 1,
+      "b0e155608e85ce4b64fd368a8b7bfaedb8dcd85f5db269235bdbd2ed06dc3132": 1,
+      "d2a8ae38961ab8c2f666f96bde7cf9d2a532578371d2a095bf47d863691c36f6": 1,
+      "924008b5d4d339c0f6fa29d9f487797e6e2533e3d2d71e8c0eb8d90a497ede55": 1,
+      "a3f8e0b36329940fff2bf8f54e048c50e3e7bcab9dd0508d24f1012c042596cc": 1,
+      "d47003bd04c1161dab55c1cbf1b4625a67078223df5360f0ebfca83f8e5690e7": 1
+    },
+    "src/lib/curriculum.ts": {
+      "ebd888fd77d5b7d7b440992241dc4e62800540a9475fd14dd1411be5de56004a": 1,
+      "5975fa035040eaf2917e996e6ab4afbf66480c7f3e74cadae537d939e220154b": 1,
+      "13037273ada70d2d0fc4460d3a9875e6bcf18286d2714de655d85e3cb4e1e045": 1,
+      "d09ead0e49d8251e5c916de533a4fcd16494365f9aba6c626d76292cfe657b3e": 1,
+      "9584f1f0a2f42495440a19d5e3a8b6879f9984d6658e89e2555de5d90fa2c436": 1,
+      "0735b60e4fde18b7be54c70eb5f4ebbdbc581b5f0bb0374305903eeb180cfb11": 1,
+      "f53f3ab41de9aef199c093f6b17e43db1deb6cb8cd120412dc8e56c0ab76be64": 1,
+      "08199a6cb8afaf53effbc2be3cabc35f2a03fdfd8a4c2c5d9ac0becc3f7cac1a": 1,
+      "b1764a2def281a1e7a379976203a6dbe4d874e47484c80f28da4fcd59de25e74": 1,
+      "bec0935dd643c3b2d00f366b3dea06d407ea8404a9c667906fd0210ec0cebf6b": 1,
+      "3cfaedebb22828cecf64178e8f810ba8fe342ca0f762687af9b99e5c80761ab5": 2
+    },
+    "src/lib/progressService.ts": {
+      "723f02f950a524d2991f028e7d0e65b233f5213453349dc331764472a35ea65f": 2,
+      "1b92a55dcd78e096f4ae22cb42df9781bf2a27e6d79dbc6476a50d6e01670477": 2
+    },
+    "src/lib/quiz/promptVisual.ts": {
+      "e9349387d46182d104cb739aa31b401821c1d6040be91e55855cd695aec5e499": 1,
+      "ef3729b9e8ccb95e78a660b299cb4ff9d4f63dae00ddcb6ac4226e9e9b10163d": 1,
+      "412e91fc0be5fb1dc837eb0a7cae6b19d6a0d52dafb368f11ac7f65409e46962": 1
+    },
+    "src/locales/index.ts": {
+      "8f25d7048a45ec4535468949d5db0526432b3f8334e9c345b92686fbfae38673": 1
+    },
+    "src/pages/AuthPage.tsx": {
+      "54f2944f3e6de36b015dcc4255d105ded144985990cdfddd0dad4a3fe8f8f421": 1
+    },
+    "src/pages/CurriculumDebug.tsx": {
+      "5cd28531a75811441ce9b40ac5499da9ed19db63b4bb04d4a50be2c49a721df3": 1,
+      "de2b9203a1998083fcfed7cb905434c6b51cfdf21c921ddecf503264841c8cd2": 1,
+      "7882d645464be06e19de26e907808e631b3a4b00df98a28853de1467d4dc749b": 1,
+      "2170c4ff0e04411beb6134e3fb035a0cf96aa94a66f2ba6112a22525b29bc556": 1,
+      "2b8a0caad4369409e1cce6001958dd4ebf2876ccf2c95d5cb8d22ce85a4f4b6c": 1
+    },
+    "src/pages/ExerciseHistoryPage.tsx": {
+      "3f12bfff8eb404f5470027d603e69d68b52c46238f51127b368bcc98264abdfa": 1
+    },
+    "src/pages/FamilyPage.tsx": {
+      "06f1a75eb3052370f6c67cc941cf65cf0c9fafb9073c242ee597edc74ff9f004": 1
+    },
+    "src/pages/admin/RecentUpdates.tsx": {
+      "90faf22163a9e5d27cddc951ce8530f172612ae0299a123cfc943a7b7d899cc8": 1,
+      "c0c79d061bec8854689800b1efaefd8eb8cd35dd2365b328d506e410189958fa": 1,
+      "0d68acd5457a356511ae5ac534f265e2f14b37f52242081235f93fc8f5d0b93b": 1,
+      "2a15d8f1efd42a346d72e055cc2b5336e67496cd760e8ba26d8beb8b79178604": 1
+    },
+    "src/pages/admin/StagingLessonWorkflowPage.test.ts": {
+      "62c4841bddc5b4b7556a770cb6a269cbff359947532928f1ac8f9b7deb69482a": 1
+    },
+    "src/pages/admin/StagingLessonWorkflowPage.tsx": {
+      "2a3a2335e85651b8af2620a5749c5feecc6e97285e7632906c709ff7336f9b40": 1,
+      "a21ebae659d899f090fea701910711327d101a22a07940893472c77cda14c1b4": 1,
+      "888658921c8ef48f4ed5d8ff732e60505864d4ccb3338fb75909dfc83c924012": 1,
+      "ab75df5a48042d81c75f753f3ca63ec4a7fcec63d35ba70d963407b822b91e67": 1,
+      "71f5b46aa1f871c2114bef6c707a832d3fd683deb93c7e10437b97159fca3d8d": 1
+    },
+    "src/pages/guardian/GuardianProgress.tsx": {
+      "9eaba470b1c32419d28e6cbc606753a793e2babdcb1d597daaab84d9218529e2": 1
+    },
+    "src/pages/learning/LessonPage.tsx": {
+      "ad245566d8ed07b96d492dd1fce78f1095359209764b6d059b5505e1505a8b60": 1,
+      "34a49ca68649c8b46c87af80ae5aa8cfb7d039a32be08ea98d6af48533836fca": 1,
+      "b5553c16b6d6bc902e28e2e5d6b92417ff75be33b3cb97d1dd9c8bd72f9e6c6d": 1,
+      "0c8d628c94d6a14e26c4b45fe8fd296cab9ba71b27081326bec9cac929199f4a": 1,
+      "022fc9accd53d98e574a4bd5f4b167a5bef9354c225b3c8dd2bf8c16ad0b2429": 1,
+      "5f2737bc300f531c0c479e1b498a0c8131e4b607c35d0c351e598fd65c34f8bc": 3
+    },
+    "src/pages/learning/MyProgramPage.tsx": {
+      "40088b0c08b685b5d985d3a1b1a2307335ea6de452b39aca27c3a8160bc13f4b": 1,
+      "723f02f950a524d2991f028e7d0e65b233f5213453349dc331764472a35ea65f": 1,
+      "50f43192a32065521ec7482fc76676c9406738ca5b08c5e7442629f335772ae4": 1
+    },
+    "src/pages/learning/SubjectDashboardPage.tsx": {
+      "47fb5fa7ab6cf792bf3071937a77c49435e145994ff7aed24ec93649b748d45f": 1
+    },
+    "src/pages/learning/VideoPlayerPage.tsx": {
+      "4152f5b29aec27fa779201c58d9863c2f8552bec277260346c02c01b0fcc686c": 1
+    },
+    "src/pages/practice/PracticeAnnalsPage.tsx": {
+      "56950cfba78afe31db1996be11bb1f514df2f04a9992967af027834a67a259a9": 2
+    },
+    "src/pages/practice/PracticeSubjectPage.tsx": {
+      "e6ebf37e6088e5c9b019434ef397b50d6b731f0563c2c0298b8b3952ea7fb874": 1,
+      "8db1b48535f3c1a3a9cd228b6b57dd674862ef681be83e2ca75e0fe5da93f4d4": 1,
+      "6f49a43308e693b458822101c5fb9275aa2cd67e9d4cdcde9093c9ccdf1747e4": 1,
+      "9c7cf668bfb4a627d53eb35a015e3632442df940931bc73a30566cede212f5ea": 1,
+      "7bc0b61dc638f53874e904a60fbddbd9a86c9bffcfe1c713012b17ca35427285": 1
+    },
+    "src/pages/practice/TrainingSessionPage.tsx": {
+      "6c39efbe916c2496ad6e1d322a7feb7109101d7b9c0c1fe575e0446b37df226a": 1
+    },
+    "src/pages/teacher/ClassDetailPage.tsx": {
+      "b7c74fbdd4ae6f38b2a00587b74b99f215fe8bbb528dbb61a6352198e35e56d1": 1
+    },
+    "src/services/adaptiveTeaching.ts": {
+      "b4770ce6bcf0e0a935e9826d52f134aa0c546cb6adff8725538b4a976fec90f7": 1,
+      "6fc96b1a558887ee9d2dc022be65324f24b4fdcdb66cfd23dc74e25e2d0d4f0a": 1,
+      "8da61012742e674390c01eed06b2681917fc022a324cb38ac79119004e24b4ba": 1,
+      "a0e509071189709b4c5111e5a9761e3a35f3bb4198a3ff40eff22660e60626f6": 2,
+      "8f7c7331166e50028637543dea492ad72171b74cf54afc0836ce7b87dbecb951": 1,
+      "77b709292a85b76fe7a82dedbbdf5074c16ab88748e95c7f9c4a323df3a2c014": 1,
+      "7ca84a055a52594689bdfefc588808b91b4655fce58c416a9608077bf6e4a90a": 2
+    },
+    "src/services/bulkStagingLessonWorkflow.test.ts": {
+      "81f6a526c9b49a3cfeb7e1e035e6e360df1645232b25bfba197174bf02777aec": 2,
+      "01322b23edd30a1ad42af267d270f2c07582dde572312df9c9455f07673f976a": 3
+    },
+    "src/services/chatService.ts": {
+      "89b4c20732c91723129f26e9c1debfabae8725ceac698a54773628250f45f98d": 1,
+      "672fa524afd93ec31ce3adda67aa53747d37c6f97c307f71392db1bb22d20827": 1,
+      "178edf7cf43369041336b2fe19e26fd32d977ef03e83ed80578429776b7088f1": 1,
+      "140e1f68a48f21a4a4649aa6714799b2d1a8ba9e2e0975e11f7eae494615ea3a": 1
+    },
+    "src/services/correctionsService.ts": {
+      "2f9435d0cbd217a9bad910e5e9bb5b4ad674529d86e1217097b00e9e8aac5d42": 1
+    },
+    "src/services/examImportService.test.ts": {
+      "70c322eb6d827eaa2f0688979028790cc58daba2aebd2034e3a127ab74f0832f": 1
+    },
+    "src/services/examImportService.ts": {
+      "ca51cd6bc4ae21c0607ef8cd22ce8204d90beeb0d5e6642f82068f29c1fe88a8": 1,
+      "a7ed7867da12a881e82ebe5395373a87f89342c957ba22dcc23f9f733f98cf16": 1,
+      "5eeab305bb19190a0b171cc5a727a5e158d35f06cae2e0b4763b6452c68ad581": 1,
+      "1a0815163f6b41aec03282a93bae443d2558b6c8c28611680ab82a30996a4849": 1,
+      "85a4c1ad2723a2409c376d5a4f1d10524d8b1c0a746082775f2d4efa6a2e2be8": 1
+    },
+    "src/services/featureFlags.ts": {
+      "bae8c428e7102d31a9234e3af4f8ca091f4d7cd7af4756304b9af0673683864d": 2,
+      "e902e9e2554efd3d114f8d01c71d913b203c0ca4804691f6e14e4bf57cb13972": 1
+    },
+    "src/services/learningAnalytics.ts": {
+      "e902e9e2554efd3d114f8d01c71d913b203c0ca4804691f6e14e4bf57cb13972": 1
+    },
+    "src/services/learningNavigation.ts": {
+      "67d5b2f0cc0b83d3db4fe5a6b33d0cb658d0328628c6401dcb8827ae79f74d40": 1,
+      "f28ebf8e0b0a146ef1cc70a7b6eeb2a29ba3333936c4d01728d69758fc6cb6b3": 1,
+      "7de073abf3f35015e679af867ae892526e1bb15b302fee3f6ead297816feb95d": 1
+    },
+    "src/services/lessonTopicGuard.test.ts": {
+      "c0da88cb7f9af023dbc0505122ce33ffa3fe31eccceed5b59b26c7c4e5ab5f0e": 1
+    },
+    "src/services/lessonVersionWorkflow.test.ts": {
+      "ba66c925e5938ec5691d766d8d2b81c26d510d5de25310331886f0322fb84552": 1,
+      "2bb2f651acdd0c7aa5350582028a47e02a0a33701496fba2b914336b5993b6d3": 1,
+      "32cc9f55cd14fa35268d081e85cd39a9329c363d1d9ea1a6ee4662ad7741f5e1": 2
+    },
+    "src/services/lessonVersionWorkflow.timeTopic.test.ts": {
+      "d7e3e6375f2e345c1a0bd58268a64b2b44ecb63850078a97f99bfef59a6cd381": 4,
+      "4acba4d030dead6a6a3a7d6af88514ba91743c41b278f3df7d4b4097f665dce8": 3,
+      "7ce5b59ad37b2ed0cdabf6af60813d566c18ffe32bd0fdd7de38eb2325de98b1": 1,
+      "03b1c16fb859f6d6ae06dbf704fcfe0ccd2a0767b8ab1ca8d1d2fefbe5b4e27c": 1,
+      "b97dd8bfdbfe7e066164e4c9513778b4662e9989f91486d25f9363d5238da9a0": 1
+    },
+    "src/services/lessonVersionWorkflow.ts": {
+      "8998a124ea938271eb511aff8defbd1be768a52310c271b3bc11474832d775cd": 2,
+      "ef4002460d8a9c2906f56280baf5ef8084a8a38a1e5a5d04f1d3927c5cee10e2": 1,
+      "64c9a45e5664323a14606938fb2bfd54464728201b5efc1e10de03e1147a4ef3": 1,
+      "a25dba481042e3f03e27930930b51f322540ad4bfea13401b4608c3af1a01098": 1,
+      "30f84be779e7573ceb1c54f410d4dca929c09802d5fb376fa605934cb57eedd3": 1,
+      "f459ce7ae56e45a013d4c5225003dbe1510940e2d2ebe86bdafb7c7b203304ca": 1,
+      "6f2b94f0229b0b0030b27a9a07e13fa934eddfc8cb0f5bc649fe196656edf84d": 1,
+      "f8120ba74b836756837e15510b6aace6e681f75e52d80adbfd66e6beb9f70fb3": 1
+    },
+    "src/services/localMathGrader.ts": {
+      "6729819c06ca097fc506d8afb404958d39c17a99ca03c564192fe72179c65655": 1
+    },
+    "src/services/problemSubmissionService.test.ts": {
+      "9c0caec6281785d4ac2a4690f4740aa362d0275579dec48ea0882ca242f52d9b": 4,
+      "7eac4fb29735acb0298291b88c01c6c02b3a481902c1b935b626be9dc6068544": 1,
+      "f879f7f23fa7a1bd0b1d0b51516a7c527b6bfc9323f722d9d175b34ea16f2c85": 1
+    },
+    "src/services/problemSubmissionService.ts": {
+      "eff96bbf5d23d8fe91b1c64b744ad292af7aec264f96d11a4286a9c9eb6b8300": 1,
+      "79263eecdda8867e5cf13618aec91e257c3948389860ffcfbd33a028d991e4d6": 1,
+      "d2372e35c37baf6a8b4922f7912c42a4b5f441eb5fccaaada0b0c2d5046c9d49": 1,
+      "c14660d1c3bb5cb98c562626e0a302bbd29da3fcdd4095eb1e1f3cc9fd6e6874": 1,
+      "6bde411e7534cfec206c7a9e6ca23490f6193e909d4e7fd8e888921bf86517b2": 1,
+      "36cac43f48d5f688a86ba88c3a40496ec7c96abb18c592e95a89e7fa50c41061": 1,
+      "e2312523ea54760cbe75e69e071ad70581e2211d7cc383ed34cde831060814ad": 1,
+      "2a388a22ef52c53cbfeebf09d31ac96e9c624de652521df0c17f214f0098fe99": 1,
+      "3bcf182d1fbda959d5847d5566dc7bf7be0c4b22e12e7adbf264bcf1507b3d5d": 1,
+      "485ed7ff4889546d53ac2febf68c1acc5ea2fc67b12b3eb474a4c80db2cf05b6": 1,
+      "d143eb654540e0b376c6a76c97eba47948e0c49bc59b01eb8809ee27c2a8a8ad": 1,
+      "99d9eed86e4287e48ff451e22cc527fb7757588f861995bdbdc732e97c706aac": 2,
+      "d68176450a1c1dabbac8bc324d917d7cc25adadcce178d1a6880499cbd67aaf7": 1,
+      "25e2651a8809c94de2beb81448b13f03a68e2765233a2bf4eaf653e1b02cf8bc": 1,
+      "53b13de0120981dc0413aa035a85fd3d4504a3aa48ce50f9882833ba0c09140c": 3,
+      "ed717f53b22aded4ce94cc4a81f9171dd88c8573cde043107854f05e7395d808": 1,
+      "5dc2d3f124c7342b2d689e64abe75fed7a08c1f46df5ceb1d1fb99a04b365a98": 2,
+      "9f6c8a90034cf1148740610e1791dfe73ed9d19c0372cf082c7a106329143d8b": 1,
+      "28c96b972a1dcb041e0823d8c1e2d75207ce2041395c8da80df5ca194d90e392": 1,
+      "5600b424292cb34d596fb19958c753337553f104fae4e0a5ba0ba68d406e3503": 2,
+      "ffa555703ebb573950c93ae33b405ce77df19c21fc46218edaaee9fe08f2c7e1": 1,
+      "37d5738e9e4da1c13543c350e4cf3f50f8de63e0c0bbfb2f93dad79e08ae4d34": 1,
+      "50039070f5a3ee7f1536fd0dd797baff3364be49b6403b3170e146760d274503": 1,
+      "ee55f10018cfb68efed5634c3c623d66a22574cbe0c3f59d888a3a2765a0d7dc": 1,
+      "57b818b7ba90d6f39f70d007aa868f49cdf8d1fe5fd0f5dd13c926c14e15f932": 1,
+      "e17694512311b920e90af26fbaf7c52524e9be6c5921ef6532e84bc6aa8b5225": 1,
+      "74c4d7421598db8696b7c851bd7ee716d9a7ce6a20058caa4837592e76fa9482": 1,
+      "4025d5816c20e4fa50b89eb3165fdf1c33675e185f3dcdf901ed24bfbb60ae19": 1,
+      "a23f6369809c996f7514fb62a173b2fb09f7d7915f72e64e49790be81cfd551d": 1,
+      "6df277ed09b7a7e9062470f9e2243361505bd9afc1307b8003e2996c59b66853": 1,
+      "28807ca9e448429a41cb16c62ab5eab28d46f0bfe1d8e5bfe22a73236b9b6da2": 2,
+      "e6c4ed43aa84b734529ce1d2df5165692d61e789b708388ac42021893be7011c": 1,
+      "7a1a127fcc066724e7392f8714eda1b16c6cbbaac2a3c7242b67c1a3cacd9e53": 1,
+      "d74d93615a5333bb52d6cd26983af9711f424e724f5826f2f7ee30a3b2c6d084": 1,
+      "a1567df8491be1cfc18d12952816b16ada44b376222589fa42da33b2fa62d11f": 1,
+      "5626952fd1fd4354a58c98665524c60e1a434c0afbe5f1ced460e5a0a8d80c5e": 1
+    },
+    "src/services/smartLearningResources.ts": {
+      "b3a68aa3277ba5e8900332112edf2ceedf9a489d70d9c84b0717cb6152d477d6": 1,
+      "2eeb4a646f1f0a3ea43ac3290944855bc6d03113573ad8ea27849204532b4734": 1,
+      "e4f5ee0616b40cea9dc5f9148e01d8fddb7f7f5726096dbcfc7a0f83c6bbf079": 1,
+      "4b311dd67bef809190ec226ff89d67ff5da594a4e587505fc06464608de82cf2": 1,
+      "20ed26bba25936cfe0b169974b869cd3a403809fe08952b934def78d1254f73e": 1,
+      "49a7e977ce89b90586e77795da54a86827afff46f98636ac41f24badc4974b08": 1,
+      "dfce892486af22c9b0062ceda80e055f1fd0a6828a5e9dd673854c9411217f7f": 1
+    },
+    "src/services/unifiedChatService.ts": {
+      "599c7e0960f246156398438e3bedea673dd14c073e67d8732a6618a5d37765fb": 1,
+      "646edecb14c342057646c0834e56f37a20963353bfd404abf58884400bf27f67": 1
+    },
+    "src/types/curriculum.ts": {
+      "007ab7ac3b8cc3baf098a5c6b7d6e8645b48e121c6adb058f17ce3db534e28e2": 1,
+      "6c6b9cb58b8e780e7df92ac18355bd9c091bed2391e50fa2117165226e4d29fc": 1
+    },
+    "src/types/exercise-history.ts": {
+      "51acc3fb074b2cb4f4b0131af3cfd1716ed12152e1699c6101c55c49e10ab3d8": 1
+    },
+    "src/types/guardian.ts": {
+      "5c586243a35aee59c9b740af7a647831470110871e726534f32609eef5c4ac05": 1,
+      "a21cd6bd0f48d57fe4d1aacbb377eb836ab907df252148817857e3e41bce3d7a": 1
+    },
+    "src/types/mastery.ts": {
+      "575c103c855c65b0e0fabaf4c6cd8e91c8a9372a03c38004365e2ec4da4d7f91": 1
+    },
+    "src/types/mathlive.d.ts": {
+      "4e9edf1d01fa472446e47ed6e4e38c3488dc46dc070d1abf69ed734973087f00": 1
+    },
+    "src/utils/chatFileHandlers.ts": {
+      "86228b25cd12925227f6b11170c9f05173ca296cf5be0011dc25648a455d930c": 2
+    },
+    "src/utils/connectionTest.ts": {
+      "3bfc545a2e746f20b45e91063711bf553eebb7c48b18fd3116fd41a6571072db": 1,
+      "672fa524afd93ec31ce3adda67aa53747d37c6f97c307f71392db1bb22d20827": 2,
+      "bd1cb4dac3c65669a764431cf51ea572a3440967dd8325b447a944105bc0892e": 1,
+      "769e57aa38e7bef813d4290782e08cd4f9917202e7fae3aac25f24b85b44090f": 1,
+      "ccd576c36e41305b8e1fb7a3382556ec1a3b1f4ebbe49f314ec5aae6b0c01954": 3
+    },
+    "src/utils/documentProcessor.ts": {
+      "329cc3b73922833b1c9aff96542fa5c43902aab2d9c8832bd7d4a107b8bb81d1": 1,
+      "832b17ca968e39afaedb4abece53a598a7c3ea9337343ec42555fc07d8f9e019": 1,
+      "a2b49c7ef4c59675ef7f11d2a05c50f00ba9afe399f8fd99cc1638d2e64a033b": 1,
+      "5beed367bb1ba00248d0a44eef1ed82035c05bfd9c0381864aac4a0e54aa08b3": 1,
+      "7111a7e358c238790617a864c005896e545fb88a5a341796f8c8ec11286b4234": 2,
+      "362297d6b6bc48fb9404277434df4423f0ec7c9b4b9b492a7d2ce14241f06de0": 2,
+      "50e182373d2a8c0f0a2669beaf132ed24e31f6d50dc3c6e49e2bc54e3f85c30a": 2,
+      "0afa7beb2dbb70b9a783b652b07788fd682061752c92d07ce284a540113c28b4": 2,
+      "b70d016f6820657836ac295cf9d74ed80f9d943c98ba78d808d6d5cb56094482": 1,
+      "8bbc5187b5992487bb5c9212359f28180e23ff65ccb5546d64a5bb7c3b24651b": 1,
+      "bd3622b994038b4028f0872477c36cdec77d708e859c650e14c7983254c3a54e": 1,
+      "fedae7ee626c320d955da3a0cf9595dfecebcddba81dd0ab26b0f82b3de2303c": 1
+    },
+    "src/utils/flexibleStepCalculator.ts": {
+      "2d16c9ce1b1a63f0d9bee3012313eeb146e126935f84b53f6b02581cdd91f633": 1,
+      "d074a11f0fdc42f95020285af0bbba8ccd480f7a27fa3e981d66a17eb7a82e4e": 1
+    },
+    "src/utils/homework/detectionUtils.ts": {
+      "4203d9d7bca5deb283d8ccf4105b212e008b711ad29e0b0a786b1018b9af5674": 1,
+      "d67b980c2a31237fa00e42dde99e2d25c394669f2334524edd2fceb73cd6ccd9": 1,
+      "1af7b2fad5325896c226452572026e660a4156f400e3de829d0e3db0de2d768e": 1,
+      "46c122da65a32fae13eb1ff2183c79066d758e9a947fba062ff5534cbba95185": 1,
+      "03465159b692fd387dfb5387ffa40fb32ed6f5ae9a06f60394bdafd1daaf184e": 1,
+      "c9c157390bea49dc1b66d07deb684d392bf1f090314fc28f4076c1ade82ea119": 1,
+      "dbcb28f27a277c7129d9ddbd65de999837782b0b96f92dd782744bfa6db4108c": 1,
+      "7662fe2fbd31856891cb15b24cf96d183e687980976cb79f0bfbfe9fe244df2d": 1,
+      "29ac1e7bfd9b4361b02dfe7a6d008fdd82478efc85b6519951b3e34824f97460": 1,
+      "af968570139fd35b17ce2b6807973bdb466c523da52148f68a28494a699254eb": 1
+    },
+    "src/utils/homework/index.ts": {
+      "607dd869573b1b676b955c9153241c8a3a38d11f019937ecb697284b78953c89": 1,
+      "c4f1adb13fb8b0f07007e3ea4f2695a405274baac78b05d7e94107e2d7c001fd": 1,
+      "3f19fbb3eb0d84ed639aff8bb6fee4e9764120d91a383de508bffcbf61348814": 1
+    },
+    "src/utils/homework/mathExtractor.ts": {
+      "fec9c2fe7a6332dd1b1fe2f97888990edc6b0dec50e2e898e6e41f7da527faeb": 1,
+      "668e23c4d69168556c7e0af26e140f14d3efea8daacff41cb465ad59c65da92a": 1,
+      "3bf982124fb4504685bf59c7a5f701952496402f3575436cd81a0b7fcd350e1b": 1,
+      "da1cc34f97a8dd02b7cfc449a82d7cae87c342468f363a15c9629fd2d7cc4dfa": 1,
+      "82734bf8520285a4bebf6d6529e976f03be78bf2bd72148401ad92742df3a25c": 1,
+      "95472a8d4f86894ba47c7d79bf13318c8933b9699c2f75bb0fe7bc19c030b7c5": 1,
+      "69491a2aa707e72c690dc142dc9c428d22c7630e7cb6e51668155a7e692983ed": 1,
+      "05efa128c5070784514ed5b716ef9995dc1ccea38a27f1a1a079219be75850c9": 1,
+      "11d9c41c6ef704fa4b8d705a9978eaca6ae55415925b7cef0e58fa67563d7d42": 1,
+      "f13caaae36e68bf5ed50eeda09f1650508b67fe7aedf4d347cd169883a6ce66f": 1,
+      "ec48d5434299dac8a7c47d332f8f618d1dffecfd9a02689b723f3574cf0e2c76": 1,
+      "a506f1c6ee4529d7009d935df5bc92730ba08a308494631de442a3cadfffe5d3": 1,
+      "c6a94e8d6da4b331ed46332189bafe46db54ceb4a94837d23dbce8af2e5dabc4": 1,
+      "e5efca15743adbdc23d1a43b2f5bef0953f93b103d353a19f19f5557d658d5a8": 1,
+      "3573306ea890403a521df23ef8b5460209e78b9e8aa231adfc2d1577a44f7edb": 1,
+      "d30035fc0f673ae44cf3b7d6c1e244d14bf459ef0ceca5593debfa443b4fdc33": 1,
+      "50587f1dae73d330c2ef792d2ff409db0f8559ff60744060793e94dd68d897ef": 1,
+      "c47258e297de7ef71bb989486b490da03ca3e067fee9f433dcc66c7763cfd971": 1,
+      "f489d67996448bc47c5fb8236255f0fb0912c7f5af336c351bb51cea66ad83fc": 1,
+      "470855c38c17fec5c81549788ab930fcd234e3d1a61668a14ad9c4a9d16d2546": 1,
+      "2f489f4a1248b291a0f06e35e2e8f075f5b95d74d42a2129dafc82959610fdb6": 1,
+      "b5253860c3524cf2be64116e0850aa9c9e18f8e919e3509786a061e6c28f18f9": 1,
+      "4e98e399ef3a66276be2f2dcd4a0a341f0112212e5060a970d7943612b2c3cdf": 1,
+      "6ecda814190830ad29121566b62daa30f4dd25a38f568c13e96a878337e73224": 1,
+      "b2d1ea171275a08d6f6ce3f6a93756fb7916df7d34915ba8c05853c46b36add4": 1,
+      "b55624d5217399427bd30c38a7046cd90e36af7279eb23504c1c31c32c185b40": 1,
+      "3dd1a54831b964bc36d77c01fe9deef67c3355e08867d953c93571e575de8e05": 1,
+      "548ce323b4fd9d5b6752ac64d911fd84db45415cc28af860ded4e9a2a26efdcf": 1,
+      "28368b29f78fd237c6bf4eb6ef2c3f2882938c0151ce0d3d5732118c321d1238": 1,
+      "e6a84e7d86c6aeedf5891cdc211b3038b73792653465ce5e8fdacece795046f9": 1,
+      "ba905b4ae714cd46e692967d34eaaf316fb892fe89b648f28e29a58afc25e6ee": 1,
+      "5dfc9aea7ba7e30f60ba1e6ca1a3798dc7b43d4d527eab3910bb3bd531e65cb8": 1,
+      "fddf4276681f8d14b2ae1ac2a1946fde78a705b8f3a2de24fd20c940e66bd9c4": 1,
+      "03766c8dcc22316f5b013432ea56d270294b4df10448285e67a3efcaef6b6eaa": 1,
+      "5da091621a482fb3e1586c5af58cc1140c05073d6c4542669f58e59930feeb48": 1,
+      "a70f689f3b1434eb4ce9bf58958afc17f2efee32bbbbd0a0bb4752801f40810b": 1,
+      "e45cd4624c90ac1c2c3603583f7eb4a6a5335d79f2449dd7538996dd6f13d065": 1,
+      "f454557599a7a20202aa115de04d6c8212351c9b4ce053b3f9921bfc45d73627": 1,
+      "51b1624a5eb6cd1d3e61228b8decdcda2b79e5757efc660a0a500f72b7bfff0b": 1,
+      "d4f1699a9b201a9c0701a16e82806e18cb046dd68c8ab7a397b537ed9d222bb6": 1,
+      "1fd0aa8252905fc4719ffe1577e7796fbccc6a5ef86bb8396bec32718d74b63b": 1,
+      "0ac631abc9a3c645f9f17d66d66725638f0d6b1b9f30c4d89cc56bd78c70722b": 1,
+      "986eca725b0531d26e5323412699476bd75242e65a8c2b8e6bec4a5960aadc25": 1,
+      "2e4a2e03c5713b6a7a1f2b0669acc6d4d764f076b923c0f67d3f5c1799f53237": 1,
+      "cbc4b30ca21b0c28635d29dc06f0f5f191cef9b2327961d33844fd202c46aa92": 1,
+      "b5e31b86e2b9b682aa19ee04fc2a4937531a19fe7ce07b19784ab796c170b3d1": 1,
+      "3d055ac4b9ba2bc184a2521c8d4ca36fbc29758ebc6ba6235dddaeffe8b318d3": 1,
+      "1b3e1da89899837bb0521754e9835fc1528119f92c2e8ce8e64b3826bbd94332": 1,
+      "6076dcb8f28e8cc66244886f54f7182f4c03b1eb634cf17c0bcbab5422f9af84": 1,
+      "c263b01931d3718d1ab5b7d425f96e70fa743de60b06e540ac6f14ec06ec5f78": 1,
+      "af2b828314215452cae2f5bd5cc9ff70565286add235fa296834a6f8609912a9": 1,
+      "86d7eb619ca98796de3a4cea32d9c9597a3c752f71f363d8f35a6c8e97bd3de0": 1,
+      "802929ab8d966a551905cbc777d9a20f85f4d8ad0cbae8bfa145b8ffac55f922": 1,
+      "b74889c59942ab77f95ffdc8ff862d460d4ecf2e4f283c756eab731322235b32": 1,
+      "027b0655b6895e673b76fe394efa6d112581b8127efe18acab5279b67e9c6d55": 1,
+      "a8563b01d8aa35d1cf343ff7d905244e74d766a62ca489c2b2ff8bc51ce3c8a3": 1,
+      "f3daea002d5ea16b87ee287884a8fe32b6445642497a04621c9cfdd53e8da4f3": 1,
+      "b900580ad9229cb3e9287ff75a98f288877693317a83a6286152a00267a9dee5": 1,
+      "8f61a04fe02deb735d91ce822f54f017194c7c6761a059a6eccc4ce4c110334b": 1,
+      "fab7c8893119c523a335ca0fb774d051bb68e564717ed294ed7af6b1739be79f": 1,
+      "3ab722a8f488534c66cf091339a77c739903fe8edf806515ab51984fb33db5b5": 1,
+      "f2659d4343b37b43e615c6458ebdf5a0c919a40f55882dc00f02dd1d2e283bf4": 1,
+      "941813ae7fca5dfef0ce9a6acc6b403434fe25330d42901cd523ec05decab26b": 1,
+      "e721d6d12b5ddf4720e9203463094b81f88e8585801cd96ca2d1c4e6bbfb466f": 1,
+      "2f5fb4ae823c02c78e1e42ba37880e61edcfd131441e3a0e9414ec1d0266ad3e": 1,
+      "aadd1c17947b2c58adbad312bb2d953ecbb1926afe6a5dfa0d1a95eec6487271": 1,
+      "023965b2ddd3cf173556258968c7ccdb07696763de1bf2496456db4562cbcaa4": 1,
+      "203f5f3ef2d59683bbc048bc185db2878ae00c02eceb6631a7ed8758ff93327b": 1,
+      "20380bd9778be3010955419fae4e49fe9ba050490cbf35cb3d7e9f58f42bcdf4": 1,
+      "8b7ca93a2d8cad55f6c7c865f041a79ec05fa677f374744b76ed14529d7a1b0b": 1,
+      "3d37aa8d710656f05f7469fdee25236a1a0634648919540f3bccdc5a4b9bbc1c": 1,
+      "a7bb6696385d9bddc98c1247a5183e87453f6b24e8cb59fe35f430a1d7fd64a3": 1,
+      "599d6c36368e7c3eaeb5145b19eda59c63b2f772c227a39dd75f1df946f3d5d8": 1,
+      "07b9819ae70727273c29d1ade4f45b8d0bfa68cfd2c08b0eb97d478fd4f961d6": 1,
+      "97b4ab8cad630764f1f2072653f2673e560520d55580ca62569228adc269d4b8": 2,
+      "c02597282175e4021f81b39ec6cc3ccbd1b37bf5a8215b9a1f242aab409e0d3a": 2,
+      "1734d3fabb3cd5dc8dfdb8b30900a730203f8cfb721c888f769cb68c038522b4": 2,
+      "cd0067988c7a84ad42c0e1d26dd0c8faa4e6d33836481d3fad08c6f7dbc657c7": 2,
+      "7dee945face3fffa74564a0fd5451752ec64c4acb45ee0eb5856efaa09d4d08b": 2,
+      "ab8ced10b26b2e0cd2cbc221683dd66efe9f19f83b2e902710145b9ec16a108f": 2,
+      "d5cab5a0f6ca3caf60b4bf82dd5e4fd779e6ade54f4f2f232ebc8adf4c9c6480": 2,
+      "1199608e27af85a5d5f8a9c4ec61c809506a1c753534f395eda76b25fe53d83b": 1,
+      "5bed60f038ad336755ef1ef51d1d9146b4fc7eb169e1b87acce780ff8fb89405": 1,
+      "82ebd7827c2d8b4e384e69eda3ca3028df81657851a8674698675dc154d1cf3e": 1
+    },
+    "src/utils/homework/multiExerciseParser.ts": {
+      "e23b6a9a128138a1baf64c3ee3c56b60c4d1b0766b4b9a15b2baafcbc107b941": 1,
+      "201d0a3ce75e6e448e3866af86f3204b2edbfd2417992fa191d9c13c3905d037": 1,
+      "def45bbe22a61b1752e9e85445ea9cd20b07a02dcf5d609ef396128f9dc8c196": 1,
+      "34f2578f414a5a277a62292d173de01b6ffe35430543b210b09f2f6ae429b989": 1,
+      "21c5a2d35afe5b6849f2c82b63f74133aa983ad1d68664ad6196c7b28a3620e0": 2,
+      "6b5ec9b1880b3e4cdc139cac28116a7d5444229f0e27f5f61f28b25110a32481": 2,
+      "5e1f9b5e0009b137ae6ccd5997252493fc4cc6fe447a74dfeeadea682bb33a0f": 2,
+      "0f8d5308bc1a31668c56b72274a782903fcd6c76eab3d661df92e4fb30237cdc": 2,
+      "c98926ef76a325a3e3978261011646e6d981631895763e9dce04e67e1507df73": 1
+    },
+    "src/utils/justificationOcr.ts": {
+      "d0012aa18d112e687a9028754c66c0e7986d543dfe8578674fa0c66d29633a9f": 1
+    },
+    "src/utils/languageUtils.ts": {
+      "6eb5430f67aa9c1440b4257a13d0070e48f7eac4a37be7b04b218848860d3666": 1
+    },
+    "src/utils/latexUtils.ts": {
+      "db2c370982bb6f43d43f29d932eb3659ca09d6611fca37c847f357ce3b93fbe7": 1,
+      "f3196bbef15301c10257b9f30e283ab00668c62b38ba9f90b3e6996f406c18df": 1,
+      "0b997e74505b122feb2037b8359987a85cc147be19873d550107bb14e4825b37": 1,
+      "65c96e1e70064b3c0abb6fc9d73b934ae7cd32b55898db47c2272088d9ff5998": 1,
+      "99c4bb9134c3e341915791c7d40d548d5d55cce9ab9e90f3ff5392c58d83c3d2": 1,
+      "3d070f88fd16e6dba016a08e04c7e8a4d074286a19ee83c26b68850d6f160e0f": 1
+    },
+    "src/utils/mathStepper/animator.ts": {
+      "2047c07973c01600655b1c7e2acf09002ca872143ade3b313fbc1ea728440a59": 2,
+      "b480d379f959f82ac38b8faeaadba46a41f68b005fed3bc3b4f939ccc41c7822": 1
+    },
+    "src/utils/mathValidation.ts": {
+      "a72b8944ae20c228feaf1377ad7808ba73b585a5e3eb43f5e707c3c6fd6308f8": 1
+    },
+    "src/utils/messageParser.ts": {
+      "7c19dfa942a38e1f4125b7964f0dd767a9edfe8e7d5b962ad9a0b35ca887dc40": 1
+    },
+    "src/utils/modelAvailability.ts": {
+      "c81fe88f3b8211de18d432993e813eed8e715917f21127066bfdc09a65d475a2": 1,
+      "2cd07e373d2d47d0bab11d35f5d7dd61de9256cfb01f0de339f482b375a84644": 2,
+      "5b8f1e1aff16f9ecd3dd513d34f5bf2829443449172098bfcccfcfc61ee56a33": 1
+    },
+    "src/utils/problemClassifier.ts": {
+      "d9ec4d8ca855e444402597bcc515df0547564a2d609fe8029217d38519550b18": 1,
+      "2d25f1aa611589e4783b1e8546b46e638a2bcb16746fcbcde10f227e7344a2aa": 1,
+      "08d6cc69567a0cd1352e5eb9ae789b0bf47a9c7ee1e180f3c52d0f42c06ae93c": 1,
+      "4245dfe2a385f79caffd32ac4353a540c4a0e999cb42c6043430003534fb00d1": 1
+    },
+    "src/utils/problemSubmission.ts": {
+      "09f0fd53ebb75433d86d295b9ae90e87a50c25977056acce93215ac316c241c5": 1,
+      "d55e533a84919cb573d0293b3797282cac9a702a57dcf9d41836456c7efc688b": 1,
+      "4380ca6e650f27c485ed13a19ce043184b749e79c154b16aaed64e23816551e3": 1,
+      "05feef738657971ace960c0a3c950cc481eed71565bd0b6d664409a42bd8fa17": 2,
+      "a71467b0de6105f21f3c994c98681fbd76a99aab6bcf4120e386faa82a511269": 2,
+      "565cba8f2727cd1d71cc11e41a2b74b876c6d8c17a7aeac1f209837a5ac7b4be": 1,
+      "6bb11e60e4ce3b51268ddcbec8dda99e942f592ea3ae6d3c905fd0a1ac6b8fb3": 2,
+      "191af27cc17bc8c2172c265d14976d88f6bf7768e676030f20463b6a7638ff16": 1,
+      "c67b8449f3a13d24110640ee5fa47ded6c92891c95f72673c9e8974a519d1d2d": 1
+    },
+    "src/utils/quizEvaluation.ts": {
+      "c63880da2de19d2c153764e1a966c4efec6ba7aaa3af9fc017307168a8345623": 1,
+      "0af3ae54e3915c40cf979dda95a2ddc84fcd34368b702f2b2034feb6d1d34981": 1,
+      "e4de52b799c2a4593889646ca237392102158e0a5b9b9dc21539da433131a3d1": 1,
+      "924befddaa479e2f7ae582b6524f3f2edbbecd3c00336fae66ad79cb995bfd39": 1,
+      "c217cd8d4f1d87e59a4429865ee0c657ebc64a03a8716375edac6d20bff5013e": 1
+    },
+    "src/utils/youtube.ts": {
+      "7c8dff74026bc3f902ec32c8bc080762c926207b257abce550529d15bba54ac8": 1
+    },
+    "supabase/functions/ai-chat/providers/anthropic.ts": {
+      "f1d07765da99684b8f91326ea393e81b2ae3e75896504d76ccfe1ec0b378ba9d": 1,
+      "e6757daebb9fb6f6d1173dc162ebd559864a98372fc45989d34aa751c4838dd5": 1
+    },
+    "supabase/functions/ai-chat/providers/deepseek.ts": {
+      "f1d07765da99684b8f91326ea393e81b2ae3e75896504d76ccfe1ec0b378ba9d": 1,
+      "e6757daebb9fb6f6d1173dc162ebd559864a98372fc45989d34aa751c4838dd5": 1,
+      "1a60fc4436a05a12251b71017f67645e13ea8a07150a4e0fb5c3ad9d5089f00f": 1,
+      "9d36cc5bf5a47b361b568b418ee16b57e38cbae56d8584e2c52c72f4f8ecb878": 1
+    },
+    "supabase/functions/ai-chat/providers/google.ts": {
+      "f1d07765da99684b8f91326ea393e81b2ae3e75896504d76ccfe1ec0b378ba9d": 1,
+      "e6757daebb9fb6f6d1173dc162ebd559864a98372fc45989d34aa751c4838dd5": 1
+    },
+    "supabase/functions/ai-chat/providers/mistral.ts": {
+      "f1d07765da99684b8f91326ea393e81b2ae3e75896504d76ccfe1ec0b378ba9d": 1,
+      "e6757daebb9fb6f6d1173dc162ebd559864a98372fc45989d34aa751c4838dd5": 1
+    },
+    "supabase/functions/ai-chat/providers/openai.ts": {
+      "f1d07765da99684b8f91326ea393e81b2ae3e75896504d76ccfe1ec0b378ba9d": 1,
+      "e6757daebb9fb6f6d1173dc162ebd559864a98372fc45989d34aa751c4838dd5": 1,
+      "1a60fc4436a05a12251b71017f67645e13ea8a07150a4e0fb5c3ad9d5089f00f": 1,
+      "9d36cc5bf5a47b361b568b418ee16b57e38cbae56d8584e2c52c72f4f8ecb878": 1
+    },
+    "supabase/functions/ai-chat/providers/xai.ts": {
+      "f1d07765da99684b8f91326ea393e81b2ae3e75896504d76ccfe1ec0b378ba9d": 1,
+      "e6757daebb9fb6f6d1173dc162ebd559864a98372fc45989d34aa751c4838dd5": 1
+    },
+    "supabase/functions/ai-chat/utils/systemPrompts.ts": {
+      "ed6a680649e2119373023b2ab147b290853dd691d650ea25de0f976b75244cf3": 1,
+      "0846d35e693bfb7d2e62e32f3b4b6c1e3b6d402ca2c49daa31b7858c004199d8": 1,
+      "8f3b8791f72204de94a6e0245ce2279c0afec2932f631bd536ce792e357c99d6": 2,
+      "50ed0ad2dba276398d85e23ae8df77b6f3a73eb50458569d12fff02ce46f2d48": 1,
+      "b856624835bbb726d882850a7867984143671fc88d5461d798c89ba5839354fc": 1,
+      "8ce09148b7f3e1a0981572e9431612eb5bfbb127b07ed44cd0ccb95e728f539c": 1,
+      "1a548ca8b6c4606a778597c8d3fd5c57a264701c27fded47bab122b55fcab487": 1,
+      "8bea5640f3996ee8b2d2bd93cdc6538271cca2dbe66301bc6238fa6332431389": 1,
+      "0c5ec3442e04a51a68c36a3f16a1631ba94928a42b7bebf532e2102cd1a59ae7": 1,
+      "8a18cea5e8ed99a15138b7a06445084e7bf138ad6b86458a1c24235dc61b11b6": 1,
+      "f7040f8ee7d1b49b70032ca0ac8c1c352ee6bb64d0bdac1236a605c624da61e4": 1,
+      "81b152b6bf49d929a1fb5273e9938376e4cd3a201450af3502274fe0310b1ce0": 1
+    },
+    "supabase/functions/ai-chat/utils.ts": {
+      "8d3460b86a3b82286ac31aee1d822dcf5da074d5658a3efead9febba519d5d16": 1,
+      "85ec9cda4a57c2c0d361c3be61bbb28ff71f9b97a2d5bc5dd1483dbd03e8a722": 1,
+      "068e90469cbe839981245993eff2706862e74bcdf5d679d757859afd123e4a64": 1,
+      "a71a5e0ac1f43f3909c0346658c4e7a06d12bf20c973ccc6487af3b091781cd4": 1,
+      "686dffd7aa8cfec7c67bf9de342e06bcbaad315194dc1b92944cfcee80b20634": 1,
+      "a7d30a0781b124b81a4fb7854cf6b7ddf25a53f703501ed504acd9b88c652b83": 1,
+      "d042a40645561cdc9c6fa4d39859f2dd1df380b85d61a2a08ba162ad6b86fd06": 1,
+      "511b93d4eb1722c350eddd8d8ca1b8ab6fcfdee368ac4e5807d449aae7cb1d78": 1
+    },
+    "supabase/functions/class-students/index.ts": {
+      "0b8342ca678d8bfb4670fb797ce4155adb3f047e000bc9913157e3070cfbd299": 1,
+      "39443a0e759bf85089215c5b2e21e9b45c642505c92a403bcbdc412e98a8c703": 1,
+      "723f02f950a524d2991f028e7d0e65b233f5213453349dc331764472a35ea65f": 1,
+      "1b92a55dcd78e096f4ae22cb42df9781bf2a27e6d79dbc6476a50d6e01670477": 1,
+      "54939ec22ac4580cf30d0737fbbbd640580df5991d7b578d02bf9b7d8931543c": 1,
+      "55613cd8e6a773fb1f43fa250a7f9982792bc43b0ef193b9911356fbf8391c14": 1,
+      "46521cac194b8bf2fd8a53bdd165ace5b7f6af9f5be85046c74c111aa7fed555": 1,
+      "2fef3a029a3f5f02748bb6b37b0ad274a91a3ca34ca7856f3c507a400d51929a": 1,
+      "ea57a577b1748e375c1822a2b1b0c1ce8985017afd0c7a749889d2bcd4b304e7": 1
+    },
+    "supabase/functions/create-child-account/index.ts": {
+      "33316c4d0b09a61b9f54fc7fac9c54e5179ba5d033fc972b937e1ef0e6bc8a03": 1,
+      "d1c9c8c2c10fd27ad2067763e75919bd8b5e8bd7f3510da18cfdb77317a36ba0": 1,
+      "f3485013094a6b8241cb22fe9f0c0382f9da564840d9a930d8a0f2a0315933c3": 1
+    },
+    "supabase/functions/document-processor/documentService.ts": {
+      "f026231a696effc158ae2b2eb8907b98e074e700ff34eacce2a6365bff15a223": 1,
+      "0f65ebddbfdf1db15b4d1682ebface9f3934aca4af4cfb30335a85113a65742f": 1,
+      "bbada3c13aee161c256db0c456bc4c2e7ec668adb986cc031bd3fdf089dc2cfe": 1
+    },
+    "supabase/functions/document-processor/extraction/boundaryDetection.ts": {
+      "f3df41b94a43df80274ddee10b2bd862c98d4bad8d353515445633fed05f0989": 1,
+      "2f526aaf6071cffc1cf4f4c03870c4eb6ca4742bb293986a3aef1fca5bcb5e0f": 1,
+      "50df4d01bc2fd9b75ecb42f84d0f1c9a558b6a29765007afc15722639f383a65": 1,
+      "6c0d0ca4946249f335ca68600176b43e669074e9c1f74cf33f8ece9ed1fe39f4": 1,
+      "2444c100feed5ef40eaa30a485a2f5a8597aea7a0e41f54b966a4c39167959d1": 1
+    },
+    "supabase/functions/document-processor/extraction/delimiterExtraction.ts": {
+      "1b6e8a6eb2dee67eed64a36acf141815e3730bfc9ca47c7a8c280701142a8acd": 1,
+      "0be186c116835e64b1ef3c86b5fe670c0b7a762cb1715ccc78e4a2c90c7348eb": 1
+    },
+    "supabase/functions/document-processor/extraction/enhancedOCRPreprocessor.ts": {
+      "33bc5b5094b25da8bb131ff9b3656d600c45bdf9e425f030da916afeff8b17df": 1,
+      "bed66d826119ceccc06fcbef7f17a78f2d551eab482c92ede91b61f46947bc68": 1,
+      "fb4561bb86172cb941454f1242cbe8c2bf55dbe09f12b67b25069049813a10c3": 1,
+      "9b9982601497c3580dd654d3aa130ec6dfd4c7cb6ba91ab907dac627babd7778": 1,
+      "95ec9531413be5da958ae9a58d139879d692eb7cf9158bc8e23cdeb0cd45b1cf": 1,
+      "1e3b939da80d5bd9f87e21ebac5ee830673f25529c6db08c93e1e159630da45e": 1,
+      "30b5e9f9e58b9dda691cff8ec5d6b77ff8a963bf39467d0a196588efc1055929": 1,
+      "a7221d0cff5673cf63879f0d5d906c2294ed489028c42935d9f53d5e15bbc3e4": 1,
+      "ae3c35141c4699140cbd30d30cdd9f8785208c5af300b4933d20fc5745237a7c": 1,
+      "1f7ebe75053c9fde656e6f1944ae72dae4d75b5ae499dcb8687e69cd50fed024": 1,
+      "9275dd001a23e6cf43ddd7cf2125d88fdab3af89d80a17ed265fcfb3ee66b123": 1,
+      "8fd1cb8be43741d9629ae5cc2aaa3cccaabc54f1b903bbf2480ea7853f985bdb": 1,
+      "38077960fa9ba31f14bc641e46542a4aa614a0ab756ea9db1518fc756493700e": 1,
+      "9ac14760527a112f5c6dd5a259b373b52910874803a9bdff5a9772ceaf24307e": 1,
+      "285509facd172cc056b1d98686813a97b96dbc6df99d17a128ad22449d1b6995": 1,
+      "d9414c7ab662f4bb25a38ff623a41d106796b61d6ff35a086f408cc5857732b5": 1,
+      "7dd9c12a4a28230574583aa366d681c0de822c1718cea67359421d2a33e1b6ee": 1
+    },
+    "supabase/functions/document-processor/extraction/multiExerciseDetector.ts": {
+      "7f04513595b01f91e05a4d915b28d1772b831ab6e50e52f467c193e33f844f36": 1,
+      "f09207a53a47ddca4aeec074868b2f07740de7de19553ebb2c09c30f3118b294": 1
+    },
+    "supabase/functions/document-processor/extraction/smartMathExtraction.ts": {
+      "6c01ee5ee7af84d3f7901e1b768f33d4c352e7ac056e187e0f2a4e294c14ce6a": 1,
+      "b54e73ffee26a0b7fbf6cd7f0fdf6352a576b418574fb0e31d5ae812df28f699": 1,
+      "2023bd1f3ddad670220a13c94c12651746e3f1d4fd8f7376a8c00be3c3e9de66": 1,
+      "0ab800363df93c830513e57d53495b3f02294afc2000c6383a7a97f434ed4178": 1,
+      "c25cb19b4d7c71a1e3b7eed3c82c1f2627a6f421178a8ed7f8efa2499c57ef91": 1,
+      "7fb6aea2f7e0fb749bf4a85722ef15b7198c9d22933fefbd9f7ad7bc9523f77b": 1,
+      "a75fbdfafc0891aabd76acbd3d8ef443f9a7840d9ac11781c139fdf7499aab6f": 1,
+      "991aa655bc18d3f800aa53cfa2419593ce2545e52698d3b64638b205e65622a3": 1,
+      "601be681372c975359d2b54328c13dd71e7146f0c1f6b55c35c8946a72569def": 1,
+      "f161cb67f7b4a27fd354a6018f365b578f62beca45287c567578725a99dc1d84": 1,
+      "7ef1d2bea0def2dbebf6502b690e3ed830814484987426a532642ea3d7bef06e": 1,
+      "a047b2c9dbfcf9f798f81796882e2a76c891378c405236850521e4f83a562796": 1,
+      "b156f78c53ef0a004942924b33752f82c2a1d8a639b44fe2e70073466ffe645d": 1,
+      "1b56adc3367efa9dbea801fd665b5905912839c6af6306db1fb1b85e3df8012e": 1,
+      "cfaea77c1da6d1d7cac1771c2401d5263230c863a386d6a9fdbd759811de78fd": 1,
+      "834dda0734d43ff06ccb68a7d5f6a32e0e283a0ee867c4bf83a071b5c146de87": 1,
+      "150e7c8eeb430cae2d2dad5142db1a4b79a3be34199d45e3bc796ea300b92b09": 1
+    },
+    "supabase/functions/document-processor/extraction/textPreprocessing.ts": {
+      "9fe5ee3847715aa367310bfca391680f5edb339371c41bcbc1a08e9698c24802": 1,
+      "e08e95b6187b5b5357c60eadad5db6842554ec8163e0f948a7a65d90684d0340": 1,
+      "a2209aa3d88430ec8feeaec2889f97653733a7db7cc9535a19225b445e2d9596": 1,
+      "a5fe2da2ed9d53641a7e5e22498ef74a38481d566c9d033809f893a8116dbacb": 1,
+      "8fd1cb8be43741d9629ae5cc2aaa3cccaabc54f1b903bbf2480ea7853f985bdb": 1,
+      "38077960fa9ba31f14bc641e46542a4aa614a0ab756ea9db1518fc756493700e": 1,
+      "83b58297241066c7cb3abcaa9dd218dd3ab327e5ea0aa61e4e353abf14fd8128": 1,
+      "e87c889feb0c8953a1eba1f720ca7f9d945915e817756bbd9475f3761ba513ae": 1,
+      "af250619867180f47efc4f4839719b52ad686b204a7c47f156a5350db896ee53": 1,
+      "a597515672fffdfc7dc7e2209cb1105eae851bb3fa97ecfdafb8667ded38f516": 1,
+      "09f34c847c9f55f69837aa41d38bf09c79e971db9f472f56d818a159fd9c6550": 1,
+      "04c32845cc60835cbfb508c5df7ea6744b10bcef02fde86c1b54772836564e92": 1,
+      "1276302e35096734992acb1ea2e40543ce18a571555ad7c34c25019714a50b64": 1,
+      "7992d824bec48f2498658cb9500311ea7bfebb72d934dc613409afa189793517": 1
+    },
+    "supabase/functions/document-processor/extraction/trueFalseExtraction.test.ts": {
+      "310b11cf920b479bf74aa115eeb0218b6537a91151da3270ad2f6c71443d4507": 1,
+      "853a7c4f59e2cee7502a9fb5e0aff93c303946cea723f70c3219148084c30b8f": 1
+    },
+    "supabase/functions/document-processor/extraction/trueFalseExtraction.ts": {
+      "4380ca6e650f27c485ed13a19ce043184b749e79c154b16aaed64e23816551e3": 1
+    },
+    "supabase/functions/document-processor/extraction/validationUtils.ts": {
+      "c95fcf975eef639df80c0f92d731968ec10b05714e992146bea163764cbe689c": 1
+    },
+    "supabase/functions/document-processor/extraction/worksheetStructureDetector.ts": {
+      "44b8e0b821974a37d883090d5c4d9df555df1885524a2cd8efcfc6c7639571d0": 1,
+      "2b22a492cc2c0ebd3b4d352c22f9a9bdec5b133d699b182ac61bc3b0bda7dc58": 1,
+      "5f664b2927d216ca71afe3e8a6fb85badbfa9ee995d7695bc17b302e2ed85f7a": 1,
+      "675ea3bd16f245c2200e740f87a3684be4cccb413e951460c73950afbac900c7": 1
+    },
+    "supabase/functions/document-processor/extractors/mistral.ts": {
+      "bb89e842ad735faf223538700a273ff63f1ec47e47bc53a3c467564b1ec1f299": 1,
+      "55817e9af058fab194862b9e6e69d9a14114817d730107862806dd62e7699946": 1,
+      "74667d28895fb0aca4f1502d85103d62d1d5ad1f83e0c4ee9d4532d60d0fbb9a": 1,
+      "5a5f9a7914d240e0202e177c75ed2b77f32d74049105a4422b18f72a28e5727c": 1,
+      "6aba28be786cf9f55bd43424a069c1696baf98305fb3fa9c16fca100f45b84fc": 1
+    },
+    "supabase/functions/document-processor/extractors/simpletex.ts": {
+      "60cbe017e9a75aaf4c68fca42c5a3f6b578ece3c9ed4ed87e73e4c566d70376c": 1
+    },
+    "supabase/functions/export-guardian-report/index.ts": {
+      "9e48c70ee53fe58d04a5e5dddbefeef227958ab64059ca8bbaff44914549a295": 1,
+      "f9cae81973bf0ff000ab4ee88ddd8cd6b15be891e4c07c9d8a79d5ab8e998f5f": 2
+    },
+    "supabase/functions/generate-lesson-content/concept-content-adapter.ts": {
+      "4bdfab2a4264c3df313d038fe2a6d27df546fd0d4431ca9926b9bc3fb5934861": 1
+    },
+    "supabase/functions/generate-lesson-content/handler.ts": {
+      "c57fdd930c2725f99c2434141e7b53e99d512b71caa782db6ddcea5eed3319d4": 1,
+      "a21da15666e1eee2aabe41da58cf7283d1e39b23530a343b389839554c8685e5": 1,
+      "01e934803f2961d15db7606b884d2a294c0944a67efc9c2a3e2c0fa1d9fe6348": 1,
+      "43faecc037e735be8e9c797d3d0975ec918685a16b93b0e693654beea4ca4743": 1,
+      "62c01bad1e9acaf9ec35c2d7e515ad7db8be9d0ce54c34202e391279f3887833": 1,
+      "2320d6ba4d6f3df9465daecb79493aeea180cd8a51ca2693ccbf1cf128a8d40e": 1,
+      "e0db05a51239efd436dcc811b027d7c17cba7c886a52bef9b29ba5a162e8b0f1": 1,
+      "5e4700be7496be8f256b6bbf51bfb2de5949d9d44d070c0f14ca395900ee31a2": 1,
+      "7daad742587d4a5e4aa0cca41ee09b5ff7ed9c0a320a5a828e2e9dd471a28599": 1,
+      "e86e86cae77a104a264caa2fe73576dc50f8b292650ed2ddf3e575270d6a42d0": 1,
+      "f4ab8ed8dd2ac6873cf3065ef2bfeb28d16c17f233793ec0dd59c432bc4f9865": 2,
+      "a0aa6df2219b27dc867629bf31bb3a92e632d702e05339fe9bf01102a08b1f92": 1,
+      "7e7a07e5ba575ef4e249ce72dc07d5cd307895d167ca28687621a77d192c36cf": 1,
+      "ddc3218e4631524e0ccb8556525609c25783f8c4b0043c27bcdb94b162fdec0d": 1,
+      "34091cbf456000d2613d91cf449ea8b02162cef63e2a711be590623c66fdb1c8": 2
+    },
+    "supabase/functions/generate-lesson-content/handler_test.ts": {
+      "0d2acea559e160665d9ee6fdd5e47e6e1d8fd98a8dcd385ff6124968c649afda": 1,
+      "bf6f3f5b38fbe549803d7077b12813e551c9f6dead6de28fe94bbed169bbf32e": 1,
+      "5da019476b85f34a1ea9ab6373796b3811cfcbcb0bfcd2b440fb242ce6ef89e6": 3,
+      "640ffbc98755690f5ff89374eca64e73841114c1711b9f64da0c391841015dba": 1
+    },
+    "supabase/functions/generate-lesson-content/interaction-content-adapter.ts": {
+      "0b1379e69f9c2b1c101ca33731461a0c771f4047e22c827b60b4b9859cbd15fb": 1
+    },
+    "supabase/functions/generate-lesson-content/lesson-blueprint.ts": {
+      "ae94d776c0e52a2c641a38d94ea009bfc207e95c9b951ea04a5aa0b156fc3cdd": 1,
+      "0eebfe04e7303eaa68aa91553fe703fcf7bb4e0be44953acfb02c05c6a69dcb6": 1,
+      "5898a3f9d4e0055a2a0c4a08363ea02ef4a362e06ddc7013372b709de25873ae": 1,
+      "191919dec7b4aafcbc74c4bc010dbc4af251a0c3ca234964f3777da6455fec12": 1
+    },
+    "supabase/functions/generate-lesson-content/level-content-adapter.ts": {
+      "2ce761c6d51459925c449800aafdf7818afcca7154611fdc49e1457a729db596": 1
+    },
+    "supabase/functions/generate-lesson-content/mastery-content-adapter.ts": {
+      "7e65b5710ebaac259f39bd435bf90862f2e8308d3081192437e2958c19b4d9e9": 1
+    },
+    "supabase/functions/generate-lesson-content/prerequisite-content-adapter.ts": {
+      "1d4ea9be883b1d62cc8db321c78b8031673e854ac1585fc57e2da28088486c97": 1
+    },
+    "supabase/functions/generate-lesson-content/staging-level-workflow.test.ts": {
+      "343e206d7ad9e032329b823c611a49e40bcc77f73e55bbd7bb8cd7b6d66cfaa5": 1,
+      "2a70be4bac349a2d62c6cf231262417bce089c3d59f95157801416ec62d89c30": 21,
+      "0a56f46fd9b00c1a259bf95c33ce60a1579e6d04b4b06f74c56c3fc7a8a35315": 1,
+      "42fe668d7f54ba87088b593b31cb1eeaefc83997a978cb4a67327bbd424005f0": 1,
+      "63aa29ff23e7e8fbdf7b55f0114cd945e136d855b4c7280e6b428c5dd7f686e5": 1,
+      "d2381973df86ad8ffe48be4b57d4ac0a4d4e55edf5ffe3dda4c891513386efef": 5,
+      "759b241c03c8ff61e5d90d3809b2225f6cb2611851eebd0b8c0221d4a0b8fb4d": 1,
+      "f2f0e211acf4dd20dced0a814c93ce5bc22092572be0428d1a1ed2bfc419b3ba": 1,
+      "7054c8540712944094331d3552adf0bc1294a5b1b51fb27f0d8c36d9f917b416": 1,
+      "8b980f7056a027f54d872258a88cb7ced0055f5801ec764850c9d7b806f436f5": 1,
+      "36f589ae571239d878dbbaac171dd6bd387a46a206070f61dab51094a9e4e2f2": 1,
+      "d0a03ce2c627271d292363ae88305de6c040f467fa13961d88ea6aa17936dd51": 1,
+      "b319783f06e86fab398b4bd72af111684bf4f710e1b33c2bff2e28c074906fca": 2,
+      "a93f8704506a46fa92f3febcd517486981a31157929c0e55b0c437bce2070663": 1,
+      "55b5819dff07b2ed220471525c67d2dca7c2e65c1527fdc36d018e1eba102d68": 1,
+      "358cae0d30a49355bb252817b36a2b04c82457b3734f039f62c032bf7f866e92": 1,
+      "643e9e05db503b8e80e1fa95dabcf8074c26d060e059f27e40ce24c832365a8f": 1,
+      "8c0537f7cff003e3d739dc7bf29f9288fc1a1a6f2cf7ef78eb63ef7e3e73b15c": 1,
+      "580e99c222435023d8d6a906f94acef1ec783d1cd96ab7aa00f3fa118f4b3306": 1,
+      "82a67fbd9a9eabdced55492eeff8f0bd256a40438f66b197dc120a55905f303c": 1,
+      "37224af711e2ade697813f113027001f82844055a02563a9c6d94b6a7353e354": 1,
+      "0401e34ee3c88b996e8096323e66456579ca7575da7bf0fd4f857c022b61eaf0": 1
+    },
+    "supabase/functions/generate-lesson-content/staging-level-workflow.ts": {
+      "f0a9fa56c93e7bd93bdd2df433c7ae662395d3c673954f9224d5b58a9cc34d4f": 1,
+      "ecd35668d14afe85d1b065fd7900b4fc1d25bffd73c12368d1752f5c4ee846c0": 1,
+      "c3abce08adf24d6f0e3f2e91f2c58c23748e7258b2d336335c92cd3bf8e9ff5b": 1
+    },
+    "supabase/functions/generate-lesson-content/staging-prompt-consistency.test.ts": {
+      "ba15d233aab6d31e488e7d249cdb928f37337297ceecebbcaae3cd54ee04cd5c": 1,
+      "450323ef8b3d41b4feb638556d608a879ada018031b3fe2b989f36704afcd616": 1,
+      "fd93f4bdacf1f2e0a058366d36be310ec16fcbdea399b79f2f6f083ece5bd7b8": 1,
+      "18909ec6c693793ac6ed39286f4dbae3fb64a1d090841e29b1d9b43d3f7f46a5": 1
+    },
+    "supabase/functions/generate-lesson-content/staging-structured-output.test.ts": {
+      "5741cd81e9246f97cdb276b340a5e1d08f8045dcc805fb38c92a23e8b71cc295": 1,
+      "846538f79243a2f9b6da6e7e88af7ec65e7adb5bf93a5afbbfdff6d2ae3ed2a9": 1,
+      "99a0431226682ad6a4b5416355968de646afee888f193dd5b8ee4d0c28fc8a66": 1,
+      "e5e444eb76a9e022e9c5b9686d6dd07626581941248acc22a6bd53fc70341ad0": 1,
+      "28417d2342403784ab779d65632a4b886740ae23de795bdf4fe9a9a5aebe39ba": 1,
+      "17f452c5a5830028e68d6ce8412faff5d23e5ae8fb0d62121c800871888a2b3b": 1,
+      "ea3aadb5854375f232eb0e14f277ef40495fb46edaa23a4060a3aa538980f79d": 1,
+      "211f47e5275188b7c5f015ebc90d933dcdb085128b14960953f5eaface50c604": 1,
+      "0001e870ba6798c483dc30981bf7057e3cf29dc46a9cba657ce7d3476c907151": 1,
+      "2e03b0223356e0b32c5ea8a61cf2359f4578e3775986f565e7a8855ae011b11f": 1,
+      "f178a536c3bd1113fcbfc4191d0db3fc58004d59eb1745602822cbd674b805fd": 1,
+      "4e8a08c78022a3d0a4b7083f8bac7504652ef2f496c4898293183cd23e326962": 1
+    },
+    "supabase/functions/generate-quiz-from-topics/index.ts": {
+      "a28f422670160ac21ffc6625124fd7b694ae309a3b6750cfb31b93a46431e2aa": 1,
+      "e9ae6d448d73994695811c68e91faa9aeb2498b7465c8cc6366c76a8f274d351": 1,
+      "9d3190c89044e0ae2c8cc3fa1ccf39ac10ce18f17f8d97b9efee6d7fa1446a13": 1,
+      "c77c8c386ed1a2903d0dc7bb1ac460a7f0a933116e7056e4ce44bca68a1e026c": 1,
+      "feb5d712a3d00b672dc88f01a1ca0eb2525f9425aa9e07c079d5cc86954fd810": 2,
+      "2d1b885047121b3874896ed43df1a7beb228adea6044551b7204af808edb7763": 1,
+      "9fa2c1f38c3c82ed0dff82b57d5d2d1be9206e26e8075af3001a5b0879da65a0": 2,
+      "46c2d265c1fc24f69934dfe3bb10ebafb734d4b86f2c66759c43edba1bf26b26": 1,
+      "834c0643a3bead80e210c5a88e99fea53f1e74fde1bb7409d0e3f94eb58a91cc": 1,
+      "91b95868574f7c7d831276b4ff8e77bb035df2a66827e548b4fdc80c8c1c2f37": 1,
+      "3f149933493632a2c692898c732516b34739012893e35decfb2257fee1a1d342": 1,
+      "93318798a1d8ada713e2dc054e1941e169046eb1a6412789a0bbd3505b15c2fb": 1,
+      "c9c675f5ede6f1ce7e9a35e117c6cd3e5f65e1995f86a79bc8955274c2ac5900": 1,
+      "3750fae4569d1778f0930f646a9c0b3fb38c0f7ab7f0a2eb26ae37ff4da5e1cd": 1,
+      "a304003563273030cf0e1a6e6d22cf85fc48fb22f845689f043c1236e0295383": 1
+    },
+    "supabase/functions/generate-quiz-from-transcripts/index.ts": {
+      "feb5d712a3d00b672dc88f01a1ca0eb2525f9425aa9e07c079d5cc86954fd810": 2,
+      "8119e839c2a8f4d4c775f89e1d5a34a2f5a2390c05dfd1855dbc6686c9a237b9": 2,
+      "9fa2c1f38c3c82ed0dff82b57d5d2d1be9206e26e8075af3001a5b0879da65a0": 2,
+      "834c0643a3bead80e210c5a88e99fea53f1e74fde1bb7409d0e3f94eb58a91cc": 1,
+      "590cc0fa32bf2c3ab007843a08fdf1ada1441302258bb3572f6900ed59dd1b95": 1,
+      "a63b561020d82fa689201e5cb5c4f912d70ba791c8f8fd8771ea365a0a810100": 1,
+      "a304003563273030cf0e1a6e6d22cf85fc48fb22f845689f043c1236e0295383": 1
+    },
+    "supabase/functions/generate-topics-from-objectives/index.ts": {
+      "5d4e35f75f3c1b4bb255323037d8a96281a827f3ca6d63dd0b92cd7ba305c70a": 1,
+      "e43156d895e4d59bae4c100d751f0cdc27b8690be99e95936a62c7e4f4753b2b": 1,
+      "b4ca25e9c5642b42369ab1a656545069774a8e3006e32006f4b6191861e792fd": 1,
+      "86a1fef952080c81a85d999494647b69d196778d119f5da9f30b33239f7c0dae": 1,
+      "bc9a4339a6cefc1c0095968b8d20cad09357ae51969553f76b0347273326d1ea": 1,
+      "65da79a978a64eada3cc616fccde6675f06e203bf6e9b9c81f206f140d898f7a": 1,
+      "750c2ceb49ed8b618e978da0ce7217354ca6d69d6b4ab5b0aa4d3518aad0e900": 1,
+      "559b9a0176d0dbc95f5efdfcb56d40011b365e5fd71c0419f89c8685a0c475be": 1,
+      "2987d0b5da30baaa9e84f02ae6361ec604e5c0cc8554a7bd22a8305bae93cebe": 1,
+      "dfd08266671cbcd03064f682ebb78362b0910b66fb79cd8c77340d0508dc28d8": 1,
+      "080fd95e20369779cc58d8b013c3a3b28893737432b5da2da9e9190ffca1d59c": 1,
+      "6ec25a683a8c8da0508e8dd4fb963566f65f42d90ea38ef04cf4600bb5053fb4": 1,
+      "5fca2ea0c77a6d3e46e014362ceb596ab5f6bfeebee30b4c9da029328b22c4e3": 1
+    },
+    "supabase/functions/import-curriculum-bundle/index.ts": {
+      "06345a51c415a2e3b84018d4a812948c512c17cf5addb24f92c3579a44a8d6ea": 1,
+      "3a6c57dd7bd82983ab912a9485810029e3147c9b5936f6a6ba1e2318f19cff57": 1,
+      "028089a8fca6d939f187b8a7e6c72bb7207f8f80087264b27fbcf73996dffa39": 1
+    },
+    "supabase/functions/import-exam-bundle/index.ts": {
+      "c4caa553209387f0bc08c6a453a088dae88b49513bd707bd5f3e9dbc27169321": 1,
+      "9be44def9f8d362e6b174ac9b835cb6c7da6a38b7c275bbd92b00caccd550c99": 1,
+      "7c41fb1c933a71588e708a189e3c242a2bf38a32c6749297c9154d595d56918f": 1,
+      "64091f27eb439ff16888f886b9e4843c507d486e10da1eb64f7133d87834c80e": 1
+    },
+    "supabase/functions/ingest-curriculum-edition/index.ts": {
+      "ed4e80b01e4885b135f1b50c298ce4df61bc44135cca802b4b6d2fb4d1e4fe0a": 1
+    },
+    "supabase/functions/quiz-bank/index.ts": {
+      "919ec24635a4469f8a6145abd0c85b20287eecd5a5fb9222772edf1c22bf8c73": 2,
+      "d2a1173dd85d3be842500ee2eeb6aae55f030f4dc3a5c4dcbf3d0bc53d1632ae": 1,
+      "d691029754eb2f62fb1cdf5a3dfb0f65894b234e1395fcbbfedfdc10e18f947c": 1,
+      "556e567b86af5e25400b58bf5e081ce4d96572410dfe560d9a9b4a393a90bb67": 1,
+      "d9abdf28f358099deebee7a6c64fb7f6d61aa617b11c283300de546bd0c8f6a2": 1,
+      "8f5bd3501415229cdecd81480c833b4724acd930d639d67666f83d555c696e14": 1,
+      "ffd99a3ad994dc2a9751cfd2a8937c643ef00f8df3abce425fc13f51ffedc153": 1,
+      "bdee3a8287be98c13d6b7924b2303793f2b78e45ccb23975645dfc52dbc36849": 1
+    },
+    "supabase/functions/quiz-bank-all/index.ts": {
+      "67b6997b59c9b6c54b0415164c441e4c4ef13c6d197ae72d81a853a45e601fba": 1,
+      "69d0dd502b6f49910ea5dee290433833abdda8fddde3481c567460a71816edff": 1,
+      "65aabebb5faf3d43e45e96cc12840895011985e9277cfda3d334bf0fff09b77a": 1,
+      "a753fdfe62bcdd8dd527221de4782b912ffc90cf2a716881935f7b705b6c8cde": 1,
+      "e6213fd7f229a288de0e713025142bb70b704fd14622967cd1396e06e7389e95": 1,
+      "025bd6e1b68c5fbeac3e431d10b5771eedcca0b225f5bbdb02a108504a687eb1": 1,
+      "2615a62f836ba98c9c44d84f6497fe25458e2274692048f94c706617055a8f67": 1
+    },
+    "supabase/functions/quiz-bank-visible/index.ts": {
+      "bf21b8bbe80b3d9746dcaa291432cec95fade4a2d7d054e4dfd230475eca7c18": 1,
+      "e6213fd7f229a288de0e713025142bb70b704fd14622967cd1396e06e7389e95": 1,
+      "28e96dd05c95aabe5876c28fc799e1aa51005efc2ac1069c39f7ec3e449bf2bf": 1,
+      "72235771209a47b6dfa5592c0011688d6cba4781138a6757180ce75c119fe123": 1
+    },
+    "supabase/functions/recommendations/index.ts": {
+      "89452fe16fe5b94e3705a277ec94b42f1bfba74ebba9bca0ff61e3d48ce06e8f": 1,
+      "9390c6a30c7bf540d13eedea3f829345e59fffeaf5956d03dfaa3d77110edd2a": 1,
+      "1967ac359949ef4f40dd820288f700ff5ff0d1ab785335ee6154a94d84672de2": 1,
+      "6490e60c6757d0f2323b4570fc20d7c0207e1c1ac5fbd17754531f1876de6850": 1
+    },
+    "supabase/functions/student-progress/index.ts": {
+      "a46a277268a285b9b4b033f3ccde4913b40abf72f4f1514364b20fb1d667f12c": 1,
+      "723f02f950a524d2991f028e7d0e65b233f5213453349dc331764472a35ea65f": 1,
+      "1b92a55dcd78e096f4ae22cb42df9781bf2a27e6d79dbc6476a50d6e01670477": 1,
+      "54939ec22ac4580cf30d0737fbbbd640580df5991d7b578d02bf9b7d8931543c": 1,
+      "55613cd8e6a773fb1f43fa250a7f9982792bc43b0ef193b9911356fbf8391c14": 1,
+      "46521cac194b8bf2fd8a53bdd165ace5b7f6af9f5be85046c74c111aa7fed555": 1,
+      "2fef3a029a3f5f02748bb6b37b0ad274a91a3ca34ca7856f3c507a400d51929a": 1,
+      "ea57a577b1748e375c1822a2b1b0c1ce8985017afd0c7a749889d2bcd4b304e7": 1
+    },
+    "supabase/functions/teacher-classes/index.ts": {
+      "f929e5d84caf775dfe4c1a40280faa09d46b128415f9da49ed9bc77944a970cf": 1
+    },
+    "supabase/functions/validate-training-answer/index.ts": {
+      "6a13f510ca0d2aa68048a4ffbc8d70de36c7eb6686ecc464368964589be675db": 2,
+      "368949f7f81df1d6a619a325461acf5f1dfb7b623cb60ede05b8f39c69bccf62": 1
+    },
+    "tailwind.config.ts": {
+      "f0daec9b86e6ddfc75d9489ad9fc788eb8e515e7d5414c80176570f68ddd007c": 1
+    }
+  }
+}

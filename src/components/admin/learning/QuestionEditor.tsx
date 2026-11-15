@@ -8,10 +8,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ, CountingQ, AdditionAcrossTenQ, SubtractionWithDotsQ } from '@/types/quiz-bank';
 import type { SliderQuestion, MatchQuestion, FillExprQuestion } from '@/types/quiz-bank';
 import { buildColumnFillQuestion } from '@/lib/quiz/columnFillBuilder';
+import { countableObjectName, countingExerciseTotal, makeCountingAnswerChoices } from '@/features/practice/countingExercise';
+import { COUNTABLE_OBJECTS, type CountableObject } from '@/types/counting-exercise';
+import { additionAcrossTenTotal, countersToNextTen, makeAdditionAcrossTenChoices } from '@/features/practice/additionAcrossTen';
+import { countSubtractionObjectsByColor, makeSubtractionWithDotsChoices, normalizeSubtractionObject, SUBTRACTION_OBJECTS, subtractionColorToCount, subtractionObjectName, type SubtractionObject } from '@/features/practice/subtractionWithDots';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -52,6 +57,16 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [hint, setHint] = useState(question?.hint || '');
   const [points, setPoints] = useState(question?.points || 1);
   const [id, setId] = useState(question?.id || `q-${Date.now()}`);
+  const [countingObject, setCountingObject] = useState<CountableObject>(question?.kind === 'counting' ? question.object : 'pencil');
+  const [countingStartingGroups, setCountingStartingGroups] = useState(question?.kind === 'counting' ? question.startingGroups : 1);
+  const [countingStartingOnes, setCountingStartingOnes] = useState(question?.kind === 'counting' ? question.startingOnes : 2);
+  const [countingGroupsToAdd, setCountingGroupsToAdd] = useState(question?.kind === 'counting' ? question.groupsToAdd : 1);
+  const [additionStartNumber, setAdditionStartNumber] = useState(question?.kind === 'addition-across-ten' ? question.startNumber : 47);
+  const [additionAddend, setAdditionAddend] = useState(question?.kind === 'addition-across-ten' ? question.addend : 8);
+  const [subtractionTarget, setSubtractionTarget] = useState(question?.kind === 'subtraction-with-dots' ? question.targetCount : 8);
+  const [subtractionTakeAway, setSubtractionTakeAway] = useState(question?.kind === 'subtraction-with-dots' ? question.takeAway : 5);
+  const [subtractionObject, setSubtractionObject] = useState<SubtractionObject>(question?.kind === 'subtraction-with-dots' ? normalizeSubtractionObject(question.object) : 'bubble');
+  const [subtractionCountByColor, setSubtractionCountByColor] = useState(question?.kind === 'subtraction-with-dots' ? question.countByColor === true : false);
 
   // Single/Multi choice state
   const [choices, setChoices] = useState<Array<{ id: string; label: string; correct?: boolean }>>(
@@ -177,6 +192,23 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setPoints(question.points || 1);
       setId(question.id);
 
+      if (question.kind === 'counting') {
+        setCountingObject(question.object);
+        setCountingStartingGroups(question.startingGroups);
+        setCountingStartingOnes(question.startingOnes);
+        setCountingGroupsToAdd(question.groupsToAdd);
+      }
+      if (question.kind === 'addition-across-ten') {
+        setAdditionStartNumber(question.startNumber);
+        setAdditionAddend(question.addend);
+      }
+      if (question.kind === 'subtraction-with-dots') {
+        setSubtractionTarget(question.targetCount);
+        setSubtractionTakeAway(question.takeAway);
+        setSubtractionObject(normalizeSubtractionObject(question.object));
+        setSubtractionCountByColor(question.countByColor === true);
+      }
+
       if (question.kind === 'single' || question.kind === 'multi') {
         setChoices((question as SingleQ | MultiQ).choices);
       } else if (question.kind === 'numeric') {
@@ -232,6 +264,16 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setHint('');
       setPoints(1);
       setId(`q-${Date.now()}`);
+      setCountingObject('pencil');
+      setCountingStartingGroups(1);
+      setCountingStartingOnes(2);
+      setCountingGroupsToAdd(1);
+      setAdditionStartNumber(47);
+      setAdditionAddend(8);
+      setSubtractionTarget(8);
+      setSubtractionTakeAway(5);
+      setSubtractionObject('bubble');
+      setSubtractionCountByColor(false);
       setChoices([{ id: 'c1', label: '', correct: false }, { id: 'c2', label: '', correct: false }]);
       setNumericAnswer(0);
       setNumericRange({});
@@ -321,7 +363,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   };
 
   const handleSave = () => {
-    if (!prompt.trim()) {
+    if (!['counting', 'addition-across-ten', 'subtraction-with-dots'].includes(kind) && !prompt.trim()) {
       alert('Please enter a question prompt');
       return;
     }
@@ -483,12 +525,84 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       const blanksArr = fillBlanks.split(',').map(s => s.trim()).filter(Boolean);
       const chipsArr = fillChips.split(',').map(s => s.trim()).filter(Boolean);
       let answersObj: Record<string,string> = {};
-      try { answersObj = JSON.parse(fillAnswers); } catch {}
+      try { answersObj = JSON.parse(fillAnswers); } catch { /* keep an empty answer map for invalid JSON */ }
       questionData = {
         id, kind: 'fill-expr', prompt, hint: hint || undefined,
         points, template: fillTemplate,
         blanks: blanksArr, chips: chipsArr, answers: answersObj,
       } satisfies FillExprQuestion;
+    } else if (kind === 'counting') {
+      const groups = Math.trunc(countingStartingGroups);
+      const ones = Math.trunc(countingStartingOnes);
+      const groupsToAdd = Math.trunc(countingGroupsToAdd);
+      const total = groups * 10 + ones + groupsToAdd * 10;
+      if (!Number.isInteger(groups) || groups < 0 || groups > 10 || !Number.isInteger(ones) || ones < 0 || ones > 9 || !Number.isInteger(groupsToAdd) || groupsToAdd < 1 || groupsToAdd > 10 || !Number.isInteger(total) || total > 100) {
+        alert('Use groups and ones that make a total between 1 and 100.');
+        return;
+      }
+      const objectName = countableObjectName(countingObject, total);
+      const generatedPrompt = `Start with ${groups * 10 + ones} ${countableObjectName(countingObject, groups * 10 + ones)}. Add ${groupsToAdd} ${groupsToAdd === 1 ? 'group' : 'groups'} of ten. How many ${objectName} are there altogether?`;
+      questionData = {
+        id,
+        kind: 'counting',
+        prompt: generatedPrompt,
+        hint: hint || undefined,
+        points,
+        object: countingObject,
+        startingGroups: groups,
+        startingOnes: ones,
+        groupsToAdd,
+        answerChoices: makeCountingAnswerChoices(total),
+      } satisfies CountingQ;
+    } else if (kind === 'addition-across-ten') {
+      const startNumber = Math.trunc(additionStartNumber);
+      const addend = Math.trunc(additionAddend);
+      const units = ((startNumber % 10) + 10) % 10;
+      const total = startNumber + addend;
+      if (!Number.isInteger(startNumber) || startNumber < 10 || startNumber > 999 || !Number.isInteger(addend) || addend < 1 || addend > 999 || units + addend <= 10 || total > 1000) {
+        alert('Choose numbers from 10 to 999 and 1 to 999 so the addition crosses the next ten and stays at or below 1000.');
+        return;
+      }
+      questionData = {
+        id,
+        kind: 'addition-across-ten',
+        prompt: `Start at ${startNumber}. Add ${addend}. Fill the next ten first, then choose the total.`,
+        hint: hint || `How many more does ${startNumber} need to reach ${startNumber - units + 10}?`,
+        points,
+        startNumber,
+        addend,
+        answerChoices: makeAdditionAcrossTenChoices(additionAcrossTenTotal({ startNumber, addend })),
+      } satisfies AdditionAcrossTenQ;
+    } else if (kind === 'subtraction-with-dots') {
+      const targetCount = Math.trunc(subtractionTarget);
+      const takeAway = Math.trunc(subtractionTakeAway);
+      const objectName = subtractionObjectName(subtractionObject, targetCount);
+      if (!Number.isInteger(targetCount) || targetCount < 2 || targetCount > 100 || !Number.isInteger(takeAway) || takeAway < 1 || takeAway >= targetCount) {
+        alert('Choose a number of objects from 2 to 100, then a smaller number to take away.');
+        return;
+      }
+      const countByColor = subtractionCountByColor;
+      const colorToCount = countByColor ? subtractionColorToCount(id, targetCount - takeAway) : undefined;
+      const answer = colorToCount
+        ? countSubtractionObjectsByColor(targetCount - takeAway, id, colorToCount)
+        : targetCount - takeAway;
+      const requestedCount = colorToCount
+        ? `How many ${colorToCount} ${subtractionObjectName(subtractionObject, targetCount)} are left?`
+        : 'Choose how many are left.';
+      questionData = {
+        id,
+        kind: 'subtraction-with-dots',
+        prompt: `Add ${targetCount} ${objectName}, then take away ${takeAway}. ${requestedCount}`,
+        hint: hint || (colorToCount
+          ? `Taking objects away means subtraction, so look for a minus sign. Then count only the ${colorToCount} objects still showing.`
+          : 'Taking objects away means subtraction, so look for a minus sign. Then count the objects still showing to check the result.'),
+        points,
+        object: subtractionObject,
+        countByColor,
+        targetCount,
+        takeAway,
+        answerChoices: makeSubtractionWithDotsChoices(answer, Math.random, targetCount),
+      } satisfies SubtractionWithDotsQ;
     } else {
       alert('Unsupported question type');
       return;
@@ -518,11 +632,14 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="numeric">{ui("Numeric Answer")}</SelectItem>
                 <SelectItem value="ordering">{ui("Ordering")}</SelectItem>
                 <SelectItem value="visual">{ui("Visual")}</SelectItem>
-                <SelectItem value="operation-posee">{ui("Pose et calcule")}</SelectItem>
+                <SelectItem value="operation-posee">Addition / subtraction · choose any numbers</SelectItem>
                 <SelectItem value="column-fill">{ui("Méthode en colonnes")}</SelectItem>
                 <SelectItem value="slider">{ui("Slider")}</SelectItem>
                 <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
+                <SelectItem value="counting">Count objects in groups of ten</SelectItem>
+                <SelectItem value="addition-across-ten">Addition · cross the next ten</SelectItem>
+                <SelectItem value="subtraction-with-dots">Subtraction · countable objects</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -538,7 +655,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             />
           </div>
 
-          <div>
+          {!['counting', 'addition-across-ten', 'subtraction-with-dots'].includes(kind) && <div>
             <Label htmlFor="prompt">{ui("Question Prompt")}</Label>
             <Textarea
               id="prompt"
@@ -548,7 +665,66 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               rows={3}
               required
             />
-          </div>
+          </div>}
+
+          {kind === 'counting' && (
+            <div className="space-y-3 rounded-xl border p-4">
+              <p className="text-sm text-muted-foreground">The instruction and answer are built from these values so the picture and question stay in sync.</p>
+              <div>
+                <Label htmlFor="counting-object">Objects</Label>
+                <Select value={countingObject} onValueChange={(value: CountableObject) => setCountingObject(value)}>
+                  <SelectTrigger id="counting-object"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {COUNTABLE_OBJECTS.map((object) => <SelectItem key={object} value={object}>{object[0].toUpperCase() + object.slice(1)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label htmlFor="counting-start-groups">Starting groups of ten</Label><Input id="counting-start-groups" type="number" min="0" max="10" value={countingStartingGroups} onChange={(event) => setCountingStartingGroups(Number(event.target.value))} /></div>
+                <div><Label htmlFor="counting-start-ones">Starting single objects</Label><Input id="counting-start-ones" type="number" min="0" max="9" value={countingStartingOnes} onChange={(event) => setCountingStartingOnes(Number(event.target.value))} /></div>
+                <div><Label htmlFor="counting-groups-to-add">Groups to add</Label><Input id="counting-groups-to-add" type="number" min="1" max="10" value={countingGroupsToAdd} onChange={(event) => setCountingGroupsToAdd(Number(event.target.value))} /></div>
+              </div>
+              <p className="text-sm font-medium">Answer: {countingExerciseTotal({ startingGroups: countingStartingGroups, startingOnes: countingStartingOnes, groupsToAdd: countingGroupsToAdd })}</p>
+            </div>
+          )}
+
+          {kind === 'addition-across-ten' && (
+            <div className="space-y-3 rounded-xl border p-4">
+              <p className="text-sm text-muted-foreground">Choose the starting number and addend. The learner fills the next ten, then adds the counters left. Use any values that cross the next ten; totals can be up to 1000.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label htmlFor="addition-start">Starting number</Label><Input id="addition-start" type="number" min="10" max="999" value={additionStartNumber} onChange={(event) => setAdditionStartNumber(Number(event.target.value))} /></div>
+                <div><Label htmlFor="addition-addend">Number to add</Label><Input id="addition-addend" type="number" min="1" max="999" value={additionAddend} onChange={(event) => setAdditionAddend(Number(event.target.value))} /></div>
+              </div>
+              <p className="text-sm font-medium">{additionStartNumber} needs {countersToNextTen(additionStartNumber)} to reach the next ten; total: {additionAcrossTenTotal({ startNumber: additionStartNumber, addend: additionAddend })}</p>
+            </div>
+          )}
+
+          {kind === 'subtraction-with-dots' && (
+            <div className="space-y-3 rounded-xl border p-4">
+              <p className="text-sm text-muted-foreground">Choose any subtraction from 2 to 100. Students add the objects, take some away, identify the subtraction, then choose the answer.</p>
+              <div>
+                <Label htmlFor="subtraction-object">Objects</Label>
+                <Select value={subtractionObject} onValueChange={(value: SubtractionObject) => setSubtractionObject(value)}>
+                  <SelectTrigger id="subtraction-object"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SUBTRACTION_OBJECTS.map((object) => {
+                      const plural = subtractionObjectName(object, 2);
+                      return <SelectItem key={object} value={object}>{plural[0].toUpperCase() + plural.slice(1)}</SelectItem>;
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label htmlFor="subtraction-target">Starting amount (2–100)</Label><Input id="subtraction-target" type="number" min="2" max="100" value={subtractionTarget} onChange={(event) => setSubtractionTarget(Number(event.target.value))} /></div>
+                <div><Label htmlFor="subtraction-take-away">Amount to take away</Label><Input id="subtraction-take-away" type="number" min="1" max="99" value={subtractionTakeAway} onChange={(event) => setSubtractionTakeAway(Number(event.target.value))} /></div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Checkbox id="subtraction-count-by-color" checked={subtractionCountByColor} onCheckedChange={(checked) => setSubtractionCountByColor(checked === true)} />
+                <div><Label htmlFor="subtraction-count-by-color">Ask how many objects of one color remain</Label><p className="text-xs text-muted-foreground">The question will choose a color for the learner to count.</p></div>
+              </div>
+              <p className="text-sm font-medium">{subtractionTarget} − {subtractionTakeAway} = {subtractionTarget - subtractionTakeAway}</p>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="hint">{ui("Hint (optional)")}</Label>
@@ -882,6 +1058,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
           {kind === 'operation-posee' && (
             <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Use this general operation format for addition or subtraction with any chosen operands, including within ten or with larger numbers.</p>
               <div>
                 <Label>{ui("Operation")}</Label>
                 <Select value={operation} onValueChange={(value: 'addition' | 'subtraction') => setOperation(value)}>

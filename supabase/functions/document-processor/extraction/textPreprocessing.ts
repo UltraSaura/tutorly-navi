@@ -7,7 +7,7 @@ export function preprocessFrenchMathText(text: string): string {
   console.log('Original text length:', text.length);
   console.log('Original text preview:', text.substring(0, 300));
   
-  let processedText = text
+  const processedText = text
     // STEP 1: Clean up SimpleTex LaTeX format specifically
     .replace(/\^\([^)]*\)/g, '') // Remove ^(aligned), ^(array), etc.
     .replace(/\\\\\&/g, ' ') // Convert \\& to space
@@ -91,13 +91,13 @@ export function preprocessStructuredWorksheet(text: string): string {
   const sections = text.split(/(?=[a-e]\s*[~\.\):])/i);
   console.log(`Found ${sections.length} potential exercise sections`);
   
-  let processedSections: string[] = [];
+  const processedSections: string[] = [];
   
   sections.forEach((section, index) => {
     console.log(`Processing section ${index}: ${section.substring(0, 100)}...`);
     
     // Clean each section
-    let cleanSection = section
+    const cleanSection = section
       // Remove LaTeX artifacts
       .replace(/\^\([^)]*\)/g, '')
       .replace(/\\\\\&/g, ' ')
@@ -130,7 +130,7 @@ export function cleanHandwrittenAnswer(answer: string): string {
   console.log('Cleaning handwritten answer:', answer.substring(0, 50));
   
   // Remove obvious OCR garbage
-  let cleaned = answer
+  const cleaned = answer
     .replace(/c{3,}/g, '') // Remove strings of c's
     .replace(/[^\d\/\.\s\-\+\*]/g, ' ') // Keep only math characters
     .replace(/\s+/g, ' ')

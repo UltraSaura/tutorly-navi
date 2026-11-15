@@ -49,6 +49,7 @@ export type BulkStagingProgress = {
 export type BulkStagingLevelResult = NonNullable<StagingGeneration['levelResults']>[number];
 
 export type BulkStagingFailure = {
+  providerDiagnostics?: GenerationErrorDetails['providerDiagnostics'];
   topicId: string;
   topicTitle: string;
   failedLevel?: number;

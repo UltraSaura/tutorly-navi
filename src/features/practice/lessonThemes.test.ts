@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CANONICAL_LEVEL_LABELS, buildThemeLessonPlan, groupPublishedLessonTopics, resolveLessonThemeId, type LessonThemeGroup } from './lessonThemes';
+import { CANONICAL_LEVEL_LABELS, buildThemeLessonPlan, groupPublishedLessonTopics, resolveLessonThemeId, type LessonThemeGroup, type PublishedLessonTopic } from './lessonThemes';
 
 const topic = (name: string, id = name) => ({
   id,
@@ -30,7 +30,7 @@ const v21Topic = (name: string, id: string, levels: number[], orderIndex = 1, va
   id, slug: id, topicLabel: name, orderIndex, lessonContent: { version: '2.1', topic_goal: name, levels: levels.map((number) => ({ ...level(number), lesson: { ...level(number).lesson, lesson_goal: `${variant} ${number}` } })) },
 });
 
-const asTheme = (topics: ReturnType<typeof v21Topic>[], label = 'Proportionnalité'): LessonThemeGroup => ({ id: 'proportionnalite', label, topics });
+const asTheme = (topics: PublishedLessonTopic[], label = 'Proportionnalité'): LessonThemeGroup => ({ id: 'proportionnalite', label, topics });
 
 describe('published lesson theme navigation', () => {
   it('uses one canonical tile for near-duplicate problem titles', () => {

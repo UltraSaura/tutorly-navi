@@ -1017,7 +1017,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   return (
     <div className={cn("rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/20", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Calculator className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           <span className="font-semibold text-blue-800 dark:text-blue-200 text-sm">
@@ -1032,7 +1032,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       </div>
 
       {/* Current Step Display */}
-      <div className="mb-4 h-[390px] overflow-y-auto">
+      <div className="mb-4 min-w-0 overflow-x-auto">
         <div className="rounded-lg px-1 py-2">
           {additionData ? (
             // Two-phase column addition view
@@ -1674,7 +1674,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                     
                     {/* Multiplier with × symbol */}
-                  <div className="ml-auto -mt-10 grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                  <div className="ml-auto mt-2 grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
                     <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>
                     {B.padStart(sumWidth, ' ').split('').map((ch, i) => (
                       <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
@@ -1908,7 +1908,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                   
         {/* Multiplier with × symbol */}
-        <div className="ml-auto -mt-10 grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+        <div className="ml-auto mt-2 grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
           <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>
           {B.padStart(sumWidth, ' ').split('').map((ch, i) => {
             // Map display position to actual B index (0-based from left)

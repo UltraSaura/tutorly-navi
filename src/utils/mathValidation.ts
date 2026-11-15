@@ -240,7 +240,7 @@ function validateEquationSolution(question: string, userAnswer: string): boolean
  */
 function normalizeAnswer(answer: string): string {
   // Remove extra whitespace and convert to lowercase
-  let normalized = answer.trim().toLowerCase();
+  const normalized = answer.trim().toLowerCase();
   
   // Handle percentage to decimal
   if (normalized.includes('%')) {

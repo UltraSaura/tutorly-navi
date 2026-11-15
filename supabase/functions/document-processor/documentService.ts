@@ -13,7 +13,7 @@ function minimalPreprocessing(text: string): string {
   console.log('Raw text (first 500 chars):', text.substring(0, 500));
   
   // Only remove non-essential LaTeX commands while preserving important math structure
-  let cleanedText = text
+  const cleanedText = text
     // Preserve key LaTeX commands like \frac and \sqrt; remove others
     .replace(/\\(?!frac|sqrt)[a-zA-Z]+/g, ' ')
     // Normalize multiple spaces on a single line but PRESERVE line breaks

@@ -8,7 +8,7 @@ import { evaluateQuestion } from "@/utils/quizEvaluation";
 import { cn } from "@/lib/utils";
 import type { GeometryFigureShape, VisualAngle, VisualBar, VisualUnion, VisualPie, VisualTriangle } from "@/lib/quiz/visual-types";
 import { normalizeAngle } from "@/lib/quiz/visual-geometry";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ManipulativeMathRenderer } from "@/components/manipulative-maths/ManipulativeMathRenderer";
 import { MathRenderer } from "@/components/math/MathRenderer";
@@ -18,6 +18,12 @@ import { FillExprQuestionView } from "./FillExprQuestion";
 import { ColumnFillQuestionView } from "./ColumnFillQuestion";
 import { useLearningDragDrop } from "./useLearningDragDrop";
 import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
+import { CountableObjectModel } from "@/components/practice/CountableObjectModel";
+import { countableObjectName, countingExerciseStart, countingExerciseTotal } from "@/features/practice/countingExercise";
+import { AdditionAcrossTenModel } from "@/components/practice/AdditionAcrossTenModel";
+import { additionAcrossTenTotal, countersToNextTen } from "@/features/practice/additionAcrossTen";
+import { countSubtractionObjectsByColor, makeSubtractionWithDotsEquationChoices, normalizeSubtractionObject, subtractionColorToCount, subtractionObjectName, subtractionWithDotsTotal } from "@/features/practice/subtractionWithDots";
+import { SubtractionWithDotsModel } from "@/components/practice/SubtractionWithDotsModel";
 
 // Renders text that may contain $...$ inline or $$...$$ display LaTeX.
 function MathText({ text, style }: { text: string; style?: React.CSSProperties }) {
@@ -738,6 +744,9 @@ export function QuestionCard({
   const ui = useInterfaceTranslation();
   const initialValue = useMemo(() => {
     if (question.kind === "multi") return [];
+    if (question.kind === "counting") return { addedGroups: 0, selectedAnswer: null };
+    if (question.kind === "addition-across-ten") return { movedToTen: 0, selectedAnswer: null };
+    if (question.kind === "subtraction-with-dots") return { dotsAdded: 0, dotsRemoved: 0, step: 'building', selectedEquation: null, selectedAnswer: null };
     if (question.kind === "visual") {
       return getInitialVisualValue(question.visual);
     }
@@ -765,8 +774,10 @@ export function QuestionCard({
   const [tries, setTries] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [subtractionFeedback, setSubtractionFeedback] = useState<string | null>(null);
   const onChangeRef = useRef(onChange);
   const inferredPromptFigure = useMemo(() => {
+    if (question.kind === 'counting') return null;
     if ((question as any).context_visual) return null;
     return inferPromptFigure(question);
   }, [question]);
@@ -787,6 +798,7 @@ export function QuestionCard({
     setTries(0);
     setSubmitted(false);
     setIsCorrect(null);
+    setSubtractionFeedback(null);
 
     if (question.kind === "ordering") {
       onChangeRef.current?.(initialValue);
@@ -866,6 +878,98 @@ export function QuestionCard({
       <h3 className="text-lg font-semibold mb-3">
         <InlineMathText text={question.prompt} />
       </h3>
+
+      {question.kind === 'counting' && (() => {
+        const addedGroups = Math.max(0, Math.min(question.groupsToAdd, Number(value?.addedGroups) || 0));
+        const total = countingExerciseTotal(question);
+        const readyForAnswer = addedGroups >= question.groupsToAdd;
+        return (
+          <div className="space-y-3" data-testid="quiz-counting-question">
+            <CountableObjectModel object={question.object} value={countingExerciseStart(question) + addedGroups * 10} />
+            {!readyForAnswer ? (
+              <>
+                <p className="text-center text-sm font-semibold text-muted-foreground">Groups added: {addedGroups} of {question.groupsToAdd}</p>
+                <button type="button" aria-label="Add one group of ten" disabled={submittedAnswer !== undefined} onClick={() => setVal({ addedGroups: addedGroups + 1, selectedAnswer: null })} className="min-h-12 w-full rounded-xl border-2 border-primary px-4 font-bold text-primary disabled:opacity-50">+ Add one group of ten</button>
+              </>
+            ) : (
+              <div role="group" aria-label={`Choose how many ${countableObjectName(question.object, total)} there are`} className="grid grid-cols-2 gap-2">
+                {question.answerChoices.map((choice) => (
+                  <button key={choice} type="button" aria-pressed={value?.selectedAnswer === choice} disabled={submittedAnswer !== undefined} onClick={() => setVal({ addedGroups, selectedAnswer: choice })} className={`min-h-12 rounded-xl border-2 px-3 font-bold disabled:opacity-50 ${value?.selectedAnswer === choice ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white'}`}>
+                    {choice}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {question.kind === 'addition-across-ten' && (() => {
+        const movedToTen = Math.max(0, Math.min(countersToNextTen(question.startNumber), Number(value?.movedToTen) || 0));
+        const moveTarget = countersToNextTen(question.startNumber);
+        const total = additionAcrossTenTotal(question);
+        const readyForAnswer = movedToTen >= moveTarget;
+        return (
+          <div className="space-y-3" data-testid="quiz-addition-across-ten-question">
+            <AdditionAcrossTenModel startNumber={question.startNumber} addend={question.addend} movedToTen={movedToTen} />
+            {!readyForAnswer ? (
+              <button type="button" aria-label="Move one counter to fill the next ten" disabled={submittedAnswer !== undefined} onClick={() => setVal({ movedToTen: movedToTen + 1, selectedAnswer: null })} className="min-h-12 w-full rounded-xl border-2 border-primary px-4 font-bold text-primary disabled:opacity-50">Move one counter to the ten-frame</button>
+            ) : (
+              <div role="group" aria-label={`Choose the total of ${question.startNumber} plus ${question.addend}`} className="grid grid-cols-2 gap-2">
+                {question.answerChoices.map((choice) => (
+                  <button key={choice} type="button" aria-pressed={value?.selectedAnswer === choice} disabled={submittedAnswer !== undefined} onClick={() => setVal({ movedToTen, selectedAnswer: choice })} className={`min-h-12 rounded-xl border-2 px-3 font-bold disabled:opacity-50 ${value?.selectedAnswer === choice ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white'}`}>{choice}</button>
+                ))}
+              </div>
+            )}
+            <p className="sr-only" aria-live="polite">{readyForAnswer ? `The ten-frame is full. ${question.addend - movedToTen} counters are left. Choose the total.` : `${movedToTen} of ${moveTarget} counters moved to fill the ten.`}</p>
+          </div>
+        );
+      })()}
+
+      {question.kind === 'subtraction-with-dots' && (() => {
+        const dotsAdded = Math.max(0, Math.min(question.targetCount, Number(value?.dotsAdded) || 0));
+        const dotsRemoved = Math.max(0, Math.min(question.takeAway, Number(value?.dotsRemoved) || 0));
+        const step = String(value?.step ?? 'building');
+        const expressions = makeSubtractionWithDotsEquationChoices(question.targetCount, question.takeAway);
+        const correctExpression = `${question.targetCount} − ${question.takeAway}`;
+        const object = normalizeSubtractionObject(question.object);
+        const objectName = subtractionObjectName(object, question.targetCount);
+        const singleObjectName = subtractionObjectName(object, 1);
+        const totalRemaining = subtractionWithDotsTotal(question);
+        const countColor = question.countByColor ? subtractionColorToCount(question.id, totalRemaining) : undefined;
+        const answer = countColor
+          ? countSubtractionObjectsByColor(totalRemaining, question.id, countColor)
+          : totalRemaining;
+        const setSubtractionValue = (next: { dotsAdded: number; dotsRemoved: number; step: string; selectedEquation: string | null; selectedAnswer: number | null }) => {
+          setSubtractionFeedback(null);
+          setVal(next);
+        };
+        return (
+          <div className="space-y-3" data-testid="quiz-subtraction-with-dots-question">
+            <SubtractionWithDotsModel targetCount={question.targetCount} dotsAdded={dotsAdded} dotsRemoved={dotsRemoved} object={object} seed={question.id} showAllRemoved={step !== 'building'} countColor={countColor} revealAnswerCount={showSubmittedState && effectiveCorrectness === true} />
+            {step === 'building' && <button type="button" aria-label={`Add one ${singleObjectName}`} disabled={submittedAnswer !== undefined} onClick={() => setSubtractionValue({ dotsAdded: Math.min(question.targetCount, dotsAdded + 1), dotsRemoved: 0, step: dotsAdded + 1 >= question.targetCount ? 'removing' : 'building', selectedEquation: null, selectedAnswer: null })} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-primary px-4 font-bold text-primary disabled:opacity-50"><Plus className="h-5 w-5" aria-hidden="true" />Add one {singleObjectName}</button>}
+            {step === 'removing' && <button type="button" aria-label={`Take away one ${singleObjectName}`} disabled={submittedAnswer !== undefined} onClick={() => setSubtractionValue({ dotsAdded, dotsRemoved: Math.min(question.takeAway, dotsRemoved + 1), step: dotsRemoved + 1 >= question.takeAway ? 'equation' : 'removing', selectedEquation: null, selectedAnswer: null })} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-amber-500 px-4 font-bold text-amber-700 disabled:opacity-50"><Minus className="h-5 w-5" aria-hidden="true" />Take away one {singleObjectName}</button>}
+            {step === 'equation' && <>
+              <p className="font-semibold">Which subtraction shows what you did?</p>
+              <div role="group" aria-label="Choose the subtraction equation" className="grid grid-cols-2 gap-2">
+                {expressions.map((expression) => <button key={expression} type="button" aria-pressed={value?.selectedEquation === expression} disabled={submittedAnswer !== undefined} onClick={() => setSubtractionValue({ dotsAdded, dotsRemoved, step, selectedEquation: expression, selectedAnswer: null })} className={`min-h-11 rounded-lg border-2 px-2 font-bold disabled:opacity-50 ${value?.selectedEquation === expression ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white'}`}>{expression}</button>)}
+              </div>
+              <button type="button" disabled={!value?.selectedEquation || submittedAnswer !== undefined} onClick={() => {
+                if (value?.selectedEquation === correctExpression) setSubtractionValue({ dotsAdded, dotsRemoved, step: 'answering', selectedEquation: correctExpression, selectedAnswer: null });
+                else setSubtractionFeedback(`Not quite. You had the ${objectName} first, then took some away. Choose the subtraction that matches.`);
+              }} className="min-h-11 w-full rounded-lg bg-primary px-4 font-bold text-primary-foreground disabled:opacity-50">Check equation</button>
+            </>}
+            {step === 'answering' && <>
+              <p className="font-semibold">{countColor ? `How many ${countColor} ${objectName} are left?` : `How many ${subtractionObjectName(object, question.targetCount)} are left? ${question.targetCount} − ${question.takeAway} = ?`}</p>
+              <div role="group" aria-label={countColor ? `Choose how many ${countColor} ${objectName} remain` : `Choose how many remain after ${question.targetCount} minus ${question.takeAway}`} className="grid grid-cols-2 gap-2">
+                {question.answerChoices.map((choice) => <button key={choice} type="button" aria-pressed={value?.selectedAnswer === choice} disabled={submittedAnswer !== undefined} onClick={() => setSubtractionValue({ dotsAdded, dotsRemoved, step, selectedEquation: correctExpression, selectedAnswer: choice })} className={`min-h-11 rounded-lg border-2 px-3 font-bold disabled:opacity-50 ${value?.selectedAnswer === choice ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white'}`}>{choice}</button>)}
+              </div>
+              <p className="sr-only" aria-live="polite">{countColor ? `${answer} ${countColor} ${subtractionObjectName(object, answer)} remain.` : `${answer} ${subtractionObjectName(object, answer)} remain after taking away ${question.takeAway} from ${question.targetCount}.`}</p>
+            </>}
+            {subtractionFeedback && <p role="status" aria-live="polite" className="rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-900">{subtractionFeedback}</p>}
+          </div>
+        );
+      })()}
 
       {question.kind === "single" && (
         <div className={question.choices.length === 4 ? "grid grid-cols-2 gap-3 mt-4" : "space-y-2 mt-3"}>

@@ -178,7 +178,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   let requestId: string = crypto.randomUUID();
   let requestAllowsPaidRepair = false;
   let aiProviderCalls = 0;
-  let stagingProgress: StagingLevelProgress[] = [];
+  const stagingProgress: StagingLevelProgress[] = [];
   let stagingFailure: { level?: number; stage?: string; message?: string; validationCategory?: string; retryCount?: number; parseStage?: string; providerDiagnostics?: Record<string, unknown> } | undefined;
   const requestOrigin = requestOriginOf(req);
   const corsHeaders = corsHeadersFor(requestOrigin, allowedOrigins);

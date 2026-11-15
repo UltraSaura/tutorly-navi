@@ -1,0 +1,86 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+import type { CountingQ } from '@/types/quiz-bank';
+import type { AdditionAcrossTenQ } from '@/types/quiz-bank';
+import type { SubtractionWithDotsQ } from '@/types/quiz-bank';
+import { subtractionColorToCount } from '@/features/practice/subtractionWithDots';
+import { QuestionCard } from './QuestionCard';
+
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
+const question: CountingQ = {
+  id: 'count-bank-1',
+  kind: 'counting',
+  prompt: 'Start with 12 apples. Add one group of ten. How many altogether?',
+  object: 'apple',
+  startingGroups: 1,
+  startingOnes: 2,
+  groupsToAdd: 1,
+  answerChoices: [22, 12, 32, 23],
+};
+
+describe('counting quiz-bank question rendering', () => {
+  it('shows the grouped object model and add control before the answer choices', () => {
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain('data-testid="quiz-counting-question"');
+    expect(html).toContain('Add one group of ten');
+    expect(html).toContain('data-testid="countable-group"');
+    expect(html).not.toContain('aria-label="Choose how many apples there are"');
+  });
+});
+
+describe('addition across ten quiz-bank question rendering', () => {
+  it('shows the ten-frame model and move action before answer choices', () => {
+    const question: AdditionAcrossTenQ = {
+      id: 'bridge-247-8',
+      kind: 'addition-across-ten',
+      prompt: 'Start at 247. Add 8. Fill the next ten, then choose the total.',
+      startNumber: 247,
+      addend: 8,
+      answerChoices: [255, 254, 256, 265],
+    };
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain('data-testid="quiz-addition-across-ten-question"');
+    expect(html).toContain('Move one counter to the ten-frame');
+    expect(html).toContain('Fill the next ten: 250');
+    expect(html).not.toContain('Choose the total of 247 plus 8');
+  });
+});
+
+describe('subtraction with countable objects quiz-bank rendering', () => {
+  it('shows the add-bubble action before the lightning take-away step', () => {
+    const question: SubtractionWithDotsQ = {
+      id: 'subtract-8-5', kind: 'subtraction-with-dots', prompt: 'Add 8 bubbles, then take away 5.',
+      targetCount: 8, takeAway: 5, answerChoices: [3, 2, 4, 5],
+    };
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain('data-testid="quiz-subtraction-with-dots-question"');
+    expect(html).toContain('Add one bubble');
+    expect(html).not.toContain('Take away one bubble');
+    expect(html).not.toContain('8 − 5');
+  });
+
+  it('uses an authored object for the model and action label', () => {
+    const question: SubtractionWithDotsQ = {
+      id: 'subtract-stars', kind: 'subtraction-with-dots', prompt: 'Add 6 stars, then take away 2.',
+      object: 'star', targetCount: 6, takeAway: 2, answerChoices: [4, 3, 5, 2],
+    };
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain('Add one star');
+    expect(html).toContain('No stars yet');
+    expect(html).not.toContain('stars added');
+  });
+
+  it('shows the selected color cue when color counting is enabled', () => {
+    const color = subtractionColorToCount('subtract-color-count', 5);
+    const question: SubtractionWithDotsQ = {
+      id: 'subtract-color-count', kind: 'subtraction-with-dots', prompt: `Add 8 apples, then take away 3. How many ${color} apples remain?`,
+      object: 'apple', countByColor: true, targetCount: 8, takeAway: 3, answerChoices: [0, 1, 2, 3],
+    };
+    const html = renderToStaticMarkup(<QuestionCard question={question} />);
+    expect(html).toContain(`Count the ${color} apples`);
+    expect(html).not.toContain(`${color} apples left`);
+    expect(html).toContain(`How many ${color} apples remain?`);
+  });
+});

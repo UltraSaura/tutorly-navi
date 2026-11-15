@@ -1,5 +1,5 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { ChildWithUser } from '@/types/guardian';
 import AddChildForm from '@/components/guardian/AddChildForm';
 import { ChildRegistrationData } from '@/types/registration';
 import { ManualChildCreationTrigger } from '@/components/guardian/ManualChildCreationTrigger';
@@ -42,7 +41,7 @@ export default function GuardianChildren() {
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [relation, setRelation] = useState('parent');
-  const [editChild, setEditChild] = useState<ChildWithUser | null>(null);
+  const [editChild, setEditChild] = useState<ComponentProps<typeof EditChildDialog>['child']>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const { countries, getSchoolLevelsByCountry } = useCountriesAndLevels();
@@ -154,7 +153,7 @@ export default function GuardianChildren() {
     addChildMutation.mutate({ ...formData, relation });
   };
 
-  const handleEditClick = (child: ChildWithUser) => {
+  const handleEditClick = (child: NonNullable<ComponentProps<typeof EditChildDialog>['child']>) => {
     setEditChild(child);
     setIsEditOpen(true);
   };

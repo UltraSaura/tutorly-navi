@@ -78,6 +78,7 @@ export function BulkLessonGenerator() {
   const [filterCurriculum, setFilterCurriculum] = useState('all');
   const [filterSubject, setFilterSubject] = useState('all');
   const [filterLevel, setFilterLevel] = useState('all');
+  const [onlyMissing, setOnlyMissing] = useState(true);
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [results, setResults] = useState<GenResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -131,7 +132,7 @@ export function BulkLessonGenerator() {
     queryKey: ['topic-lesson-versions-bulk-lesson', topicIds],
     queryFn: async () => {
       if (!topicIds.length) return [] as Array<{ topic_id: string; status: string }>;
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('topic_lesson_versions')
         .select('topic_id, status')
         .in('topic_id', topicIds)
@@ -173,10 +174,10 @@ export function BulkLessonGenerator() {
         if (filterSubject !== 'all' && t.curriculum_subject_id !== filterSubject) return false;
         if (filterLevel !== 'all' && t.curriculum_level_code !== filterLevel) return false;
         if (filterCurriculum !== 'all' && t.curriculum_country_code !== filterCurriculum) return false;
-        if (statusForTopic(t) !== 'none') return false;
+        if (onlyMissing && statusForTopic(t) !== 'none') return false;
         return true;
       }),
-    [topics, filterCurriculum, filterSubject, filterLevel, stagingStatusesByTopic],
+    [topics, filterCurriculum, filterSubject, filterLevel, onlyMissing, stagingStatusesByTopic],
   );
 
   const toggle = (id: string) => {
@@ -439,6 +440,11 @@ export function BulkLessonGenerator() {
                 </SelectContent>
               </Select>
 
+              <label className="flex cursor-pointer items-center gap-1.5 text-sm">
+                <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(Boolean(v))} />
+                {ui("Sans leçon")}
+              </label>
+
               {developerMode && <div data-testid="bulk-developer-controls" className="flex flex-wrap gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
                 <label className="flex cursor-pointer items-center gap-1.5">
                   <Checkbox checked={dryRun} onCheckedChange={(v) => setDryRun(Boolean(v))} />
@@ -488,6 +494,31 @@ export function BulkLessonGenerator() {
                       {topic.curriculum_level_code && (
                         <Badge variant="outline" className="h-5 text-xs">
                           {topic.curriculum_level_code}
+                        </Badge>
+                      )}
+                      {statusForTopic(topic) === 'staging' ? (
+                        <Badge className="h-5 border-blue-200 bg-blue-50 text-xs text-blue-700 hover:bg-blue-50">
+                          {ui("Brouillon staging")}
+                        </Badge>
+                      ) : topic.lesson_content ? (
+                        <>
+                          <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
+                            {ui("Leçon publiée")}
+                          </Badge>
+                          {showLegacyControls && <button
+                            onClick={(e) => handleDeleteOne(topic.id, e)}
+                            disabled={deletingIds.has(topic.id)}
+                            title={ui("Supprimer la leçon")}
+                            className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
+                          >
+                            {deletingIds.has(topic.id)
+                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              : <Trash2 className="h-3.5 w-3.5" />}
+                          </button>}
+                        </>
+                      ) : (
+                        <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
+                          {ui("Aucune version")}
                         </Badge>
                       )}
                       <Badge variant="outline" className="h-5 text-xs text-muted-foreground">{topic.curriculum_country_code ?? '—'}</Badge>

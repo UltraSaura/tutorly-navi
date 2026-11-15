@@ -32,7 +32,7 @@ export function scanForExerciseMarkers(text: string): Array<{ question: string, 
   const lines = text.split(/\n+/);
   console.log('Total lines to process:', lines.length);
   
-  let currentExercise = '';
+  const currentExercise = '';
   let currentMarker = '';
   let exerciseContent = '';
   

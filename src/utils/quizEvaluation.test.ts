@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Question } from "@/types/quiz-bank";
 import { buildColumnFillQuestion } from "@/lib/quiz/columnFillBuilder";
+import { countSubtractionObjectsByColor, subtractionColorToCount, subtractionWithDotsTotal } from '@/features/practice/subtractionWithDots';
 import {
   evaluateQuestion,
+  isQuizAnswerComplete,
   getPenaltyFactorForAttempt,
   gradeQuizWithDetails,
   scoreQuestionWithPenalty,
@@ -20,6 +22,59 @@ const singleQuestion = (id: string, points = 1): Question => ({
 });
 
 describe("quiz penalty grading", () => {
+  it('grades an addition-across-ten question only after filling the ten and choosing the total', () => {
+    const question: Question = {
+      id: 'bridge-1', kind: 'addition-across-ten', prompt: 'Start at 247. Add 8.',
+      startNumber: 247, addend: 8, answerChoices: [255, 254, 256, 265], points: 1,
+    };
+    expect(isQuizAnswerComplete(question, { movedToTen: 0, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { movedToTen: 0, selectedAnswer: 255 })).toBe(false);
+    expect(isQuizAnswerComplete(question, { movedToTen: 3, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { movedToTen: 3, selectedAnswer: 254 })).toBe(true);
+    expect(evaluateQuestion(question, { movedToTen: 3, selectedAnswer: 254 })).toBe(false);
+    expect(evaluateQuestion(question, { movedToTen: 3, selectedAnswer: 255 })).toBe(true);
+  });
+
+  it('grades a bubble subtraction only after adding, removing, identifying the equation, and choosing the result', () => {
+    const question: Question = {
+      id: 'subtract-8-5', kind: 'subtraction-with-dots', prompt: 'Add 8 bubbles, then take away 5.',
+      targetCount: 8, takeAway: 5, answerChoices: [3, 2, 4, 5], points: 1,
+    };
+    expect(isQuizAnswerComplete(question, { dotsAdded: 0, dotsRemoved: 0, selectedEquation: null, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { dotsAdded: 8, dotsRemoved: 5, selectedEquation: '8 − 5', selectedAnswer: null })).toBe(false);
+    const answer = { dotsAdded: 8, dotsRemoved: 5, selectedEquation: '8 − 5', selectedAnswer: 3 };
+    expect(isQuizAnswerComplete(question, answer)).toBe(true);
+    expect(evaluateQuestion(question, { ...answer, selectedEquation: '8 + 5' })).toBe(false);
+    expect(evaluateQuestion(question, answer)).toBe(true);
+  });
+
+  it('grades an optional color-count subtraction by the selected color subset', () => {
+    const question: Extract<Question, { kind: 'subtraction-with-dots' }> = {
+      id: 'subtract-color-count', kind: 'subtraction-with-dots', prompt: 'Count the red apples left.',
+      object: 'apple', countByColor: true, targetCount: 8, takeAway: 3,
+      answerChoices: [0, 1, 2, 3], points: 1,
+    };
+    const totalRemaining = subtractionWithDotsTotal(question);
+    const answer = countSubtractionObjectsByColor(totalRemaining, question.id, subtractionColorToCount(question.id, totalRemaining));
+    const response = { dotsAdded: 8, dotsRemoved: 3, selectedEquation: '8 − 3', selectedAnswer: answer };
+    expect(evaluateQuestion(question, response)).toBe(true);
+    expect(evaluateQuestion(question, { ...response, selectedAnswer: (answer + 1) % 6 })).toBe(false);
+  });
+
+  it('scores a counting-bank question only after the required groups and correct choice', () => {
+    const question: Question = {
+      id: 'count-1', kind: 'counting', prompt: 'Start with 12 apples. Add one group of ten.',
+      object: 'apple', startingGroups: 1, startingOnes: 2, groupsToAdd: 1,
+      answerChoices: [22, 12, 32, 23], points: 2,
+    };
+    expect(isQuizAnswerComplete(question, { addedGroups: 0, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { addedGroups: 1, selectedAnswer: null })).toBe(false);
+    expect(isQuizAnswerComplete(question, { addedGroups: 1, selectedAnswer: 12 })).toBe(true);
+    expect(evaluateQuestion(question, { addedGroups: 0, selectedAnswer: 22 })).toBe(false);
+    expect(evaluateQuestion(question, { addedGroups: 1, selectedAnswer: 12 })).toBe(false);
+    expect(evaluateQuestion(question, { addedGroups: 1, selectedAnswer: 22 })).toBe(true);
+  });
+
   it("uses the 100/50/25/0 penalty curve", () => {
     expect(getPenaltyFactorForAttempt(1)).toBe(1);
     expect(getPenaltyFactorForAttempt(2)).toBe(0.5);

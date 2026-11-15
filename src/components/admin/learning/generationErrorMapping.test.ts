@@ -171,3 +171,14 @@ describe('generation error mapping', () => {
     expect(formatted).not.toContain('secret');
   });
 });
+
+
+describe('provider syntax position validation', () => {
+  it.each([12, null])('preserves a valid position %j', (position) => {
+    expect(getGenerationErrorDetails({ providerDiagnostics: { syntaxError: { message: 'Invalid JSON', position } } }).providerDiagnostics?.syntaxError).toEqual({ message: 'Invalid JSON', position });
+  });
+
+  it.each(['12', {}, undefined])('omits an invalid position %j without dropping the message', (position) => {
+    expect(getGenerationErrorDetails({ providerDiagnostics: { syntaxError: { message: 'Invalid JSON', position } } }).providerDiagnostics?.syntaxError).toEqual({ message: 'Invalid JSON' });
+  });
+});

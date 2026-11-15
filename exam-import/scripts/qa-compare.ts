@@ -238,11 +238,11 @@ interface Token {
 
 function tokenizeEnumerate(body: string): Token[] {
   const tokens: Token[] = [];
-  let pos = 0;
+  const pos = 0;
   // Track nesting depth of ALL environments so we only process items that are
   // directly inside an \begin{enumerate} (not inside tabularx, itemize, etc.)
   let enumDepth = 0; // depth counting only enumerate environments
-  let envDepth  = 0; // depth counting ALL environments (to skip non-enumerate items)
+  const envDepth  = 0; // depth counting ALL environments (to skip non-enumerate items)
 
   // Pre-tokenize all significant positions
   type Ev = { pos: number; kind: "begin-enum" | "end-enum" | "begin-other" | "end-other" | "item" };
