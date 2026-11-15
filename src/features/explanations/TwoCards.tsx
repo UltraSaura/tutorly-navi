@@ -444,7 +444,7 @@ export function TwoCards({
               />
             </div>
 
-            <div className="sticky bottom-0 z-10 flex shrink-0 justify-end bg-card/95 py-2 backdrop-blur-sm">
+            <div className="flex shrink-0 justify-end py-2">
               <Button
                 type="button"
                 onClick={() => setGuidedView('lesson')}
