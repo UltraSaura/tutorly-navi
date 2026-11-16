@@ -738,6 +738,7 @@ export function QuestionCard({
   const ui = useInterfaceTranslation();
   const initialValue = useMemo(() => {
     if (question.kind === "multi") return [];
+    if (question.kind === "flash-card" || question.kind === "empty-space") return "";
     if (question.kind === "visual") {
       return getInitialVisualValue(question.visual);
     }
@@ -863,7 +864,12 @@ export function QuestionCard({
           <PromptFigure spec={inferredPromptFigure} />
         </div>
       )}
-      <h3 className="text-lg font-semibold mb-3">
+      <h3 className={cn(
+        "mb-3",
+        question.kind === "flash-card"
+          ? "rounded-xl border border-[#9FE1CB] bg-[#F2FBF8] px-4 py-5 text-center text-3xl font-extrabold text-[#0F172A]"
+          : "text-lg font-semibold",
+      )}>
         <InlineMathText text={question.prompt} />
       </h3>
 
@@ -1146,8 +1152,9 @@ export function QuestionCard({
         );
       })()}
 
-      {question.kind === "numeric" && !["fraction", "time"].includes((question as any).answerFormat) && (() => {
+      {(question.kind === "numeric" && !["fraction", "time"].includes((question as any).answerFormat) || question.kind === "flash-card") && (() => {
         const q: any = question;
+        const isFlashCard = question.kind === "flash-card";
         const chips: number[] = buildNumericChips(q);
         const answerUnit = inferAnswerUnit(q);
         const currentStr = String(value ?? '');
@@ -1171,7 +1178,8 @@ export function QuestionCard({
             ? '#F8FAFC'
             : 'white';
         return (
-          <div className="mt-2 flex flex-col items-center gap-3 py-2">
+          <div className={cn("mt-2 flex flex-col items-center gap-3 py-2", isFlashCard && "rounded-2xl border border-[#9FE1CB] bg-[#F2FBF8] px-4") }>
+            {isFlashCard && <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#0F6E56]">{ui("Carte flash")}</span>}
             <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
               {answerUnit ? `${ui("Tape ta réponse")} (${answerUnit})` : ui("Tape ta réponse")}
             </p>
@@ -1192,6 +1200,7 @@ export function QuestionCard({
                 inputMode="numeric"
                 autoComplete="off"
                 autoFocus
+                aria-label={ui("Réponse")}
                 value={value}
                 onChange={e => setVal(e.target.value)}
                 placeholder="?"
@@ -1258,6 +1267,41 @@ export function QuestionCard({
                 </p>
               </div>
             )}
+          </div>
+        );
+      })()}
+
+      {question.kind === "empty-space" && (() => {
+        const parts = question.template.split("__");
+        const borderColor = showSubmittedState
+          ? effectiveCorrectness === true ? '#16A34A' : '#EF4444'
+          : String(value ?? '').trim() ? '#12C6A0' : '#CBD5E1';
+        const background = showSubmittedState
+          ? effectiveCorrectness === true ? '#DCFCE7' : '#FEE2E2'
+          : '#FFFFFF';
+        return (
+          <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-[#EAECEF] bg-[#F8FAFC] px-3 py-5">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-2xl font-bold text-[#0F172A]" aria-label={question.template.replace("__", question.blankLabel ?? ui("case vide"))}>
+              {parts.map((part, index) => (
+                <React.Fragment key={`empty-space-${index}`}>
+                  {part && <span>{part}</span>}
+                  {index < parts.length - 1 && (
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoFocus
+                      value={value ?? ''}
+                      onChange={event => setVal(event.target.value)}
+                      aria-label={question.blankLabel ?? ui("Réponse manquante")}
+                      className="h-14 w-20 rounded-xl border-2 text-center text-2xl font-extrabold outline-none"
+                      style={{ borderColor, background, fontFamily: 'Poppins, sans-serif' }}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            {parts.length !== 2 && <p className="text-sm text-destructive">{ui("Cette question doit contenir un seul blanc (__).")}</p>}
           </div>
         );
       })()}

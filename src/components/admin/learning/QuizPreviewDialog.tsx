@@ -68,6 +68,29 @@ function AnswerDisplay({ question }: { question: Question }) {
       );
     }
 
+    case 'flash-card': {
+      return (
+        <div className="flex items-center gap-2 py-2 text-2xl font-bold text-green-600">
+          <CheckCircle2 className="h-6 w-6" />
+          {question.answer}
+        </div>
+      );
+    }
+
+    case 'empty-space': {
+      const parts = question.template.split('__');
+      return (
+        <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-green-300 bg-green-50 px-3 py-3 text-lg font-semibold dark:bg-green-950/20">
+          {parts.map((part, index) => (
+            <span key={`empty-preview-${index}`} className="contents">
+              {part && <span>{part}</span>}
+              {index < parts.length - 1 && <span className="inline-flex min-w-[44px] items-center justify-center rounded-lg bg-green-500 px-3 py-2 text-white">{question.answer}</span>}
+            </span>
+          ))}
+        </div>
+      );
+    }
+
     case 'ordering': {
       return (
         <div className="space-y-1.5">

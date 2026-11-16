@@ -22,6 +22,16 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
     const yours = Array.isArray(answer) ? [...answer].sort().join(",") : "";
     return correct === yours;
   }
+  if (q.kind === "flash-card") {
+    const submitted = String(answer ?? '').trim();
+    return submitted !== '' && Number(submitted) === q.answer;
+  }
+  if (q.kind === "empty-space") {
+    const submitted = String(answer ?? '').trim();
+    if (submitted === '') return false;
+    const value = Number(submitted);
+    return (q.acceptedAnswers ?? [q.answer]).some((accepted) => value === accepted);
+  }
   if (q.kind === "numeric") {
     const numQ = q as any;
     if (numQ.answerFormat === "fraction" && numQ.fractionAnswer) {
