@@ -82,13 +82,37 @@ describe('original demonstration followed by independent application', () => {
     let withHelp = s;
     for (let n = 0; n < 3; n++) withHelp = requestTutorHint(withHelp);
     withHelp = continueAfterDemonstration(withHelp);
-    expect(withHelp.question).toContain('5 + 5');
-    expect(submitTutorResponse(withHelp, '10').question).toContain('16 − 7');
-    const recovered = submitTutorResponse(s, '10');
+    expect(withHelp.question).toContain('10 + 6');
+    expect(submitTutorResponse(withHelp, '16').question).toContain('16 − 7');
+    const recovered = submitTutorResponse(s, '16');
     expect(recovered.question).toContain('16 − 7');
     expect(submitTutorResponse(recovered, '9').canAdvance).toBe(true);
     s = submitTutorResponse(submitTutorResponse(s, '1'), '1');
     expect(s.state).toBe('needs-support');
     expect(submitTutorResponse(s, '1')).toBe(s);
   });
+  it.each([
+    ['9', '10 + 6', '16', '16 − 7'],
+    ['10', '5 + 1', '6', '12 − 6'],
+    ['11', '1 + 1', '2', '3 − 2'],
+    ['12', '100 + 60', '160', '326 − 157'],
+  ])('uses a relevant prerequisite at transfer step %s and resumes the same question', (target, preparation, answer, original) => {
+    let s = application();
+    while (s.step < Number(target)) {
+      s = advanceTutorStep(submitTutorResponse(s, ['9', '6', '1'][s.step - 9]));
+    }
+    const savedStep = s.step;
+    s = submitTutorResponse(s, 'wrong');
+    s = submitTutorResponse(s, 'wrong');
+    expect(s.state).toBe('demonstrate');
+    s = continueAfterDemonstration(s);
+    s = submitTutorResponse(s, 'wrong');
+    expect(s.prerequisite).toBe(true);
+    expect(s.question).toContain(preparation);
+    const recovered = submitTutorResponse(s, answer);
+    expect(recovered.prerequisite).toBe(false);
+    expect(recovered.step).toBe(savedStep);
+    expect(recovered.question).toContain(original);
+  });
+
 });
