@@ -20,8 +20,14 @@ describe('original demonstration followed by independent application', () => {
     expect(next.question).not.toContain('169');
     expect(next.attempts).toEqual(s.attempts);
   });
-  it('accepts compensation and proceeds to the original demonstration', () => {
-    expect(submitTutorResponse(createInteractiveTutorSession(), 'J’ajoute 10 unités en haut et 1 dizaine en bas').state).toBe('demonstrate');
+  it('advances after a correct initial answer without requiring the animation', () => {
+    const s = submitTutorResponse(createInteractiveTutorSession(), 'J’ajoute 10 unités en haut et 1 dizaine en bas');
+    expect(s.state).toBe('awaiting-response');
+    expect(s.step).toBe(1);
+    expect(s.question).toContain('Une dizaine');
+    expect(s.demonstrationUsed).toBe(false);
+    expect(s.criticalStepIndependent).toBe(true);
+    expect(s.attempts).toHaveLength(1);
   });
   it('guides the application through all four compensation stages', () => {
     let s = application();
