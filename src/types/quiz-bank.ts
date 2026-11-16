@@ -26,6 +26,19 @@ export type NumericQ = BaseQ & {
   answerUnit?: string;
   dragOptions?: number[];
 };
+/** One-step numeric retrieval presented as a mental-math flash card. */
+export type FlashCardQ = BaseQ & {
+  kind: "flash-card";
+  answer: number;
+};
+/** A single typed blank embedded in a calculation template (use `__` for the blank). */
+export type EmptySpaceQ = BaseQ & {
+  kind: "empty-space";
+  template: string;
+  answer: number;
+  acceptedAnswers?: number[];
+  blankLabel?: string;
+};
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
 export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
 export type OperationPoseeQ = BaseQ & {
@@ -137,6 +150,8 @@ export type Question =
   | SingleQ
   | MultiQ
   | NumericQ
+  | FlashCardQ
+  | EmptySpaceQ
   | OrderingQ
   | VisualQ
   | OperationPoseeQ
