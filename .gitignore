@@ -23,4 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 artifacts/stuwy-explain-v2/actual/
+artifacts/qa/playwright-results/
 scripts/visual-regression/__pycache__/

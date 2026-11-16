@@ -14,6 +14,7 @@
     "lint": "eslint .",
     "test:visual:stuwy": "python3 scripts/visual-regression/stuwy-explain-v2.py",
     "test:e2e:student-session": "python3 scripts/visual-regression/student-session-hotfix.py",
+    "test:e2e:stuwy:browser": "playwright test --config=playwright.config.ts",
     "preview": "vite preview",
     "debug:dnb-visibility": "node scripts/debug-dnb.js",
     "debug:training-item-docs": "node --experimental-strip-types exam-import/scripts/debug-training-item-docs.ts",
@@ -111,6 +112,7 @@
   "devDependencies": {
     "@capacitor/cli": "^7.4.3",
     "@eslint/js": "^9.9.0",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/typography": "^0.5.15",
     "@types/katex": "^0.16.7",
     "@types/node": "^22.5.5",
