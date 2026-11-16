@@ -73,7 +73,7 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
   if (correct) {
     if (session.prerequisite) return { ...updated, prerequisite: false, state: activeState(session), question: stages[session.step].question, feedback: 'Oui, 5 + 5 font 10. Reprenons la question avec cette idée.' };
     if (isTransferStage(session)) return { ...updated, state: 'feedback', canAdvance: true, completedSteps: [...new Set([...session.completedSteps, session.step])], feedback: stages[session.step].feedback };
-    if (session.step === 0) return demonstrateTutorStep({ ...updated, feedback: stages[0].feedback, criticalStepIndependent: session.attempts.length === 0 && session.hintLevel === 0 });
+    if (session.step === 0) return { ...updated, step: 1, state: 'awaiting-response', hintLevel: 0, question: stages[1].question, feedback: stages[0].feedback, criticalStepIndependent: session.attempts.length === 0 && session.hintLevel === 0 };
     const step = session.step + 1;
     return { ...updated, step, state: step === 9 ? 'transfer' : 'awaiting-response', hintLevel: 0, question: stages[step].question, feedback: stages[session.step].feedback, criticalStepIndependent: session.criticalStepIndependent || (session.step === 0 && session.attempts.length === 0 && session.hintLevel === 0 && !session.demonstrationUsed) };
   }
