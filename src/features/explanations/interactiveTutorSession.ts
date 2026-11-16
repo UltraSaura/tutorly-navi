@@ -52,8 +52,18 @@ export function createInteractiveTutorSession(): InteractiveTutorSession {
   return { state: 'awaiting-response', step: 0, hintLevel: 0, attempts: [], question: stages[0].question, feedback: '', assistanceLevel: 0, hintLevelsByStep: {}, demonstrationUsed: false, demonstratedSteps: [], criticalStepIndependent: false, transferAttempts: 0, prerequisite: false, correctionCheckAttempts: 0, correctionDemo: false, canAdvance: false, completedSteps: [] };
 }
 
+const preparationByStep: Record<number, { question: string; answer: string; feedback: string; hints: [string, string] }> = {
+  9: { question: 'Préparons les unités : combien font 10 + 6 ?', answer: '16', feedback: 'Oui, 10 + 6 font 16. Reprenons les unités.', hints: ['Commence avec 10 unités et ajoute 6 unités.', 'Calcule 10 + 6.'] },
+  10: { question: 'Préparons les dizaines du bas : combien font 5 + 1 ?', answer: '6', feedback: 'Oui, 5 + 1 font 6. Reprenons les dizaines.', hints: ['La compensation ajoute 1 dizaine aux 5 dizaines du bas.', 'Calcule 5 + 1.'] },
+  11: { question: 'Préparons les centaines du bas : combien font 1 + 1 ?', answer: '2', feedback: 'Oui, 1 + 1 font 2. Reprenons les centaines.', hints: ['La compensation ajoute 1 centaine à la centaine du bas.', 'Calcule 1 + 1.'] },
+  12: { question: 'Préparons le résultat : combien font 100 + 60 ?', answer: '160', feedback: 'Oui, 100 + 60 font 160. Reprenons le résultat final.', hints: ['Assemble une centaine et six dizaines.', 'Calcule 100 + 60.'] },
+};
+const defaultPreparation = { question: 'Un petit calcul pour préparer la suite : combien font 5 + 5 ?', answer: '10', feedback: 'Oui, 5 + 5 font 10. Reprenons la question.', hints: ['Prépare deux groupes de cinq objets.', 'Compte tous les objets des deux groupes, un par un.'] };
+const preparationFor = (step: number) => preparationByStep[step] ?? defaultPreparation;
+
 function prerequisite(session: InteractiveTutorSession): InteractiveTutorSession {
-  return { ...session, state: 'awaiting-response', prerequisite: true, hintLevel: 0, assistanceLevel: 4, question: 'Un petit calcul pour préparer la suite : combien font 5 + 5 ?', feedback: 'Comptons deux groupes de cinq avant de reprendre la question.' };
+  const preparation = preparationFor(session.step);
+  return { ...session, state: 'awaiting-response', prerequisite: true, hintLevel: 0, assistanceLevel: 4, question: preparation.question, feedback: 'Essayons un calcul plus simple, puis nous reviendrons à la même étape.' };
 }
 
 export function submitTutorResponse(session: InteractiveTutorSession, answer: string): InteractiveTutorSession {
@@ -66,12 +76,12 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
   }
   const numeric = normalized.replace(/\s*(unites?|dizaines?|centaines?)\.?$/, '').trim();
   const approach = /^(j['’]ajoute|ajouter) 10 unites en haut et (1|une) dizaine en bas\.?$/.test(normalized);
-  const correct = session.prerequisite ? numeric === '10' : session.step === 0 ? approach : numeric === stages[session.step].answer;
+  const correct = session.prerequisite ? numeric === preparationFor(session.step).answer : session.step === 0 ? approach : numeric === stages[session.step].answer;
   const misconception: InteractiveMisconception | undefined = correct ? undefined : session.step === 0 && /8\s*(moins|-)\s*5/.test(normalized) ? 'reversed-subtraction' : session.step === 0 && normalized.includes('commence par les dizaines') ? 'skipped-units' : session.step === 0 ? 'insufficient-evidence' : 'incorrect-arithmetic-fact';
   const attempts = [...session.attempts, { step: session.step, prerequisite: session.prerequisite, answer, isCorrect: correct, misconception }];
   const updated = { ...session, attempts, lastMisconception: misconception, canAdvance: false, transferAttempts: session.transferAttempts + (isTransferStage(session) && !session.prerequisite ? 1 : 0) };
   if (correct) {
-    if (session.prerequisite) return { ...updated, prerequisite: false, state: activeState(session), question: stages[session.step].question, feedback: 'Oui, 5 + 5 font 10. Reprenons la question avec cette idée.' };
+    if (session.prerequisite) return { ...updated, prerequisite: false, state: activeState(session), hintLevel: 0, question: stages[session.step].question, feedback: preparationFor(session.step).feedback };
     if (isTransferStage(session)) return { ...updated, state: 'feedback', canAdvance: true, completedSteps: [...new Set([...session.completedSteps, session.step])], feedback: stages[session.step].feedback };
     if (session.step === 0) return { ...updated, step: 1, state: 'awaiting-response', hintLevel: 0, question: stages[1].question, feedback: stages[0].feedback, criticalStepIndependent: session.attempts.length === 0 && session.hintLevel === 0 };
     const step = session.step + 1;
@@ -82,7 +92,7 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
     return { ...updated, state: 'correction-explanation', correction, correctionCheckAttempts: 0, feedback: correction.explanation };
   }
   const failures = attempts.filter(a => a.step === session.step && a.prerequisite === session.prerequisite && !a.isCorrect).length;
-  if (session.prerequisite && failures >= 2) return { ...updated, state: 'needs-support', feedback: 'Fais deux groupes de cinq objets avec un adulte. Comptez-les ensemble avant de reprendre.' };
+  if (session.prerequisite && failures >= 2) return { ...updated, state: 'needs-support', feedback: `Reprends ce petit calcul avec un adulte : ${preparationFor(session.step).question}` };
   if (!session.prerequisite && failures >= 3 && session.demonstratedSteps.includes(session.step)) {
     // One supported retry after the simpler exercise, then an explicit human-help exit.
     if (session.attempts.some(a => a.step === session.step && a.prerequisite && a.isCorrect)) return { ...updated, state: 'needs-support', feedback: 'Cette étape mérite un accompagnement. Reprends-la avec un adulte, sans recommencer le calcul.' };
@@ -90,7 +100,7 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
   }
   if (!session.prerequisite && failures >= 2) return demonstrateTutorStep(updated);
   const wrongFeedback = session.step === 10 ? 'Vérifie les dizaines : en bas, 5 dizaines et la dizaine ajoutée font 6.' : session.step === 11 ? 'Vérifie les centaines : la compensation ajoute 1 centaine en bas.' : session.step === 12 ? 'Relis les chiffres obtenus dans l’ordre des centaines, dizaines et unités.' : session.step === 9 ? 'Vérifie les unités : on calcule 16 − 7 après avoir ajouté 10 unités en haut.' : 'Pas encore. Vérifie la compensation, puis essaie encore.';
-  return { ...updated, state: 'feedback', feedback: session.prerequisite ? 'Compte cinq objets, puis cinq autres. Tu peux réessayer ou demander un indice.' : wrongFeedback };
+  return { ...updated, state: 'feedback', feedback: session.prerequisite ? `Pas encore. ${preparationFor(session.step).hints[0]} Tu peux réessayer ou demander un indice.` : wrongFeedback };
 }
 
 export function advanceTutorStep(session: InteractiveTutorSession): InteractiveTutorSession {
@@ -104,9 +114,9 @@ export function requestTutorHint(session: InteractiveTutorSession): InteractiveT
   if (terminal(session) || session.state === 'demonstrate') return session;
   const hintLevel = session.hintLevel + 1;
   const updated = { ...session, hintLevel, hintLevelsByStep: { ...session.hintLevelsByStep, [`${session.step}${session.prerequisite ? '-prerequisite' : ''}`]: hintLevel } };
-  if (hintLevel >= 4) return session.prerequisite ? { ...updated, state: 'needs-support', feedback: 'Compte deux groupes de cinq objets avec un adulte.' } : prerequisite(updated);
+  if (hintLevel >= 4) return session.prerequisite ? { ...updated, state: 'needs-support', feedback: `Reprends ce petit calcul avec un adulte : ${preparationFor(session.step).question}` } : prerequisite(updated);
   if (hintLevel === 3) return demonstrateTutorStep(updated);
-  return { ...updated, state: 'hint', assistanceLevel: Math.max(session.assistanceLevel, hintLevel) as 1 | 2 | 3 | 4, feedback: session.prerequisite ? (hintLevel === 1 ? 'Prépare deux groupes de cinq objets.' : 'Compte tous les objets des deux groupes, un par un.') : stages[session.step].hints[hintLevel - 1] };
+  return { ...updated, state: 'hint', assistanceLevel: Math.max(session.assistanceLevel, hintLevel) as 1 | 2 | 3 | 4, feedback: session.prerequisite ? preparationFor(session.step).hints[Math.min(hintLevel - 1, 1)] : stages[session.step].hints[hintLevel - 1] };
 }
 
 export function retryTutorQuestion(session: InteractiveTutorSession): InteractiveTutorSession {
