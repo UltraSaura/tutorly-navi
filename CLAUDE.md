@@ -129,13 +129,14 @@ All routes use React `lazy()` imports in `src/App.tsx`.
 
 ---
 
-## Question Types (9 total)
+## Question Types (12 total)
 
 All defined in `src/types/quiz-bank.ts` as a union type `Question`:
 
 ```typescript
 type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ |
-                OperationPoseeQ | SliderQuestion | MatchQuestion | FillExprQuestion
+                OperationPoseeQ | ColumnFillQ | SliderQuestion | MatchQuestion | FillExprQuestion |
+                FlashCardQ | EmptySpaceQ
 ```
 
 - `single` — one correct answer from 4 choices
@@ -144,9 +145,12 @@ type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ |
 - `ordering` — drag items into correct sequence
 - `visual` — pie chart fraction interaction or angle measurement
 - `operation-posee` — column arithmetic with manipulable digits
+- `column-fill` — fill missing cells in a written column calculation
 - `slider` — drag to a value on a range
 - `match` — connect left column to right column pairs
 - `fill-expr` — drag number chips into blank positions in a formula
+- `flash-card` — mental-calculation prompt with a typed numeric answer
+- `empty-space` — type the missing value into a single blank in a calculation
 
 **Correct answers are NEVER revealed on wrong submissions.** This is a confirmed product rule.
 
@@ -224,7 +228,7 @@ File: `supabase/functions/generate-lesson-content/index.ts`
 ## Current State (what's built and working)
 
 ### ✅ Working
-- Quiz system: `QuizOverlay` + `QuestionCard` with all 9 question types
+- Quiz system: `QuizOverlay` + `QuestionCard` with all 12 question types
 - S'exercer / Practice flow
 - Tuteur AI chat with StudyWhiz prompt
 - Explanation caching (useTwoCardTeaching reads from DB before calling AI)
