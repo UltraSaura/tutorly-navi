@@ -37,7 +37,7 @@ const stages = [
   { question: 'Lis les chiffres obtenus : 1 centaine, 7 dizaines et 7 unités. Quel est le résultat ?', answer: '177', feedback: 'Exact, 325 − 148 = 177. Essaie maintenant un calcul proche.', hints: ['Lis les centaines, puis les dizaines et les unités.', 'Assemble 100 + 70 + 7.'], demo: '170 + 7' },
   { question: 'Unités : 6 − 7 ne suffit pas. On ajoute 10 unités en haut et 1 dizaine en bas pour conserver la différence. Combien font 16 − 7 ?', answer: '9', feedback: 'Oui ! Il reste 9 unités.', hints: ['La compensation transforme 6 en 16 unités.', 'Calcule 16 − 7.'], demo: '16 - 7' },
   { question: 'La dizaine ajoutée en bas fait 5 + 1 = 6. On ajoute 10 dizaines en haut et 1 centaine en bas. Combien font 12 − 6 ?', answer: '6', feedback: 'Oui ! Il reste 6 dizaines.', hints: ['En bas, 5 dizaines et la retenue font 6 dizaines.', 'En haut, 2 dizaines deviennent 12. Calcule 12 − 6.'], demo: '12 - 6' },
-  { question: 'La centaine ajoutée en bas fait 1 + 1 = 2. Combien font 3 − 2 ?', answer: '1', feedback: 'Oui ! Il reste 1 centaine.', hints: ['La dizaine ajoutée en haut est compensée par une centaine en bas.', 'Calcule 3 − 2.'], demo: '3 - 2' },
+  { question: 'La centaine ajoutée en bas fait 1 + 1 = 2. Combien font 3 − 2 ?', answer: '1', feedback: 'Oui ! Il reste 1 centaine.', hints: ['Les 10 dizaines ajoutées en haut sont compensées par 1 centaine en bas.', 'Calcule 3 − 2.'], demo: '3 - 2' },
   { question: 'Assemble les chiffres des unités, dizaines et centaines. Quel est le résultat de 326 − 157 ?', answer: '169', feedback: 'Bravo ! 326 − 157 = 169. Tu as appliqué la compensation jusqu’au bout.', hints: ['Lis les chiffres obtenus de gauche à droite.', 'Tu as 1 centaine, 6 dizaines et 9 unités.'], demo: '100 + 60 + 9' },
 ] as const;
 
@@ -89,7 +89,7 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
     return prerequisite(updated);
   }
   if (!session.prerequisite && failures >= 2) return demonstrateTutorStep(updated);
-  const wrongFeedback = session.step === 10 ? 'Vérifie les dizaines : en bas, 5 dizaines et la dizaine ajoutée font 6.' : session.step === 11 ? 'Vérifie les centaines : la compensation ajoute 1 centaine en bas.' : session.step === 12 ? 'Relis les chiffres obtenus dans l’ordre des centaines, dizaines et unités.' : 'Pas encore. Vérifie la compensation, puis essaie encore.';
+  const wrongFeedback = session.step === 10 ? 'Vérifie les dizaines : en bas, 5 dizaines et la dizaine ajoutée font 6.' : session.step === 11 ? 'Vérifie les centaines : la compensation ajoute 1 centaine en bas.' : session.step === 12 ? 'Relis les chiffres obtenus dans l’ordre des centaines, dizaines et unités.' : session.step === 9 ? 'Vérifie les unités : on calcule 16 − 7 après avoir ajouté 10 unités en haut.' : 'Pas encore. Vérifie la compensation, puis essaie encore.';
   return { ...updated, state: 'feedback', feedback: session.prerequisite ? 'Compte cinq objets, puis cinq autres. Tu peux réessayer ou demander un indice.' : wrongFeedback };
 }
 
