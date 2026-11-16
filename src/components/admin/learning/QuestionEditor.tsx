@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, FlashCardQ, EmptySpaceQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ } from '@/types/quiz-bank';
 import type { SliderQuestion, MatchQuestion, FillExprQuestion } from '@/types/quiz-bank';
 import { buildColumnFillQuestion } from '@/lib/quiz/columnFillBuilder';
 
@@ -65,7 +65,13 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
     question && question.kind === 'numeric' ? (question as NumericQ).answerFormat || 'number' : 'number'
   );
   const [numericAnswer, setNumericAnswer] = useState<number>(
-    question && question.kind === 'numeric' ? (question as NumericQ).answer : 0
+    question && (question.kind === 'numeric' || question.kind === 'flash-card' || question.kind === 'empty-space') ? question.answer : 0
+  );
+  const [emptySpaceTemplate, setEmptySpaceTemplate] = useState(
+    question?.kind === 'empty-space' ? question.template : '7 × __ = 42'
+  );
+  const [emptySpaceBlankLabel, setEmptySpaceBlankLabel] = useState(
+    question?.kind === 'empty-space' ? question.blankLabel ?? '' : ''
   );
   const [timeHours, setTimeHours] = useState<number>(
     question?.kind === 'numeric' ? (question as NumericQ).timeAnswer?.hours ?? Math.floor((question as NumericQ).answer / 100) : 0
@@ -190,6 +196,12 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setTimeMinutes(numQ.timeAnswer?.minutes ?? numQ.answer % 100);
         setNumericAnswerUnit(numQ.answerUnit ?? '');
         setDragOptions(numQ.dragOptions ?? []);
+      } else if (question.kind === 'flash-card') {
+        setNumericAnswer(question.answer);
+      } else if (question.kind === 'empty-space') {
+        setEmptySpaceTemplate(question.template);
+        setNumericAnswer(question.answer);
+        setEmptySpaceBlankLabel(question.blankLabel ?? '');
       } else if (question.kind === 'ordering') {
         const ordQ = question as OrderingQ;
         setOrderingItems(ordQ.items);
@@ -234,6 +246,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setId(`q-${Date.now()}`);
       setChoices([{ id: 'c1', label: '', correct: false }, { id: 'c2', label: '', correct: false }]);
       setNumericAnswer(0);
+      setEmptySpaceTemplate('7 × __ = 42');
+      setEmptySpaceBlankLabel('');
       setNumericRange({});
       setAnswerFormat('number');
       setFractionNumerator(1);
@@ -347,6 +361,31 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         points,
         choices: validChoices,
       } as SingleQ | MultiQ;
+    } else if (kind === 'flash-card') {
+      if (!Number.isFinite(numericAnswer)) {
+        alert('Please enter a valid flash-card answer');
+        return;
+      }
+      questionData = { id, kind: 'flash-card', prompt, hint: hint || undefined, points, answer: numericAnswer } satisfies FlashCardQ;
+    } else if (kind === 'empty-space') {
+      if (emptySpaceTemplate.split('__').length !== 2) {
+        alert('The expression must contain exactly one blank, written as __');
+        return;
+      }
+      if (!Number.isFinite(numericAnswer)) {
+        alert('Please enter a valid answer for the blank');
+        return;
+      }
+      questionData = {
+        id,
+        kind: 'empty-space',
+        prompt,
+        hint: hint || undefined,
+        points,
+        template: emptySpaceTemplate,
+        answer: numericAnswer,
+        blankLabel: emptySpaceBlankLabel.trim() || undefined,
+      } satisfies EmptySpaceQ;
     } else if (kind === 'numeric') {
       if (answerFormat === 'fraction') {
         if (!fractionDenominator) {
@@ -516,6 +555,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="single">{ui("Single Choice")}</SelectItem>
                 <SelectItem value="multi">{ui("Multiple Choice")}</SelectItem>
                 <SelectItem value="numeric">{ui("Numeric Answer")}</SelectItem>
+                <SelectItem value="flash-card">{ui("Calcul mental — carte flash")}</SelectItem>
+                <SelectItem value="empty-space">{ui("Calcul mental — case vide")}</SelectItem>
                 <SelectItem value="ordering">{ui("Ordering")}</SelectItem>
                 <SelectItem value="visual">{ui("Visual")}</SelectItem>
                 <SelectItem value="operation-posee">{ui("Pose et calcule")}</SelectItem>
@@ -788,6 +829,34 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {kind === 'flash-card' && (
+            <div className="space-y-2 rounded-xl border border-[#9FE1CB] bg-[#F2FBF8] p-3">
+              <p className="text-sm text-muted-foreground">{ui("Présente une opération, puis laisse l’élève retrouver le résultat sans choix de réponse.")}</p>
+              <div>
+                <Label htmlFor="flash-card-answer">{ui("Correct Answer")}</Label>
+                <Input id="flash-card-answer" type="number" step="any" value={numericAnswer} onChange={e => setNumericAnswer(e.target.value === '' ? 0 : Number(e.target.value))} />
+              </div>
+            </div>
+          )}
+
+          {kind === 'empty-space' && (
+            <div className="space-y-3 rounded-xl border border-[#9FE1CB] bg-[#F2FBF8] p-3">
+              <div>
+                <Label htmlFor="empty-space-template">{ui("Expression (use __ for the blank)")}</Label>
+                <Input id="empty-space-template" value={emptySpaceTemplate} onChange={e => setEmptySpaceTemplate(e.target.value)} placeholder="7 × __ = 42" />
+                <p className="mt-1 text-xs text-muted-foreground">{ui("Use exactly one __ in the expression.")}</p>
+              </div>
+              <div>
+                <Label htmlFor="empty-space-answer">{ui("Correct Answer")}</Label>
+                <Input id="empty-space-answer" type="number" step="any" value={numericAnswer} onChange={e => setNumericAnswer(e.target.value === '' ? 0 : Number(e.target.value))} />
+              </div>
+              <div>
+                <Label htmlFor="empty-space-label">{ui("Blank accessibility label (optional)")}</Label>
+                <Input id="empty-space-label" value={emptySpaceBlankLabel} onChange={e => setEmptySpaceBlankLabel(e.target.value)} placeholder={ui("Missing factor")} />
+              </div>
             </div>
           )}
 
