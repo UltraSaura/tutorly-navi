@@ -38,6 +38,7 @@ describe('original demonstration followed by independent application', () => {
     expect(s.demonstrationUsed).toBe(false);
     expect(s.criticalStepIndependent).toBe(true);
     expect(s.attempts).toHaveLength(1);
+    expect(s.completedSteps).toContain(0);
   });
   it('guides the application through all four compensation stages', () => {
     let s = application();

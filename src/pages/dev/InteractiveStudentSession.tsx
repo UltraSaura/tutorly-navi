@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SubtractionVisualGuide } from '@/features/explanations/SubtractionVisualGuide';
 import { advanceTutorStep, continueAfterDemonstration, createInteractiveTutorSession, demonstrateCorrectionMethod, demonstrateTutorStep, isTransferStage, requestTutorHint, resumeWithSupport, retryTutorQuestion, submitTutorResponse } from '@/features/explanations/interactiveTutorSession';
 
 // Development-only parent: animation, narration and navigation belong to the original component.
@@ -27,6 +28,11 @@ export function InteractiveStudentSession({ grade }: { grade: string }) {
       </TabsList>
       <TabsContent value="teacher" data-testid="teacher-tab" className="mt-3">
         <p className="mb-3 font-semibold">{isTransferStage(session) && !demonstration ? 'Application : 326 − 157' : '325 − 148'}</p>
+        <div className="mb-3" aria-label="Progression de l’exercice">
+          <div className="mb-1 flex justify-between text-xs text-slate-600 dark:text-slate-300"><span>Étapes réussies</span><span data-testid="exercise-progress-count">{session.completedSteps.length} / 13</span></div>
+          <div role="progressbar" aria-label="Progression de l’exercice" aria-valuemin={0} aria-valuemax={13} aria-valuenow={session.completedSteps.length} className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"><div className="h-full rounded-full bg-teal-500 transition-[width]" style={{ width: `${Math.min(100, (session.completedSteps.length / 13) * 100)}%` }} /></div>
+        </div>
+        <SubtractionVisualGuide session={session} />
         {session.state === 'correction-explanation' && session.correction ? <div data-testid="pedagogical-correction" className="space-y-3">
           <h4 className="font-semibold">Pourquoi ?</h4><p>{session.correction.explanation}</p>
           <Button className="h-auto w-full whitespace-normal" onClick={() => setSession(demonstrateCorrectionMethod)}>Voir la méthode sur l’opération</Button>
@@ -36,7 +42,7 @@ export function InteractiveStudentSession({ grade }: { grade: string }) {
           <Button className="h-auto min-h-11 w-full whitespace-normal" onClick={() => setSession(continueAfterDemonstration)}>À moi d’essayer un autre calcul</Button>
         </div> : <>
           {session.feedback && !session.canAdvance && <p role="status" aria-live="polite" className="mb-3">{session.feedback}</p>}
-          {session.state === 'complete' ? <><h4 className="font-bold">Séance terminée</h4><p>Tu as appliqué la compensation à un nouveau calcul. La différence reste la même quand on ajoute la même quantité aux deux nombres.</p></> : session.state === 'needs-support' ? <><p>{session.question}</p><Button className="h-auto whitespace-normal" onClick={() => setSession(resumeWithSupport)}>Reprendre avec mon accompagnant</Button></> : session.canAdvance ? <div><p role="status">{session.feedback}</p><Button className="mt-3 min-h-11 w-full" onClick={() => setSession(advanceTutorStep)}>Suivant</Button></div> : <form onSubmit={event => { event.preventDefault(); submit(); }}>
+          {session.state === 'complete' ? <div data-testid="completion-screen" className="space-y-3 rounded-lg bg-teal-50 p-3 dark:bg-teal-950/30"><h4 className="font-bold">Exercice terminé !</h4><p>326 − 157 = <strong>169</strong>. Bravo : tu as suivi les colonnes et gardé la différence en compensant les deux nombres.</p><dl className="grid grid-cols-2 gap-2 text-sm"><div><dt className="text-slate-600 dark:text-slate-300">Étapes réussies</dt><dd className="font-semibold">{session.completedSteps.length} / 13</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Essais</dt><dd className="font-semibold">{session.attempts.length}</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Indices demandés</dt><dd className="font-semibold">{Object.values(session.hintLevelsByStep).reduce((sum, count) => sum + count, 0)}</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Points gagnés</dt><dd className="font-semibold">0 XP</dd></div></dl><p className="text-xs text-slate-600 dark:text-slate-300">Cette activité de pratique n’ajoute pas de XP : Tutorly attribue les XP selon les règles existantes des leçons et vidéos.</p><div className="grid gap-2 sm:grid-cols-2"><Button type="button" variant="outline" onClick={() => { setAnswer(''); setSession(createInteractiveTutorSession()); }}>Refaire le parcours</Button><Button type="button" onClick={() => { window.location.assign('/practice'); }}>Continuer à s’entraîner</Button></div></div> : session.state === 'needs-support' ? <><p>{session.question}</p><Button className="h-auto whitespace-normal" onClick={() => setSession(resumeWithSupport)}>Reprendre avec mon accompagnant</Button></> : session.canAdvance ? <div><p role="status">{session.feedback}</p><Button className="mt-3 min-h-11 w-full" onClick={() => setSession(advanceTutorStep)}>Suivant</Button></div> : <form onSubmit={event => { event.preventDefault(); submit(); }}>
             <h4 data-testid="active-question" className="font-semibold" aria-live="polite">{session.question}</h4>
             {session.step === 0 && <div className="mt-3 grid gap-2" role="group" aria-label="Réponses proposées">
               {['J’ajoute 10 unités en haut et 1 dizaine en bas', 'Je calcule 8 moins 5', 'Je commence par les dizaines'].map(choice => <Button key={choice} type="button" variant="outline" className="h-auto min-h-11 whitespace-normal text-left" onClick={() => setAnswer(choice)}>{choice}</Button>)}

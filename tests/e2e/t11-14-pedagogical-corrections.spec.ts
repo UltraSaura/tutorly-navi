@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const route = '/dev/stuwy-explain-v2';
-const evidenceDir = path.resolve('docs/qa/artifacts/t11.14');
+const evidenceDir = path.resolve('docs/qa/artifacts/t11.15');
 const transfer = [
   { answer: '9', question: '16 − 7', prerequisite: '14 − 6', prepare: '8' },
   { answer: '6', question: '12 − 6', prerequisite: '13 − 6', prepare: '7' },
@@ -251,6 +251,31 @@ test('Scenario J — compensation errors get targeted feedback and prerequisite 
   await screenshot(page, 'scenario-j-compensation-prerequisite');
   await submitAnswer(page, '16');
   await expect(s.getByTestId('active-question')).toContainText('16 − 7');
+});
+
+test('Scenario K — visual compensation follows the active column through completion', async ({ page }) => {
+  await reachTransferWithoutAnimation(page);
+  const s = session(page);
+  const guide = s.getByTestId('subtraction-visual-guide');
+  await expect(guide).toContainText('326 − 157');
+  await expect(guide).toContainText('La compensation des unités');
+  await expect(guide).toContainText('16');
+  await screenshot(page, 'visual-units-compensation');
+  await advanceCorrectTransferStage(page, '9');
+  await expect(guide).toContainText('12');
+  await expect(guide).toContainText('9');
+  await screenshot(page, 'visual-tens-compensation');
+  await advanceCorrectTransferStage(page, '6');
+  await expect(guide).toContainText('3');
+  await expect(guide).toContainText('6');
+  await screenshot(page, 'visual-hundreds');
+  await advanceCorrectTransferStage(page, '1');
+  await screenshot(page, 'visual-final-answer-question');
+  await submitAnswer(page, '169');
+  await s.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await expect(s.getByTestId('completion-screen')).toContainText('Points gagnés');
+  await expect(s.getByTestId('exercise-progress-count')).toHaveText('13 / 13');
+  await screenshot(page, 'completion-summary');
 });
 
 for (const viewport of [

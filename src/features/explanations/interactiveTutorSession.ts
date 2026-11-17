@@ -116,10 +116,13 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
   const errorKind: TutorErrorKind | undefined = correct ? undefined : compensationMistake(session.step, numeric) ? 'compensation' : 'arithmetic';
   const misconception: InteractiveMisconception | undefined = correct ? undefined : session.step === 0 && /8\s*(moins|-)\s*5/.test(normalized) ? 'reversed-subtraction' : session.step === 0 && normalized.includes('commence par les dizaines') ? 'skipped-units' : session.step === 0 ? 'insufficient-evidence' : errorKind === 'compensation' ? 'compensation-error' : 'incorrect-arithmetic-fact';
   const attempts = [...session.attempts, { step: session.step, prerequisite: session.prerequisite, answer, isCorrect: correct, misconception, errorKind }];
-  const updated = { ...session, attempts, lastMisconception: misconception, ...(errorKind ? { lastErrorKind: errorKind } : {}), canAdvance: false, transferAttempts: session.transferAttempts + (isTransferStage(session) && !session.prerequisite ? 1 : 0) };
+  const completedSteps = correct && !session.prerequisite
+    ? [...new Set([...session.completedSteps, session.step])]
+    : session.completedSteps;
+  const updated = { ...session, attempts, completedSteps, lastMisconception: misconception, ...(errorKind ? { lastErrorKind: errorKind } : {}), canAdvance: false, transferAttempts: session.transferAttempts + (isTransferStage(session) && !session.prerequisite ? 1 : 0) };
   if (correct) {
     if (session.prerequisite) return { ...updated, prerequisite: false, state: activeState(session), hintLevel: 0, question: stages[session.step].question, feedback: preparationFor(session.step, session.lastErrorKind).feedback };
-    if (isTransferStage(session)) return { ...updated, state: 'feedback', canAdvance: true, completedSteps: [...new Set([...session.completedSteps, session.step])], feedback: stages[session.step].feedback };
+    if (isTransferStage(session)) return { ...updated, state: 'feedback', canAdvance: true, feedback: stages[session.step].feedback };
     if (session.step === 0) return { ...updated, step: 1, state: 'awaiting-response', hintLevel: 0, question: stages[1].question, feedback: stages[0].feedback, criticalStepIndependent: session.attempts.length === 0 && session.hintLevel === 0 };
     const step = session.step + 1;
     return { ...updated, step, state: step === 9 ? 'transfer' : 'awaiting-response', hintLevel: 0, question: stages[step].question, feedback: stages[session.step].feedback, criticalStepIndependent: session.criticalStepIndependent || (session.step === 0 && session.attempts.length === 0 && session.hintLevel === 0 && !session.demonstrationUsed) };
