@@ -117,7 +117,7 @@ test('Scenario B — reversed subtraction correction and retry at every applicat
     await expect(s.getByRole('status')).toBeVisible();
     await s.getByRole('button', { name: 'Suivant', exact: true }).click();
   }
-  await expect(s.getByText('Séance terminée')).toBeVisible();
+  await expect(s.getByTestId('completion-screen')).toContainText('Exercice terminé');
 });
 
 test('Scenario C — successive hints become more specific without revealing the answer', async ({ page }) => {
@@ -167,7 +167,7 @@ test('Scenario D — repeated errors trigger each matching prerequisite and resu
     await expect(s.getByRole('button', { name: 'Suivant', exact: true })).toBeEnabled();
     await s.getByRole('button', { name: 'Suivant', exact: true }).click();
   }
-  await expect(s.getByText('Séance terminée')).toBeVisible();
+  await expect(s.getByTestId('completion-screen')).toContainText('Exercice terminé');
 });
 
 test('Scenario E — complete 326 − 157 with 9 → 6 → 1 → 169', async ({ page }) => {
@@ -184,7 +184,7 @@ test('Scenario E — complete 326 − 157 with 9 → 6 → 1 → 169', async ({ 
     await screenshot(page, `scenario-e-${['units', 'tens', 'hundreds', 'final'][index]}`);
     await s.getByRole('button', { name: 'Suivant', exact: true }).click();
   }
-  await expect(s.getByText('Séance terminée')).toBeVisible();
+  await expect(s.getByTestId('completion-screen')).toContainText('Exercice terminé');
   await screenshot(page, 'scenario-e-completed');
 });
 
@@ -276,6 +276,22 @@ test('Scenario K — visual compensation follows the active column through compl
   await expect(s.getByTestId('completion-screen')).toContainText('Points gagnés');
   await expect(s.getByTestId('exercise-progress-count')).toHaveText('13 / 13');
   await screenshot(page, 'completion-summary');
+});
+
+test('Scenario L — the existing Practice routes open and return in the Tutorly app', async ({ page }) => {
+  const practiceResponse = await page.goto('/practice');
+  expect(practiceResponse?.status()).toBe(200);
+  await expect(page.getByRole('heading', { name: 'S’entraîner' })).toBeVisible();
+  await screenshot(page, 'practice-home-navigation', page.locator('main'));
+
+  const subjectResponse = await page.goto('/practice/mathematiques');
+  expect(subjectResponse?.status()).toBe(200);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await screenshot(page, 'practice-maths-navigation', page.locator('main'));
+
+  await page.goto('/practice');
+  await expect(page.getByRole('heading', { name: 'S’entraîner' })).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe('/practice');
 });
 
 for (const viewport of [

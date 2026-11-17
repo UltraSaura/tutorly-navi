@@ -1,25 +1,39 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SubtractionVisualGuide } from '@/features/explanations/SubtractionVisualGuide';
 import { advanceTutorStep, continueAfterDemonstration, createInteractiveTutorSession, demonstrateCorrectionMethod, demonstrateTutorStep, isTransferStage, requestTutorHint, resumeWithSupport, retryTutorQuestion, submitTutorResponse } from '@/features/explanations/interactiveTutorSession';
+import { restoreStudentSession, saveStudentSession, type StudentSessionTab } from '@/features/explanations/studentSessionPersistence';
 
-// Development-only parent: animation, narration and navigation belong to the original component.
-export function InteractiveStudentSession({ grade }: { grade: string }) {
-  const [session, setSession] = useState(createInteractiveTutorSession);
-  const [answer, setAnswer] = useState('');
-  const [tab, setTab] = useState<'teacher' | 'animation'>('teacher');
+export function InteractiveStudentSession({ grade, storageKey, practiceHref, lessonHref, videoHref }: {
+  grade: string;
+  storageKey?: string;
+  practiceHref?: string;
+  lessonHref?: string;
+  videoHref?: string;
+}) {
+  const [initial] = useState(() => typeof window === 'undefined' ? null : restoreStudentSession(window.sessionStorage, storageKey));
+  const [session, setSession] = useState(initial?.session ?? createInteractiveTutorSession);
+  const [answer, setAnswer] = useState(initial?.answer ?? '');
+  const [tab, setTab] = useState<StudentSessionTab>(initial?.tab ?? 'teacher');
+  const answerEffectReady = useRef(false);
   useEffect(() => {
     if (window.location.hash === '#student-session') document.getElementById('student-session')?.scrollIntoView();
   }, []);
-  useEffect(() => { setAnswer(''); }, [session.step, session.prerequisite]);
+  useEffect(() => {
+    if (!answerEffectReady.current) { answerEffectReady.current = true; return; }
+    setAnswer('');
+  }, [session.step, session.prerequisite]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') saveStudentSession(window.sessionStorage, storageKey, session, answer, tab);
+  }, [storageKey, session, answer, tab]);
   const demonstration = session.state === 'demonstrate';
   const submit = () => { setSession(current => submitTutorResponse(current, answer)); setAnswer(''); };
   return <section id="student-session" data-testid="interactive-student-session" className="min-w-0 rounded-xl border border-teal-200 bg-white p-3 dark:bg-slate-950">
     <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <h3 className="font-bold">À toi de jouer · {grade}</h3>
-      <Button variant="ghost" size="sm" onClick={() => { setAnswer(''); setSession(createInteractiveTutorSession()); }}>Nouvel exercice</Button>
+      <Button variant="ghost" size="sm" onClick={() => { setAnswer(''); setSession(createInteractiveTutorSession()); if (storageKey) window.sessionStorage.removeItem(storageKey); }}>Nouvel exercice</Button>
     </header>
     <Tabs value={tab} onValueChange={value => setTab(value as 'teacher' | 'animation')} className="w-full">
       <TabsList className="grid h-auto w-full grid-cols-2">
@@ -42,7 +56,7 @@ export function InteractiveStudentSession({ grade }: { grade: string }) {
           <Button className="h-auto min-h-11 w-full whitespace-normal" onClick={() => setSession(continueAfterDemonstration)}>À moi d’essayer un autre calcul</Button>
         </div> : <>
           {session.feedback && !session.canAdvance && <p role="status" aria-live="polite" className="mb-3">{session.feedback}</p>}
-          {session.state === 'complete' ? <div data-testid="completion-screen" className="space-y-3 rounded-lg bg-teal-50 p-3 dark:bg-teal-950/30"><h4 className="font-bold">Exercice terminé !</h4><p>326 − 157 = <strong>169</strong>. Bravo : tu as suivi les colonnes et gardé la différence en compensant les deux nombres.</p><dl className="grid grid-cols-2 gap-2 text-sm"><div><dt className="text-slate-600 dark:text-slate-300">Étapes réussies</dt><dd className="font-semibold">{session.completedSteps.length} / 13</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Essais</dt><dd className="font-semibold">{session.attempts.length}</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Indices demandés</dt><dd className="font-semibold">{Object.values(session.hintLevelsByStep).reduce((sum, count) => sum + count, 0)}</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Points gagnés</dt><dd className="font-semibold">0 XP</dd></div></dl><p className="text-xs text-slate-600 dark:text-slate-300">Cette activité de pratique n’ajoute pas de XP : Tutorly attribue les XP selon les règles existantes des leçons et vidéos.</p><div className="grid gap-2 sm:grid-cols-2"><Button type="button" variant="outline" onClick={() => { setAnswer(''); setSession(createInteractiveTutorSession()); }}>Refaire le parcours</Button><Button type="button" onClick={() => { window.location.assign('/practice'); }}>Continuer à s’entraîner</Button></div></div> : session.state === 'needs-support' ? <><p>{session.question}</p><Button className="h-auto whitespace-normal" onClick={() => setSession(resumeWithSupport)}>Reprendre avec mon accompagnant</Button></> : session.canAdvance ? <div><p role="status">{session.feedback}</p><Button className="mt-3 min-h-11 w-full" onClick={() => setSession(advanceTutorStep)}>Suivant</Button></div> : <form onSubmit={event => { event.preventDefault(); submit(); }}>
+          {session.state === 'complete' ? <div data-testid="completion-screen" className="space-y-3 rounded-lg bg-teal-50 p-3 dark:bg-teal-950/30"><h4 className="font-bold">Exercice terminé !</h4><p>326 − 157 = <strong>169</strong>. Bravo : tu as suivi les colonnes et gardé la différence en compensant les deux nombres.</p><dl className="grid grid-cols-2 gap-2 text-sm"><div><dt className="text-slate-600 dark:text-slate-300">Étapes réussies</dt><dd className="font-semibold">{session.completedSteps.length} / 13</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Essais</dt><dd className="font-semibold">{session.attempts.length}</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Indices demandés</dt><dd className="font-semibold">{Object.values(session.hintLevelsByStep).reduce((sum, count) => sum + count, 0)}</dd></div><div><dt className="text-slate-600 dark:text-slate-300">Points gagnés</dt><dd className="font-semibold">0 XP</dd></div></dl><p className="text-xs text-slate-600 dark:text-slate-300">Cette activité de pratique n’ajoute pas de XP : Tutorly attribue les XP selon les règles existantes des leçons et vidéos.</p><div className="grid gap-2 sm:grid-cols-2"><Button type="button" variant="outline" onClick={() => { setAnswer(''); setSession(createInteractiveTutorSession()); if (storageKey) window.sessionStorage.removeItem(storageKey); }}>Refaire le parcours</Button>{practiceHref ? <a className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground" href={practiceHref}>Faire un autre exercice</a> : <a className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground" href="/practice">Continuer à s’entraîner</a>}{lessonHref && <a className="inline-flex min-h-11 items-center justify-center rounded-md border px-4 py-2 text-center text-sm font-medium" href={lessonHref}>Ouvrir la leçon associée</a>}{videoHref && <a className="inline-flex min-h-11 items-center justify-center rounded-md border px-4 py-2 text-center text-sm font-medium" href={videoHref}>Regarder la vidéo associée</a>}</div></div> : session.state === 'needs-support' ? <><p>{session.question}</p><Button className="h-auto whitespace-normal" onClick={() => setSession(resumeWithSupport)}>Reprendre avec mon accompagnant</Button></> : session.canAdvance ? <div><p role="status">{session.feedback}</p><Button className="mt-3 min-h-11 w-full" onClick={() => setSession(advanceTutorStep)}>Suivant</Button></div> : <form onSubmit={event => { event.preventDefault(); submit(); }}>
             <h4 data-testid="active-question" className="font-semibold" aria-live="polite">{session.question}</h4>
             {session.step === 0 && <div className="mt-3 grid gap-2" role="group" aria-label="Réponses proposées">
               {['J’ajoute 10 unités en haut et 1 dizaine en bas', 'Je calcule 8 moins 5', 'Je commence par les dizaines'].map(choice => <Button key={choice} type="button" variant="outline" className="h-auto min-h-11 whitespace-normal text-left" onClick={() => setAnswer(choice)}>{choice}</Button>)}

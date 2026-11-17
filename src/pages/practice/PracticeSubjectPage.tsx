@@ -27,11 +27,51 @@ import { supabase } from '@/integrations/supabase/client';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { useLearner } from '@/context/FamilyProfileContext';
 import { useExamPapers, useTrainingItems } from '@/hooks/useExamImport';
+import { useAllBanks } from '@/hooks/useQuizBank';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
+import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
 import type { PracticeDomainGroup, PracticeTopic } from '@/hooks/usePracticeTopics';
 import { resolveExamDisciplinesForSubjectSlug } from '@/utils/examSubjectMapping';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
+import { InteractiveStudentSession } from '@/features/explanations/InteractiveStudentSession';
+import { findPracticeSubtractionTopic } from '@/features/explanations/practiceStuwyAvailability';
+
+function PracticeStuwyPanel({ topic, userId, subjectSlug, grade, open, lessonHref, videoHref, onStart, onExit }: {
+  topic: PracticeTopic;
+  userId: string;
+  subjectSlug: string;
+  grade: string;
+  open: boolean;
+  lessonHref?: string;
+  videoHref?: string;
+  onStart: () => void;
+  onExit: () => void;
+}) {
+  const banksQuery = useAllBanks(topic.id, '', [], userId, 'practice');
+  const availableBank = banksQuery.data?.banks.find((bank) => bank.topicId === topic.id && bank.isUnlocked);
+  if (banksQuery.isLoading) return open ? <Skeleton className="h-56 w-full rounded-xl" /> : null;
+  if (!availableBank) return open ? <Card role="status"><CardContent className="p-4">Cette aide guidée n’est pas disponible pour ce parcours. Le contenu de Practice n’a pas changé.</CardContent></Card> : null;
+
+  if (!open) return <section className="rounded-2xl border-2 p-4" style={{ background: '#F2FBF8', borderColor: '#12C6A0' }} data-testid="practice-stuwy-launch">
+    <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#087F68' }}>Aide guidée · {grade}</p>
+    <h2 className="mt-1 text-lg font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>Soustractions avec compensation</h2>
+    <p className="mt-1 text-sm" style={{ color: '#436B65' }}>Avance colonne par colonne. Tes réponses restent enregistrées pendant cette session.</p>
+    <Button className="mt-3 min-h-11 w-full sm:w-auto" onClick={onStart}>Commencer l’aide guidée</Button>
+  </section>;
+
+  return <section className="space-y-3" data-testid="practice-stuwy-session">
+    <Button type="button" variant="outline" className="min-h-11" onClick={onExit}><ArrowLeft className="mr-2 h-4 w-4" />Retour aux compétences</Button>
+    <InteractiveStudentSession
+      key={`${userId}:${topic.id}`}
+      grade={grade}
+      storageKey={`tutorly:stuwy-practice:${userId}:${topic.id}`}
+      practiceHref={practiceTopicPath(subjectSlug, availableBank.bankId)}
+      lessonHref={lessonHref}
+      videoHref={videoHref}
+    />
+  </section>;
+}
 
 type TopicState = 'mastered' | 'in_progress' | 'not_started';
 
@@ -128,11 +168,12 @@ export default function PracticeSubjectPage() {
   const ui = useInterfaceTranslation();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { subject } = useParams<{ subject: string }>();
   const { user } = useLearner();
   const activeSchoolLevel = useActiveSchoolLevel();
   const { data: learningSubjects = [] } = useLearningSubjects();
+  const subjectDashboard = useSubjectDashboard(subject ?? '');
 
   const subjectSlug = subject ?? '';
   const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
@@ -162,7 +203,7 @@ export default function PracticeSubjectPage() {
     queryFn: async (): Promise<{ id: string; title: string; school_levels: string[] | null }[]> => {
       if (!subjectQuery.data?.id) return [];
 
-      const { data, error: banksError } = await (supabase as any)
+      const { data, error: banksError } = await supabase
         .from('quiz_banks')
         .select('id, title, school_levels')
         .eq('subject_id', subjectQuery.data.id)
@@ -170,7 +211,7 @@ export default function PracticeSubjectPage() {
         .limit(50);
 
       if (banksError) throw banksError;
-      return ((data ?? []) as any[]).filter((bank) => bankMatchesLevel(bank.school_levels, activeLevel));
+      return (data ?? []).filter((bank) => bankMatchesLevel(bank.school_levels, activeLevel));
     },
     enabled: Boolean(subjectQuery.data?.id && activeLevel),
   });
@@ -303,6 +344,29 @@ export default function PracticeSubjectPage() {
     [enrichedDomains],
   );
 
+  const stuwyTopic = useMemo(() => findPracticeSubtractionTopic(
+    subjectSlug,
+    activeSchoolLevel.activeLevel,
+    flatTopics.map(({ topic }) => topic),
+    new Set(topicBankMap.keys()),
+  ), [subjectSlug, activeSchoolLevel.activeLevel, flatTopics, topicBankMap]);
+  const selectedStuwyTopicId = searchParams.get('stuwyTopic');
+  const selectedStuwyTopic = stuwyTopic?.id === selectedStuwyTopicId ? stuwyTopic : null;
+  const selectedTopicResources = useMemo(
+    () => subjectDashboard.data?.categories.flatMap((category) => category.topics ?? []).find((topic) => topic.id === selectedStuwyTopic?.id) ?? null,
+    [subjectDashboard.data, selectedStuwyTopic?.id],
+  );
+  const relatedVideoQuery = useQuery({
+    queryKey: ['practice-stuwy-related-video', selectedStuwyTopic?.id],
+    queryFn: async (): Promise<{ id: string } | null> => {
+      if (!selectedStuwyTopic) return null;
+      const { data, error } = await supabase.from('videos').select('id').eq('topic_id', selectedStuwyTopic.id).eq('is_active', true).order('order_index').limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: Boolean(selectedStuwyTopic?.id),
+  });
+
   const totalTopics = flatTopics.length;
   const masteredTopics = flatTopics.filter(({ topic }) => topicMastery[topic.id]?.state === 'mastered').length;
   const masteryPercent = totalTopics > 0 ? Math.round((masteredTopics / totalTopics) * 100) : 0;
@@ -416,6 +480,18 @@ export default function PracticeSubjectPage() {
       </div>
 
       <div className="mx-auto w-full max-w-3xl space-y-5 px-4 py-5 sm:px-6">
+        {stuwyTopic && user?.id && <PracticeStuwyPanel
+          topic={stuwyTopic}
+          userId={user.id}
+          subjectSlug={subjectSlug}
+          grade={activeSchoolLevel.activeLevel ?? 'CM1'}
+          open={Boolean(selectedStuwyTopic)}
+          lessonHref={selectedTopicResources?.lesson_content && selectedTopicResources.slug ? `/learning/${encodeURIComponent(subjectSlug)}/${encodeURIComponent(selectedTopicResources.slug)}` : undefined}
+          videoHref={relatedVideoQuery.data?.id ? `/learning/video/${encodeURIComponent(relatedVideoQuery.data.id)}` : undefined}
+          onStart={() => setSearchParams((current) => { const next = new URLSearchParams(current); next.set('stuwyTopic', stuwyTopic.id); return next; })}
+          onExit={() => setSearchParams((current) => { const next = new URLSearchParams(current); next.delete('stuwyTopic'); return next; })}
+        />}
+        {!selectedStuwyTopic && <>
         {totalTopics > 0 && (
           <div>
             <div className="mb-1.5 flex justify-between text-xs" style={{ color: '#667085' }}>
@@ -589,6 +665,7 @@ export default function PracticeSubjectPage() {
             </div>
           </div>
         )}
+        </>}
       </div>
     </div>
   );

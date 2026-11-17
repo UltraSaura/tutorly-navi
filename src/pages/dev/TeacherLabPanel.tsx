@@ -6,7 +6,7 @@ import { CleanWrittenOperation } from '@/components/math/CleanWrittenOperation';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { buildLabSolution } from '@/features/explanations/stuwyExplainLab';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
-import { InteractiveStudentSession } from './InteractiveStudentSession';
+import { InteractiveStudentSession } from '@/features/explanations/InteractiveStudentSession';
 import {
   buildTeacherDecision,
   transitionTeacherDecision,
