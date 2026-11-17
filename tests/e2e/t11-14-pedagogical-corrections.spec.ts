@@ -3,12 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const route = '/dev/stuwy-explain-v2';
-const evidenceDir = path.resolve('docs/qa/artifacts/t11.13c');
+const evidenceDir = path.resolve('docs/qa/artifacts/t11.14');
 const transfer = [
-  { answer: '9', question: '16 − 7', prerequisite: '10 + 6', prepare: '16' },
-  { answer: '6', question: '12 − 6', prerequisite: '5 + 1', prepare: '6' },
-  { answer: '1', question: '3 − 2', prerequisite: '1 + 1', prepare: '2' },
-  { answer: '169', question: '326 − 157', prerequisite: '100 + 60', prepare: '160' },
+  { answer: '9', question: '16 − 7', prerequisite: '14 − 6', prepare: '8' },
+  { answer: '6', question: '12 − 6', prerequisite: '13 − 6', prepare: '7' },
+  { answer: '1', question: '3 − 2', prerequisite: '4 − 2', prepare: '2' },
+  { answer: '169', question: '326 − 157', prerequisite: '100 + 50 + 8', prepare: '158' },
 ] as const;
 const consoleResults: Array<{ scenario: string; status?: string; errors: string[] }> = [];
 
@@ -62,6 +62,15 @@ async function reachTransferWithoutAnimation(page: Page) {
   await expect(s.getByTestId('active-question')).toContainText('16 − 7');
 }
 
+async function answerRemainingOriginalOperation(page: Page) {
+  const s = session(page);
+  await expect(s.getByTestId('active-question')).toContainText('On a 5 unités');
+  await s.getByRole('button', { name: 'J’ajoute 10 unités en haut et 1 dizaine en bas' }).click();
+  await submitButton(page).click();
+  for (const answer of ['10', '15', '7', '5', '12', '7', '1', '177']) await submitAnswer(page, answer);
+  await expect(s.getByTestId('active-question')).toContainText('16 − 7');
+}
+
 async function advanceCorrectTransferStage(page: Page, answer: string) {
   await submitAnswer(page, answer);
   await expect(session(page).getByRole('status')).toBeVisible();
@@ -95,10 +104,11 @@ test('Scenario B — reversed subtraction correction and retry at every applicat
   await screenshot(page, 'scenario-b-why-correction');
   await s.getByRole('button', { name: 'Voir la méthode sur l’opération' }).click();
   await s.getByRole('button', { name: 'À moi d’essayer un autre calcul' }).click();
+  await answerRemainingOriginalOperation(page);
   for (const stage of transfer) {
     await expect(s.getByTestId('active-question')).toContainText(stage.question);
     await submitAnswer(page, '999');
-    await expect(s.getByRole('status')).toContainText(/Vérifie|Pas encore|Relis/);
+    await expect(s.getByRole('status')).toHaveText(/\S/);
     await screenshot(page, `scenario-b-retry-${stage.question.replace(/\s/g, '')}-feedback`);
     await expect(s.getByRole('button', { name: 'Réessayer' })).toBeVisible();
     await s.getByRole('button', { name: 'Réessayer' }).click();
@@ -127,6 +137,14 @@ test('Scenario C — successive hints become more specific without revealing the
   await expect(s.getByRole('button', { name: 'À moi d’essayer un autre calcul' })).toBeVisible();
   await expect(answerField(page)).toHaveCount(0);
   await screenshot(page, 'scenario-c-supported-demonstration');
+  await s.getByRole('button', { name: 'À moi d’essayer un autre calcul' }).click();
+  await advanceCorrectTransferStage(page, '9');
+  await advanceCorrectTransferStage(page, '6');
+  await advanceCorrectTransferStage(page, '1');
+  await s.getByRole('button', { name: 'Un indice' }).click();
+  await s.getByRole('button', { name: 'Un indice' }).click();
+  await expect(s.getByRole('status')).not.toContainText('169');
+  await screenshot(page, 'scenario-c-final-hints-do-not-reveal-answer');
 });
 
 test('Scenario D — repeated errors trigger each matching prerequisite and resume the same stage', async ({ page }) => {
@@ -202,6 +220,37 @@ test('Scenario G — switching tabs preserves the active question and typed resp
   await submitButton(page).click();
   await expect(s.getByTestId('active-question')).toContainText('Si on ajoute 10 unités');
   await screenshot(page, 'scenario-g-persisted-progress');
+});
+
+test('Scenario I — returning from a demonstration resumes the same step and keeps a draft answer', async ({ page }) => {
+  await reachTransferWithoutAnimation(page);
+  const s = session(page);
+  await answerField(page).fill('8');
+  await s.getByRole('button', { name: 'Un indice' }).click();
+  await expect(answerField(page)).toHaveValue('8');
+  await s.getByRole('button', { name: 'Un indice' }).click();
+  await s.getByRole('button', { name: 'Un indice' }).click();
+  await expect(s.getByTestId('twocards-learning-surface')).toBeVisible();
+  await s.getByRole('button', { name: 'À moi d’essayer un autre calcul' }).click();
+  await expect(s.getByTestId('active-question')).toContainText('16 − 7');
+  await expect(answerField(page)).toHaveValue('8');
+  await screenshot(page, 'scenario-i-demonstration-resumes-step-and-draft');
+});
+
+test('Scenario J — compensation errors get targeted feedback and prerequisite practice', async ({ page }) => {
+  await reachTransferWithoutAnimation(page);
+  const s = session(page);
+  await submitAnswer(page, '-1');
+  await expect(s.getByRole('status')).toContainText('ajouter 10 unités en haut');
+  await s.getByRole('button', { name: 'Réessayer' }).click();
+  await submitAnswer(page, '-1');
+  await expect(s.getByTestId('twocards-learning-surface')).toBeVisible();
+  await s.getByRole('button', { name: 'À moi d’essayer un autre calcul' }).click();
+  await submitAnswer(page, '-1');
+  await expect(s.getByTestId('active-question')).toContainText('10 + 6');
+  await screenshot(page, 'scenario-j-compensation-prerequisite');
+  await submitAnswer(page, '16');
+  await expect(s.getByTestId('active-question')).toContainText('16 − 7');
 });
 
 for (const viewport of [

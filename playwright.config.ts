@@ -6,7 +6,7 @@ const baseURL = 'http://127.0.0.1:4174';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: '**/t11-13c-browser-validation.spec.ts',
+  testMatch: '**/t11-14-pedagogical-corrections.spec.ts',
   fullyParallel: false,
   workers: 1,
   retries: 0,

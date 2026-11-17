@@ -1,5 +1,6 @@
 export type InteractiveTutorState = 'awaiting-response' | 'feedback' | 'hint' | 'demonstrate' | 'correction-explanation' | 'correction-check' | 'transfer' | 'complete' | 'needs-support';
-export type InteractiveMisconception = 'reversed-subtraction' | 'incorrect-arithmetic-fact' | 'skipped-units' | 'insufficient-evidence';
+export type InteractiveMisconception = 'reversed-subtraction' | 'incorrect-arithmetic-fact' | 'compensation-error' | 'skipped-units' | 'insufficient-evidence';
+export type TutorErrorKind = 'compensation' | 'arithmetic';
 import { createPedagogicalCorrection, understandsCorrection, type PedagogicalCorrection } from './pedagogicalCorrection';
 
 // Stage is independent of presentation state: hints and demonstrations cannot lose the question.
@@ -7,10 +8,11 @@ export interface InteractiveTutorSession {
   state: InteractiveTutorState;
   step: number;
   hintLevel: number;
-  attempts: Array<{ step: number; prerequisite: boolean; answer: string; isCorrect: boolean; misconception?: InteractiveMisconception }>;
+  attempts: Array<{ step: number; prerequisite: boolean; answer: string; isCorrect: boolean; misconception?: InteractiveMisconception; errorKind?: TutorErrorKind }>;
   question: string;
   feedback: string;
   lastMisconception?: InteractiveMisconception;
+  lastErrorKind?: TutorErrorKind;
   assistanceLevel: 0 | 1 | 2 | 3 | 4;
   hintLevelsByStep: Record<string, number>;
   demonstrationUsed: boolean;
@@ -21,6 +23,8 @@ export interface InteractiveTutorSession {
   correction?: PedagogicalCorrection;
   correctionCheckAttempts: number;
   correctionDemo: boolean;
+  returnState?: InteractiveTutorState;
+  returnFeedback?: string;
   canAdvance: boolean;
   completedSteps: number[];
 }
@@ -38,7 +42,7 @@ const stages = [
   { question: 'Unités : 6 − 7 ne suffit pas. On ajoute 10 unités en haut et 1 dizaine en bas pour conserver la différence. Combien font 16 − 7 ?', answer: '9', feedback: 'Oui ! Il reste 9 unités.', hints: ['La compensation transforme 6 en 16 unités.', 'Calcule 16 − 7.'], demo: '16 - 7' },
   { question: 'La dizaine ajoutée en bas fait 5 + 1 = 6. On ajoute 10 dizaines en haut et 1 centaine en bas. Combien font 12 − 6 ?', answer: '6', feedback: 'Oui ! Il reste 6 dizaines.', hints: ['En bas, 5 dizaines et la retenue font 6 dizaines.', 'En haut, 2 dizaines deviennent 12. Calcule 12 − 6.'], demo: '12 - 6' },
   { question: 'La centaine ajoutée en bas fait 1 + 1 = 2. Combien font 3 − 2 ?', answer: '1', feedback: 'Oui ! Il reste 1 centaine.', hints: ['Les 10 dizaines ajoutées en haut sont compensées par 1 centaine en bas.', 'Calcule 3 − 2.'], demo: '3 - 2' },
-  { question: 'Assemble les chiffres des unités, dizaines et centaines. Quel est le résultat de 326 − 157 ?', answer: '169', feedback: 'Bravo ! 326 − 157 = 169. Tu as appliqué la compensation jusqu’au bout.', hints: ['Lis les chiffres obtenus de gauche à droite.', 'Tu as 1 centaine, 6 dizaines et 9 unités.'], demo: '100 + 60 + 9' },
+  { question: 'Assemble les chiffres des unités, dizaines et centaines. Quel est le résultat de 326 − 157 ?', answer: '169', feedback: 'Bravo ! 326 − 157 = 169. Tu as appliqué la compensation jusqu’au bout.', hints: ['Lis les chiffres obtenus, puis repère les centaines, les dizaines et les unités.', 'Place chaque chiffre dans sa colonne avant d’assembler le résultat.'], demo: '100 + 60 + 9' },
 ] as const;
 
 export const regroupingPrompts = stages;
@@ -52,18 +56,50 @@ export function createInteractiveTutorSession(): InteractiveTutorSession {
   return { state: 'awaiting-response', step: 0, hintLevel: 0, attempts: [], question: stages[0].question, feedback: '', assistanceLevel: 0, hintLevelsByStep: {}, demonstrationUsed: false, demonstratedSteps: [], criticalStepIndependent: false, transferAttempts: 0, prerequisite: false, correctionCheckAttempts: 0, correctionDemo: false, canAdvance: false, completedSteps: [] };
 }
 
-const preparationByStep: Record<number, { question: string; answer: string; feedback: string; hints: [string, string] }> = {
-  9: { question: 'Préparons les unités : combien font 10 + 6 ?', answer: '16', feedback: 'Oui, 10 + 6 font 16. Reprenons les unités.', hints: ['Commence avec 10 unités et ajoute 6 unités.', 'Calcule 10 + 6.'] },
-  10: { question: 'Préparons les dizaines du bas : combien font 5 + 1 ?', answer: '6', feedback: 'Oui, 5 + 1 font 6. Reprenons les dizaines.', hints: ['La compensation ajoute 1 dizaine aux 5 dizaines du bas.', 'Calcule 5 + 1.'] },
-  11: { question: 'Préparons les centaines du bas : combien font 1 + 1 ?', answer: '2', feedback: 'Oui, 1 + 1 font 2. Reprenons les centaines.', hints: ['La compensation ajoute 1 centaine à la centaine du bas.', 'Calcule 1 + 1.'] },
-  12: { question: 'Préparons le résultat : combien font 100 + 60 ?', answer: '160', feedback: 'Oui, 100 + 60 font 160. Reprenons le résultat final.', hints: ['Assemble une centaine et six dizaines.', 'Calcule 100 + 60.'] },
+type Preparation = { question: string; answer: string; feedback: string; hints: [string, string] };
+const preparationByError: Record<number, Partial<Record<TutorErrorKind, Preparation>>> = {
+  4: { compensation: { question: 'Pour t’entraîner, combien font 3 + 1 ?', answer: '4', feedback: 'Oui, ajouter 1 augmente le nombre de 1. Reprenons les dizaines.', hints: ['La compensation ajoute une unité au nombre du bas.', 'Calcule 3 + 1.'] } },
+  5: { compensation: { question: 'Pour t’entraîner, combien font 3 + 10 ?', answer: '13', feedback: 'Oui, ajouter 10 augmente le nombre de dix unités. Reprenons les dizaines.', hints: ['Ajouter 10, c’est ajouter une dizaine.', 'Calcule 3 + 10.'] } },
+  7: { compensation: { question: 'Pour t’entraîner, combien font 2 + 1 ?', answer: '3', feedback: 'Oui, ajouter 1 augmente le nombre du bas. Reprenons les centaines.', hints: ['La compensation ajoute 1 au nombre du bas.', 'Calcule 2 + 1.'] } },
+  9: {
+    compensation: { question: 'Préparons les unités : combien font 10 + 6 ?', answer: '16', feedback: 'Oui, 10 + 6 font 16. Reprenons les unités.', hints: ['Commence avec 10 unités et ajoute 6 unités.', 'Calcule 10 + 6.'] },
+    arithmetic: { question: 'Pour t’entraîner à soustraire, combien font 14 − 6 ?', answer: '8', feedback: 'Oui, 14 − 6 font 8. Reprenons le calcul des unités.', hints: ['Tu peux retirer 4 pour arriver à 10, puis continuer.', 'Reprends 14 − 6 en deux étapes.'] },
+  },
+  10: {
+    compensation: { question: 'Pour t’entraîner à ajouter la retenue, combien font 4 + 1 ?', answer: '5', feedback: 'Oui, on ajoute bien 1 au nombre du bas. Reprenons les dizaines.', hints: ['La compensation ajoute 1 dizaine au nombre du bas.', 'Calcule 4 + 1.'] },
+    arithmetic: { question: 'Pour t’entraîner à soustraire, combien font 13 − 6 ?', answer: '7', feedback: 'Oui, 13 − 6 font 7. Reprenons les dizaines.', hints: ['Décompose 13 en 10 et 3 pour calculer.', 'Reprends 13 − 6 sans changer les nombres.'] },
+  },
+  11: {
+    compensation: { question: 'Pour t’entraîner à ajouter la retenue, combien font 2 + 1 ?', answer: '3', feedback: 'Oui, la quantité du bas augmente de 1. Reprenons les centaines.', hints: ['La compensation ajoute 1 au nombre du bas.', 'Calcule 2 + 1.'] },
+    arithmetic: { question: 'Pour t’entraîner à soustraire, combien font 4 − 2 ?', answer: '2', feedback: 'Oui, 4 − 2 font 2. Reprenons les centaines.', hints: ['Compte 4 objets et enlève-en 2.', 'Reprends 4 − 2.'] },
+  },
+  12: {
+    compensation: { question: 'Pour t’entraîner à compenser une dizaine, combien font 4 + 1 ?', answer: '5', feedback: 'Oui, on ajoute 1 au nombre du bas. Reprenons le résultat.', hints: ['La compensation change aussi le nombre du bas.', 'Calcule 4 + 1.'] },
+    arithmetic: { question: 'Pour t’entraîner à assembler les rangs, combien font 100 + 50 + 8 ?', answer: '158', feedback: 'Oui, 100 + 50 + 8 font 158. Reprenons le résultat.', hints: ['Additionne les centaines, les dizaines puis les unités.', 'Assemble 100, 50 et 8.'] },
+  },
 };
-const defaultPreparation = { question: 'Un petit calcul pour préparer la suite : combien font 5 + 5 ?', answer: '10', feedback: 'Oui, 5 + 5 font 10. Reprenons la question.', hints: ['Prépare deux groupes de cinq objets.', 'Compte tous les objets des deux groupes, un par un.'] };
-const preparationFor = (step: number) => preparationByStep[step] ?? defaultPreparation;
+const defaultPreparation: Record<TutorErrorKind, Preparation> = {
+  compensation: { question: 'Un petit calcul pour préparer la compensation : combien font 5 + 5 ?', answer: '10', feedback: 'Oui, 5 + 5 font 10. Reprenons la question.', hints: ['La compensation ajoute la même quantité aux deux nombres.', 'Compte deux groupes de cinq.'] },
+  arithmetic: { question: 'Un petit calcul pour préparer la suite : combien font 6 − 2 ?', answer: '4', feedback: 'Oui, 6 − 2 font 4. Reprenons la question.', hints: ['Commence avec 6 objets et enlève-en 2.', 'Calcule 6 − 2.'] },
+};
+const preparationFor = (step: number, errorKind: TutorErrorKind = 'arithmetic') => preparationByError[step]?.[errorKind] ?? defaultPreparation[errorKind];
 
 function prerequisite(session: InteractiveTutorSession): InteractiveTutorSession {
-  const preparation = preparationFor(session.step);
-  return { ...session, state: 'awaiting-response', prerequisite: true, hintLevel: 0, assistanceLevel: 4, question: preparation.question, feedback: 'Essayons un calcul plus simple, puis nous reviendrons à la même étape.' };
+  const preparation = preparationFor(session.step, session.lastErrorKind);
+  return { ...session, state: 'awaiting-response', prerequisite: true, hintLevel: 0, assistanceLevel: 4, question: preparation.question, feedback: session.lastErrorKind === 'compensation' ? 'Reprenons d’abord la compensation, puis nous reviendrons à cette question.' : 'Entraînons le calcul, puis nous reviendrons à cette question.' };
+}
+
+function compensationMistake(step: number, answer: string): boolean {
+  const characteristicWrongAnswers: Record<number, string> = {
+    4: '4',
+    5: '2',
+    7: '2',
+    9: '-1',
+    10: '7',
+    11: '2',
+    12: '179',
+  };
+  return characteristicWrongAnswers[step] === answer;
 }
 
 export function submitTutorResponse(session: InteractiveTutorSession, answer: string): InteractiveTutorSession {
@@ -76,12 +112,13 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
   }
   const numeric = normalized.replace(/\s*(unites?|dizaines?|centaines?)\.?$/, '').trim();
   const approach = /^(j['’]ajoute|ajouter) 10 unites en haut et (1|une) dizaine en bas\.?$/.test(normalized);
-  const correct = session.prerequisite ? numeric === preparationFor(session.step).answer : session.step === 0 ? approach : numeric === stages[session.step].answer;
-  const misconception: InteractiveMisconception | undefined = correct ? undefined : session.step === 0 && /8\s*(moins|-)\s*5/.test(normalized) ? 'reversed-subtraction' : session.step === 0 && normalized.includes('commence par les dizaines') ? 'skipped-units' : session.step === 0 ? 'insufficient-evidence' : 'incorrect-arithmetic-fact';
-  const attempts = [...session.attempts, { step: session.step, prerequisite: session.prerequisite, answer, isCorrect: correct, misconception }];
-  const updated = { ...session, attempts, lastMisconception: misconception, canAdvance: false, transferAttempts: session.transferAttempts + (isTransferStage(session) && !session.prerequisite ? 1 : 0) };
+  const correct = session.prerequisite ? numeric === preparationFor(session.step, session.lastErrorKind).answer : session.step === 0 ? approach : numeric === stages[session.step].answer;
+  const errorKind: TutorErrorKind | undefined = correct ? undefined : compensationMistake(session.step, numeric) ? 'compensation' : 'arithmetic';
+  const misconception: InteractiveMisconception | undefined = correct ? undefined : session.step === 0 && /8\s*(moins|-)\s*5/.test(normalized) ? 'reversed-subtraction' : session.step === 0 && normalized.includes('commence par les dizaines') ? 'skipped-units' : session.step === 0 ? 'insufficient-evidence' : errorKind === 'compensation' ? 'compensation-error' : 'incorrect-arithmetic-fact';
+  const attempts = [...session.attempts, { step: session.step, prerequisite: session.prerequisite, answer, isCorrect: correct, misconception, errorKind }];
+  const updated = { ...session, attempts, lastMisconception: misconception, ...(errorKind ? { lastErrorKind: errorKind } : {}), canAdvance: false, transferAttempts: session.transferAttempts + (isTransferStage(session) && !session.prerequisite ? 1 : 0) };
   if (correct) {
-    if (session.prerequisite) return { ...updated, prerequisite: false, state: activeState(session), hintLevel: 0, question: stages[session.step].question, feedback: preparationFor(session.step).feedback };
+    if (session.prerequisite) return { ...updated, prerequisite: false, state: activeState(session), hintLevel: 0, question: stages[session.step].question, feedback: preparationFor(session.step, session.lastErrorKind).feedback };
     if (isTransferStage(session)) return { ...updated, state: 'feedback', canAdvance: true, completedSteps: [...new Set([...session.completedSteps, session.step])], feedback: stages[session.step].feedback };
     if (session.step === 0) return { ...updated, step: 1, state: 'awaiting-response', hintLevel: 0, question: stages[1].question, feedback: stages[0].feedback, criticalStepIndependent: session.attempts.length === 0 && session.hintLevel === 0 };
     const step = session.step + 1;
@@ -92,15 +129,27 @@ export function submitTutorResponse(session: InteractiveTutorSession, answer: st
     return { ...updated, state: 'correction-explanation', correction, correctionCheckAttempts: 0, feedback: correction.explanation };
   }
   const failures = attempts.filter(a => a.step === session.step && a.prerequisite === session.prerequisite && !a.isCorrect).length;
-  if (session.prerequisite && failures >= 2) return { ...updated, state: 'needs-support', feedback: `Reprends ce petit calcul avec un adulte : ${preparationFor(session.step).question}` };
+  if (session.prerequisite && failures >= 2) return { ...updated, state: 'needs-support', feedback: `Reprends ce petit calcul avec un adulte : ${preparationFor(session.step, session.lastErrorKind).question}` };
   if (!session.prerequisite && failures >= 3 && session.demonstratedSteps.includes(session.step)) {
     // One supported retry after the simpler exercise, then an explicit human-help exit.
     if (session.attempts.some(a => a.step === session.step && a.prerequisite && a.isCorrect)) return { ...updated, state: 'needs-support', feedback: 'Cette étape mérite un accompagnement. Reprends-la avec un adulte, sans recommencer le calcul.' };
     return prerequisite(updated);
   }
   if (!session.prerequisite && failures >= 2) return demonstrateTutorStep(updated);
-  const wrongFeedback = session.step === 10 ? 'Vérifie les dizaines : en bas, 5 dizaines et la dizaine ajoutée font 6.' : session.step === 11 ? 'Vérifie les centaines : la compensation ajoute 1 centaine en bas.' : session.step === 12 ? 'Relis les chiffres obtenus dans l’ordre des centaines, dizaines et unités.' : session.step === 9 ? 'Vérifie les unités : on calcule 16 − 7 après avoir ajouté 10 unités en haut.' : 'Pas encore. Vérifie la compensation, puis essaie encore.';
-  return { ...updated, state: 'feedback', feedback: session.prerequisite ? `Pas encore. ${preparationFor(session.step).hints[0]} Tu peux réessayer ou demander un indice.` : wrongFeedback };
+  const wrongFeedback = errorKind === 'compensation'
+    ? session.step === 4 ? 'La dizaine ajoutée en bas compte aussi : pense à ajouter 1 aux dizaines.'
+      : session.step === 5 ? 'Pour garder la différence, les 10 dizaines du haut sont compensées par une centaine en bas.'
+        : session.step === 7 ? 'La centaine ajoutée en bas compte aussi : pense à ajouter 1 au nombre du bas.'
+          : session.step === 9 ? 'Il faut d’abord ajouter 10 unités en haut et compenser avec 1 dizaine en bas.'
+            : session.step === 10 ? 'La dizaine de compensation s’ajoute aux 5 dizaines du bas.'
+              : session.step === 11 ? 'La centaine de compensation s’ajoute à la centaine du bas.'
+                : 'Vérifie que tu as bien tenu compte des quantités ajoutées par compensation.'
+    : session.step === 9 ? 'La compensation est faite : calcule maintenant 16 − 7.'
+      : session.step === 10 ? 'Le nombre du bas est 6 dizaines. Reprends le calcul 12 − 6.'
+        : session.step === 11 ? 'Les centaines à comparer sont 3 et 2. Reprends ce calcul.'
+          : session.step === 12 ? 'Repère les centaines, les dizaines et les unités, puis assemble-les dans l’ordre.'
+            : 'Pas encore. Reprends le calcul de cette colonne, puis essaie encore.';
+  return { ...updated, state: 'feedback', feedback: session.prerequisite ? `Pas encore. ${preparationFor(session.step, session.lastErrorKind).hints[0]} Tu peux réessayer ou demander un indice.` : wrongFeedback };
 }
 
 export function advanceTutorStep(session: InteractiveTutorSession): InteractiveTutorSession {
@@ -114,9 +163,9 @@ export function requestTutorHint(session: InteractiveTutorSession): InteractiveT
   if (terminal(session) || session.state === 'demonstrate') return session;
   const hintLevel = session.hintLevel + 1;
   const updated = { ...session, hintLevel, hintLevelsByStep: { ...session.hintLevelsByStep, [`${session.step}${session.prerequisite ? '-prerequisite' : ''}`]: hintLevel } };
-  if (hintLevel >= 4) return session.prerequisite ? { ...updated, state: 'needs-support', feedback: `Reprends ce petit calcul avec un adulte : ${preparationFor(session.step).question}` } : prerequisite(updated);
+  if (hintLevel >= 4) return session.prerequisite ? { ...updated, state: 'needs-support', feedback: `Reprends ce petit calcul avec un adulte : ${preparationFor(session.step, session.lastErrorKind).question}` } : prerequisite(updated);
   if (hintLevel === 3) return demonstrateTutorStep(updated);
-  return { ...updated, state: 'hint', assistanceLevel: Math.max(session.assistanceLevel, hintLevel) as 1 | 2 | 3 | 4, feedback: session.prerequisite ? preparationFor(session.step).hints[Math.min(hintLevel - 1, 1)] : stages[session.step].hints[hintLevel - 1] };
+  return { ...updated, state: 'hint', assistanceLevel: Math.max(session.assistanceLevel, hintLevel) as 1 | 2 | 3 | 4, feedback: session.prerequisite ? preparationFor(session.step, session.lastErrorKind).hints[Math.min(hintLevel - 1, 1)] : stages[session.step].hints[hintLevel - 1] };
 }
 
 export function retryTutorQuestion(session: InteractiveTutorSession): InteractiveTutorSession {
@@ -131,19 +180,19 @@ export function beginCorrectionCheck(session: InteractiveTutorSession): Interact
 
 export function demonstrateCorrectionMethod(session: InteractiveTutorSession): InteractiveTutorSession {
   if (session.state !== 'correction-explanation' || !session.correction) return session;
-  return { ...session, state: 'demonstrate', correctionDemo: true, assistanceLevel: Math.max(3, session.assistanceLevel) as 3 | 4, demonstrationUsed: true, feedback: 'Regardons la compensation sur 325 − 148. Tu essaieras ensuite un autre calcul.' };
+  return { ...session, state: 'demonstrate', correctionDemo: true, returnState: session.state, returnFeedback: session.feedback, assistanceLevel: Math.max(3, session.assistanceLevel) as 3 | 4, demonstrationUsed: true, feedback: 'Regardons la compensation sur 325 − 148. Tu essaieras ensuite un autre calcul.' };
 }
 
 export function demonstrateTutorStep(session: InteractiveTutorSession): InteractiveTutorSession {
   if (terminal(session)) return session;
-  return { ...session, state: 'demonstrate', assistanceLevel: Math.max(3, session.assistanceLevel) as 3 | 4, demonstrationUsed: true, demonstratedSteps: [...new Set([...session.demonstratedSteps, session.step])], feedback: 'Revois la compensation sur 325 − 148, puis applique-la à 326 − 157.' };
+  return { ...session, state: 'demonstrate', returnState: session.state, returnFeedback: session.feedback, assistanceLevel: Math.max(3, session.assistanceLevel) as 3 | 4, demonstrationUsed: true, demonstratedSteps: [...new Set([...session.demonstratedSteps, session.step])], feedback: 'Revois la compensation sur 325 − 148, puis applique-la à 326 − 157.' };
 }
 
 export function continueAfterDemonstration(session: InteractiveTutorSession): InteractiveTutorSession {
   if (session.state !== 'demonstrate') return session;
-  if (session.prerequisite) return { ...session, state: 'awaiting-response', feedback: 'Reprenons le petit calcul de préparation.' };
-  if (isTransferStage(session)) return { ...session, state: 'transfer', feedback: 'À toi : reprends cette étape.' };
-  return { ...session, state: 'transfer', correctionDemo: false, step: 9, question: stages[9].question, feedback: 'À toi ! Applique la même méthode à ce nouveau calcul.', demonstratedSteps: [...new Set([...session.demonstratedSteps, 9])] };
+  if (session.prerequisite) return { ...session, state: session.returnState ?? 'awaiting-response', feedback: session.returnFeedback ?? 'Reprenons le petit calcul de préparation.', returnState: undefined, returnFeedback: undefined };
+  if (session.correctionDemo) return { ...session, state: activeState(session), question: stages[session.step].question, correctionDemo: false, feedback: 'À toi : reprends cette même question avec la méthode que tu viens de voir.', returnState: undefined, returnFeedback: undefined };
+  return { ...session, state: session.returnState ?? activeState(session), feedback: session.returnFeedback ?? 'Reprenons cette même question.', returnState: undefined, returnFeedback: undefined };
 }
 
 export function resumeWithSupport(session: InteractiveTutorSession): InteractiveTutorSession {

@@ -1,0 +1,62 @@
+[
+  {
+    "scenario": "Scenario A — correct answers advance directly without opening Animation",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario B — reversed subtraction correction and retry at every application step",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario C — successive hints become more specific without revealing the answer",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario D — repeated errors trigger each matching prerequisite and resume the same stage",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario E — complete 326 − 157 with 9 → 6 → 1 → 169",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario F — Animation tab exposes the original TwoCards stepper controls",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario G — switching tabs preserves the active question and typed response",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario I — returning from a demonstration resumes the same step and keeps a draft answer",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario J — compensation errors get targeted feedback and prerequisite practice",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario H — responsive student controls at 1440 × 900",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario H — responsive student controls at 375 × 812",
+    "status": "passed",
+    "errors": []
+  },
+  {
+    "scenario": "Scenario H — responsive student controls at 447 × 956",
+    "status": "passed",
+    "errors": []
+  }
+]

@@ -12,13 +12,13 @@ export function InteractiveStudentSession({ grade }: { grade: string }) {
   useEffect(() => {
     if (window.location.hash === '#student-session') document.getElementById('student-session')?.scrollIntoView();
   }, []);
-  useEffect(() => { setAnswer(''); }, [session.step, session.state, session.prerequisite]);
+  useEffect(() => { setAnswer(''); }, [session.step, session.prerequisite]);
   const demonstration = session.state === 'demonstrate';
   const submit = () => { setSession(current => submitTutorResponse(current, answer)); setAnswer(''); };
   return <section id="student-session" data-testid="interactive-student-session" className="min-w-0 rounded-xl border border-teal-200 bg-white p-3 dark:bg-slate-950">
     <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <h3 className="font-bold">À toi de jouer · {grade}</h3>
-      <Button variant="ghost" size="sm" onClick={() => setSession(createInteractiveTutorSession())}>Nouvel exercice</Button>
+      <Button variant="ghost" size="sm" onClick={() => { setAnswer(''); setSession(createInteractiveTutorSession()); }}>Nouvel exercice</Button>
     </header>
     <Tabs value={tab} onValueChange={value => setTab(value as 'teacher' | 'animation')} className="w-full">
       <TabsList className="grid h-auto w-full grid-cols-2">
