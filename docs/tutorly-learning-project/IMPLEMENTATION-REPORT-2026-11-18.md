@@ -71,3 +71,7 @@ Recommended sequence: equal-groups feedback pilot → existing number line → p
 - `e2e/guided-families.pw.ts`: reproducible synthetic learner journeys for desktop and mobile.
 
 Earlier uncommitted arithmetic-display, clock, and source-link documentation work in the same feature checkout was preserved. Its presence here does not imply those changes have been merged into the other branches.
+
+## Vercel direct-link correction
+
+A live request after delivery found the preview root returning 200 while `/practice` returned Vercel `404 NOT_FOUND`. The Vite preview server used by local browser tests already supplied a history fallback, so those tests did not establish hosted deep-link support. Added `vercel.json` with filesystem-first routing and an SPA entry-page fallback. Real files retain priority; app URLs are interpreted by React Router after loading `index.html`. The correction is verified against the hosted page and nested activity URLs, not inferred from local preview behavior.
