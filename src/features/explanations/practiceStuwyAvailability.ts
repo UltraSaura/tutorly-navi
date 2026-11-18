@@ -8,5 +8,10 @@ export function findPracticeSubtractionTopic(subjectSlug: string, level: string 
   const subject = normalize(subjectSlug).replace(/[^a-z0-9]/g, '');
   const normalizedLevel = normalize(level ?? '').replace(/[^a-z0-9]/g, '');
   if (!['mathematiques', 'maths'].includes(subject) || normalizedLevel !== 'cm1') return null;
-  return topics.find((topic) => normalize(topic.topicLabel).includes('soustract') && activePracticeTopicIds.has(topic.id)) ?? null;
+  return topics.find((topic) => {
+    const label = normalize(topic.topicLabel).replace(/[^a-z0-9]+/g, ' ').trim();
+    const isSubtractionTopic = label.includes('soustract');
+    const isFourOperationsTopic = /\b(quatre|4) operations?\b/.test(label);
+    return (isSubtractionTopic || isFourOperationsTopic) && activePracticeTopicIds.has(topic.id);
+  }) ?? null;
 }

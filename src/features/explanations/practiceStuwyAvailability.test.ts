@@ -13,4 +13,9 @@ describe('findPracticeSubtractionTopic', () => {
   it('does not surface an unrelated topic or practice subject', () => {
     expect(findPracticeSubtractionTopic('maths', 'CM1', topics.slice(1), new Set(['add']))).toBeNull();
   });
+  it('accepts a CM1 four-operations topic when it has an active Practice assignment', () => {
+    const fourOperations = [{ id: 'operations', topicLabel: 'Les quatre opérations', orderIndex: 1 }];
+    expect(findPracticeSubtractionTopic('mathematiques', 'cm1', fourOperations, new Set(['operations']))?.id).toBe('operations');
+    expect(findPracticeSubtractionTopic('mathematiques', 'cm1', fourOperations, new Set())).toBeNull();
+  });
 });
