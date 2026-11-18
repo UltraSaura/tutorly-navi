@@ -25,13 +25,15 @@ following links identify the specific deployments confirmed ready on
 | Development | [Open development deployment](https://stuwy-2lqvpwjb3-stuwy.vercel.app) | `a8708d5459e7c2bd94d85cf4ef6440c2c52622f1` | [Build details](https://vercel.com/stuwy/stuwy/HcSPQVC5YxWyh8w5aHJyLCsUsWUp) |
 | Practice | [Open practice deployment](https://stuwy-lz52zo37c-stuwy.vercel.app) | `cf8d3348072075d70abe9c4caa4ca36283ab6fc6` | [Build details](https://vercel.com/stuwy/stuwy/DTQ4XTMAubwPRc2p4HRC2Ba6C9Bf) |
 
+[Coordinates preview — France, 5ème](https://stuwy-git-feature-guided-practice-lessons-stuwy.vercel.app/practice/coordinates). Use the matching learner profile or authorized school-level preview.
+
 [Manage the Stuwy Vercel project](https://vercel.com/stuwy/stuwy).
 
 The guided exercises, clock and arithmetic display work in this checkout are on
 [`feature/guided-practice-lessons`](https://github.com/UltraSaura/tutorly-navi/tree/feature/guided-practice-lessons).
 The main, development and practice previews do not include feature-branch changes unless those changes have been integrated into their respective branches and deployed.
 
-Implementation notes: [guided exercise delivery and validation](docs/tutorly-learning-project/IMPLEMENTATION-REPORT-2026-11-18.md) · [Brilliant evaluation and implementation plan](docs/tutorly-learning-project/BRILLIANT-IMPLEMENTATION-PLAN.md) · [equal-groups feedback pilot](docs/tutorly-learning-project/EQUAL-GROUPS-FEEDBACK-PILOT.md) · [number-line feedback pilot](docs/tutorly-learning-project/NUMBER-LINE-FEEDBACK-PILOT.md) · [independent retry policy](docs/tutorly-learning-project/NUMBER-LINE-RETRY-POLICY.md).
+Implementation notes: [guided exercise delivery and validation](docs/tutorly-learning-project/IMPLEMENTATION-REPORT-2026-11-18.md) · [Brilliant evaluation and implementation plan](docs/tutorly-learning-project/BRILLIANT-IMPLEMENTATION-PLAN.md) · [equal-groups feedback pilot](docs/tutorly-learning-project/EQUAL-GROUPS-FEEDBACK-PILOT.md) · [number-line feedback pilot](docs/tutorly-learning-project/NUMBER-LINE-FEEDBACK-PILOT.md) · [independent retry policy](docs/tutorly-learning-project/NUMBER-LINE-RETRY-POLICY.md) · [coordinates and curriculum mapping](docs/tutorly-learning-project/COORDINATE-PLANE-DELIVERY.md).
 
 ## How can I edit this code?
 

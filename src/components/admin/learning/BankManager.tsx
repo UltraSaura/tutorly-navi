@@ -1,3 +1,4 @@
+import { canAuthorCoordinates } from '@/features/practice/exerciseCurriculum';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -79,7 +80,7 @@ const BankManager = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('learning_categories')
-        .select('id, subject_id');
+        .select('id, subject_id, name');
       if (error) throw error;
       return data || [];
     },
@@ -90,7 +91,7 @@ const BankManager = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
-        .select('id, name, category_id, curriculum_level_code, lesson_content')
+        .select('id, name, category_id, curriculum_level_code, curriculum_country_code, lesson_content')
         .eq('is_active', true)
         .order('name');
       if (error) throw error;
@@ -326,8 +327,14 @@ const BankManager = () => {
     }
   };
 
+  const coordinateBank = decoratedBanks.find(bank => bank.id === selectedBank);
+  const coordinateTopic = (topicId: string) => { const topic = topicMap.get(topicId); return { countryCode: topic?.curriculum_country_code, levelCode: topic?.curriculum_level_code, subject: subjectNameMap.get(topic?.subject_id), category: categories.find(category => category.id === topic?.category_id)?.name }; };
+  const coordinateContext = { subject: coordinateBank?.effectiveSubjectName, schoolLevels: coordinateBank?.school_levels ?? [], topics: [...new Set([...(coordinateBank?.effectiveTopicIds ?? []), ...bankAssignmentsIndex.filter(assignment => assignment.bank_id === selectedBank).map(assignment => assignment.topic_id).filter((id): id is string => Boolean(id))])].map(coordinateTopic) };
+
   const handleQuestionSave = async (question: Question, position: number) => {
     if (!selectedBank) return;
+
+    if (question.kind === 'coordinate-plane' && !canAuthorCoordinates(coordinateContext)) { toast.error('Les coordonnées dans le plan nécessitent une banque affectée uniquement au programme français de 5ème.'); return; }
 
     if (editingQuestion?.dbId) {
       await updateQuestion.mutateAsync({
@@ -361,6 +368,7 @@ const BankManager = () => {
 
   const handleAssignmentSave = async (assignmentData: any) => {
     if (!selectedBank) return;
+    if (questions.some(question => question.kind === 'coordinate-plane') && !canAuthorCoordinates({ topics: [coordinateTopic(assignmentData.topic_id)] })) { toast.error('Cette banque contient des coordonnées : affectation autorisée uniquement à un thème France · 5ème.'); return; }
 
     if (editingAssignment) {
       await updateAssignment.mutateAsync({
@@ -783,6 +791,7 @@ const BankManager = () => {
 
       {questionEditorOpen && (
         <QuestionEditor
+          coordinateContext={coordinateContext}
           question={editingQuestion || undefined}
           isOpen={questionEditorOpen}
           onClose={() => {

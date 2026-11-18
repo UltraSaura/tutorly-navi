@@ -159,7 +159,10 @@ export interface FillExprQuestion {
 
 export type GuidedFamilyQ = BaseQ & import('@/features/practice/guidedFamilies').GuidedFamilyExercise;
 
+export type CoordinateQ = BaseQ & import('@/features/practice/coordinatePlane').CoordinatePlaneExercise;
+
 export type Question =
+  | CoordinateQ
   | GuidedFamilyQ
   | SingleQ
   | MultiQ

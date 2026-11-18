@@ -1,3 +1,6 @@
+import { CoordinatePlaneEditor } from './CoordinatePlaneEditor';
+import { createCoordinateExercise, validateCoordinateExercise, type CoordinatePlaneExercise } from '@/features/practice/coordinatePlane';
+import { canAuthorCoordinates, type CoordinateAuthoringContext } from '@/features/practice/exerciseCurriculum';
 import { createGuidedFamilyExercise, guidedFamilyPrompt, isGuidedFamilyExercise, validateGuidedFamilyExercise, type GuidedFamilyExercise } from '@/features/practice/guidedFamilies';
 import { GuidedFamilyEditor } from './GuidedFamilyEditor';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
@@ -21,6 +24,7 @@ import { additionAcrossTenTotal, countersToNextTen, makeAdditionAcrossTenChoices
 import { countSubtractionObjectsByColor, makeSubtractionWithDotsChoices, normalizeSubtractionObject, SUBTRACTION_OBJECTS, subtractionColorToCount, subtractionObjectName, type SubtractionObject } from '@/features/practice/subtractionWithDots';
 
 interface QuestionEditorProps {
+  coordinateContext?: CoordinateAuthoringContext;
   question?: Question & { dbId?: string; position?: number };
   isOpen: boolean;
   onClose: () => void;
@@ -52,8 +56,10 @@ const createDefaultVisual = (): VisualUnion => ({
     }
   ]
 });
-export function QuestionEditor({ question, isOpen, onClose, onSave, position }: QuestionEditorProps) {
+export function QuestionEditor({ question, isOpen, onClose, onSave, position, coordinateContext }: QuestionEditorProps) {
   const ui = useInterfaceTranslation();
+  const coordinateAllowed = canAuthorCoordinates(coordinateContext);
+  const [coordinateExercise, setCoordinateExercise] = useState<CoordinatePlaneExercise>(() => question?.kind === 'coordinate-plane' ? question : createCoordinateExercise());
   const [kind, setKind] = useState<Question['kind']>(question?.kind || 'single');
   const [prompt, setPrompt] = useState(question?.prompt || '');
   const [hint, setHint] = useState(question?.hint || '');
@@ -196,6 +202,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   useEffect(() => {
     if (question) {
       setKind(question.kind);
+      setCoordinateExercise(question.kind === 'coordinate-plane' ? question : createCoordinateExercise());
       setGuidedExercise(isGuidedFamilyExercise(question) ? question as GuidedFamilyExercise : null);
       setPrompt(question.prompt);
       setHint(question.hint || '');
@@ -373,14 +380,20 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   };
 
   const handleSave = () => {
-    if (!['counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && !prompt.trim()) {
+    if (!['coordinate-plane', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && !prompt.trim()) {
       alert('Please enter a question prompt');
       return;
     }
 
     let questionData: Question;
 
-    if (['guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind)) {
+    if (kind === 'coordinate-plane') {
+      if (!coordinateAllowed) { alert('Affecte cette banque uniquement à un thème du programme français de 5ème avant de créer cet exercice.'); return; }
+      const candidate = { ...coordinateExercise, id, points, curriculumCountry: 'fr' as const, schoolLevels: ['5eme'], prompt: coordinateExercise.mode === 'read' ? 'Lis les coordonnées du point A.' : `Place le point A (${coordinateExercise.target.x} ; ${coordinateExercise.target.y}).` };
+      const errors = validateCoordinateExercise(candidate);
+      if (errors.length) { alert(errors.join('\n')); return; }
+      questionData = candidate;
+    } else if (['guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind)) {
       if (!guidedExercise || guidedExercise.kind !== kind) return;
       const candidate = { ...guidedExercise, prompt: guidedFamilyPrompt(guidedExercise), id, points, hint: undefined };
       const errors = validateGuidedFamilyExercise(candidate);
@@ -653,6 +666,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="slider">{ui("Slider")}</SelectItem>
                 <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
+                <SelectItem value="coordinate-plane" disabled={!coordinateAllowed}>Coordonnées dans le plan · France · 5ème</SelectItem>
                 <SelectItem value="guided-word-problem">Problème guidé — choisir puis calculer</SelectItem>
                 <SelectItem value="equal-groups">Groupes égaux — multiplication</SelectItem>
                 <SelectItem value="colour-grid">Compter dans une grille de couleurs</SelectItem>
@@ -674,7 +688,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             />
           </div>
 
-          {!['counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && <div>
+          {!['coordinate-plane', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && <div>
             <Label htmlFor="prompt">{ui("Question Prompt")}</Label>
             <Textarea
               id="prompt"
@@ -686,6 +700,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             />
           </div>}
 
+          {kind === 'coordinate-plane' && <><p role={coordinateAllowed ? undefined : 'alert'} className="text-sm text-violet-900">{coordinateAllowed ? 'Type disponible pour le thème France · 5ème de cette banque.' : 'Ce type nécessite une banque affectée exclusivement à un thème France · 5ème.'}</p><CoordinatePlaneEditor exercise={coordinateExercise} onChange={setCoordinateExercise} /></>}
           {guidedExercise?.kind === kind && <GuidedFamilyEditor exercise={guidedExercise} onChange={setGuidedExercise} />}
 
           {kind === 'counting' && (
@@ -747,7 +762,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             </div>
           )}
 
-          {['guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Les indices de ces activités expliquent la méthode et sont générés à partir du type d’exercice, sans donner le résultat.</p> : (
+          {['coordinate-plane', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Les indices de ces activités expliquent la méthode et sont générés à partir du type d’exercice, sans donner le résultat.</p> : (
           <div>
             <Label htmlFor="hint">{ui("Hint (optional)")}</Label>
             <Textarea

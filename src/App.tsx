@@ -42,6 +42,7 @@ const LessonPage = lazy(() => import("./pages/learning/LessonPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
+const CoordinatePlanePage = lazy(() => import('./pages/practice/CoordinatePlanePage'));
 const GraduatedNumberLinePage = lazy(() => import("./pages/practice/GraduatedNumberLinePage"));
 const AddUpTo100Page = lazy(() => import("./pages/practice/AddUpTo100Page"));
 const FlashcardPracticePage = lazy(() => import("./pages/practice/FlashcardPracticePage"));
@@ -263,6 +264,7 @@ const App = () => {
                           <Route path="subtraction-within-ten" element={<SubtractionWithDotsPage />} />
                           <Route path="guided/:family" element={<GuidedFamiliesPracticePage />} />
                           <Route path="one-hour-later" element={<OneHourLaterPracticePage />} />
+                          <Route path="coordinates" element={<CoordinatePlanePage />} />
                           <Route path="number-line" element={<GraduatedNumberLinePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />

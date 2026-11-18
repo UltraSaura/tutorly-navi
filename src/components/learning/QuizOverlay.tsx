@@ -1,3 +1,4 @@
+import { isCoordinateExercise } from '@/features/practice/coordinatePlane';
 import { isGuidedFamilyExercise } from '@/features/practice/guidedFamilies';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
@@ -219,7 +220,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
     const currentAnswer = answers[currentQuestion.id];
     const correct = evaluateQuestion(currentQuestion, currentAnswer);
     const previousAttempts = questionAttemptCountsRef.current[currentQuestion.id] || 0;
-    const guidedAttempts = isGuidedFamilyExercise(currentQuestion) && Number.isInteger(currentAnswer?.attempts) ? currentAnswer.attempts : 0;
+    const guidedAttempts = (isGuidedFamilyExercise(currentQuestion) || isCoordinateExercise(currentQuestion)) && Number.isInteger(currentAnswer?.attempts) ? currentAnswer.attempts : 0;
     const attemptNumber = Math.max(previousAttempts + 1, guidedAttempts);
     questionAttemptCountsRef.current[currentQuestion.id] = attemptNumber;
     const timeToAnswerMs = Date.now() - questionViewStartedAtRef.current;
@@ -240,7 +241,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
       wasCorrect: correct,
       attemptNumber,
       timeToAnswerMs,
-      hintUsed: isGuidedFamilyExercise(currentQuestion) ? currentAnswer?.supported === true : false,
+      hintUsed: (isGuidedFamilyExercise(currentQuestion) || isCoordinateExercise(currentQuestion)) ? currentAnswer?.supported === true : false,
     });
 
     if (!correct) {
@@ -258,7 +259,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
         wasCorrect: false,
         attemptNumber,
         timeToAnswerMs,
-        hintUsed: isGuidedFamilyExercise(currentQuestion) ? currentAnswer?.supported === true : false,
+        hintUsed: (isGuidedFamilyExercise(currentQuestion) || isCoordinateExercise(currentQuestion)) ? currentAnswer?.supported === true : false,
       });
     }
 
@@ -443,7 +444,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
   if (submitted) {
     const pct = gradedQuiz.maxScore ? Math.round((100 * gradedQuiz.score) / gradedQuiz.maxScore) : 0;
     const xpEarned = gradedQuiz.score * 10;
-    const isMastered = pct >= 80 && !questions.some(question => isGuidedFamilyExercise(question));
+    const isMastered = pct >= 80 && !questions.some(question => isGuidedFamilyExercise(question) || question.kind === 'coordinate-plane');
 
     return (
       <div

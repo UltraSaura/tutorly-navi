@@ -1,3 +1,4 @@
+import { isCoordinateExercise, isCoordinateAnswerCorrect } from '@/features/practice/coordinatePlane';
 import { isGuidedFamilyExercise, isGuidedFamilyAnswerCorrect } from '@/features/practice/guidedFamilies';
 import type { Question } from '@/types/quiz-bank';
 import { evaluateVisual } from '@/lib/quiz/visual-evaluate';
@@ -16,6 +17,7 @@ export type QuizQuestionGradeDetail = {
 };
 
 export function evaluateQuestion(q: Question, answer: any): boolean {
+  if (q.kind === 'coordinate-plane') return isCoordinateExercise(q) && isCoordinateAnswerCorrect(q, answer);
   if (isGuidedFamilyExercise(q)) return isGuidedFamilyAnswerCorrect(q, answer);
   if (q.kind === "single") {
     const correctId = q.choices.find(c => c.correct)?.id;
@@ -106,6 +108,7 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
 }
 
 export function isQuizAnswerComplete(q: Question, answer: unknown): boolean {
+  if (q.kind === 'coordinate-plane') return isCoordinateExercise(q) && isCoordinateAnswerCorrect(q, answer);
   const value = answer && typeof answer === 'object' ? answer as Record<string, unknown> : {};
   if (isGuidedFamilyExercise(q)) return value.complete === true && isGuidedFamilyAnswerCorrect(q, answer);
   if (['guided-word-problem', 'equal-groups', 'colour-grid'].includes(q.kind)) return false;

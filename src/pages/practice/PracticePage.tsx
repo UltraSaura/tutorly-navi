@@ -1,3 +1,4 @@
+import { useCoordinateEligibility } from '@/hooks/useCoordinateEligibility';
 import { useSubjectLabel } from '@/i18n/useSubjectLabel';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo } from 'react';
@@ -45,6 +46,7 @@ export default function PracticePage() {
   const subjectsQuery = useLearningSubjects();
   const practiceButtonsQuery = usePracticeSubjectButtons();
   const activeSchoolLevel = useActiveSchoolLevel();
+  const coordinateEligibility = useCoordinateEligibility();
   const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
   const papersQuery = useExamPapers({ exam: 'dnb', level: activeLevel });
   const trainingCountsQuery = useTrainingItemSubjectCounts(activeLevel);
@@ -221,6 +223,7 @@ export default function PracticePage() {
           />
         </section>
 
+        {coordinateEligibility.allowed && <section className="rounded-3xl border border-violet-200 bg-violet-50 p-5"><p className="text-sm font-semibold text-violet-800">France · 5ème · Espace et géométrie</p><h2 className="mt-1 text-xl font-bold">Coordonnées dans le plan</h2><p className="mt-2 text-slate-700">Lis les coordonnées d’un point ou place-le dans un repère.</p><button type="button" className="mt-3 min-h-11 w-full rounded-xl bg-violet-700 px-4 py-2 font-semibold text-white" onClick={() => navigate('/practice/coordinates')}>Commencer : Coordonnées dans le plan</button></section>}
         <section className="space-y-3" aria-label="Nouvelles activités guidées">
           {[
             ['word-problems', 'Petits problèmes guidés', 'Choisis l’opération et résous une histoire avec des objets.'],

@@ -1,3 +1,4 @@
+import { canAuthorCoordinates } from '@/features/practice/exerciseCurriculum';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -202,7 +203,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     queryFn: async () => {
       const { data, error } = await supabase
         .from('learning_categories')
-        .select('id, subject_id')
+        .select('id, subject_id, name')
         .eq('is_active', true)
         .order('order_index');
       if (error) throw error;
@@ -369,6 +370,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     const levels = Array.from(new Set(selectedTopics.map(topic => normalizeSchoolLevel(topic.curriculum_level_code)).filter(Boolean)));
     return levels[0] ?? null;
   }, [selectedTopicIds, topics]);
+
+  const coordinateContext = { schoolLevels: selectedTopicLevel ? [selectedTopicLevel] : [], topics: selectedTopicIds.map(id => { const topic = topics.find(topic => topic.id === id); const category = categories.find(category => category.id === topic?.category_id); return { countryCode: topic?.curriculum_country_code, levelCode: topic?.curriculum_level_code, category: category?.name, subject: subjects.find(subject => subject.id === category?.subject_id)?.name }; }) };
 
   const selectedTopicLevelLabel = selectedTopicLevel ? getSchoolLevelLabel(selectedTopicLevel) : '';
 
@@ -566,6 +569,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   };
 
   const handleSave = async () => {
+    if (generatedQuestions.some(question => question.kind === 'coordinate-plane') && !canAuthorCoordinates(coordinateContext)) { toast.error('Les coordonnées nécessitent un thème de géométrie du programme français de 5ème.'); return; }
     if (!bankTitle.trim()) {
       toast.error('Please enter a title');
       return;
@@ -631,6 +635,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
   // Batch save: one bank per unit (auto-titled), each auto-assigned to its topic as Practice.
   const handleSaveBatch = async () => {
+    if (batchUnits.some(unit => unit.questions.some(question => question.kind === 'coordinate-plane')) && !canAuthorCoordinates(coordinateContext)) { toast.error('Les coordonnées nécessitent un thème de géométrie du programme français de 5ème.'); return; }
     if (partialGeneration && !partialGenerationConfirmed) {
       toast.error('Confirmez explicitement la sauvegarde des banques complètes disponibles.');
       return;
@@ -1366,6 +1371,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
             {editingQuestionIndex !== null && (
               <QuestionEditor
+                coordinateContext={coordinateContext}
                 isOpen={true}
                 onClose={() => setEditingQuestionIndex(null)}
                 question={generatedQuestions[editingQuestionIndex]}
