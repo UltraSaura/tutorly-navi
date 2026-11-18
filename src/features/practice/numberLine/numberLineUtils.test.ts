@@ -8,6 +8,12 @@ describe('graduated number line values', () => {
     expect(parseNumberLineValue('0,5')).toBe(0.5);
     expect(parseNumberLineValue('1.25')).toBe(1.25);
   });
+  it('rejects blank input instead of treating it as zero', () => {
+    expect(parseNumberLineValue('')).toBeNull();
+    expect(parseNumberLineValue('   ')).toBeNull();
+    expect(equivalentNumberLineValues('', 0)).toBe(false);
+    expect(parseNumberLineValue('0')).toBe(0);
+  });
   it('accepts equivalent fraction and decimal answers', () => {
     expect(equivalentNumberLineValues('1/2', '0,5')).toBe(true);
     expect(equivalentNumberLineValues('3/4', '0.75')).toBe(true);

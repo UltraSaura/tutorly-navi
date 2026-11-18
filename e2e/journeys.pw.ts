@@ -45,7 +45,7 @@ test('practice answer submission, incorrect feedback, retry and progress', async
   const check = page.getByRole('button', { name: 'Check answer', exact: true });
   await assertUsable(page, check);
   for (const [fraction, tick] of [['1/4', '0,5'], ['1/2', '0,75'], ['3/4', '0,25']]) {
-    await page.getByRole('button', { name: fraction, exact: true }).click();
+    await page.getByTestId('number-line-values').getByRole('button', { name: fraction, exact: true }).click();
     await page.getByRole('button', { name: `Place at ${tick}`, exact: true }).click();
   }
   await check.click();
@@ -56,7 +56,7 @@ test('practice answer submission, incorrect feedback, retry and progress', async
   await page.getByRole('button', { name: 'Try again', exact: true }).click();
   await assertUsable(page, page.getByRole('button', { name: 'Place at 0,25', exact: true }));
   for (const [fraction, tick] of [['1/4', '0,25'], ['1/2', '0,5'], ['3/4', '0,75']]) {
-    await page.getByRole('button', { name: `${fraction} ✓`, exact: true }).click();
+    await page.getByTestId('number-line-values').getByRole('button', { name: fraction, exact: true }).click();
     await page.getByRole('button', { name: `Place at ${tick}`, exact: true }).click();
   }
   await check.click();

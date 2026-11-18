@@ -2,6 +2,7 @@ export function parseNumberLineValue(input: unknown): number | null {
   if (typeof input === 'number') return Number.isFinite(input) ? input : null;
   if (typeof input !== 'string') return null;
   const value = input.trim().replace(',', '.');
+  if (!value) return null;
   const fraction = value.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
   if (fraction) { const denominator = Number(fraction[2]); return denominator === 0 ? null : Number(fraction[1]) / denominator; }
   const mixed = value.match(/^([+-]?\d+)\s+(\d+)\s*\/\s*(\d+)$/);

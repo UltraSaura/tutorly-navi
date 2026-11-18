@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2, GripVertical, RotateCcw, Settings2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, GripVertical, RotateCcw, Settings2, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { PracticeFeedback, type PracticeFeedbackStatus } from '@/components/practice/PracticeFeedback';
 import type { GraduatedNumberLineConfiguration, GraduatedNumberLineItem, GraduatedNumberLineResult } from './numberLineTypes';
-import { equivalentNumberLineValues, formatNumberLineValue, initialNumberLinePositions, normalizedNumberLinePosition, numberLineTickValues, numberLineValidPositions, parseNumberLineValue, snapNumberLinePosition, sortNumberLineValues, validateNumberLinePlacement } from './numberLineUtils';
+import { formatNumberLineValue, initialNumberLinePositions, normalizedNumberLinePosition, numberLineTickValues, numberLineValidPositions, snapNumberLinePosition } from './numberLineUtils';
 
-type LinePoint = { label: string; value?: unknown; position?: number; itemId?: string; correct?: boolean };
+import { evaluateNumberLineItems, numberLineMethodHint } from './numberLineFeedback';
+
+type LinePoint = { label: string; value?: unknown; position?: number; itemId?: string; correct?: boolean; locked?: boolean };
 type LineHandle = { label: string; position: number };
 
 function Line({ config, points = [], interactive = false, onTickSelect, handle, onHandlePosition, dropPosition, dropActive, dropCue, dropLabel, containerRef, onPointPointerDown }: { config: GraduatedNumberLineConfiguration; points?: LinePoint[]; interactive?: boolean; onTickSelect?: (position: number) => void; handle?: LineHandle | null; onHandlePosition?: (position: number) => void; dropPosition?: number | null; dropActive?: boolean; dropCue?: boolean; dropLabel?: string; containerRef?: React.RefObject<HTMLDivElement>; onPointPointerDown?: (itemId: string, event: React.PointerEvent<HTMLButtonElement>) => void }) {
@@ -34,7 +36,7 @@ function Line({ config, points = [], interactive = false, onTickSelect, handle, 
     {points.map((point) => {
       const position = point.position ?? normalizedNumberLinePosition(point.value, config.line.start, config.line.end) ?? 0;
       const markerColor = point.correct === true ? 'bg-emerald-600' : point.correct === false ? 'bg-destructive' : 'bg-primary';
-      return <div key={point.itemId ?? point.label} className="pointer-events-none absolute top-0 -translate-x-1/2" style={{ left: String(Math.max(0, Math.min(1, position)) * 100) + '%' }} aria-label={point.label + ': ' + (point.value ?? formatNumberLineValue(config.line.start + position * (config.line.end - config.line.start)))}>{point.itemId ? <button type="button" className="pointer-events-auto touch-none rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onPointerDown={(event) => onPointPointerDown?.(point.itemId!, event)}><span className={'flex min-h-6 max-w-14 items-center justify-center whitespace-nowrap rounded-sm border border-white/70 px-1 text-[10px] font-bold leading-4 text-primary-foreground shadow-sm ' + markerColor}>{point.label}</span></button> : <span className={'flex min-h-6 max-w-14 items-center justify-center whitespace-nowrap rounded-sm border border-white/70 px-1 text-[10px] font-bold leading-4 text-primary-foreground shadow-sm ' + markerColor}>{point.label}</span>}<div className={'mx-auto h-3 w-0.5 rounded-full ' + markerColor} /></div>;
+      return <div key={point.itemId ?? point.label} className="pointer-events-none absolute top-0 -translate-x-1/2" style={{ left: String(Math.max(0, Math.min(1, position)) * 100) + '%' }} aria-label={config.mode === 'read_point_value' ? point.label : point.label + ': ' + (point.value ?? formatNumberLineValue(config.line.start + position * (config.line.end - config.line.start)))}>{point.itemId ? <button type="button" className="pointer-events-auto touch-none rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" disabled={point.locked} onPointerDown={(event) => onPointPointerDown?.(point.itemId!, event)}><span className={'flex min-h-6 max-w-14 items-center justify-center whitespace-nowrap rounded-sm border border-white/70 px-1 text-[10px] font-bold leading-4 text-primary-foreground shadow-sm ' + markerColor}>{point.label}</span></button> : <span className={'flex min-h-6 max-w-14 items-center justify-center whitespace-nowrap rounded-sm border border-white/70 px-1 text-[10px] font-bold leading-4 text-primary-foreground shadow-sm ' + markerColor}>{point.label}</span>}<div className={'mx-auto h-3 w-0.5 rounded-full ' + markerColor} /></div>;
     })}
     {dropActive && typeof dropPosition === 'number' ? <div aria-hidden="true" className="pointer-events-none absolute top-0 z-20 flex -translate-x-1/2 flex-col items-center" style={{ left: String(dropPosition * 100) + '%' }}><span className="rounded-sm bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground shadow-sm">{dropLabel ?? 'Dépose ici'}</span><div className="h-12 w-1 rounded-full bg-primary shadow-[0_0_0_6px_rgba(18,198,160,0.2)]" /></div> : null}
     {interactive && handle ? <button type="button" className="absolute top-1 z-10 flex min-h-8 min-w-9 -translate-x-1/2 touch-none flex-col items-center justify-start rounded-md bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" style={{ left: String(Math.max(0, Math.min(1, handle.position)) * 100) + '%' }} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); positionFromPointer(event.clientX); }} onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) positionFromPointer(event.clientX); }} onPointerUp={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); positionFromPointer(event.clientX); }} aria-label={'Move ' + handle.label}><span>{handle.label}</span><span className="h-3 w-1 rounded-full bg-primary" /></button> : null}
@@ -43,9 +45,17 @@ function Line({ config, points = [], interactive = false, onTickSelect, handle, 
 
 const display = (item: GraduatedNumberLineItem) => item.displayValue ?? String(item.value);
 
-export function GraduatedNumberLineActivity({ config, onResult, onReset }: { config: GraduatedNumberLineConfiguration; onResult?: (result: GraduatedNumberLineResult) => void; onReset?: () => void }) {
+type ActivityProps = { config: GraduatedNumberLineConfiguration; onResult?: (result: GraduatedNumberLineResult) => void; onReset?: () => void };
+export function GraduatedNumberLineActivity(props: ActivityProps) {
+  return <NumberLineSession key={JSON.stringify(props.config)} {...props} />;
+}
+
+function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
   const ui = useInterfaceTranslation();
   const { language } = useLanguage();
+  const fr = language.startsWith('fr');
+  const [confirmed, setConfirmed] = useState<string[]>([]);
+  const [hintOpen, setHintOpen] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [placements, setPlacements] = useState<Record<string, number>>(() => config.mode === 'order_values'
     ? initialNumberLinePositions(config.items, numberLineValidPositions(config.line.start, config.line.end, config.line.subdivisions, config.validPositions))
@@ -61,9 +71,9 @@ export function GraduatedNumberLineActivity({ config, onResult, onReset }: { con
   const [attempts, setAttempts] = useState(0);
   const ticks = useMemo(() => numberLineTickValues(config.line.start, config.line.end, config.line.subdivisions), [config]);
   const validPositions = useMemo(() => numberLineValidPositions(config.line.start, config.line.end, config.line.subdivisions, config.validPositions), [config]);
-  const expectedOrder = useMemo(() => sortNumberLineValues(config.items, (item) => item.value), [config]);
+  const locked = (id: string) => confirmed.includes(id) || validationResults !== null;
   const hasPlacements = Object.keys(placements).length > 0;
-  const placeValuePoints = config.items.flatMap((item) => typeof placements[item.id] === 'number' ? [{ label: display(item), position: placements[item.id], itemId: item.id }] : []);
+  const placeValuePoints = config.items.flatMap((item) => typeof placements[item.id] === 'number' ? [{ label: display(item), position: placements[item.id], itemId: item.id, correct: validationResults?.[item.id] ?? (confirmed.includes(item.id) ? true : undefined), locked: locked(item.id) }] : []);
 
   useEffect(() => {
     if (!draggingItemId && !pendingDrag) return undefined;
@@ -100,12 +110,13 @@ export function GraduatedNumberLineActivity({ config, onResult, onReset }: { con
   }, [draggingItemId, pendingDrag, dragPosition, validPositions]);
 
   function beginChipDrag(itemId: string, event: React.PointerEvent<HTMLButtonElement>) {
+    if (locked(itemId)) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     setPendingDrag({ itemId, x: event.clientX, y: event.clientY }); setSelectedItemId(itemId);
   }
 
   function placeSelected(position: number) {
-    if (!selectedItemId) return;
+    if (!selectedItemId || locked(selectedItemId)) return;
     const nextPosition = config.snapMode === 'free' ? Math.max(0, Math.min(1, position)) : snapNumberLinePosition(position, validPositions);
     setPlacements((current) => ({ ...current, [selectedItemId]: nextPosition }));
     setValidationResults(null);
@@ -113,16 +124,11 @@ export function GraduatedNumberLineActivity({ config, onResult, onReset }: { con
   }
 
   function resetActivity() {
-    setAnswers({}); setPlacements(config.mode === 'order_values' ? initialNumberLinePositions(config.items, validPositions) : {}); setSelectedItemId(null); setValidationResults(null); setPlacementFeedback({}); setDraggingItemId(null); setPendingDrag(null); setDragPointer(null); setDragPosition(null); setAttempts(0); onReset?.();
+    setConfirmed([]); setHintOpen(false); setAnswers({}); setPlacements(config.mode === 'order_values' ? initialNumberLinePositions(config.items, validPositions) : {}); setSelectedItemId(null); setValidationResults(null); setPlacementFeedback({}); setDraggingItemId(null); setPendingDrag(null); setDragPointer(null); setDragPosition(null); setAttempts(0); onReset?.();
   }
 
   function retryActivity() {
-    // Start ordering attempts from the same deterministic shuffled state used
-    // on first render. Placement and read-value attempts keep the learner's
-    // work so they can correct it in place.
-    if (config.mode === 'order_values') {
-      setPlacements(initialNumberLinePositions(config.items, validPositions));
-    }
+    // Keep accepted answers and all positions; correct only unresolved work.
     setSelectedItemId(null);
     setValidationResults(null);
     setPlacementFeedback({});
@@ -134,33 +140,20 @@ export function GraduatedNumberLineActivity({ config, onResult, onReset }: { con
   }
 
   function submit() {
+    if (validationResults) return;
     const nextAttempts = attempts + 1; setAttempts(nextAttempts);
-    const currentOrder = config.items.slice().sort((a, b) => (placements[a.id] ?? Infinity) - (placements[b.id] ?? Infinity));
-    const results = config.items.map((item) => {
-      const correct = config.mode === 'read_point_value'
-        ? equivalentNumberLineValues(answers[item.id], item.value) || Boolean(item.acceptedAnswers?.some((answer) => equivalentNumberLineValues(answers[item.id], answer)))
-        : config.mode === 'place_value'
-          ? typeof placements[item.id] === 'number' && validateNumberLinePlacement(item.value, placements[item.id], config.line.start, config.line.end, item.tolerance ?? 0.08)
-          : config.validationMode === 'relative_order'
-            ? currentOrder.indexOf(item) === expectedOrder.indexOf(item)
-            : typeof placements[item.id] === 'number' && validateNumberLinePlacement(item.value, placements[item.id], config.line.start, config.line.end, item.tolerance ?? 0.08);
-      return { id: item.id, correct };
-    });
+    const results = evaluateNumberLineItems(config, answers, placements);
     const correct = results.every((result) => result.correct);
     const result: GraduatedNumberLineResult = { activityId: config.id, mode: config.mode, status: correct ? 'correct' : results.some((item) => item.correct) ? 'partial' : 'incorrect', attempts: nextAttempts, items: results, errors: correct ? [] : ['graduation_or_order'], skillTags: config.skillTags, timestamp: new Date().toISOString() };
     setValidationResults(Object.fromEntries(results.map((item) => [item.id, item.correct])));
-    if (config.mode === 'place_value') setPlacementFeedback(Object.fromEntries(results.map((item) => [item.id, placementHint(config.items.find((candidate) => candidate.id === item.id)!, config, item.correct)])));
+    setConfirmed(results.filter(item => item.correct).map(item => item.id));
+    if (config.mode === 'place_value') setPlacementFeedback(Object.fromEntries(results.map((item) => [item.id, placementHint(config, item.correct)])));
     onResult?.(result);
   }
 
-  function placementHint(item: GraduatedNumberLineItem, activity: GraduatedNumberLineConfiguration, correct: boolean) {
+  function placementHint(activity: GraduatedNumberLineConfiguration, correct: boolean) {
     if (correct) return ui('Correct placement');
-    const value = parseNumberLineValue(item.value);
-    if (value === 0.5) return ui('Halfway hint');
-    if (value === 0.75) return ui('Three quarters hint');
-    if (value !== null && value > activity.line.end) return ui('Greater than one hint');
-    const step = formatNumberLineValue((activity.line.end - activity.line.start) / activity.line.subdivisions);
-    return ui('Graduation value hint') + ' ' + step + '.';
+    return numberLineMethodHint(activity, language);
   }
 
   const feedbackStatus: PracticeFeedbackStatus | null = validationResults
@@ -176,19 +169,21 @@ export function GraduatedNumberLineActivity({ config, onResult, onReset }: { con
       ? { message: ui('Some values do not match the points.'), hint: ui('Hint: observe the value of one graduation.') }
       : { message: ui('Some labels are not on the right graduation.'), hint: ui('Hint: look at the value of one graduation.') };
 
-  return <div className="space-y-5">
+  return <div className="space-y-5" data-testid="number-line-activity">
     <p className="text-sm text-muted-foreground">{config.instruction}</p>
-    <Line config={config} points={config.mode === 'place_value' ? placeValuePoints : config.mode === 'order_values' ? config.items.map((item) => ({ label: display(item), value: item.value, itemId: item.id, position: placements[item.id], correct: validationResults?.[item.id] })) : config.items.map((item) => ({ label: item.label, value: item.value }))} interactive={config.mode === 'place_value'} onTickSelect={config.mode === 'place_value' ? placeSelected : undefined} onHandlePosition={placeSelected} dropPosition={dragPosition} dropActive={Boolean(draggingItemId)} dropCue={config.mode === 'place_value' && Object.keys(placements).length === 0} dropLabel={draggingItemId ? display(config.items.find((item) => item.id === draggingItemId) ?? config.items[0]) : undefined} containerRef={lineContainerRef} onPointPointerDown={beginChipDrag} />
+    <Line config={config} points={config.mode === 'place_value' ? placeValuePoints : config.mode === 'order_values' ? config.items.map((item) => ({ label: display(item), value: item.value, itemId: item.id, position: placements[item.id], correct: validationResults?.[item.id] ?? (confirmed.includes(item.id) ? true : undefined), locked: locked(item.id) })) : config.items.map((item) => ({ label: item.label, value: item.value }))} interactive={config.mode !== 'read_point_value' && validationResults === null} onTickSelect={config.mode !== 'read_point_value' ? placeSelected : undefined} onHandlePosition={placeSelected} dropPosition={dragPosition} dropActive={Boolean(draggingItemId)} dropCue={config.mode === 'place_value' && Object.keys(placements).length === 0} dropLabel={draggingItemId ? display(config.items.find((item) => item.id === draggingItemId) ?? config.items[0]) : undefined} containerRef={lineContainerRef} onPointPointerDown={beginChipDrag} />
     {feedbackStatus && <PracticeFeedback status={feedbackStatus} language={language} />}
     {feedbackStatus && feedbackStatus !== 'correct' && <div className="space-y-1 text-sm" role="status"><p className="font-semibold">{compactFeedback.message}</p><p className="text-muted-foreground">{compactFeedback.hint}</p></div>}
-    {config.mode === 'read_point_value' && <div className="grid gap-3 sm:grid-cols-2">{config.items.map((item) => <label key={item.id} className="flex items-center gap-2 font-semibold">{item.label} = <Input value={answers[item.id] ?? ''} onChange={(event) => { const value = (event.target as HTMLInputElement).value; setAnswers((current) => ({ ...current, [item.id]: value })); }} aria-label={item.label + ' value'} placeholder={ui('Write the value')} /></label>)}</div>}
-    {config.mode === 'place_value' && <div className="space-y-3">
-      <div className="flex flex-wrap gap-2" aria-label={ui('Values to place')}>{config.items.map((item) => <Button key={item.id} type="button" className="touch-none cursor-grab gap-1.5 active:cursor-grabbing" variant={selectedItemId === item.id ? 'default' : 'outline'} aria-pressed={selectedItemId === item.id} aria-label={display(item) + (typeof placements[item.id] === 'number' ? ' ✓' : '')} onPointerDown={(event) => beginChipDrag(item.id, event)} onClick={() => setSelectedItemId(item.id)}><GripVertical className="h-4 w-4 opacity-60" aria-hidden="true" /><span>{display(item)}</span>{typeof placements[item.id] === 'number' ? ' ✓' : ''}</Button>)}</div>
+    {confirmed.length > 0 && feedbackStatus !== 'correct' && <p role="status" className="text-sm font-semibold text-emerald-800">{fr ? 'Les réponses correctes sont conservées. Corrige seulement les autres.' : 'Correct answers are kept. Work only on the others.'}</p>}
+    {feedbackStatus !== 'correct' && <div><Button type="button" variant="outline" className="min-h-11" aria-expanded={hintOpen} onClick={() => setHintOpen(value => !value)}><Lightbulb aria-hidden="true" className="mr-2 h-4 w-4" />{hintOpen ? (fr ? 'Masquer l’indice' : 'Hide hint') : (fr ? 'Afficher un indice' : 'Show hint')}</Button>{hintOpen && <p className="mt-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-950" data-testid="number-line-hint">{numberLineMethodHint(config, language)}</p>}</div>}
+    {config.mode === 'read_point_value' && <div className="grid gap-3 sm:grid-cols-2">{config.items.map((item) => <label key={item.id} className="flex items-center gap-2 font-semibold">{item.label} = <Input value={answers[item.id] ?? ''} disabled={locked(item.id)} onChange={(event) => { const value = (event.target as HTMLInputElement).value; setAnswers((current) => ({ ...current, [item.id]: value })); }} aria-label={item.label + ' value'} placeholder={ui('Write the value')} />{confirmed.includes(item.id) && <CheckCircle2 aria-label={fr ? 'Réponse conservée' : 'Answer kept'} className="h-5 w-5 shrink-0 text-emerald-700" />}</label>)}</div>}
+    {config.mode !== 'read_point_value' && <div className="space-y-3">
+      <div className="flex flex-wrap gap-2" data-testid="number-line-values" role="group" aria-label={ui('Values to place')}>{config.items.map((item) => <Button key={item.id} type="button" disabled={locked(item.id)} className="min-h-11 touch-none cursor-grab gap-1.5 active:cursor-grabbing" variant={selectedItemId === item.id ? 'default' : 'outline'} aria-pressed={selectedItemId === item.id} aria-label={display(item) + (confirmed.includes(item.id) ? ' ✓' : '')} onPointerDown={(event) => beginChipDrag(item.id, event)} onClick={() => setSelectedItemId(item.id)}><GripVertical className="h-4 w-4 opacity-60" aria-hidden="true" /><span>{display(item)}</span>{confirmed.includes(item.id) ? ' ✓' : ''}</Button>)}</div>
       <p className="text-xs text-muted-foreground">{ui('You can also tap a label, then a graduation.')}</p>
-      <details className="rounded-lg border bg-muted/30 px-3 py-2"><summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold"><Settings2 className="h-4 w-4" />{ui('Accessibility options')}</summary><div className="mt-3 space-y-3">{config.items.map((item) => <label key={item.id} className="flex flex-col gap-1 text-sm font-semibold">{display(item)}<select className="h-11 rounded-md border bg-background px-3 text-base" value={placements[item.id] ?? ''} onChange={(event) => { const value = (event.target as HTMLSelectElement).value; setPlacements((current) => ({ ...current, [item.id]: value === '' ? undefined : Number(value) })); setSelectedItemId(item.id); setValidationResults(null); setPlacementFeedback({}); }} aria-label={'Fallback position for ' + display(item)}><option value="">{ui('Choose a graduation')}</option>{ticks.map((tick) => <option key={tick} value={normalizedNumberLinePosition(tick, config.line.start, config.line.end) ?? 0}>{formatNumberLineValue(tick)}</option>)}</select></label>)}{selectedItemId && <div className="flex flex-wrap gap-2 border-t pt-3"><Button type="button" size="sm" variant="ghost" onClick={() => { setPlacements((current) => { const next = { ...current }; delete next[selectedItemId]; return next; }); }}>{ui('Clear label')}</Button><Button type="button" size="sm" variant="ghost" onClick={() => { setPlacements({}); setValidationResults(null); setPlacementFeedback({}); }}>{ui('Reset placements')}</Button><Button type="button" size="sm" variant="ghost" onClick={() => { const index = validPositions.indexOf(placements[selectedItemId] ?? 0); placeSelected(validPositions[Math.max(0, index - 1)] ?? 0); }} aria-label="Move selected value left"><ArrowLeft className="h-4 w-4" /></Button><Button type="button" size="sm" variant="ghost" onClick={() => { const index = validPositions.indexOf(placements[selectedItemId] ?? 0); placeSelected(validPositions[Math.min(validPositions.length - 1, index + 1)] ?? 0); }} aria-label="Move selected value right"><ArrowRight className="h-4 w-4" /></Button></div>}</div></details>
+      {feedbackStatus !== 'correct' && <details className="rounded-lg border bg-muted/30 px-3 py-2"><summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold"><Settings2 className="h-4 w-4" />{ui('Accessibility options')}</summary><div className="mt-3 space-y-3">{config.items.map((item) => <label key={item.id} className="flex flex-col gap-1 text-sm font-semibold">{display(item)}<select disabled={locked(item.id)} className="h-11 rounded-md border bg-background px-3 text-base" value={placements[item.id] ?? ''} onChange={(event) => { const value = (event.target as HTMLSelectElement).value; setPlacements((current) => ({ ...current, [item.id]: value === '' ? undefined : Number(value) })); setSelectedItemId(item.id); setValidationResults(null); setPlacementFeedback({}); }} aria-label={'Fallback position for ' + display(item)}><option value="">{ui('Choose a graduation')}</option>{ticks.map((tick) => <option key={tick} value={normalizedNumberLinePosition(tick, config.line.start, config.line.end) ?? 0}>{formatNumberLineValue(tick)}</option>)}</select></label>)}{selectedItemId && <div className="flex flex-wrap gap-2 border-t pt-3"><Button type="button" size="sm" variant="ghost" onClick={() => { setPlacements((current) => { const next = { ...current }; if (!locked(selectedItemId)) delete next[selectedItemId]; return next; }); }}>{ui('Clear label')}</Button><Button type="button" size="sm" variant="ghost" onClick={() => { setPlacements(current => Object.fromEntries(Object.entries(current).filter(([id]) => confirmed.includes(id)))); setValidationResults(null); setPlacementFeedback({}); }}>{ui('Reset placements')}</Button><Button type="button" size="sm" variant="ghost" onClick={() => { const index = validPositions.indexOf(placements[selectedItemId] ?? 0); placeSelected(validPositions[Math.max(0, index - 1)] ?? 0); }} aria-label="Move selected value left"><ArrowLeft className="h-4 w-4" /></Button><Button type="button" size="sm" variant="ghost" onClick={() => { const index = validPositions.indexOf(placements[selectedItemId] ?? 0); placeSelected(validPositions[Math.min(validPositions.length - 1, index + 1)] ?? 0); }} aria-label="Move selected value right"><ArrowRight className="h-4 w-4" /></Button></div>}</div></details>}
     </div>}
-    {validationResults && feedbackStatus !== 'correct' && <details className="rounded-lg border border-border/60 px-3 py-2"><summary className="cursor-pointer text-sm font-semibold">{ui('View details')}</summary><ul className="mt-2 space-y-1 text-xs text-muted-foreground" aria-label={ui('Ordering feedback')}>{config.items.map((item) => <li key={item.id}><strong>{display(item)}:</strong> {validationResults[item.id] ? ui('Correct') : placementFeedback[item.id] ?? ui('Compare the values and move this label to the right position.')}</li>)}</ul></details>}
-    {feedbackStatus !== 'correct' && <div className="flex flex-col gap-2"><Button type="button" className="w-full" onClick={validationResults ? retryActivity : submit}>{validationResults ? ui('Try again') : ui('Check answer')}</Button>{config.mode === 'place_value' && hasPlacements ? <Button type="button" variant="ghost" size="sm" className="self-center text-muted-foreground" onClick={() => { setPlacements({}); setSelectedItemId(null); setValidationResults(null); setPlacementFeedback({}); }}>{ui('Reset')}</Button> : null}</div>}
+    {validationResults && feedbackStatus !== 'correct' && <details className="rounded-lg border border-border/60 px-3 py-2"><summary className="cursor-pointer text-sm font-semibold">{ui('View details')}</summary><ul className="mt-2 space-y-1 text-xs text-muted-foreground" aria-label={ui('Ordering feedback')}>{config.items.map((item) => <li key={item.id}><strong>{config.mode === 'read_point_value' ? item.label : display(item)}:</strong> {validationResults[item.id] ? ui('Correct') : placementFeedback[item.id] ?? numberLineMethodHint(config, language)}</li>)}</ul></details>}
+    {feedbackStatus !== 'correct' && <div className="flex flex-col gap-2"><Button type="button" className="w-full" onClick={validationResults ? retryActivity : submit}>{validationResults ? ui('Try again') : ui('Check answer')}</Button>{config.mode === 'place_value' && hasPlacements ? <Button type="button" variant="ghost" size="sm" className="self-center text-muted-foreground" onClick={() => { resetActivity(); }}>{ui('Reset')}</Button> : null}</div>}
     {draggingItemId && dragPointer ? <div className="pointer-events-none fixed z-[80] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-3 py-2 text-sm font-bold text-primary-foreground shadow-xl" style={{ left: dragPointer.x, top: dragPointer.y }}>{display(config.items.find((item) => item.id === draggingItemId) ?? config.items[0])}</div> : null}
   </div>;
 }
