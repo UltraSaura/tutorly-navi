@@ -63,7 +63,7 @@ export function guidedFamilyAnswer(exercise: GuidedFamilyExercise): number {
 /** Four neutral choices, stable for an authored exercise and distinct at both bounds. */
 export function makeGuidedFamilyChoices(exercise: GuidedFamilyExercise): number[] {
   const answer = guidedFamilyAnswer(exercise);
-  const candidates = [answer, answer - 1, answer + 1, answer - 2, answer + 2, answer + 3, answer + 4]
+  const candidates = [...(exercise.kind === 'equal-groups' ? [answer, exercise.groups, exercise.perGroup, exercise.groups + exercise.perGroup] : []), answer, answer - 1, answer + 1, answer - 2, answer + 2, answer + 3, answer + 4]
     .filter(value => value >= 0 && value <= 100);
   const values = [...new Set(candidates)].slice(0, 4);
   for (let offset = 3; values.length < 4; offset++) {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { EqualGroupsTransfer } from '@/components/practice/EqualGroupsTransfer';
 import { GuidedFamilyActivity } from '@/components/practice/GuidedFamilyActivity';
 import { useLearner } from '@/context/FamilyProfileContext';
 import { learnerStorageKey } from '@/features/family/profileRuntime';
@@ -49,6 +50,7 @@ function FamilySession({ kind }: { kind: GuidedFamilyKind }) {
     {complete && <section className="mt-4 space-y-3 border-t pt-4" aria-label="Activité terminée">
       <p>Score de cet exercice : {score} / {exercise.points ?? 1}</p>
       {answer.supported && <p className="text-sm text-slate-700">Tu as utilisé une aide. Essaie un autre exercice pour t’entraîner à le résoudre seul.</p>}
+      {exercise.kind === 'equal-groups' && <EqualGroupsTransfer key={`${storageKey}:${exercise.id}`} source={exercise} storageKey={storageKey} />}
       <button type="button" className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 py-2 font-semibold text-primary-foreground" onClick={() => { const next = createGuidedFamilyExercise(kind); setExercise(next); setRestored(undefined); setAnswer(undefined); try { localStorage.setItem(storageKey, JSON.stringify({ exercise: next })); } catch { /* optional persistence */ } }}><RotateCcw className="h-4 w-4" />Un autre exercice</button>
     </section>}
   </>;
