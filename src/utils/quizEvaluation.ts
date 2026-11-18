@@ -1,3 +1,4 @@
+import { isGuidedFamilyExercise, isGuidedFamilyAnswerCorrect } from '@/features/practice/guidedFamilies';
 import type { Question } from '@/types/quiz-bank';
 import { evaluateVisual } from '@/lib/quiz/visual-evaluate';
 import { additionAcrossTenTotal, countersToNextTen } from '@/features/practice/additionAcrossTen';
@@ -15,6 +16,7 @@ export type QuizQuestionGradeDetail = {
 };
 
 export function evaluateQuestion(q: Question, answer: any): boolean {
+  if (isGuidedFamilyExercise(q)) return isGuidedFamilyAnswerCorrect(q, answer);
   if (q.kind === "single") {
     const correctId = q.choices.find(c => c.correct)?.id;
     return answer === correctId;
@@ -103,23 +105,26 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
   return false;
 }
 
-export function isQuizAnswerComplete(q: Question, answer: any): boolean {
+export function isQuizAnswerComplete(q: Question, answer: unknown): boolean {
+  const value = answer && typeof answer === 'object' ? answer as Record<string, unknown> : {};
+  if (isGuidedFamilyExercise(q)) return value.complete === true && isGuidedFamilyAnswerCorrect(q, answer);
+  if (['guided-word-problem', 'equal-groups', 'colour-grid'].includes(q.kind)) return false;
   if (q.kind === 'counting') {
-    return answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
-      && Number(answer?.addedGroups) >= q.groupsToAdd
-      && Number.isInteger(Number(answer?.selectedAnswer));
+    return value.selectedAnswer !== null && value.selectedAnswer !== undefined
+      && Number(value.addedGroups) >= q.groupsToAdd
+      && Number.isInteger(Number(value.selectedAnswer));
   }
   if (q.kind === 'addition-across-ten') {
-    return answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
-      && Number(answer?.movedToTen) >= countersToNextTen(q.startNumber)
-      && Number.isInteger(Number(answer?.selectedAnswer));
+    return value.selectedAnswer !== null && value.selectedAnswer !== undefined
+      && Number(value.movedToTen) >= countersToNextTen(q.startNumber)
+      && Number.isInteger(Number(value.selectedAnswer));
   }
   if (q.kind === 'subtraction-with-dots') {
-    return answer?.selectedEquation !== null && answer?.selectedEquation !== undefined
-      && answer?.selectedAnswer !== null && answer?.selectedAnswer !== undefined
-      && Number(answer?.dotsAdded) >= q.targetCount
-      && Number(answer?.dotsRemoved) >= q.takeAway
-      && Number.isInteger(Number(answer?.selectedAnswer));
+    return value.selectedEquation !== null && value.selectedEquation !== undefined
+      && value.selectedAnswer !== null && value.selectedAnswer !== undefined
+      && Number(value.dotsAdded) >= q.targetCount
+      && Number(value.dotsRemoved) >= q.takeAway
+      && Number.isInteger(Number(value.selectedAnswer));
   }
   return true;
 }

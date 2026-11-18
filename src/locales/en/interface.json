@@ -1847,5 +1847,10 @@
   "Stuwy management dashboard for overseeing users, learning content and platform activity.": "Stuwy management dashboard for overseeing users, learning content and platform activity.",
   "Brouillon staging": "Staging draft",
   "Leçon publiée": "Published lesson",
-  "Aucune version": "No version"
+  "Aucune version": "No version",
+  "Previous step": "Previous step",
+  "Pause steps": "Pause steps",
+  "Play steps": "Play steps",
+  "Next step": "Next step",
+  "Restart steps": "Restart steps"
 }

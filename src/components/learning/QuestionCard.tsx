@@ -1,3 +1,5 @@
+import { GuidedFamilyActivity } from '@/components/practice/GuidedFamilyActivity';
+import { isGuidedFamilyExercise } from '@/features/practice/guidedFamilies';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -777,7 +779,7 @@ export function QuestionCard({
   const [subtractionFeedback, setSubtractionFeedback] = useState<string | null>(null);
   const onChangeRef = useRef(onChange);
   const inferredPromptFigure = useMemo(() => {
-    if (question.kind === 'counting') return null;
+    if (question.kind === 'counting' || isGuidedFamilyExercise(question)) return null;
     if ((question as any).context_visual) return null;
     return inferPromptFigure(question);
   }, [question]);
@@ -856,6 +858,16 @@ export function QuestionCard({
     if (Array.isArray(value) && value.includes(choiceId)) return "wrong";
     return "faded";
   };
+
+  if (['guided-word-problem', 'equal-groups', 'colour-grid'].includes(question.kind) && !isGuidedFamilyExercise(question)) {
+    return <p role="alert" className="rounded-xl bg-amber-50 p-4 text-amber-900">Cette activité est mal configurée. Choisis un autre exercice.</p>;
+  }
+
+  if (isGuidedFamilyExercise(question)) {
+    return <GuidedFamilyActivity key={question.id} exercise={question} disabled={externallySubmitted}
+      onChange={state => onChange?.(state)}
+      onComplete={result => { onChange?.(result); onFinish?.(true, result.attempts); }} />;
+  }
 
   return (
     <motion.div

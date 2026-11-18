@@ -221,6 +221,14 @@ export default function PracticePage() {
           />
         </section>
 
+        <section className="space-y-3" aria-label="Nouvelles activités guidées">
+          {[
+            ['word-problems', 'Petits problèmes guidés', 'Choisis l’opération et résous une histoire avec des objets.'],
+            ['equal-groups', 'Groupes égaux', 'Comprends la multiplication avec des groupes d’objets.'],
+            ['colour-grid', 'Compter les couleurs', 'Compte les cases d’une couleur dans une grille.'],
+          ].map(([slug, title, description]) => <div key={slug} className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm"><h2 className="text-lg font-extrabold text-[#050B34]">{title}</h2><p className="mt-1 text-sm text-slate-600">{description}</p><button type="button" onClick={() => navigate(`/practice/guided/${slug}`)} className="mt-3 min-h-11 w-full rounded-xl bg-[#5145B5] px-4 py-2 font-semibold text-white">Commencer : {title}</button></div>)}
+        </section>
+
         <section className="rounded-[28px] border border-[#BCEFE3] bg-[#E8F8F3] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -266,6 +274,13 @@ export default function PracticePage() {
           <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">Numbers after ten</h2>
           <p className="mt-1 text-sm text-[#667085]">Build a number with one group of ten and extra single objects.</p>
           <button type="button" onClick={() => navigate('/practice/numbers-after-ten')} className="mt-4 min-h-11 w-full rounded-xl bg-[#5145B5] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Start numbers lesson</button>
+        </section>
+
+        <section className="rounded-[24px] border border-[#D9DDF8] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#5145B5]">Maths · Time and durations</p>
+          <h2 className="mt-1 text-lg font-extrabold text-[#050B34]">One hour later</h2>
+          <p className="mt-1 text-sm text-[#667085]">Read an analogue clock and choose the time one hour later.</p>
+          <button type="button" onClick={() => navigate('/practice/one-hour-later')} className="mt-4 min-h-11 w-full rounded-xl bg-[#5145B5] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#40369B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5145B5] focus-visible:ring-offset-2">Start clock practice</button>
         </section>
 
         <section>

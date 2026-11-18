@@ -49,6 +49,8 @@ const MentalCalculationRacePage = lazy(() => import("./pages/practice/MentalCalc
 const NumbersAfterTenPage = lazy(() => import("./pages/practice/NumbersAfterTenPage"));
 const AdditionAcrossTenPage = lazy(() => import("./pages/practice/AdditionAcrossTenPage"));
 const SubtractionWithDotsPage = lazy(() => import("./pages/practice/SubtractionWithDotsPage"));
+const GuidedFamiliesPracticePage = lazy(() => import("./pages/practice/GuidedFamiliesPracticePage"));
+const OneHourLaterPracticePage = lazy(() => import("./pages/practice/OneHourLaterPracticePage"));
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
@@ -259,6 +261,8 @@ const App = () => {
                           <Route path="numbers-after-ten" element={<NumbersAfterTenPage />} />
                           <Route path="addition-across-ten" element={<AdditionAcrossTenPage />} />
                           <Route path="subtraction-within-ten" element={<SubtractionWithDotsPage />} />
+                          <Route path="guided/:family" element={<GuidedFamiliesPracticePage />} />
+                          <Route path="one-hour-later" element={<OneHourLaterPracticePage />} />
                           <Route path="number-line" element={<GraduatedNumberLinePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />

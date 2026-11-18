@@ -157,7 +157,10 @@ export interface FillExprQuestion {
   tags?: string[];
 }
 
+export type GuidedFamilyQ = BaseQ & import('@/features/practice/guidedFamilies').GuidedFamilyExercise;
+
 export type Question =
+  | GuidedFamilyQ
   | SingleQ
   | MultiQ
   | NumericQ

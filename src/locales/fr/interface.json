@@ -1847,5 +1847,10 @@
   "Stuwy management dashboard for overseeing users, learning content and platform activity.": "Tableau de bord de gestion Stuwy pour superviser les utilisateurs, les contenus pédagogiques et l'activité de la plateforme.",
   "Brouillon staging": "Brouillon staging",
   "Leçon publiée": "Leçon publiée",
-  "Aucune version": "Aucune version"
+  "Aucune version": "Aucune version",
+  "Previous step": "Étape précédente",
+  "Pause steps": "Mettre les étapes en pause",
+  "Play steps": "Lire les étapes",
+  "Next step": "Étape suivante",
+  "Restart steps": "Recommencer les étapes"
 }

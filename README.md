@@ -4,6 +4,35 @@
 
 This checkout contains the Stuwy practice branch application.
 
+## Open the app — Vercel links
+
+The development, practice and guided-activity previews belong to the **Stuwy** Vercel project. The main app belongs to the **tutorly-navi** Vercel project. You may need to sign in
+to Vercel with access to the Stuwy team.
+
+| Branch | Open the app | GitHub source |
+| --- | --- | --- |
+| Main | [Main app](https://tutorly-navi.vercel.app/) | [`main`](https://github.com/UltraSaura/tutorly-navi/tree/main) |
+| Guided activities | [Guided activities preview](https://stuwy-git-feature-guided-practice-lessons-stuwy.vercel.app) | [`feature/guided-practice-lessons`](https://github.com/UltraSaura/tutorly-navi/tree/feature/guided-practice-lessons) |
+| Development | [Development preview](https://stuwy-git-development-stuwy.vercel.app) | [`development`](https://github.com/UltraSaura/tutorly-navi/tree/development) |
+| Practice | [Practice preview](https://stuwy-git-practice-stuwy.vercel.app) | [`practice`](https://github.com/UltraSaura/tutorly-navi/tree/practice) |
+
+Branch preview links point to the deployment assigned to that branch. The
+following links identify the specific deployments confirmed ready on
+16 November 2026 (fixed historical snapshots, not necessarily the latest branch builds):
+
+| Branch | Specific deployment | Source commit | Vercel deployment details |
+| --- | --- | --- | --- |
+| Development | [Open development deployment](https://stuwy-2lqvpwjb3-stuwy.vercel.app) | `a8708d5459e7c2bd94d85cf4ef6440c2c52622f1` | [Build details](https://vercel.com/stuwy/stuwy/HcSPQVC5YxWyh8w5aHJyLCsUsWUp) |
+| Practice | [Open practice deployment](https://stuwy-lz52zo37c-stuwy.vercel.app) | `cf8d3348072075d70abe9c4caa4ca36283ab6fc6` | [Build details](https://vercel.com/stuwy/stuwy/DTQ4XTMAubwPRc2p4HRC2Ba6C9Bf) |
+
+[Manage the Stuwy Vercel project](https://vercel.com/stuwy/stuwy).
+
+The guided exercises, clock and arithmetic display work in this checkout are on
+[`feature/guided-practice-lessons`](https://github.com/UltraSaura/tutorly-navi/tree/feature/guided-practice-lessons).
+The main, development and practice previews do not include feature-branch changes unless those changes have been integrated into their respective branches and deployed.
+
+Implementation notes: [guided exercise delivery and validation](docs/tutorly-learning-project/IMPLEMENTATION-REPORT-2026-11-18.md) · [Brilliant evaluation and implementation plan](docs/tutorly-learning-project/BRILLIANT-IMPLEMENTATION-PLAN.md).
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

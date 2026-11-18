@@ -11,8 +11,7 @@ import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { useUserContext } from '@/hooks/useUserContext';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
-import { extractExpressionFromText } from '@/utils/mathStepper/parser';
-import { analyzeExerciseProfile, detectOperationType, generateProfileMatchedExample } from '@/utils/operationTypeDetector';
+import { getStepperExpression } from './stepperExpression';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -369,16 +368,7 @@ export function TwoCards({
   }, [orderedSteps, s.exercise, subjectSlug, topicId, userContext?.learning_style]);
 
   const exampleExpression = React.useMemo(() => {
-    const exerciseText = s.exercise || '';
-    const profile = analyzeExerciseProfile(exerciseText);
-    const op = detectOperationType(exerciseText).type;
-
-    if (op !== 'unknown') {
-      return generateProfileMatchedExample(profile).replace(/\s*=\s*.+$/, '');
-    }
-
-    const extracted = stepTextForExpression ? extractExpressionFromText(stepTextForExpression) : null;
-    return extracted || '2 + 3';
+    return getStepperExpression(s.exercise || '', stepTextForExpression);
   }, [s.exercise, stepTextForExpression]);
   
   // Show interactive stepper only for pure arithmetic problems for young students
@@ -402,11 +392,31 @@ export function TwoCards({
   }, [shouldShowInteractiveStepper, s.exercise]);
 
   if (isSupportedDivision(s.exercise)) {
-    return <div className="flex h-[min(82dvh,720px)] max-h-[calc(100dvh-2rem)] min-h-0 flex-col overflow-hidden sm:h-[min(78dvh,720px)]">
-      <ExplanationRenderer mode="kid" steps={[]} miniPracticeContext={miniPracticeContext}
-        onPracticeMore={handlePracticeMore}
-        onViewLesson={handleViewLesson} canViewLesson={Boolean(canShowLessonLink)} />
-    </div>;
+    return (
+      <div className="flex min-h-0 flex-col gap-3 pb-2">
+        <div className="shrink-0 rounded-xl border bg-muted p-4">
+          <div className="font-semibold">{t('exercises.explanation.headers.exercise')}</div>
+          <div className="mt-1 break-words text-muted-foreground">
+            {s.exercise
+              ? toChildFriendlyExplanationText(resolveText(s.exercise))
+              : t('exercises.explanation.fallback.no_exercise')}
+          </div>
+        </div>
+
+        <div className="min-h-0 rounded-xl border bg-card p-4 shadow-sm">
+          <div className="mb-3 font-semibold">{t('exercises.explanation.headers.interactive_practice')}</div>
+          <div className="max-w-full overflow-x-auto">
+            <CompactMathStepper expression={exampleExpression} className="text-sm" />
+          </div>
+        </div>
+
+        {canShowLessonLink && (
+          <Button type="button" onClick={handleViewLesson} className="self-end rounded-2xl px-5">
+            {t('exercises.explanation.kid.view_lesson')}
+          </Button>
+        )}
+      </div>
+    );
   }
 
   return (

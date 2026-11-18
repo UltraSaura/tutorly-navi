@@ -1,3 +1,5 @@
+import { createGuidedFamilyExercise, guidedFamilyPrompt, isGuidedFamilyExercise, validateGuidedFamilyExercise, type GuidedFamilyExercise } from '@/features/practice/guidedFamilies';
+import { GuidedFamilyEditor } from './GuidedFamilyEditor';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useEffect } from 'react';
 import VisualQuestionBuilder from '@/components/admin/VisualQuestionBuilder';
@@ -55,7 +57,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [kind, setKind] = useState<Question['kind']>(question?.kind || 'single');
   const [prompt, setPrompt] = useState(question?.prompt || '');
   const [hint, setHint] = useState(question?.hint || '');
-  const [points, setPoints] = useState(question?.points || 1);
+  const [points, setPoints] = useState(question?.points ?? 1);
   const [id, setId] = useState(question?.id || `q-${Date.now()}`);
   const [countingObject, setCountingObject] = useState<CountableObject>(question?.kind === 'counting' ? question.object : 'pencil');
   const [countingStartingGroups, setCountingStartingGroups] = useState(question?.kind === 'counting' ? question.startingGroups : 1);
@@ -67,6 +69,13 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [subtractionTakeAway, setSubtractionTakeAway] = useState(question?.kind === 'subtraction-with-dots' ? question.takeAway : 5);
   const [subtractionObject, setSubtractionObject] = useState<SubtractionObject>(question?.kind === 'subtraction-with-dots' ? normalizeSubtractionObject(question.object) : 'bubble');
   const [subtractionCountByColor, setSubtractionCountByColor] = useState(question?.kind === 'subtraction-with-dots' ? question.countByColor === true : false);
+
+  const [guidedExercise, setGuidedExercise] = useState<GuidedFamilyExercise | null>(() => isGuidedFamilyExercise(question) ? question as GuidedFamilyExercise : null);
+  useEffect(() => {
+    if (['guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind)) {
+      setGuidedExercise(current => current?.kind === kind ? current : createGuidedFamilyExercise(kind as GuidedFamilyExercise['kind']));
+    }
+  }, [kind]);
 
   // Single/Multi choice state
   const [choices, setChoices] = useState<Array<{ id: string; label: string; correct?: boolean }>>(
@@ -187,9 +196,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   useEffect(() => {
     if (question) {
       setKind(question.kind);
+      setGuidedExercise(isGuidedFamilyExercise(question) ? question as GuidedFamilyExercise : null);
       setPrompt(question.prompt);
       setHint(question.hint || '');
-      setPoints(question.points || 1);
+      setPoints(question.points ?? 1);
       setId(question.id);
 
       if (question.kind === 'counting') {
@@ -363,14 +373,20 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   };
 
   const handleSave = () => {
-    if (!['counting', 'addition-across-ten', 'subtraction-with-dots'].includes(kind) && !prompt.trim()) {
+    if (!['counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && !prompt.trim()) {
       alert('Please enter a question prompt');
       return;
     }
 
     let questionData: Question;
 
-    if (kind === 'single' || kind === 'multi') {
+    if (['guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind)) {
+      if (!guidedExercise || guidedExercise.kind !== kind) return;
+      const candidate = { ...guidedExercise, prompt: guidedFamilyPrompt(guidedExercise), id, points, hint: undefined };
+      const errors = validateGuidedFamilyExercise(candidate);
+      if (errors.length) { alert(errors.join('\n')); return; }
+      questionData = candidate;
+    } else if (kind === 'single' || kind === 'multi') {
       const validChoices = choices.filter(c => c.label.trim());
       if (validChoices.length < 2) {
         alert('Please add at least 2 choices');
@@ -637,6 +653,9 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="slider">{ui("Slider")}</SelectItem>
                 <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
+                <SelectItem value="guided-word-problem">Problème guidé — choisir puis calculer</SelectItem>
+                <SelectItem value="equal-groups">Groupes égaux — multiplication</SelectItem>
+                <SelectItem value="colour-grid">Compter dans une grille de couleurs</SelectItem>
                 <SelectItem value="counting">Count objects in groups of ten</SelectItem>
                 <SelectItem value="addition-across-ten">Addition · cross the next ten</SelectItem>
                 <SelectItem value="subtraction-with-dots">Subtraction · countable objects</SelectItem>
@@ -655,7 +674,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             />
           </div>
 
-          {!['counting', 'addition-across-ten', 'subtraction-with-dots'].includes(kind) && <div>
+          {!['counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && <div>
             <Label htmlFor="prompt">{ui("Question Prompt")}</Label>
             <Textarea
               id="prompt"
@@ -666,6 +685,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               required
             />
           </div>}
+
+          {guidedExercise?.kind === kind && <GuidedFamilyEditor exercise={guidedExercise} onChange={setGuidedExercise} />}
 
           {kind === 'counting' && (
             <div className="space-y-3 rounded-xl border p-4">
@@ -726,6 +747,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             </div>
           )}
 
+          {['guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Les indices de ces activités expliquent la méthode et sont générés à partir du type d’exercice, sans donner le résultat.</p> : (
           <div>
             <Label htmlFor="hint">{ui("Hint (optional)")}</Label>
             <Textarea
@@ -736,6 +758,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               rows={2}
             />
           </div>
+          )}
 
           <div>
             <Label htmlFor="points">{ui("Points")}</Label>
@@ -743,8 +766,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               id="points"
               type="number"
               value={points}
-              onChange={(e) => setPoints(parseInt(e.target.value) || 1)}
-              min="1"
+              onChange={(e) => setPoints(Number.isFinite(e.target.valueAsNumber) ? Math.max(0, Math.trunc(e.target.valueAsNumber)) : 0)}
+              min="0"
             />
           </div>
 
