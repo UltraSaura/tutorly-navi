@@ -41,6 +41,12 @@ test('number line keeps correct work through placement, reading and ordering ret
   await page.getByRole('textbox', { name: 'A value', exact: true }).fill('0,25');
   await page.getByRole('textbox', { name: 'B value', exact: true }).fill('1/2');
   await check();
+  await expect(page.getByRole('textbox', { name: 'A value', exact: true })).toBeDisabled();
+  await expect(activity.getByText('View details', { exact: true })).toHaveCount(0);
+  await retry();
+  await expect(page.getByRole('textbox', { name: 'A value', exact: true })).toBeEnabled();
+  await check();
+  await activity.getByRole('button', { name: 'Guide me', exact: true }).click();
   await activity.getByText('View details', { exact: true }).click();
   await expect(activity.getByLabel('Ordering feedback')).not.toContainText('3/4');
   await retry();
@@ -53,6 +59,10 @@ test('number line keeps correct work through placement, reading and ordering ret
   // The old retry reshuffled all labels. Now only the unresolved labels need work.
   await place('0,25', '0,25');
   await check();
+  await retry();
+  await expect(chip('0,25')).toBeEnabled();
+  await check();
+  await activity.getByRole('button', { name: 'Guide me', exact: true }).click();
   await retry();
   await expect(chip('0,25 ✓')).toBeDisabled();
   await place('1/2', '0,5');

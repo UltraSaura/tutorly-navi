@@ -50,7 +50,7 @@ test('practice answer submission, incorrect feedback, retry and progress', async
   }
   await check.click();
   await expect(page.getByRole('status').filter({ hasText: 'Not yet' })).toBeVisible();
-  await expect(page.getByText('Some labels are not on the right graduation.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Not quite yet. Check your work and try again.', { exact: true })).toBeVisible();
   await expect(page).toHaveScreenshot('practice-wrong-answer.png', { fullPage: true });
   await expect(page.getByRole('button', { name: 'Next activity', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Try again', exact: true }).click();

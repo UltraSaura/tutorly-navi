@@ -31,7 +31,7 @@ The guided exercises, clock and arithmetic display work in this checkout are on
 [`feature/guided-practice-lessons`](https://github.com/UltraSaura/tutorly-navi/tree/feature/guided-practice-lessons).
 The main, development and practice previews do not include feature-branch changes unless those changes have been integrated into their respective branches and deployed.
 
-Implementation notes: [guided exercise delivery and validation](docs/tutorly-learning-project/IMPLEMENTATION-REPORT-2026-11-18.md) · [Brilliant evaluation and implementation plan](docs/tutorly-learning-project/BRILLIANT-IMPLEMENTATION-PLAN.md) · [equal-groups feedback pilot](docs/tutorly-learning-project/EQUAL-GROUPS-FEEDBACK-PILOT.md) · [number-line feedback pilot](docs/tutorly-learning-project/NUMBER-LINE-FEEDBACK-PILOT.md).
+Implementation notes: [guided exercise delivery and validation](docs/tutorly-learning-project/IMPLEMENTATION-REPORT-2026-11-18.md) · [Brilliant evaluation and implementation plan](docs/tutorly-learning-project/BRILLIANT-IMPLEMENTATION-PLAN.md) · [equal-groups feedback pilot](docs/tutorly-learning-project/EQUAL-GROUPS-FEEDBACK-PILOT.md) · [number-line feedback pilot](docs/tutorly-learning-project/NUMBER-LINE-FEEDBACK-PILOT.md) · [independent retry policy](docs/tutorly-learning-project/NUMBER-LINE-RETRY-POLICY.md).
 
 ## How can I edit this code?
 

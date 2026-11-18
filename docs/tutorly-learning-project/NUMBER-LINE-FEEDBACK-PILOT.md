@@ -1,5 +1,7 @@
 # Number-line feedback pilot — 18 November 2026
 
+The immediate correct-part locking described below is superseded by the approved [independent retry and optional guidance policy](NUMBER-LINE-RETRY-POLICY.md). This report records the earlier pilot.
+
 Branch: `feature/guided-practice-lessons`. Clean starting commit `ca43cf00f88a8299c772d291827b3262d0a01fb1`, verified against the fetched feature branch before editing. No other worktree was changed.
 
 ## Source and category
