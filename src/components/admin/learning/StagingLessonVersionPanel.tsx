@@ -65,7 +65,7 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
     const generated = await generateStagingDraft(topicId, undefined, null);
     const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id, null, generated.topicKind ?? classifyStagingTopic(topic.name), generated.validation as any);
     await refresh();
-    navigate(`/admin/generated-lessons?version=${encodeURIComponent(saved.id)}`);
+    navigate(`/admin/staging-lessons/preview/${encodeURIComponent(saved.id)}`);
   });
 
   const validate = (version: LessonVersion) => run(`validate:${version.id}`, async () => {
@@ -107,7 +107,9 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
         {versions.map((version) => <div key={version.id} className="flex flex-wrap items-center gap-2 rounded border p-3">
           <div className="min-w-0 flex-1"><p className="font-medium">{topicNames.get(version.topic_id)?.name ?? version.topic_id}</p><p className="text-xs text-muted-foreground">{version.id} · {new Date(version.created_at).toLocaleString()}</p></div>
           <Badge variant={version.status === 'published' ? 'default' : 'outline'}>{version.status}</Badge>
-          <Button size="sm" variant="outline" onClick={() => navigate(`/admin/generated-lessons?version=${encodeURIComponent(version.id)}`)}>Preview draft</Button>
+          <Button size="sm" variant="outline" onClick={() => navigate(version.status === 'draft'
+            ? `/admin/staging-lessons/preview/${encodeURIComponent(version.id)}`
+            : `/admin/generated-lessons?version=${encodeURIComponent(version.id)}`)}>Preview draft</Button>
           {version.status === 'draft' && <Button size="sm" variant="outline" onClick={() => validate(version)} disabled={busy !== null}>Validate draft</Button>}
           {version.status === 'validated' && <Button size="sm" onClick={() => publish(version)} disabled={busy !== null}>Publish draft</Button>}
         </div>)}

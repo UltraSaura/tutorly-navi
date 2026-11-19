@@ -1,3 +1,5 @@
+import { STAGING_PROMPT_VERSION, STAGING_PROMPT_V22_CANDIDATE, type StagingPromptVersion } from '../../../shared/staging-prompt-version.ts';
+export { STAGING_PROMPT_VERSION, STAGING_PROMPT_V22_CANDIDATE } from '../../../shared/staging-prompt-version.ts';
 import { ANSWER_TYPE_VALUES, validateLessonV21 } from './lesson-v21-contract.ts';
 import { pedagogicalIssues, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
@@ -148,8 +150,15 @@ const object = (value: unknown): Record<string, unknown> | null =>
 
 export const STAGING_LEVEL_COUNT = 4;
 export const STAGING_LEVEL_MAX_TOKENS = 4096;
-export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v4-visual-first';
 export const STAGING_JSON_NESTING_RULE = 'STRUCTURE JSON: construis chaque objet avec ses propriétés nommées et ses tableaux complets. Utilise les exemples JSON fournis comme modèles de structure; ne compte pas les accolades, ne force pas un ordre de fermeture et ne recopie jamais une suite de fermetures JSON. Chaque bloc doit être autonome et correctement fermé avant de passer au suivant.';
+const STAGING_V22_QUALITY_INSTRUCTIONS = [
+  'Aligne le but, chaque concept, les exemples, les exercices et la maîtrise sur les objectifs de la spécification approuvée. Reprends à l’identique ses critères de réussite lorsqu’ils sont fournis et vérifie chacun par une tâche observable.',
+  'Enseigne une idée à la fois. Explique, montre un exemple résolu, propose un essai guidé, puis vérifie l’application autonome et la maîtrise lorsque c’est pertinent. Utilise les blocs existants et les questions de maîtrise pour l’application autonome.',
+  'Fais progresser la difficulté. Dans chaque étape résolue, explique l’action et sa raison. Donne un indice qui aide à démarrer sans révéler la réponse. Dans le retour d’erreur, indique une cause plausible et une prochaine action concrète.',
+  'Utilise des mots et des phrases adaptés à l’âge. Explique les termes indispensables lors de leur première apparition et coupe les répétitions. Choisis un visuel seulement s’il éclaire l’idée ou si la spécification le demande. Vérifie chaque quantité, valeur et étiquette du visuel.',
+  'Conserve exactement le contrat JSON V2.1 ci-dessous. N’ajoute aucun champ ni type de bloc.',
+].join('\n');
+
 export const STAGING_JSON_SYNTAX_RULE = 'SYNTAXE JSON STRICTE: un nombre JSON (expected_answer, correct_answer, radius, degrees, x, y, factor…) s’écrit TOUJOURS avec un point décimal et sans espace: 0.5, 2.75, 12 — JAMAIS 0,5, 2,75, 1 000, .5 ni 05. La virgule décimale française (« 2,75 ») n’est autorisée qu’À L’INTÉRIEUR d’une chaîne entre guillemets, par exemple "2,75". Si une réponse décimale doit s’afficher avec une virgule, mets-la en chaîne: "expected_answer":"2,75" (et la même chaîne dans choices). Dans le texte, n’écris jamais de guillemet droit " non échappé: utilise « » ou \\". N’utilise aucune barre oblique inverse (pas de LaTeX comme \\frac ou \\times): écris « × », « ÷ », « 3/4 ». Aucune virgule finale avant } ou ], aucun commentaire, aucun NaN/Infinity. ' + STAGING_JSON_NESTING_RULE;
 export const STAGING_JSON_OUTPUT_RULE = 'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau complet pour ce niveau; aucune fence Markdown (pas de ```json), aucun texte avant/après, aucun second objet JSON, aucun tableau racine ni wrapper. Respecte exactement le schéma demandé et arrête-toi après la dernière accolade. ' + STAGING_JSON_SYNTAX_RULE;
 export const STAGING_CUSTOM_PROMPT = 'STAGING_DRAFT single-topic contract: this request is one of exactly four level calls (levels 1, 2, 3, and 4); every one of the four levels must return one complete level object before the draft can be saved. The student_try block MUST contain a non-null correct_answer. mastery_check.questions MUST contain 1–4 complete question objects, and EVERY question MUST contain these eight required properties: id, question, answer_type, correct_answer, skill, difficulty, success_feedback, error_feedback. The optional choices property is allowed in addition; it is REQUIRED with at least two strings when answer_type is multiple_choice or selection, and it may be omitted for numeric or text questions. correct_answer MUST be non-null. A valid JSON object missing any required field is rejected before pedagogical validation; do not repair, complete, infer, or fabricate values. Return only the one JSON object for the requested level.';
@@ -160,14 +169,31 @@ function requiredStagingField(value: Record<string, unknown>, path: string, fiel
   if (!nonEmpty(value[field])) issues.push({ path: `${path}.${field}`, message: 'Required non-empty string' });
 }
 
-function requiredStagingChoices(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
+function requiredStagingAnswer(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
   const answerType = String(value.answer_type ?? '');
+  const answer = value.correct_answer;
+  if (answer === undefined || answer === null) return;
+  const answerPath = `${path}.correct_answer`;
+  if (answerType === 'numeric' && !(
+    (typeof answer === 'number' && Number.isFinite(answer)) ||
+    (typeof answer === 'string' && /^[-+]?\d+(?:[.,]\d+)?$/.test(answer.trim()))
+  )) issues.push({ path: answerPath, message: 'Numeric answer requires a finite number or a decimal string.' });
+  if (answerType === 'time' && !nonEmpty(answer)) {
+    issues.push({ path: answerPath, message: 'Expected a non-empty time answer.' });
+  }
+  if (['short_text', 'text'].includes(answerType) && !nonEmpty(answer) &&
+    !(typeof answer === 'number' && Number.isFinite(answer))) {
+    issues.push({ path: answerPath, message: 'Expected a non-empty text answer or a finite number.' });
+  }
+  if (answerType === 'ordering' && (!Array.isArray(answer) || answer.length < 2 || answer.some((item) => !nonEmpty(item)))) {
+    issues.push({ path: answerPath, message: 'Ordering requires an array of at least two non-empty strings.' });
+  }
   if (!['multiple_choice', 'selection'].includes(answerType)) return;
   if (!Array.isArray(value.choices) || value.choices.length < 2 || value.choices.some((choice) => !nonEmpty(choice))) {
     issues.push({ path: `${path}.choices`, message: 'Choice question requires at least two non-empty choices' });
     return;
   }
-  if (!value.choices.some((choice) => String(choice).trim() === String(value.correct_answer ?? '').trim())) {
+  if (!value.choices.includes(answer)) {
     issues.push({ path: `${path}.correct_answer`, message: 'Correct answer must exactly match one choice' });
   }
 }
@@ -230,7 +256,7 @@ function requiredStagingMasteryQuestions(value: Record<string, unknown>, path: s
     if (!ANSWER_TYPE_VALUES.includes(String(question.answer_type) as typeof ANSWER_TYPE_VALUES[number])) {
       issues.push({ path: `${questionPath}.answer_type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });
     }
-    requiredStagingChoices(question, questionPath, issues);
+    requiredStagingAnswer(question, questionPath, issues);
   });
 }
 
@@ -303,7 +329,7 @@ export function stagingSequenceContractIssues(lesson: Record<string, unknown>, m
     if (block.type === 'student_try') {
       ['question', 'answer_type', 'success_feedback', 'error_feedback'].forEach((field) => requiredStagingField(block, path, field, issues));
       if (block.correct_answer === undefined || block.correct_answer === null) issues.push({ path: `${path}.correct_answer`, message: 'Required non-null value' });
-      requiredStagingChoices(block, path, issues);
+      requiredStagingAnswer(block, path, issues);
     }
     if (block.type === 'mastery_check') {
       if (!Array.isArray(block.questions) || block.questions.length < 1 || block.questions.length > 4) issues.push({ path: `${path}.questions`, message: 'Expected 1–4 questions' });
@@ -533,7 +559,7 @@ const VISUAL_FIELD_RULES = [
   'N’ajoute width/height à une figure que si leurs proportions sont cohérentes avec les coordonnées.',
 ].join('\n');
 
-export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string, specification?: StagingSpecification): string {
+export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string, specification?: StagingSpecification, promptVersion: StagingPromptVersion = STAGING_PROMPT_VERSION): string {
   const specificationLevel = specification?.levels.find((level) => level.levelNumber === metadata.level_number);
   const kinds = specificationLevel ? specificationLevel.visualKinds : stagingPromptVisualKinds(metadata);
   const allowedKinds = kinds.map((kind) => `kind "${kind}"`).join(' ou ');
@@ -558,7 +584,8 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     ? `CONTRAT SPATIAL AUTORITAIRE — ${SPATIAL_MOVEMENT_RENDERER_LIMITATION} Pour CM2, explique une coordonnée simplement comme deux nombres lus dans l’ordre : d’abord la position horizontale, puis la position verticale. Utilise uniquement kind "diagram" avec data.points (coordonnées numériques et labels), data.segments obligatoires reliant les labels de points existants, data.arrows facultatifs en complément des segments, et des annotations explicites. N’introduis ni axes formels, ni vecteurs, ni repère de collège. La progression est : repérer une position; décrire et suivre un déplacement; interpréter un parcours; programmer un parcours avec changements de direction. Distingue toujours distance parcourue (somme des segments) et déplacement net (du départ à l’arrivée).`
     : '';
   return [
-    'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4 — PROMPT ' + STAGING_PROMPT_VERSION,
+    'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4 — PROMPT ' + promptVersion,
+    ...(promptVersion === STAGING_PROMPT_V22_CANDIDATE ? [STAGING_V22_QUALITY_INSTRUCTIONS] : []),
     'Sujet: ' + topicName + '; niveau scolaire: ' + grade + '; langue: ' + language + '.',
     'But de ce niveau: ' + metadata.purpose,
     'Objectifs autorisés: ' + (objectiveText || 'aucun objectif précisé'),
@@ -611,11 +638,11 @@ export function parseStagingLevelResponse(raw: unknown, metadata?: StagingLevelM
 function visualGeometryIssues(lesson: Record<string, unknown>): Array<{ path: string; message: string }> {
   const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
   return sequence.flatMap((block, index) => {
-    const visual = object(block.visual);
+    const visual = object(block?.visual);
     if (!visual) return [];
     const kind = String(visual.kind ?? '');
     const data = object(visual.data);
-    const errors = geometryVisualDataErrors(kind, visual.data, 'sequence[' + index + '].visual.data')
+    const errors = geometryVisualDataErrors(kind, visual.data, 'sequence[' + index + '].visual.data', true)
       .map((error) => ({ path: error.path, message: error.message }));
     if (data && (kind === 'rectangle' || (kind === 'polygon' && data.shape === 'rectangle'))) {
       const hasSides = (Array.isArray(data.side_labels) && data.side_labels.length >= 4) || (Number.isFinite(Number(data.width)) && Number.isFinite(Number(data.height)));

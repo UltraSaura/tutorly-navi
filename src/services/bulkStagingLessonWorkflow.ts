@@ -1,3 +1,4 @@
+import type { StagingPromptVersion } from '../../shared/staging-prompt-version';
 import {
   assertExplicitStagingTopicId,
   assertReturnedTopicMatches,
@@ -96,6 +97,7 @@ export type BulkStagingDependencies = {
   dryRun?: boolean;
   dryRunContent?: unknown;
   language?: 'fr' | 'en';
+  promptVersion?: StagingPromptVersion;
   signal?: AbortSignal;
 };
 
@@ -152,7 +154,7 @@ export async function runBulkStagingGeneration(
   validateBulkTopicIds(topics);
   const generate = dependencies.dryRun
     ? async (topicId: string) => dryRunGeneration(topicId, dependencies.dryRunContent)
-    : (dependencies.generate ?? ((topicId) => generateStagingDraft(topicId, undefined, null, dependencies.language ?? 'fr')));
+    : (dependencies.generate ?? ((topicId) => generateStagingDraft(topicId, undefined, null, dependencies.language ?? 'fr', dependencies.promptVersion)));
   const save = dependencies.dryRun ? async () => ({ id: `dry-run-${Date.now()}` } as LessonVersion) : (dependencies.save ?? ((topicId, content, returnedTopicId, topicKind, stagingMetadata) => saveDraftVersion(topicId, content, returnedTopicId, null, topicKind, stagingMetadata)));
   const validate = dependencies.validate ?? ((content, topicKind) => validateLessonVersion(content, { topicKind }));
   const results: BulkStagingResult[] = [];

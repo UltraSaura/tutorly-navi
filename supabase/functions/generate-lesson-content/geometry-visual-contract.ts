@@ -1,3 +1,4 @@
+import { numberLineTickValues } from '../../../shared/pedagogical-number-line.ts';
 import { solidVisualDataErrors } from '../../../shared/solid-visual-contract.ts';
 import { solidNetErrors } from '../../../shared/solid-net-contract.ts';
 
@@ -22,9 +23,10 @@ const points = (data: Obj, field: string, min: number, path: string, aliases: st
   return values.flatMap((value, index) => point(value) ? [] : [issue(`${path}.${key}[${index}]`, 'invalid_geometry_point', 'Each point must contain finite numeric x and y coordinates.')]);
 };
 
-export function geometryVisualDataErrors(kind: string, data: unknown, basePath = 'visual.data'): GeometryContractIssue[] {
+export function geometryVisualDataErrors(kind: string, data: unknown, basePath = 'visual.data', staging = false): GeometryContractIssue[] {
   if (kind === 'geometric_solid') return solidVisualDataErrors(data, basePath);
-  if (!['clock', 'timeline', 'unit_conversion', 'diagram', 'angle', 'circle', 'polygon', 'symmetry', 'triangle', 'rectangle'].includes(kind)) return [];
+  const stagingKind = staging && ['number_line', 'fraction_bar', 'fraction_circle'].includes(kind);
+  if (!stagingKind && !['clock', 'timeline', 'unit_conversion', 'diagram', 'angle', 'circle', 'polygon', 'symmetry', 'triangle', 'rectangle'].includes(kind)) return [];
   if (!obj(data)) return [issue(basePath, 'missing_geometry_data', `Visual kind ${kind} requires complete renderable data.`)];
   const d = data;
   switch (kind) {
@@ -37,6 +39,33 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
           ? []
           : [issue(`${basePath}.minute`, 'invalid_clock_minute', `Clock minute must be an integer from 0 to 59; received ${received(d.minute)}.`)]),
       ];
+    case 'number_line': {
+      const { min, max, value, step } = d;
+      if (!finite(min) || !finite(max) || min >= max) {
+        return [issue(basePath, 'invalid_number_line_bounds', 'Number line requires numeric min < max.')];
+      }
+      const errors: GeometryContractIssue[] = [];
+      if (value !== undefined && (!finite(value) || value < min || value > max)) {
+        errors.push(issue(`${basePath}.value`, 'invalid_number_line_value', 'The marked value must be numeric and within the displayed bounds.'));
+      }
+      if (step !== undefined && (!finite(step) || step <= 0)) {
+        errors.push(issue(`${basePath}.step`, 'invalid_number_line_step', 'The tick interval must be a positive number.'));
+      }
+      if (errors.length === 0 && numberLineTickValues(min, max, finite(step) ? step : 1).length === 0) {
+        errors.push(issue(`${basePath}.step`, 'excessive_number_line_ticks', 'The displayed range and interval must fit the renderer’s 41-tick limit.'));
+      }
+      return errors;
+    }
+    case 'fraction_bar': case 'fraction_circle': {
+      const denominator = d.denominator === undefined ? 4 : d.denominator;
+      const numerator = d.numerator === undefined ? 1 : d.numerator;
+      if (!finite(denominator) || !Number.isInteger(denominator) || denominator < 1 || denominator > 16) {
+        return [issue(`${basePath}.denominator`, 'invalid_fraction_denominator', 'This visual can display between 1 and 16 equal parts.')];
+      }
+      return finite(numerator) && Number.isInteger(numerator) && numerator >= 0 && numerator <= denominator
+        ? []
+        : [issue(`${basePath}.numerator`, 'invalid_fraction_numerator', 'The number of shaded parts must be an integer between zero and the total parts.')];
+    }
     case 'timeline': {
       const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
       const relations = Array.isArray(d.relations) ? d.relations : [];
@@ -62,6 +91,7 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
     case 'angle': {
       const errors: GeometryContractIssue[] = [];
       if (!(finite(d.degrees) && d.degrees > 0 && d.degrees <= 360) && d.rightAngle !== true) errors.push(issue(`${basePath}.degrees`, 'missing_geometry_data', 'Angle degrees or rightAngle=true is required.'));
+      if (staging && d.rightAngle === true && finite(d.degrees) && d.degrees !== 90) errors.push(issue(`${basePath}.degrees`, 'inconsistent_right_angle', 'A right-angle marker requires a 90-degree angle.'));
       if (point(d.vertex)) { /* valid */ } else errors.push(issue(`${basePath}.vertex`, 'missing_geometry_data', 'Angle vertex coordinates are required.'));
       if (!Array.isArray(d.rays) || d.rays.length < 2 || d.rays.some((ray) => !point(ray))) errors.push(issue(`${basePath}.rays`, 'missing_geometry_data', 'Two ray endpoint coordinates are required.'));
       return errors;
@@ -70,6 +100,9 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
       const errors: GeometryContractIssue[] = [];
       if (!point(d.center) && !point(d.centre)) errors.push(issue(`${basePath}.center`, 'missing_geometry_data', 'Circle centre coordinates are required.'));
       if (!(finite(d.radius) && d.radius > 0) && !(finite(d.diameter) && d.diameter > 0)) errors.push(issue(`${basePath}.radius`, 'missing_geometry_data', 'A positive numeric radius or diameter is required.'));
+      if (staging && finite(d.radius) && finite(d.diameter) && d.diameter !== 2 * d.radius) {
+        errors.push(issue(`${basePath}.diameter`, 'inconsistent_circle_dimensions', 'Numeric diameter must equal twice the radius.'));
+      }
       return errors;
     }
     case 'polygon': case 'triangle': case 'rectangle': {

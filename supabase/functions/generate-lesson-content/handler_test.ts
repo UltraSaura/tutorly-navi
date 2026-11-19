@@ -1,9 +1,9 @@
 // Handler-level staging tests. Every provider and database call is faked;
 // no real network request is ever made (providerCalls counts fake calls only).
 import { assert, assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { stagingFullLevelExample, stagingLevelMetadata, STAGING_VISUAL_EXAMPLES } from './staging-level-workflow.ts';
+import { stagingFullLevelExample, stagingLevelMetadata, STAGING_VISUAL_EXAMPLES, STAGING_PROMPT_V22_CANDIDATE } from './staging-level-workflow.ts';
 
-const SB = 'https://fake-staging.supabase.test';
+import { STAGING_PROMPT_PROJECT_URL as SB } from '../../../shared/staging-prompt-version.ts';
 Deno.env.set('SUPABASE_URL', SB);
 Deno.env.set('SUPABASE_ANON_KEY', 'fake-anon');
 Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'fake-service');
@@ -23,11 +23,12 @@ type ObjectiveFixture = { reference: string; id: string; id_new?: string; text: 
 
 function installFakes(reply: ProviderReply, topic = TOPIC, objectiveFixture?: ObjectiveFixture): Calls {
   const calls: Calls = { provider: 0, dbWrites: [], prompts: [] };
+  const origin = Deno.env.get('SUPABASE_URL');
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
   globalThis.fetch = async (input: Request | URL | string, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
-    if (url.origin !== SB) throw new Error('unexpected external request: ' + url.href);
+    if (url.origin !== origin) throw new Error('unexpected external request: ' + url.href);
     const p = url.pathname;
     if (p === '/functions/v1/ai-chat') {
       calls.provider += 1;
@@ -55,25 +56,25 @@ function installFakes(reply: ProviderReply, topic = TOPIC, objectiveFixture?: Ob
   return calls;
 }
 
-async function run(reply: ProviderReply, requestId: string | undefined = 'req-1', topic = TOPIC, objectiveFixture?: ObjectiveFixture) {
+async function run(reply: ProviderReply, requestId: string | undefined = 'req-1', topic = TOPIC, objectiveFixture?: ObjectiveFixture, promptVersion?: string) {
   const calls = installFakes(reply, topic, objectiveFixture);
   const headers = { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' } as Record<string, string>;
   if (requestId) headers['x-request-id'] = requestId;
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers,
-    body: JSON.stringify({ topicId: topic.id, mode: 'staging_draft', language: 'fr', providerFreeFixture: true }),
+    body: JSON.stringify({ topicId: topic.id, mode: 'staging_draft', language: 'fr', providerFreeFixture: true, promptVersion }),
   }));
   const body = await res.json();
   return { status: res.status, body, calls };
 }
 
-async function runWithoutApprovedSpecification() {
+async function runWithoutApprovedSpecification(promptVersion?: string) {
   const calls = installFakes(valid);
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
       method: 'POST',
       headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
-      body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+      body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr', promptVersion }),
     }));
   return { status: res.status, body: await res.json(), calls };
 }
@@ -165,6 +166,51 @@ test('normalizes migrated objective links from legacy id to canonical id_new', a
   assertEquals(calls.dbWrites, []);
 });
 
+test('accepts the candidate selection but keeps the approval gate provider-free', async () => {
+  const { status, body, calls } = await runWithoutApprovedSpecification(STAGING_PROMPT_V22_CANDIDATE);
+  assertEquals(status, 422);
+  assertEquals(body.error.code, 'staging_preflight_failed');
+  assertEquals(body.promptVersion, STAGING_PROMPT_V22_CANDIDATE);
+  assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('passes the selected candidate to all four mocked calls and reports the actual version', async () => {
+  const { status, body, calls } = await run(valid, 'candidate-fixture', TOPIC, undefined, STAGING_PROMPT_V22_CANDIDATE);
+  assertEquals(status, 200);
+  assertEquals(calls.prompts.length, 4);
+  assert(calls.prompts.every((prompt) => prompt.includes(STAGING_PROMPT_V22_CANDIDATE) && prompt.includes('l’application autonome')));
+  assertEquals(body.promptVersion, STAGING_PROMPT_V22_CANDIDATE);
+  assertEquals(body.validation.promptVersion, STAGING_PROMPT_V22_CANDIDATE);
+  assert(body.levelResults.every((level: { promptVersion: string }) => level.promptVersion === STAGING_PROMPT_V22_CANDIDATE));
+  assertEquals(calls.dbWrites, []);
+});
+
+test('rejects an unknown prompt version before mocked provider calls or writes', async () => {
+  const { status, body, calls } = await run(valid, 'invalid-version', TOPIC, undefined, 'unlisted');
+  assertEquals(status, 400);
+  assertEquals(body.error.code, 'unsupported_staging_prompt_version');
+  assertEquals(calls.provider, 0);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('rejects explicit candidate selection outside staging drafts or the staging project', async () => {
+  for (const mode of [undefined, 'healthcheck', 'staging_draft']) {
+    const project = mode === 'staging_draft' ? 'https://outside-staging.invalid' : SB;
+    Deno.env.set('SUPABASE_URL', project);
+    const calls = installFakes(valid);
+    const response = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+      body: JSON.stringify({ mode, topicId: TOPIC.id, promptVersion: STAGING_PROMPT_V22_CANDIDATE }),
+    })).finally(() => Deno.env.set('SUPABASE_URL', SB));
+    assertEquals(response.status, 400);
+    assertEquals((await response.json()).error.code, 'staging_prompt_selection_unavailable');
+    assertEquals(calls.provider, 0);
+    assertEquals(calls.dbWrites, []);
+  }
+});
+
 test('four valid levels return 200 with providerCalls=4 and no database write', async () => {
   const { status, body, calls } = await run(valid);
   assertEquals(status, 200);
@@ -175,6 +221,11 @@ test('four valid levels return 200 with providerCalls=4 and no database write', 
   assertEquals(body.progress.length, 4);
   assertEquals(body.validation.prerequisiteValid, true);
   assertEquals(body.validation.interactionValid, true);
+  assertEquals(body.validation.promptVersion, body.promptVersion);
+  assertEquals(body.validation.pedagogicalReviewRequired, true);
+  assert(body.validation.pedagogicalWarnings.some((issue: { path: string }) => issue.path === 'levels[0].lesson.success_criteria'));
+  assertEquals(body.lesson_content.levels[0].objective_ids, ['provider-free-objective']);
+  assert(calls.prompts[0].includes('provider-free-objective: Comprendre'));
   assertEquals(body.progress[0].validation.prerequisiteValid, true);
   assertEquals(body.progress[0].validation.interactionValid, true);
   assertEquals(body.progress[0].requestId, 'req-1');

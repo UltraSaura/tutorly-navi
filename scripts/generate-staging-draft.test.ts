@@ -1,3 +1,4 @@
+import { STAGING_PROMPT_V22_CANDIDATE } from '../shared/staging-prompt-version.ts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   assertSafeProjectUrl,
@@ -92,6 +93,14 @@ describe('staging terminal runner', () => {
     await expect(executeStagingDraft(deps({ authenticate: vi.fn(async () => ({ userId: 'user-1', accessToken: 'token', isAdmin: false })) }))).rejects.toThrow('admin_access_required');
   });
 
+  it('passes a requested candidate and blocks saving when the Edge version differs', async () => {
+    const d = deps();
+    await expect(executeStagingDraft(d, 'topic-1', STAGING_PROMPT_V22_CANDIDATE))
+      .rejects.toThrow('staging_prompt_version_mismatch');
+    expect(d.invoke).toHaveBeenCalledWith('secret-token', 'topic-1', STAGING_PROMPT_V22_CANDIDATE);
+    expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
   it('accepts exactly four complete levels and inserts one draft', async () => {
     const d = deps();
     const result = await executeStagingDraft(d);
@@ -100,6 +109,11 @@ describe('staging terminal runner', () => {
     expect(result.levelResults?.[0]).toMatchObject({ level: 1, providerCalls: 1, prerequisiteValid: true, interactionValid: true, requestId: 'request-1' });
     expect(d.invoke).toHaveBeenCalledTimes(1);
     expect(d.insertDraft).toHaveBeenCalledTimes(1);
+    expect(d.insertDraft).toHaveBeenCalledWith(expect.objectContaining({
+      lessonContent: expect.objectContaining({
+        _staging_metadata: expect.objectContaining({ promptVersion: successfulBody.promptVersion }),
+      }),
+    }));
     expect(extractVisualKinds(lessonContent)).toEqual(['angle', 'circle', 'rectangle', 'symmetry', 'triangle']);
   });
 

@@ -1,3 +1,4 @@
+import { validateLessonV21 } from './lesson-v21-contract.ts';
 import { describe, expect, it } from 'vitest';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import { normalizeGeneratedLesson } from './lesson-normalization.ts';
@@ -5,6 +6,8 @@ import { meaningfulTokens, pedagogicalWarnings, semanticDuplicationDiagnostics }
 import { TAKEAWAY_RULE, CONCEPT_LENGTH_RULE, MASTERY_QUESTION_RULE, STAGING_VISUAL_EXAMPLES as SVE } from './staging-level-workflow.ts';
 import {
   KEY_POINT_RULE,
+  STAGING_PROMPT_VERSION,
+  STAGING_PROMPT_V22_CANDIDATE,
   PREREQUISITE_ANSWER_RULE,
   STAGING_NUMERIC_PREREQUISITE_EXAMPLE,
   STAGING_CHOICE_PREREQUISITE_EXAMPLE,
@@ -21,6 +24,47 @@ const topicName = 'La géométrie plane';
 const metadata = stagingLevelMetadata('topic-1', topicName, ['objective-1']);
 
 describe('staging prompt ↔ validator consistency (providerCalls=0)', () => {
+  it('keeps V2.2 opt-in and uses the same V2.1 output contract', () => {
+    const level = metadata[0];
+    const active = stagingLevelPrompt(topicName, 'CM2', 'fr', level, 'objective-1');
+    const candidate = stagingLevelPrompt(topicName, 'CM2', 'fr', level, 'objective-1', undefined, STAGING_PROMPT_V22_CANDIDATE);
+    expect(active).toContain(STAGING_PROMPT_VERSION);
+    expect(active).not.toContain(STAGING_PROMPT_V22_CANDIDATE);
+    expect(candidate).toContain(STAGING_PROMPT_V22_CANDIDATE);
+    expect(candidate).toContain('l’application autonome');
+    expect(candidate).toContain('critères de réussite');
+    expect(candidate.split('Sujet: ')[1]).toBe(active.split('Sujet: ')[1]);
+    expect(validateStagingLevel(stagingFullLevelExample(level), level, topicName, 'CM2').canonicalIssues).toEqual([]);
+  });
+
+  it('rejects a non-numeric mastery answer and a choice with no exact match', () => {
+    const level = metadata[0];
+    const lesson = structuredClone(stagingFullLevelExample(level)) as Record<string, unknown>;
+    const sequence = lesson.sequence as Record<string, unknown>[];
+    const questions = sequence[4].questions as Record<string, unknown>[];
+    Object.assign(sequence[3], { answer_type: 'multiple_choice', choices: ['A', 'B'], correct_answer: ' A ' });
+    Object.assign(questions[0], { answer_type: 'numeric', correct_answer: 'a dozen' });
+    expect(validateStagingLevel(lesson, level, topicName, 'CM2').canonicalIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'sequence[3].correct_answer' }),
+      expect.objectContaining({ path: 'sequence[4].questions[0].correct_answer' }),
+    ]));
+  });
+
+  it.each([
+    { kind: 'number_line', data: {} },
+    { kind: 'fraction_bar', data: { numerator: 20, denominator: 20 } },
+    { kind: 'circle', data: { center: { x: 0, y: 0 }, radius: 3, diameter: 5 } },
+    { kind: 'angle', data: { vertex: { x: 0, y: 0 }, rays: [{ x: 1, y: 0 }, { x: 0, y: 1 }], degrees: 60, rightAngle: true } },
+  ])('preserves legacy V2.1 validation of $kind and applies strict checks in staging', (visual) => {
+    const level = metadata[0];
+    const lesson = structuredClone(stagingFullLevelExample(level));
+    const sequence = lesson.sequence as Record<string, unknown>[];
+    sequence[0].visual = visual;
+    expect(validateLessonV21({ version: '2.1', topic_goal: topicName, levels: [{ ...level, lesson }] })).toEqual({ success: true });
+    expect(validateStagingLevel(lesson, level, topicName, 'CM2').geometryIssues)
+      .toContainEqual(expect.objectContaining({ path: expect.stringContaining('sequence[0].visual.data') }));
+  });
+
   it('explicitly requires a complete answer for every mastery question at every level', () => {
     for (const level of stagingLevelMetadata('decimal-topic', 'Les nombres décimaux', [])) {
       const prompt = stagingLevelPrompt('Les nombres décimaux', 'CM2', 'fr', level, '');

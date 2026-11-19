@@ -7,6 +7,7 @@ import {
   buildProviderFreeApprovedSpecification,
   buildProposedSpecification,
   buildSolidsSpecificationProposal,
+  checkStagingCoverage,
   SOLIDS_LINKED_OBJECTIVES,
   SOLIDS_VISUAL_EXAMPLES,
   resolveObjectiveSelection,
@@ -149,4 +150,22 @@ it('checks patron geometry independently from diagram rendering', () => {
   expect(geometryVisualDataErrors('diagram', VALID_CUBE_NET)).toEqual([]);
   expect(geometryVisualDataErrors('diagram', INVALID_DISJOINT_CUBE_NET).some((issue) => issue.code === 'disconnected_solid_net')).toBe(true);
 });
+});
+
+it('checks approved criterion text exactly and leaves objective meaning for review', () => {
+  const selection = resolveObjectiveSelection(['linked-1'], [{ id: 'linked-1', text: 'Comparer des décimaux.' }], []);
+  const specification = buildProviderFreeApprovedSpecification({
+    topicId: 'topic-spec', curriculum: 'CM2', language: 'fr', topicKind: 'decimal', objectiveSelection: selection, metadata,
+  });
+  const level = { ...specification.levels[0], successCriteria: ['Je compare deux décimaux.'] };
+  const result = checkStagingCoverage({ success_criteria: ['Je compare deux décimaux.'] }, level);
+  expect(result.errors).toEqual([]);
+  expect(result.warnings).toEqual(expect.arrayContaining([
+    expect.objectContaining({ path: 'sequence[4]', message: expect.stringContaining('linked-1') }),
+  ]));
+  expect(checkStagingCoverage({ success_criteria: ['Je sais comparer deux décimaux.'] }, level).errors)
+    .toEqual([expect.objectContaining({ path: 'success_criteria' }), expect.objectContaining({ path: 'success_criteria[0]' })]);
+  const unassigned = { ...level, objectiveIds: [] };
+  expect(validateStagingSpecification({ ...specification, levels: [unassigned, ...specification.levels.slice(1)] }, selection))
+    .toContainEqual(expect.objectContaining({ code: 'invalid_objective_reference', path: 'levels[0].teachingObjectiveIds' }));
 });

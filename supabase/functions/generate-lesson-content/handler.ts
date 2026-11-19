@@ -1,3 +1,4 @@
+import { isStagingPromptProject, isStagingPromptVersion } from '../../../shared/staging-prompt-version.ts';
 import { requireAdminPermissionOrTeacher } from '../_shared/admin-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
@@ -43,6 +44,7 @@ import { stagingProviderOutputContract } from './staging-structured-output.ts';
 import {
   buildProposedSpecification,
   buildProviderFreeApprovedSpecification,
+  checkStagingCoverage,
   getServerApprovedStagingSpecification,
   resolveObjectiveSelection,
   runStagingPreflight,
@@ -246,6 +248,21 @@ export async function handleRequest(req: Request): Promise<Response> {
       },
     }), { status: 400, headers: responseHeaders() });
   }
+  const requestedPromptVersion = requestBody.promptVersion;
+  const providerFreeTest = Deno.env.get('DENO_ENV') === 'test' && requestBody.providerFreeFixture === true;
+  if (Object.hasOwn(requestBody, 'promptVersion')) {
+    const versionError = requestBody.mode !== 'staging_draft' ||
+      !isStagingPromptProject(Deno.env.get('SUPABASE_URL'))
+      ? 'staging_prompt_selection_unavailable'
+      : !isStagingPromptVersion(requestedPromptVersion) ? 'unsupported_staging_prompt_version' : null;
+    if (versionError) {
+      return new Response(JSON.stringify({
+        success: false, ok: false, requestId,
+        error: { code: versionError, message: 'The requested prompt version is unavailable for this request.', stage: 'pre_generation', providerCalls: 0, databaseWrite: false, requestId },
+      }), { status: 400, headers: responseHeaders() });
+    }
+  }
+  const stagingPromptVersion = isStagingPromptVersion(requestedPromptVersion) ? requestedPromptVersion : STAGING_PROMPT_VERSION;
   const noPaidMode = requestBody.mode === 'healthcheck' || requestBody.mode === 'fixture';
   if (noPaidMode) {
     const mode = String(requestBody.mode);
@@ -652,7 +669,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       aiProviderCalls += 1;
       console.info('[generate-lesson-content] staging provider call', {
         build: GENERATOR_BUILD,
-        promptVersion: STAGING_PROMPT_VERSION,
+        promptVersion: stagingPromptVersion,
         topicId,
         level: metadata.level_number,
         attempt: attempt + 1,
@@ -745,7 +762,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       (attempt) => callStagingLevelAI(message, metadata, attempt),
       (retryCount, error) => console.warn('[generate-lesson-content] bounded JSON retry', {
         build: GENERATOR_BUILD,
-      promptVersion: STAGING_PROMPT_VERSION,
+      promptVersion: stagingPromptVersion,
         topicId,
         level: metadata.level_number,
         retryCount,
@@ -926,8 +943,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
     if (body.mode === 'staging_draft') {
       const objectiveText = objectives.map((o) => o.text).join('; ');
       const topicKind = stagingTopicKind(topic.name, objectiveText);
-      const metadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id), objectiveText);
-      const providerFreeTest = Deno.env.get('DENO_ENV') === 'test' && body.providerFreeFixture === true;
+      const proposedMetadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id), objectiveText);
       const effectiveObjectiveSelection = providerFreeTest && objectiveSelection.provenance === 'absent'
         ? {
           ...objectiveSelection,
@@ -941,7 +957,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         language: responseLang,
         topicKind,
         objectiveSelection: effectiveObjectiveSelection,
-        metadata,
+        metadata: proposedMetadata,
       });
       const serverApprovedSpecification = getServerApprovedStagingSpecification(String(topicId));
       const specification = providerFreeTest
@@ -951,7 +967,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           language: responseLang,
           topicKind,
           objectiveSelection: effectiveObjectiveSelection,
-          metadata,
+          metadata: proposedMetadata,
         })
         : serverApprovedSpecification ?? proposedSpecification;
       const preflight = runStagingPreflight({ specification, objectiveSelection: effectiveObjectiveSelection });
@@ -962,6 +978,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           ok: false,
           requestId,
           httpStatus: 422,
+          promptVersion: stagingPromptVersion,
           error: {
             code: 'staging_preflight_failed',
             message: 'La génération staging est bloquée par le préflight pédagogique.',
@@ -981,15 +998,23 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         }), { status: 422, headers: responseHeaders() });
       }
       console.info('[generate-lesson-content] staging request started', { requestId, topicId: String(topicId), levels: STAGING_LEVEL_COUNT, providerCallsAttempted: aiProviderCalls });
-      const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
+      const validatedLevels: Array<{ metadata: StagingLevelMetadata; lesson: Record<string, unknown> }> = [];
       let totalRetryCount = 0;
-      for (const levelMetadata of metadata) {
+      for (const baseMetadata of proposedMetadata) {
+        const approved = specification.levels.find((level) => level.levelNumber === baseMetadata.level_number);
+        if (!approved) throw new Error('Approved specification is missing a level after preflight.');
+        const levelMetadata = { ...baseMetadata, title: approved.title, purpose: approved.purpose, objective_ids: approved.objectiveIds };
         const levelIndex = levelMetadata.level_number;
         let levelTokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
         let levelValidation;
         try {
           console.info('[generate-lesson-content] staging level started', { requestId, level: levelIndex, providerCallsAttempted: aiProviderCalls });
-          const result = await callStagingLevelWithBoundedJsonRetry(stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, objectives.map((o) => o.text).join('; '), specification), levelMetadata);
+          const approvedObjectives = effectiveObjectiveSelection.selected
+            .filter((objective) => approved.objectiveIds.includes(objective.id))
+            .map((objective) => `${objective.id}: ${objective.text}`)
+            .join('; ');
+          const prompt = stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, approvedObjectives, specification, stagingPromptVersion);
+          const result = await callStagingLevelWithBoundedJsonRetry(prompt, levelMetadata);
           levelTokenUsage = result.tokenUsage;
           totalRetryCount += result.retryCount;
           const normalized = normalizeGeneratedLesson(result.value, topic.name, { preserveProviderSequence: true });
@@ -999,7 +1024,9 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           const lesson = normalized.lesson;
           const validation = validateStagingLevel(lesson, levelMetadata, topic.name, rawLevel);
           const requiredIssues = requiredGeometryKindsIssues(lesson, levelMetadata.required_geometry_kinds, levelMetadata.required_geometry_alternatives);
-          const reviewWarnings = pedagogicalWarnings(lesson, rawLevel, topic.name);
+          const coverage = checkStagingCoverage(lesson, approved, effectiveObjectiveSelection.selected);
+          validation.canonicalIssues.push(...coverage.errors);
+          const reviewWarnings = [...pedagogicalWarnings(lesson, rawLevel, topic.name), ...coverage.warnings];
           levelValidation = summarizeStagingValidation(validation, requiredIssues, reviewWarnings);
           const issues = [...validation.canonicalIssues, ...validation.pedagogicalIssues, ...validation.geometryIssues, ...requiredIssues];
           if (issues.length > 0) {
@@ -1008,8 +1035,8 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             throw validationError;
           }
           validatedLevels.push({ metadata: levelMetadata, lesson });
-          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1 + result.retryCount, retryCount: result.retryCount, retryCategory: result.retryCategory, parseStage: result.retryCount > 0 ? 'valid_json_after_bounded_retry' : 'valid_json', tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, requestId, validation: levelValidation, diagnostics: [...reviewWarnings.map((warning) => `review_warning:${warning.path}: ${warning.message}`), ...(result.retryCount > 0 ? [`initial_${result.retryCategory ?? 'json'}_retry_succeeded`] : [])] });
-          console.info('[generate-lesson-content] staging level complete', { requestId, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCallsAttempted: aiProviderCalls, levelProviderCalls: 1 + result.retryCount, retryCount: result.retryCount, tokenUsage: result.tokenUsage });
+          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1 + result.retryCount, retryCount: result.retryCount, retryCategory: result.retryCategory, parseStage: result.retryCount > 0 ? 'valid_json_after_bounded_retry' : 'valid_json', tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: stagingPromptVersion, requestId, validation: levelValidation, diagnostics: [...(result.retryCount > 0 ? [`initial_${result.retryCategory ?? 'json'}_retry_succeeded`] : []), ...reviewWarnings.map((warning) => `review_warning:${warning.path}: ${warning.message}`)] });
+          console.info('[generate-lesson-content] staging level complete', { requestId, build: GENERATOR_BUILD, promptVersion: stagingPromptVersion, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCallsAttempted: aiProviderCalls, levelProviderCalls: 1 + result.retryCount, retryCount: result.retryCount, tokenUsage: result.tokenUsage });
         } catch (error) {
           const structuredFailure = error && typeof error === 'object' && 'stagingFailure' in error
             ? (error as { stagingFailure?: { level?: number; stage?: string; technicalDetail?: string; validationCategory?: string; providerDiagnostics?: Record<string, unknown> } }).stagingFailure
@@ -1035,7 +1062,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             parseStage: stagingFailure.parseStage,
             tokenUsage: levelTokenUsage,
             build: GENERATOR_BUILD,
-            promptVersion: STAGING_PROMPT_VERSION,
+            promptVersion: stagingPromptVersion,
             requestId,
             validation: levelValidation,
             diagnostics: [stagingFailure.message ?? (error instanceof Error ? error.message : String(error))],
@@ -1046,11 +1073,12 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       }
       const candidate = assembleStagingLesson(topic.name, validatedLevels);
       const finalCanonical = validateLessonV21(candidate, { prerequisiteFormat: 'staging' });
-      const requiredKinds = [...new Set(metadata.flatMap((level) => level.required_geometry_kinds))];
+      const requiredKinds = [...new Set(proposedMetadata.flatMap((level) => level.required_geometry_kinds))];
       const finalGeometryIssues = requiredGeometryIssues(candidate, requiredKinds);
       if (!finalCanonical.success) throw new Error('staging_assembly_canonical_validation_failed: ' + finalCanonical.issues.slice(0, 8).map((issue) => issue.path + ': ' + issue.message).join('; '));
       if (finalGeometryIssues.length > 0) throw new Error('staging_assembly_geometry_validation_failed: ' + finalGeometryIssues.map((issue) => issue.message).join('; '));
       const aggregateValidation = {
+        promptVersion: stagingPromptVersion,
         canonicalValid: true,
         pedagogicalValid: true,
         prerequisiteValid: true,
@@ -1085,7 +1113,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         providerCalls: aiProviderCalls,
         retryCount: totalRetryCount,
         build: GENERATOR_BUILD,
-        promptVersion: STAGING_PROMPT_VERSION,
+        promptVersion: stagingPromptVersion,
         progress: stagingProgress,
         levelResults: stagingProgress,
       };
@@ -1474,7 +1502,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
     // The rejection is unchanged: success=false, same error, httpStatus kept.
     const softRejection = [422, 500, 502].includes(classified.status) && (requestBody as Record<string, unknown> | undefined)?.rejectionInBody === true;
     return new Response(
-      JSON.stringify({ success: false, ok: false, requestId, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, httpStatus: classified.status, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
+      JSON.stringify({ success: false, ok: false, requestId, build: GENERATOR_BUILD, promptVersion: stagingPromptVersion, httpStatus: classified.status, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
       { status: softRejection ? 200 : classified.status, headers: responseHeaders() }
     );
   }

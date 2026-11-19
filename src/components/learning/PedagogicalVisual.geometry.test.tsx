@@ -1,6 +1,7 @@
+import { numberLineTickValues } from '../../../shared/pedagogical-number-line';
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { formatNumberLineLabel, numberLineExactTickIndex, numberLineLabelIndices, numberLinePosition, numberLineTickValues, PedagogicalVisual } from './PedagogicalVisual';
+import { formatNumberLineLabel, numberLineExactTickIndex, numberLineLabelIndices, numberLinePosition, PedagogicalVisual } from './PedagogicalVisual';
 
 const render = (kind: string, data: unknown, content = 'Géométrie') => renderToStaticMarkup(<PedagogicalVisual block={{ title: 'Visuel', content, visual: { kind, data, alt_text: 'Visuel de géométrie' } }} />);
 
@@ -178,6 +179,12 @@ describe('PedagogicalVisual geometry data', () => {
     expect(html).toContain('number-line-point-label--desktop');
     expect(html).toContain('number-line-point-label--mobile');
     expect(html.match(new RegExp(`>${formatNumberLineLabel(value)}<`, 'g'))).toHaveLength(2);
+  });
+
+  it('still renders a legacy number line with default data', () => {
+    const html = render('number_line', {});
+    expect(html).toContain('aria-label="Droite graduée"');
+    expect(html).not.toContain('role="status"');
   });
 
   it('reports an explicit bounded-graduation message when more than 41 ticks are needed', () => {

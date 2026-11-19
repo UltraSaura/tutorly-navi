@@ -1,4 +1,6 @@
+import { isStagingPromptVersion, STAGING_PROMPT_VERSION, type StagingPromptVersion } from '../shared/staging-prompt-version.ts';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { withStagingMetadata } from '../shared/staging-review-metadata.ts';
 
 export const STAGING_PROJECT_REF = 'sibprjxhbxahouejygeu';
 export const PRODUCTION_PROJECT_REF = 'urskkwizwutodikgznas';
@@ -35,7 +37,7 @@ export type RunnerDependencies = {
   /** Topic the run must target; defaults to the CM2 geometry topic, null disables the guard (tests only). */
   expectedTopicId?: string | null;
   countExistingDrafts: (topicId: string) => Promise<number>;
-  invoke: (accessToken: string, topicId: string) => Promise<SafeResponse>;
+  invoke: (accessToken: string, topicId: string, promptVersion?: StagingPromptVersion) => Promise<SafeResponse>;
   insertDraft: (input: { topicId: string; lessonContent: Record<string, unknown>; createdBy: string }) => Promise<string>;
   readTopicLessonContent: (topicId: string) => Promise<unknown>;
 };
@@ -236,7 +238,8 @@ export function validateGenerationResponse(body: unknown): {
   }
   if (!validation.canonical || !validation.pedagogical || !validation.prerequisite || !validation.geometry || !validation.interaction) throw new Error('generation_validation_failed');
   if (!isRecord(body.lesson_content)) throw new Error('generation_lesson_content_missing');
-  return { lessonContent: body.lesson_content, providerCalls: body.providerCalls, progress, validation, levelResults, requestId: typeof body.requestId === 'string' ? body.requestId : undefined, promptVersion: typeof body.promptVersion === 'string' ? body.promptVersion : undefined, build: typeof body.build === 'string' ? body.build : undefined };
+  const lessonContent = withStagingMetadata(body.lesson_content, { promptVersion: body.promptVersion, ...(isRecord(body.validation) ? body.validation : {}) });
+  return { lessonContent, providerCalls: body.providerCalls, progress, validation, levelResults, requestId: typeof body.requestId === 'string' ? body.requestId : undefined, promptVersion: typeof body.promptVersion === 'string' ? body.promptVersion : undefined, build: typeof body.build === 'string' ? body.build : undefined };
 }
 
 function responseRequestId(response: SafeResponse): string | undefined {
@@ -277,7 +280,7 @@ function safeErrorResponseBody(body: unknown): Record<string, unknown> {
   return result;
 }
 
-export async function executeStagingDraft(deps: RunnerDependencies, explicitTopicId = process.env.STAGING_TOPIC_ID): Promise<RunnerResult> {
+export async function executeStagingDraft(deps: RunnerDependencies, explicitTopicId = process.env.STAGING_TOPIC_ID, promptVersion?: StagingPromptVersion): Promise<RunnerResult> {
   const topicId = requireExplicitTopicId(explicitTopicId, deps.expectedTopicId === undefined ? CM2_GEOMETRY_TOPIC_ID : deps.expectedTopicId);
   const auth = await deps.authenticate();
   if (!auth.userId || !auth.accessToken) throw new Error('authenticated_session_required');
@@ -291,7 +294,7 @@ export async function executeStagingDraft(deps: RunnerDependencies, explicitTopi
 
   let response: SafeResponse;
   try {
-    response = await deps.invoke(auth.accessToken, topic.id);
+    response = promptVersion ? await deps.invoke(auth.accessToken, topic.id, promptVersion) : await deps.invoke(auth.accessToken, topic.id);
   } catch (error) {
     throw Object.assign(new Error('edge_function_invocation_failed'), { safeResult: invokeFailureDiagnostic(topic.id, error) });
   }
@@ -309,6 +312,7 @@ export async function executeStagingDraft(deps: RunnerDependencies, explicitTopi
     throw Object.assign(new Error('generation_validation_failed'), { safeResult: failure });
   }
 
+  if (promptVersion && generated.promptVersion !== promptVersion) throw new Error('staging_prompt_version_mismatch');
   const returnedTopicId = isRecord(response.body) ? response.body.topic_id : undefined;
   if (returnedTopicId !== undefined && returnedTopicId !== topic.id) {
     throw Object.assign(new Error('topic_id_mismatch'), { safeResult: { ok: false, requestedTopicId: topic.id, returnedTopicId: String(returnedTopicId), providerCalls: generated.providerCalls, databaseWrite: false } });
@@ -391,8 +395,8 @@ async function createDependencies(url: string, anonKey: string, email: string, p
       if (result.error) throw new Error('duplicate_check_failed');
       return result.data?.length ?? 0;
     },
-    invoke: async (token, topicId) => {
-      const result = await withTimeout(client.functions.invoke(FUNCTION_NAME, { body: { mode: 'staging_draft', topicId, allowPaidRepair: false }, headers: { Authorization: `Bearer ${token}` } }));
+    invoke: async (token, topicId, promptVersion) => {
+      const result = await withTimeout(client.functions.invoke(FUNCTION_NAME, { body: { mode: 'staging_draft', topicId, allowPaidRepair: false, ...(promptVersion ? { promptVersion } : {}) }, headers: { Authorization: `Bearer ${token}` } }));
       // On non-2xx responses supabase-js leaves data null; read the structured
       // error body so code/level/stage/technicalDetail survive to the report.
       let body: unknown = result.data;
@@ -446,9 +450,11 @@ export async function main(argv = process.argv.slice(2), env = process.env): Pro
     const dryRun = argv.includes('--dry-run');
     const configuredUrl = env.STAGING_SUPABASE_URL || STAGING_URL;
     assertSafeProjectUrl(configuredUrl);
+    const promptVersion = env.STAGING_PROMPT_VERSION;
+    if (promptVersion !== undefined && !isStagingPromptVersion(promptVersion)) throw new Error('unsupported_staging_prompt_version');
     if (dryRun) {
       emitted = true;
-      console.log(safeDiagnostics({ ok: true, dryRun: true, project: STAGING_PROJECT_REF, function: FUNCTION_NAME, topicId: env.STAGING_TOPIC_ID ?? null, plannedProviderCalls: LEVEL_COUNT, maxTokensPerCall: MAX_TOKENS_PER_LEVEL, databaseWrite: false, processExitCode: 0, processSignal: null }));
+      console.log(safeDiagnostics({ ok: true, dryRun: true, project: STAGING_PROJECT_REF, function: FUNCTION_NAME, topicId: env.STAGING_TOPIC_ID ?? null, promptVersion: promptVersion ?? STAGING_PROMPT_VERSION, plannedProviderCalls: LEVEL_COUNT, maxTokensPerCall: MAX_TOKENS_PER_LEVEL, databaseWrite: false, processExitCode: 0, processSignal: null }));
       return;
     }
     if (!env.STAGING_SUPABASE_URL || !env.STAGING_SUPABASE_ANON_KEY || !env.STAGING_ADMIN_EMAIL || !env.STAGING_ADMIN_PASSWORD) throw new Error('staging_credentials_required');
@@ -456,7 +462,7 @@ export async function main(argv = process.argv.slice(2), env = process.env): Pro
     requireExplicitTopicId(env.STAGING_TOPIC_ID, expectedTopicId);
     const deps = await createDependencies(configuredUrl, env.STAGING_SUPABASE_ANON_KEY, env.STAGING_ADMIN_EMAIL, env.STAGING_ADMIN_PASSWORD, expectedTopicId);
     emitted = true;
-    console.log(safeDiagnostics({ ...(await executeStagingDraft(deps, env.STAGING_TOPIC_ID)), processExitCode: 0, processSignal: null }));
+    console.log(safeDiagnostics({ ...(await executeStagingDraft(deps, env.STAGING_TOPIC_ID, promptVersion)), processExitCode: 0, processSignal: null }));
   } catch (error) {
     emitted = true;
     const safeResult = isRecord(error) && isRecord(error.safeResult) ? { ...error.safeResult, processExitCode: 1, processSignal: null } : { ...processTerminationDiagnostic({ stage: 'runner_exception', topicId, processExitCode: 1 }), code: safeErrorCode(error) };

@@ -2,11 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
+import { previewValidationStatus } from '@/services/lessonVersionWorkflow';
 import { runBulkStagingGeneration } from '@/services/bulkStagingLessonWorkflow';
 import { formatStagingTopicLabel } from '@/components/admin/learning/StagingLessonVersionPanel';
 import { playerLesson, previewVisualKinds, providerFreeFourLevelLesson, topicIds } from './StagingLessonWorkflowPage';
 
 describe('independent staging lesson-version workflow', () => {
+  it('reports pass, review, or fail with the affected path and reason', () => {
+    const valid = {
+      canonicalValid: true, pedagogicalValid: true, geometryValid: true,
+      canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [],
+    };
+    const criterion = { path: 'levels[1].lesson.success_criteria[0]', message: 'Verify the criterion in mastery.' };
+    const blocker = { path: 'levels[0].lesson.sequence[3].correct_answer', message: 'Expected a number.' };
+    expect(previewValidationStatus(valid, [])).toMatchObject({ status: 'Pass', issues: [] });
+    expect(previewValidationStatus(valid, [criterion])).toMatchObject({ status: 'Review', issues: [criterion] });
+    expect(previewValidationStatus({ ...valid, canonicalValid: false, canonicalIssues: [blocker] }, [criterion]))
+      .toMatchObject({ status: 'Fail', issues: [blocker] });
+  });
+
   it('maps the CM2 time topic to its database UUID and selector label', () => {
     const topic = { id: '7588497a-6173-4144-864e-25bcab6b4011', name: 'Le repérage dans le temps et les durées', curriculum_level_code: 'cm2' };
     expect(formatStagingTopicLabel(topic)).toBe('Le repérage dans le temps et les durées · cm2');

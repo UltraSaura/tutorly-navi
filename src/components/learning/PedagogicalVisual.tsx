@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { numberLineTickValues } from '../../../shared/pedagogical-number-line';
 import { solidVisualDataErrors, type SolidVisualData } from '../../../shared/solid-visual-contract';
 import { solidNetErrors } from '../../../shared/solid-net-contract';
 
@@ -86,13 +87,6 @@ function Timeline({ d }: { d: Data }) {
     </div>)}
   </div>;
 }
-export function numberLineTickValues(min: number, max: number, step: number, maxTicks = 41): number[] {
-  if (![min, max, step].every(Number.isFinite) || step <= 0 || max < min) return [];
-  const count = Math.floor((max - min) / step + 1e-9);
-  if (count + 1 > maxTicks) return [];
-  return Array.from({ length: count + 1 }, (_, index) => Number((min + index * step).toFixed(10)));
-}
-
 export function formatNumberLineLabel(value: number): string {
   return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 10, useGrouping: false }).format(value);
 }

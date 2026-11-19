@@ -1,3 +1,4 @@
+import { isStagingPromptProject, isStagingPromptVersion, STAGING_PROMPT_VERSION, STAGING_PROMPT_V22_CANDIDATE, type StagingPromptVersion } from '../../../shared/staging-prompt-version';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +11,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { storedGeometryVisualFixture } from '@/components/admin/learning/geometryLesson.fixture';
 import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 import { discoverLessonVisuals } from '@/components/admin/learning/GeneratedLessonsPage';
-import { assertExplicitStagingTopicId, classifyStagingTopic, getStoredStagingMetadata, getStoredStagingTopicKind, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
+import { assertExplicitStagingTopicId, classifyStagingTopic, getStoredStagingMetadata, getStoredStagingTopicKind, previewValidationStatus, validateLessonVersion, type LessonVersion } from '@/services/lessonVersionWorkflow';
 import { runBulkStagingGeneration, type BulkStagingProgress, type BulkStagingResult } from '@/services/bulkStagingLessonWorkflow';
 import { runStagingHealthcheck, type StagingHealthcheckResult } from '@/services/stagingHealthcheck';
 import type { LessonV2, LessonV21 } from '@/types/lesson-generator';
@@ -35,6 +36,12 @@ export function previewVisualKinds(lesson: unknown): string[] {
 
 export function previewReviewWarnings(lesson: unknown) {
   return getStoredStagingMetadata(lesson)?.pedagogicalWarnings ?? [];
+}
+
+function reviewLocation(path: string): string {
+  const match = path.match(/^levels\[(\d+)\]\.lesson\.sequence\[(\d+)\]/);
+  if (match) return path.replace(match[0], `Level ${Number(match[1]) + 1}, block ${Number(match[2]) + 1}`);
+  return path.replace(/^levels\[(\d+)\]\.?/, (_, index) => `Level ${Number(index) + 1} · `);
 }
 
 export const providerFreeFourLevelLesson = {
@@ -69,6 +76,7 @@ function validationSummary(result: BulkStagingResult): string {
 export function StagingLessonWorkflowPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [promptVersion, setPromptVersion] = useState<StagingPromptVersion>(STAGING_PROMPT_VERSION);
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [progress, setProgress] = useState<BulkStagingProgress | null>(null);
   const [results, setResults] = useState<BulkStagingResult[]>([]);
@@ -79,6 +87,7 @@ export function StagingLessonWorkflowPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dryRun = searchParams.get('dryRun') === '1';
+  const showPromptSelector = !dryRun && isStagingPromptProject(import.meta.env.VITE_SUPABASE_URL);
 
   useEffect(() => {
     let active = true;
@@ -105,6 +114,7 @@ export function StagingLessonWorkflowPage() {
       const output = await runBulkStagingGeneration(selectedTopics, setProgress, {
         dryRun,
         dryRunContent: providerFreeFourLevelLesson,
+        promptVersion: showPromptSelector && promptVersion !== STAGING_PROMPT_VERSION ? promptVersion : undefined,
       });
       setResults(output);
     } catch (runError) {
@@ -129,6 +139,15 @@ export function StagingLessonWorkflowPage() {
       <div className="flex gap-2"><Button variant={mode === 'single' ? 'default' : 'outline'} onClick={() => setMode('single')}>Single topic</Button><Button variant={mode === 'bulk' ? 'default' : 'outline'} onClick={() => setMode('bulk')}>Bulk topics</Button></div>
       {loading ? <p>Loading topics…</p> : <div className="grid gap-2 md:grid-cols-2">{topics.map((topic) => <label key={topic.id} className="flex items-start gap-3 rounded border p-3"><input type="checkbox" checked={selected.has(topic.id)} onChange={() => toggle(topic.id)} /><span><span className="block font-medium">{topic.name}</span><span className="block text-xs text-muted-foreground">{topic.id} · {topic.curriculum_level_code ?? '—'}</span></span></label>)}</div>}
       <p className="text-xs text-muted-foreground">Explicit topic UUIDs are required. Fixture topics are rejected before any provider call.</p>
+      {showPromptSelector && <label className="flex flex-wrap items-center gap-2 text-sm">
+        Prompt version
+        <select className="rounded border bg-background p-2" value={promptVersion} onChange={(event) => {
+          if (isStagingPromptVersion(event.target.value)) setPromptVersion(event.target.value);
+        }}>
+          <option value={STAGING_PROMPT_VERSION}>V2.1 (default)</option>
+          <option value={STAGING_PROMPT_V22_CANDIDATE}>V2.2 candidate</option>
+        </select>
+      </label>}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button onClick={run} disabled={loading || progress?.status === 'generating' || progress?.status === 'validating'}>{dryRun ? 'Run provider-free dry-run' : mode === 'single' ? 'Generate one draft' : 'Generate selected drafts'}</Button>
       <Button variant="outline" onClick={checkFunction} disabled={healthcheckLoading} data-testid="staging-healthcheck">{healthcheckLoading ? 'Vérification…' : 'Vérifier la fonction'}</Button>
@@ -173,20 +192,26 @@ export function StagingLessonDraftPreviewPage() {
   if (loading) return <div className="p-6">Loading draft preview…</div>;
   if (error || !row || !topic) return <div className="space-y-4"><PageMeta title="Draft preview" description="Protected staging draft preview" /><p role="alert" className="text-destructive">{error ?? 'Draft unavailable.'}</p><Button asChild variant="outline"><Link to="/admin/staging-lessons">Back to staging workflow</Link></Button></div>;
   const lesson = parseLesson(row.lesson_content);
-  if (!lesson) return <p role="alert">Draft lesson content is not valid JSON.</p>;
+  if (!lesson) return <p role="alert"><strong>Fail</strong> · Draft lesson content must be a JSON object.</p>;
   const levels = Array.isArray(lesson.levels) ? lesson.levels : [];
   const current = levels[levelIndex];
   const validation = validateLessonVersion(row.lesson_content, { topicKind: getStoredStagingTopicKind(row.lesson_content) ?? classifyStagingTopic(topic.name) });
-  const reviewWarnings = previewReviewWarnings(row.lesson_content);
-  const kinds = levels.flatMap((level) => previewVisualKinds(level.lesson));
-  if (!current) return <p role="alert">Draft has no lesson levels.</p>;
+  const reviewMetadata = getStoredStagingMetadata(row.lesson_content);
+  const review = previewValidationStatus(validation, reviewMetadata?.pedagogicalWarnings ?? [], reviewMetadata?.pedagogicalReviewRequired);
+  const kinds = levels.flatMap((level) => previewVisualKinds(level?.lesson));
   return <div className="space-y-6">
     <PageMeta title={`Draft preview · ${topic.name}`} description="Protected admin preview using the student lesson player" />
     <div className="flex flex-wrap items-center justify-between gap-3"><div><Badge variant="outline">PROTECTED ADMIN DRAFT</Badge><h1 className="mt-2 text-3xl font-bold">{topic.name}</h1><p className="text-xs text-muted-foreground">{row.id} · topic {row.topic_id} · status={row.status}</p></div><Button asChild variant="outline"><Link to="/admin/staging-lessons">Back to staging workflow</Link></Button></div>
-    <Card><CardHeader><CardTitle>Validation and visual inventory</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><p>Canonical: {String(validation.canonicalValid)} · pedagogical: {String(validation.pedagogicalValid)} · prerequisite: {String(validation.prerequisiteValid ?? validation.canonicalValid)} · geometry: {String(validation.geometryValid)} · interaction: {String(validation.interactionValid ?? validation.canonicalValid)}</p><p>All levels: {levels.length} · visuals: {kinds.length}</p><p data-testid="draft-visual-kinds">{kinds.join(', ')}</p></CardContent></Card>
-    {reviewWarnings.length > 0 && <Card data-testid="staging-review-warnings"><CardHeader><CardTitle>Pedagogical review warnings</CardTitle></CardHeader><CardContent className="space-y-1 text-sm"><p>Review required: lexical similarity was detected; blocking validation still passed.</p>{reviewWarnings.map((warning) => <p key={`${warning.path}:${warning.message}`}>{warning.path}: {warning.message}</p>)}</CardContent></Card>}
-    <div className="flex flex-wrap gap-2">{levels.map((level, index) => <Button key={level.id ?? index} size="sm" variant={index === levelIndex ? 'default' : 'outline'} onClick={() => setLevelIndex(index)}>Niveau {level.level_number ?? index + 1}: {level.title}</Button>)}</div>
-    <Card><CardHeader><CardTitle>{current.title}</CardTitle></CardHeader><CardContent><div className="min-h-[600px]"><LessonV2Player topicId={row.topic_id} subjectId={topic.curriculum_subject_id} topicName={topic.name} lesson={playerLesson(current)} readOnly /></div></CardContent></Card>
+    <Card><CardHeader><CardTitle>Validation and visual inventory</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
+      <p><strong>{review.status}</strong> · {review.reason}</p>
+      {reviewMetadata?.promptVersion && <p>Prompt version {reviewMetadata.promptVersion}</p>}
+      {review.issues.length > 0 && <ul className="list-disc space-y-1 pl-5" data-testid="staging-review-warnings">
+        {review.issues.map((issue) => <li key={`${issue.path}:${issue.message}`}>{reviewLocation(issue.path)} · {issue.message}</li>)}
+      </ul>}
+      <p>All levels: {levels.length} · visuals: {kinds.length}</p><p data-testid="draft-visual-kinds">{kinds.join(', ')}</p>
+    </CardContent></Card>
+    <div className="flex flex-wrap gap-2">{levels.map((level, index) => level && <Button key={level.id ?? index} size="sm" variant={index === levelIndex ? 'default' : 'outline'} onClick={() => setLevelIndex(index)}>Niveau {level.level_number ?? index + 1}: {level.title}</Button>)}</div>
+    {current && review.status !== 'Fail' && <Card><CardHeader><CardTitle>{current.title}</CardTitle></CardHeader><CardContent><div className="min-h-[600px]"><LessonV2Player topicId={row.topic_id} subjectId={topic.curriculum_subject_id} topicName={topic.name} lesson={playerLesson(current)} readOnly /></div></CardContent></Card>}
   </div>;
 }
 

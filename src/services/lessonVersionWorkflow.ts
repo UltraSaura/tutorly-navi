@@ -1,6 +1,9 @@
+import type { StagingPromptVersion } from '../../shared/staging-prompt-version';
 import { supabase } from '@/integrations/supabase/client';
 import { getGenerationErrorDetails, getGenerationErrorTechnicalDetail } from '@/components/admin/learning/generationErrorMapping';
 import { validateLessonV21, type ContractIssue } from '@/types/lesson-v21-contract';
+import { withStagingMetadata, type StagingReviewMetadata } from '../../shared/staging-review-metadata';
+export { getStoredStagingMetadata, withStagingMetadata, type StagingReviewMetadata } from '../../shared/staging-review-metadata';
 
 export const LESSON_VERSION_STATUSES = ['draft', 'validated', 'published', 'rejected'] as const;
 export type LessonVersionStatus = typeof LESSON_VERSION_STATUSES[number];
@@ -19,11 +22,6 @@ export type LessonVersion = {
   published_by?: string | null;
 };
 
-export type StagingReviewMetadata = {
-  pedagogicalWarnings: ValidationIssue[];
-  pedagogicalReviewRequired: boolean;
-};
-
 export function getStoredStagingTopicKind(lesson: unknown): StagingTopicKind | undefined {
   const value = object(lesson)?.staging_topic_kind;
   return value === 'decimal' || value === 'time' || value === 'geometry' ? value : undefined;
@@ -32,27 +30,6 @@ export function getStoredStagingTopicKind(lesson: unknown): StagingTopicKind | u
 export function withStagingTopicKind(lesson: unknown, topicKind?: StagingTopicKind): unknown {
   if (!topicKind || !object(lesson)) return lesson;
   return { ...(lesson as Record<string, unknown>), staging_topic_kind: topicKind };
-}
-
-const STAGING_METADATA_KEY = '_staging_metadata';
-
-export function withStagingMetadata(lesson: unknown, metadata?: unknown): unknown {
-  if (!metadata || !object(lesson)) return lesson;
-  const value = object(metadata);
-  if (!value || !Array.isArray(value.pedagogicalWarnings) || typeof value.pedagogicalReviewRequired !== 'boolean') return lesson;
-  return { ...(lesson as Record<string, unknown>), [STAGING_METADATA_KEY]: {
-    pedagogicalWarnings: value.pedagogicalWarnings,
-    pedagogicalReviewRequired: value.pedagogicalReviewRequired,
-  } };
-}
-
-export function getStoredStagingMetadata(lesson: unknown): StagingReviewMetadata | undefined {
-  const metadata = object(object(lesson)?.[STAGING_METADATA_KEY]);
-  if (!metadata || !Array.isArray(metadata.pedagogicalWarnings) || typeof metadata.pedagogicalReviewRequired !== 'boolean') return undefined;
-  return {
-    pedagogicalWarnings: metadata.pedagogicalWarnings.filter((issue): issue is ValidationIssue => Boolean(object(issue)) && typeof issue.path === 'string' && typeof issue.message === 'string'),
-    pedagogicalReviewRequired: metadata.pedagogicalReviewRequired,
-  };
 }
 
 export type ValidationIssue = { path: string; message: string };
@@ -66,6 +43,18 @@ export type LessonValidation = {
   pedagogicalIssues: ValidationIssue[];
   geometryIssues: ValidationIssue[];
 };
+
+export function previewValidationStatus(validation: LessonValidation, warnings: ValidationIssue[], reviewRequired = false) {
+  const blockers = [...validation.canonicalIssues, ...validation.pedagogicalIssues, ...validation.geometryIssues];
+  if (!validation.canonicalValid || !validation.pedagogicalValid || !validation.geometryValid ||
+      validation.prerequisiteValid === false || validation.interactionValid === false) {
+    return { status: 'Fail', issues: blockers, reason: 'Blocking validation failed.' };
+  }
+  if (warnings.length > 0 || reviewRequired) {
+    return { status: 'Review', issues: warnings, reason: 'A reviewer needs to verify the items below.' };
+  }
+  return { status: 'Pass', issues: [], reason: 'The available validation checks passed.' };
+}
 
 export type StagingTransportFailure = {
   providerCallsKnown: false;
@@ -84,12 +73,18 @@ const point = (value: unknown) => {
 
 const points = (value: unknown) => Array.isArray(value) && value.length >= 2 && value.every(point);
 
-const allVisuals = (lesson: any) => (lesson?.levels ?? []).flatMap((level: any) =>
-  (level?.lesson?.sequence ?? []).flatMap((block: any, index: number) => {
-    const visual = object(block?.visual);
-    return visual ? [{ visual, path: `levels[${level?.level_number ?? 1}].lesson.sequence[${index}].visual` }] : [];
-  }),
-);
+const allVisuals = (lesson: unknown) => {
+  const levels = object(lesson)?.levels;
+  if (!Array.isArray(levels)) return [];
+  return levels.flatMap((level, levelIndex) => {
+    const sequence = object(object(level)?.lesson)?.sequence;
+    if (!Array.isArray(sequence)) return [];
+    return sequence.flatMap((block, index) => {
+      const visual = object(object(block)?.visual);
+      return visual ? [{ visual, path: `levels[${levelIndex}].lesson.sequence[${index}].visual` }] : [];
+    });
+  });
+};
 
 function geometryIssuesForVisual(kind: string, data: unknown, path: string): ValidationIssue[] {
   const d = object(data);
@@ -364,7 +359,7 @@ export function buildDraftInsertPayload(topicId: string, lessonContent: unknown,
   return { topic_id: topicId, lesson_content: lessonContent, status: 'draft' as const, created_by: userId };
 }
 
-export async function generateStagingDraft(topicId: string, modelId?: string, expectedTopicId: string | null = null, language: 'fr' | 'en' = 'fr') {
+export async function generateStagingDraft(topicId: string, modelId?: string, expectedTopicId: string | null = null, language: 'fr' | 'en' = 'fr', promptVersion?: StagingPromptVersion) {
   const requested = topicId.trim();
   if (!requested) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
   if (expectedTopicId === null) {
@@ -378,7 +373,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   const requestStartedAt = Date.now();
   try {
     ({ data, error, response } = await withStagingBrowserTimeout(() => supabase.functions.invoke('generate-lesson-content', {
-      body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false, rejectionInBody: true },
+      body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false, rejectionInBody: true, ...(promptVersion ? { promptVersion } : {}) },
     })));
   } catch (requestError) {
     const timeout = requestError instanceof Error && requestError.message === 'staging_browser_timeout';
@@ -467,6 +462,9 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
     });
   }
   assertReturnedTopicMatches(requested, data.topic_id);
+  if (promptVersion && data.promptVersion !== promptVersion) {
+    throw new Error(`staging_prompt_version_mismatch: requested ${promptVersion}, received ${String(data.promptVersion)}.`);
+  }
   validateStagingGenerationEnvelope(data);
   return { ...data, clientDurationMs } as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; clientDurationMs?: number; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }

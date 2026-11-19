@@ -245,7 +245,7 @@ export function pedagogicalWarnings(lesson: Record<string, unknown>, grade: stri
   if (!['CP', 'CE1', 'CE2', 'CM1', 'CM2'].includes(grade)) return [];
   const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
   return sequence.flatMap((block) => {
-    if (block.type !== 'concept') return [];
+    if (block?.type !== 'concept') return [];
     const conceptIndex = sequence.indexOf(block);
     return semanticDuplicationDiagnostics(block, topicName)
       .filter((duplicate) => !duplicate.blocking)
@@ -265,7 +265,7 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
   const primary = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'].includes(grade);
   if (!primary) return issues;
   const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
-  const concepts = sequence.filter((block) => block.type === 'concept');
+  const concepts = sequence.filter((block) => block?.type === 'concept');
   concepts.forEach((block) => {
     const conceptIndex = sequence.indexOf(block);
     const content = typeof block.content === 'string' ? block.content.trim() : '';
@@ -311,13 +311,13 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
       issues.push({ path: `sequence[${conceptIndex}].${pathField}`, message: `${duplicate.reason} overlap=${d.overlap}, ratio=${d.ratio.toFixed(2)}, tokensA=[${d.leftTokens.join(', ')}], tokensB=[${d.rightTokens.join(', ')}].` });
     }
   });
-  const hasInteraction = sequence.some((block) => ['prediction', 'student_try', 'feedback_checkpoint'].includes(String(block.type)));
+  const hasInteraction = sequence.some((block) => ['prediction', 'student_try', 'feedback_checkpoint'].includes(String(block?.type)));
   if (!hasInteraction) issues.push({ path: 'sequence', message: 'Le niveau primaire doit proposer une interaction avant la maîtrise.' });
   const visualTopic = /durée|heure|fraction|angle|triangle|rectangle|cercle|géométr|repère|solide|conversion/i.test(`${topicName} ${String(lesson.lesson_goal ?? '')}`);
   // A deterministic visual may be a standalone block or attached to the
   // concept it explains. Both are valid representations for the topic-level
   // visual requirement.
-  const hasVisual = sequence.some((block) => block.type === 'visual' || Boolean(block.visual));
+  const hasVisual = sequence.some((block) => block?.type === 'visual' || Boolean(block?.visual));
   const hasRequiredVisualIssue = issues.some((issue) => issue.path.endsWith('.visual') && issue.message.startsWith('Visuel requis'));
   if (visualTopic && !hasVisual && !hasRequiredVisualIssue) issues.push({ path: 'sequence', message: 'Ce concept bénéficie d’un visuel pédagogique déterministe.' });
   return issues;

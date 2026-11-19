@@ -18,6 +18,7 @@ export type StagingSpecificationLevel = {
   title: string;
   purpose: string;
   objectiveIds: string[];
+  successCriteria?: string[];
   teachingObjectiveIds: string[];
   assessmentObjectiveIds: string[];
   exerciseObjectiveIds: string[];
@@ -271,10 +272,21 @@ export function validateStagingSpecification(
   const seenLevels = new Set<number>();
   specification.levels.forEach((level, index) => {
     const path = `levels[${index}]`;
+    if (![1, 2, 3, 4].includes(level.levelNumber)) errors.push({ code: 'level_progression_invalid', path: `${path}.levelNumber`, message: 'Le numéro de niveau doit être compris entre 1 et 4.' });
     if (seenLevels.has(level.levelNumber)) errors.push({ code: 'level_duplicate', path: `${path}.levelNumber`, message: 'Numéro de niveau dupliqué.' });
     seenLevels.add(level.levelNumber);
-    for (const objectiveId of [...level.teachingObjectiveIds, ...level.assessmentObjectiveIds, ...level.exerciseObjectiveIds, ...level.masteryObjectiveIds]) {
+    const assignments = ['teachingObjectiveIds', 'assessmentObjectiveIds', 'exerciseObjectiveIds', 'masteryObjectiveIds'] as const;
+    for (const objectiveId of level.objectiveIds) {
       if (!knownObjectiveIds.has(objectiveId)) errors.push({ code: 'invalid_objective_reference', path: `${path}.objectiveIds`, message: `Objectif ${objectiveId} absent des objectifs liés sélectionnés.` });
+    }
+    for (const assignment of assignments) {
+      for (const objectiveId of level[assignment]) {
+        if (!level.objectiveIds.includes(objectiveId)) errors.push({ code: 'invalid_objective_reference', path: `${path}.${assignment}`, message: `Objectif ${objectiveId} absent des objectifs assignés au niveau.` });
+      }
+    }
+    if (level.successCriteria && (level.successCriteria.length < 1 || level.successCriteria.length > 5 ||
+      level.successCriteria.some((criterion) => !criterion.trim()) || new Set(level.successCriteria).size !== level.successCriteria.length)) {
+      errors.push({ code: 'invalid_success_criteria', path: `${path}.successCriteria`, message: 'Prévoir 1 à 5 critères de réussite non vides et distincts.' });
     }
     if (level.teachingObjectiveIds.length === 0) errors.push({ code: 'teaching_coverage_missing', path: `${path}.teachingObjectiveIds`, message: 'Aucun objectif enseigné n’est assigné à ce niveau.' });
     if (level.assessmentObjectiveIds.length === 0) errors.push({ code: 'assessment_coverage_missing', path: `${path}.assessmentObjectiveIds`, message: 'Aucun objectif évalué n’est assigné à ce niveau.' });
@@ -304,7 +316,34 @@ export function specificationPromptContext(specification: StagingSpecification, 
     `Provenance objectifs: ${specification.objectiveProvenance}.`,
     `Progression niveau ${levelNumber} « ${level.title} »: ${level.purpose}`,
     `objectifs enseignés=${level.teachingObjectiveIds.join(', ') || 'aucun'}; objectifs évalués=${level.assessmentObjectiveIds.join(', ') || 'aucun'}; exercice=${level.exerciseObjectiveIds.join(', ') || 'aucun'}; maîtrise=${level.masteryObjectiveIds.join(', ') || 'aucun'}.`,
+    ...(level.successCriteria ? [`Critères de réussite à reprendre exactement dans success_criteria: ${JSON.stringify(level.successCriteria)}.`] : []),
     `Visuels autorisés=${level.visualKinds.join('|') || 'aucun'}; visuels requis=${String(level.visualsRequired)}.`,
     `Évaluation=${level.evaluationStatus}; note=${level.evaluationNote}`,
   ].join(' ');
+}
+
+/** The canonical blocks have no objective or criterion references. Review their
+ * meaning against the approved assignments, even when the criterion text matches. */
+export function checkStagingCoverage(lesson: Record<string, unknown>, level: StagingSpecificationLevel, objectives: readonly StagingObjective[] = []) {
+  const errors: Array<{ path: string; message: string }> = [];
+  const warnings: Array<{ path: string; message: string }> = [];
+  const actual = Array.isArray(lesson.success_criteria) ? lesson.success_criteria : [];
+  if (level.successCriteria) {
+    for (const criterion of level.successCriteria) {
+      if (!actual.includes(criterion)) errors.push({ path: 'success_criteria', message: `Critère approuvé manquant : « ${criterion} ».` });
+    }
+    actual.forEach((criterion, index) => {
+      if (!level.successCriteria?.includes(criterion)) errors.push({ path: `success_criteria[${index}]`, message: 'Critère absent de la spécification approuvée ou reformulé.' });
+      else if (actual.indexOf(criterion) !== index) errors.push({ path: `success_criteria[${index}]`, message: 'Critère approuvé dupliqué.' });
+    });
+  } else {
+    warnings.push({ path: 'success_criteria', message: 'La spécification ne fournit pas de libellés approuvés à comparer.' });
+  }
+  const objectiveLabels = (ids: string[]) => ids.map((id) => objectives.find((objective) => objective.id === id)?.text ?? id).join(' · ');
+  warnings.push(
+    { path: 'lesson_goal', message: `Vérifier le but, les concepts et l’exemple pour les objectifs enseignés : ${objectiveLabels(level.teachingObjectiveIds)}.` },
+    { path: 'sequence[3]', message: `Vérifier l’exercice pour les objectifs : ${objectiveLabels(level.exerciseObjectiveIds)}.` },
+    { path: 'sequence[4]', message: `Vérifier la maîtrise et les critères pour les objectifs évalués : ${objectiveLabels(level.assessmentObjectiveIds)}. Objectifs de maîtrise : ${objectiveLabels(level.masteryObjectiveIds)}.` },
+  );
+  return { errors, warnings };
 }

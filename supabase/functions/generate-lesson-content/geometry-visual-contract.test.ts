@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 
+const stagingVisualIssues = (kind: string, data: unknown) => geometryVisualDataErrors(kind, data, 'visual.data', true);
+
 const complete = {
   diagram: { points: [{ x: 0, y: 0, label: 'A' }, { x: 100, y: 0, label: 'B' }], segments: [{ from: 'A', to: 'B' }] },
   angle: { vertex: { x: 50, y: 50, label: 'B' }, rays: [{ x: 50, y: 0, label: 'A' }, { x: 100, y: 50, label: 'C' }], degrees: 90, rightAngle: true },
@@ -11,6 +13,34 @@ const complete = {
 
 describe('canonical geometry visual contract', () => {
   it.each(Object.entries(complete).filter(([kind]) => kind !== 'symmetry'))('accepts complete %s data', (kind, data) => expect(geometryVisualDataErrors(kind, data)).toEqual([]));
+  it('checks exact numeric circle dimensions without requiring both fields in legacy visuals', () => {
+    expect(stagingVisualIssues('circle', { ...complete.circle, diameter: 50 })).toEqual([]);
+    expect(stagingVisualIssues('circle', { ...complete.circle, diameter: 49 })).toContainEqual(
+      expect.objectContaining({ path: 'visual.data.diameter', code: 'inconsistent_circle_dimensions' }),
+    );
+  });
+  it('rejects numeric visual data the renderer cannot depict as specified', () => {
+    expect(stagingVisualIssues('number_line', { min: 0, max: 2, step: 0.1, value: 1.4 })).toEqual([]);
+    expect(stagingVisualIssues('number_line', { min: 0, max: 2, step: 0, value: 2.1 }).map(({ path }) => path))
+      .toEqual(['visual.data.value', 'visual.data.step']);
+    expect(stagingVisualIssues('fraction_bar', { numerator: 3, denominator: 4 })).toEqual([]);
+    expect(stagingVisualIssues('fraction_circle', { numerator: 5, denominator: 4 })[0]?.path).toBe('visual.data.numerator');
+    expect(stagingVisualIssues('angle', { ...complete.angle, degrees: 60 })[0]?.code).toBe('inconsistent_right_angle');
+  });
+  it.each([
+    [{ min: 0, max: 40, step: 1 }, undefined],
+    [{ min: 0, max: 4, step: 0.1 }, undefined],
+    [{ min: 0, max: 40 }, undefined],
+    [{ min: 0, max: 41, step: 1 }, 'excessive_number_line_ticks'],
+    [{ min: 0, max: 100, step: 1 }, 'excessive_number_line_ticks'],
+    [{ min: 1, max: 0, step: 1 }, 'invalid_number_line_bounds'],
+    [{ min: 1, max: 1, step: 1 }, 'invalid_number_line_bounds'],
+    [{ min: 0, max: 1, step: 0 }, 'invalid_number_line_step'],
+    [{ min: 0, max: 1, step: -1 }, 'invalid_number_line_step'],
+    [{ min: 0, max: 1, step: '1' }, 'invalid_number_line_step'],
+  ])('validates staging number line %j with renderer tick limits', (data, code) => {
+    expect(stagingVisualIssues('number_line', data)[0]?.code).toBe(code);
+  });
   it('accepts a clock only when hour and minute are integers in their allowed ranges', () => {
     expect(geometryVisualDataErrors('clock', { hour: 1, minute: 0 })).toEqual([]);
     expect(geometryVisualDataErrors('clock', { hour: 12, minute: 59 })).toEqual([]);

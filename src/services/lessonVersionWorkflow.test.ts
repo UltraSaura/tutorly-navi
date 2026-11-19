@@ -1,3 +1,4 @@
+import { STAGING_PROMPT_VERSION, STAGING_PROMPT_V22_CANDIDATE } from '../../shared/staging-prompt-version';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { geometryDraftLesson } from '@/components/admin/learning/geometryDraft';
 
@@ -57,18 +58,33 @@ describe('lesson version workflow', () => {
     expect(getStoredStagingTopicKind(payload.lesson_content)).toBe('decimal');
   });
 
+  it('rejects a response that used V2.1 when the candidate was requested', async () => {
+    const topicId = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
+    invoke.mockResolvedValue({ data: {
+      success: true, providerCalls: 4, lesson_content: geometryDraftLesson,
+      topic_id: topicId, promptVersion: STAGING_PROMPT_VERSION,
+    }, error: null, response: null });
+    await expect(generateStagingDraft(topicId, undefined, null, 'fr', STAGING_PROMPT_V22_CANDIDATE))
+      .rejects.toThrow('staging_prompt_version_mismatch');
+    expect(from).not.toHaveBeenCalled();
+  });
+
   it('round-trips Edge review warnings through draft save, reread, and preview metadata', async () => {
     const warning = { path: 'sequence[1].takeaway', message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.' };
-    const metadata = { pedagogicalWarnings: [warning], pedagogicalReviewRequired: true };
+    const metadata = { pedagogicalWarnings: [warning], pedagogicalReviewRequired: true, promptVersion: STAGING_PROMPT_V22_CANDIDATE };
     invoke.mockResolvedValue({ data: {
       success: true,
       providerCalls: 4,
       lesson_content: geometryDraftLesson,
       topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81',
       validation: metadata,
+      promptVersion: STAGING_PROMPT_V22_CANDIDATE,
       levelResults: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1 })),
     }, error: null, response: null });
-    const generated = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
+    const generated = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81', undefined, null, 'fr', STAGING_PROMPT_V22_CANDIDATE);
+    expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({
+      body: expect.objectContaining({ mode: 'staging_draft', promptVersion: STAGING_PROMPT_V22_CANDIDATE }),
+    }));
     let insertedPayload: Record<string, unknown> | undefined;
     const single = vi.fn().mockImplementation(() => ({ data: { id: 'version-warning', ...insertedPayload }, error: null }));
     const insert = vi.fn((payload: Record<string, unknown>) => {
