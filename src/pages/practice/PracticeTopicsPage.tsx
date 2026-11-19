@@ -2,7 +2,6 @@ import { useSubjectLabel } from '@/i18n/useSubjectLabel';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, BookOpen, CheckCircle2, Circle, Sparkles } from 'lucide-react';
@@ -11,10 +10,13 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
-import { useAllBanks, useBankAttemptStatus } from '@/hooks/useQuizBank';
+import { useBankAttemptStatus } from '@/hooks/useQuizBank';
 import { useLearner } from '@/context/FamilyProfileContext';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
+import { useExerciseCurriculum } from '@/hooks/useCoordinateEligibility';
+import { usePracticeBankCatalogue } from '@/hooks/usePracticeBankCatalogue';
+import { normalizeSchoolLevel } from '@/domain/schoolLevels';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 import { cn } from '@/lib/utils';
 import type { Topic, Category } from '@/types/learning';
@@ -50,33 +52,17 @@ const masteryIcons: Record<MasteryLevel, React.ReactNode> = {
 interface TopicCardProps {
   topic: Topic;
   userId: string;
+  bankId: string;
   index: number;
   onPractice: (bankId: string) => void;
 }
 
-function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
+function TopicCard({ topic, userId, bankId, index, onPractice }: TopicCardProps) {
   const ui = useInterfaceTranslation();
   const { t } = useTranslation();
-  const banksQuery = useAllBanks(topic.id, '', [], userId, 'practice');
-  const banks = banksQuery.data?.banks ?? [];
-  const firstBank = banks.find(b => b.isUnlocked) ?? banks[0] ?? null;
-
-  const attemptQuery = useBankAttemptStatus(firstBank?.bankId, userId);
+  const attemptQuery = useBankAttemptStatus(bankId, userId);
   const mastery = getMasteryLevel(attemptQuery.data?.bestScore, attemptQuery.data?.maxScore);
   const masteryKey = `practice.topics.mastery.${mastery === 'not_started' ? 'notStarted' : mastery === 'needs_practice' ? 'needsPractice' : mastery === 'in_progress' ? 'inProgress' : 'mastered'}`;
-
-  const questionCount = firstBank ? null : 0; // count comes from bank data, not stored on assignment
-
-  if (banksQuery.isLoading) {
-    return (
-      <div className="rounded-xl border border-border/60 p-4">
-        <Skeleton className="h-4 w-2/3 mb-2" />
-        <Skeleton className="h-3 w-1/3" />
-      </div>
-    );
-  }
-
-  if (banks.length === 0) return null;
 
   return (
     <motion.div
@@ -101,8 +87,7 @@ function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
         size="sm"
         variant={mastery === 'mastered' ? 'outline' : 'default'}
         className="shrink-0"
-        onClick={() => firstBank && onPractice(firstBank.bankId)}
-        disabled={!firstBank}
+        onClick={() => onPractice(bankId)}
       >
         <Sparkles className="h-3.5 w-3.5 mr-1.5" />
         {t('practice.topics.practiceBtn')}
@@ -120,37 +105,32 @@ export default function PracticeTopicsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   const { user } = useLearner();
+  const activeSchoolLevel = useActiveSchoolLevel();
+  const curriculum = useExerciseCurriculum();
+  const profileLoading = curriculum.pending;
 
   const subjectSlug = subject ?? '';
   const dashboardQuery = useSubjectDashboard(subjectSlug);
+  const learnerCountry = curriculum.consistent ? curriculum.country : null;
+  const learnerLevel = curriculum.consistent ? curriculum.level : null;
   const subjectName = getSubjectNameForSlug(subjectSlug ?? '', i18n.language, dashboardQuery.data?.subject?.name);
 
   // Flatten all topics across categories to check for "Practice All"
-  const allTopics = useMemo(
-    () => (dashboardQuery.data?.categories ?? []).flatMap(c => c.topics ?? []),
-    [dashboardQuery.data],
-  );
-
-  const topicIds = useMemo(() => allTopics.map((topic) => topic.id), [allTopics]);
-
-  const bankAssignmentsQuery = useQuery({
-    queryKey: ['practice-topics-bank-assignments', topicIds.join(',')],
-    queryFn: async (): Promise<{ topic_id: string }[]> => {
-      const { data, error } = await supabase
-        .from('quiz_bank_assignments')
-        .select('topic_id')
-        .eq('is_active', true)
-        .in('topic_id', topicIds);
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: allTopics.length > 0,
-  });
-
-  const topicsWithBanks = useMemo(() => {
-    return new Set((bankAssignmentsQuery.data || []).map((row) => row.topic_id));
-  }, [bankAssignmentsQuery.data]);
+  const allTopics = useMemo(() => (dashboardQuery.data?.categories ?? []).flatMap(c => c.topics ?? []), [dashboardQuery.data]);
+  const catalogueTopics = useMemo(() => allTopics.map(topic => ({
+    id: topic.id,
+    curriculum_country_code: topic.curriculum_country_code,
+    curriculum_level_code: topic.curriculum_level_code,
+  })), [allTopics]);
+  const bankCatalogue = usePracticeBankCatalogue(catalogueTopics, learnerCountry, learnerLevel);
+  const topicBankMap = bankCatalogue.bankByTopic;
+  const eligibleTopics = useMemo(() => allTopics.filter(topic => {
+    if (!learnerCountry || !learnerLevel) return false;
+    return topic.curriculum_country_code?.trim().toLowerCase() === learnerCountry.trim().toLowerCase()
+      && normalizeSchoolLevel(topic.curriculum_level_code) === normalizeSchoolLevel(learnerLevel)
+      && topicBankMap.has(topic.id);
+  }), [allTopics, learnerCountry, learnerLevel, topicBankMap]);
+  const eligibleTopicIds = useMemo(() => new Set(eligibleTopics.map(topic => topic.id)), [eligibleTopics]);
 
   const openQuiz = (bankId: string) => {
     setSearchParams(prev => {
@@ -164,16 +144,16 @@ export default function PracticeTopicsPage() {
   const sortedCategories = useMemo(() => {
     return (dashboardQuery.data?.categories ?? []).map(category => ({
       ...category,
-      topics: [...(category.topics ?? [])].sort((a, b) => {
+      topics: [...(category.topics ?? [])].filter(topic => eligibleTopicIds.has(topic.id)).sort((a, b) => {
         const pa = a.progress_percentage ?? 0;
         const pb = b.progress_percentage ?? 0;
         return pa - pb; // least progress first
       }),
     })).filter(category => (category.topics?.length ?? 0) > 0);
-  }, [dashboardQuery.data]);
+  }, [dashboardQuery.data, eligibleTopicIds]);
 
-  const isLoading = dashboardQuery.isLoading;
-  const hasContent = allTopics.length > 0;
+  const isLoading = dashboardQuery.isLoading || activeSchoolLevel.isLoading || profileLoading || bankCatalogue.isLoading;
+  const hasContent = eligibleTopics.length > 0;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -226,7 +206,6 @@ export default function PracticeTopicsPage() {
         {/* Topics by category */}
         {!isLoading && sortedCategories
           .filter(cat => (cat.topics ?? []).length > 0)
-          .filter(cat => topicsWithBanks.size === 0 || (cat.topics ?? []).some(t => topicsWithBanks.has(t.id)))
           .map((category, catIdx) => (
           (category.topics?.length ?? 0) > 0 ? (
             <section key={category.id} className="space-y-2">
@@ -240,6 +219,7 @@ export default function PracticeTopicsPage() {
                       key={topic.id}
                       topic={topic}
                       userId={user.id}
+                      bankId={topicBankMap.get(topic.id)!}
                       index={catIdx * 10 + topicIdx}
                       onPractice={openQuiz}
                     />

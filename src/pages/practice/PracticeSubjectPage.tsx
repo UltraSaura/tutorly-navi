@@ -2,7 +2,7 @@ import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useTranslation } from 'react-i18next';
 import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useMemo } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -25,10 +25,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
+import { useExerciseCurriculum } from '@/hooks/useCoordinateEligibility';
 import { useLearner } from '@/context/FamilyProfileContext';
 import { useExamPapers, useTrainingItems } from '@/hooks/useExamImport';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
+import { usePracticeBankCatalogue } from '@/hooks/usePracticeBankCatalogue';
 import type { PracticeDomainGroup, PracticeTopic } from '@/hooks/usePracticeTopics';
 import { resolveExamDisciplinesForSubjectSlug } from '@/utils/examSubjectMapping';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
@@ -74,22 +76,6 @@ function getDomainConfig(domainLabel: string, index: number) {
   return DOMAIN_CONFIGS[index % DOMAIN_CONFIGS.length];
 }
 
-function normalizeSchoolLevel(level?: string | null): string | null {
-  if (!level) return null;
-  return level
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[:_\s-]+/g, '');
-}
-
-function bankMatchesLevel(schoolLevels: string[] | null, activeLevel: string) {
-  if (!schoolLevels || schoolLevels.length === 0) return true;
-  const normalizedActiveLevel = normalizeSchoolLevel(activeLevel);
-  if (!normalizedActiveLevel) return true;
-  return schoolLevels.some((level) => normalizeSchoolLevel(level) === normalizedActiveLevel);
-}
-
 function formatSubjectLabel(subjectSlug: string) {
   return subjectSlug
     .split('-')
@@ -128,15 +114,18 @@ export default function PracticeSubjectPage() {
   const ui = useInterfaceTranslation();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [, setSearchParams] = useSearchParams();
   const { subject } = useParams<{ subject: string }>();
   const { user } = useLearner();
   const activeSchoolLevel = useActiveSchoolLevel();
+  const curriculum = useExerciseCurriculum();
+  const profileLoading = curriculum.pending;
   const { data: learningSubjects = [] } = useLearningSubjects();
 
   const subjectSlug = subject ?? '';
-  const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
-  const { domainGroups: practiceDomainGroups, isLoading: topicsLoading, error } = usePracticeTopics(subjectSlug, activeLevel);
+  const learnerCountry = curriculum.consistent ? curriculum.country : null;
+  const learnerLevel = curriculum.consistent ? curriculum.level : null;
+  const activeLevel = learnerLevel ?? NO_ACTIVE_LEVEL;
+  const { domainGroups: practiceDomainGroups, isLoading: topicsLoading } = usePracticeTopics(subjectSlug, learnerLevel, learnerCountry);
   const examDisciplines = useMemo(
     () => (subjectSlug ? resolveExamDisciplinesForSubjectSlug(subjectSlug) : []),
     [subjectSlug],
@@ -157,34 +146,26 @@ export default function PracticeSubjectPage() {
     enabled: Boolean(subjectSlug),
   });
 
-  const subjectQuizBanksQuery = useQuery({
-    queryKey: ['practice-subject-quiz-banks', subjectQuery.data?.id, activeLevel],
-    queryFn: async (): Promise<{ id: string; title: string; school_levels: string[] | null }[]> => {
-      if (!subjectQuery.data?.id) return [];
-
-      const { data, error: banksError } = await (supabase as any)
-        .from('quiz_banks')
-        .select('id, title, school_levels')
-        .eq('subject_id', subjectQuery.data.id)
-        .order('updated_at', { ascending: false })
-        .limit(50);
-
-      if (banksError) throw banksError;
-      return ((data ?? []) as any[]).filter((bank) => bankMatchesLevel(bank.school_levels, activeLevel));
-    },
-    enabled: Boolean(subjectQuery.data?.id && activeLevel),
-  });
+  const catalogueTopics = useMemo(
+    () => practiceDomainGroups.flatMap((domain) => domain.topics.map((topic) => ({
+      id: topic.id,
+      curriculum_country_code: topic.curriculum_country_code,
+      curriculum_level_code: topic.curriculum_level_code,
+    }))),
+    [practiceDomainGroups],
+  );
+  const bankCatalogue = usePracticeBankCatalogue(catalogueTopics, learnerCountry, learnerLevel);
 
   const domainGroups = useMemo<DomainTopicGroup[]>(() => {
     return practiceDomainGroups
       .map((domain: PracticeDomainGroup) => ({
         domainId: domain.domainId,
         domainLabel: domain.domainLabel,
-        topics: [...domain.topics].sort((a, b) => a.orderIndex - b.orderIndex),
+        topics: domain.topics.filter((topic) => bankCatalogue.bankByTopic.has(topic.id)).sort((a, b) => a.orderIndex - b.orderIndex),
         masteredTopics: 0,
       }))
       .filter((domain) => domain.topics.length > 0);
-  }, [practiceDomainGroups]);
+  }, [practiceDomainGroups, bankCatalogue.bankByTopic]);
 
   const topicIds = useMemo(
     () => domainGroups.flatMap((domain) => domain.topics.map((topic) => topic.id)),
@@ -252,30 +233,7 @@ export default function PracticeSubjectPage() {
     enabled: !!user?.id && topicIds.length > 0,
   });
 
-  const bankAssignmentsQuery = useQuery({
-    queryKey: ['practice-bank-assignments', topicIds.join(',')],
-    queryFn: async (): Promise<{ topic_id: string; bank_id: string }[]> => {
-      const { data, error } = await supabase
-        .from('quiz_bank_assignments')
-        .select('topic_id, bank_id')
-        .eq('is_active', true)
-        .in('topic_id', topicIds);
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: topicIds.length > 0,
-  });
-
-  const topicBankMap = useMemo(() => {
-    const map = new Map<string, string>();
-    (bankAssignmentsQuery.data || []).forEach((row) => {
-      if (!map.has(row.topic_id)) {
-        map.set(row.topic_id, row.bank_id);
-      }
-    });
-    return map;
-  }, [bankAssignmentsQuery.data]);
+  const topicBankMap = bankCatalogue.bankByTopic;
 
   const papersQuery = useExamPapers({
     exam: 'dnb',
@@ -289,7 +247,7 @@ export default function PracticeSubjectPage() {
     limit: 1,
   });
 
-  const topicMastery = masteryQuery.data || {};
+  const topicMastery = useMemo(() => masteryQuery.data || {}, [masteryQuery.data]);
 
   const enrichedDomains = useMemo(() => {
     return domainGroups.map((domain) => {
@@ -322,24 +280,17 @@ export default function PracticeSubjectPage() {
       null
     );
   }, [flatTopics, topicMastery, topicBankMap]);
-  const showTopicActionSkeletons = masteryQuery.isLoading || bankAssignmentsQuery.isLoading;
-
   const matchedSubject = learningSubjects.find((entry) => entry.subject.slug === subjectSlug);
   const subjectLabel = getSubjectNameForSlug(subjectSlug, i18n.language, matchedSubject?.subject.name || subjectQuery.data?.name || formatSubjectLabel(subjectSlug));
   const pageTitle = subjectLabel ? `${t('practice.title')} - ${subjectLabel}` : t('practice.title');
   const showExamSection = EXAM_PREP_LEVELS.has((activeSchoolLevel.normalizedLevel ?? '').toLowerCase());
   const examPaperCount = papersQuery.data?.length ?? 0;
   const hasTrainingItems = (trainingItemsQuery.data?.length ?? 0) > 0;
-  const firstSubjectQuizBank = subjectQuizBanksQuery.data?.[0] ?? null;
-  const hasSubjectQuizBanks = Boolean(firstSubjectQuizBank);
   const hasExamPrepContent = showExamSection && (hasTrainingItems || examPaperCount > 0);
-  const hasPracticeQuizContent = hasSubjectQuizBanks || hasExamPrepContent;
+  const hasPracticeQuizContent = hasExamPrepContent;
   const isResolvingExamPrepFallback =
     showExamSection && enrichedDomains.length === 0 && (papersQuery.isLoading || trainingItemsQuery.isLoading);
-  const isResolvingQuizFallback =
-    enrichedDomains.length === 0 && (subjectQuery.isLoading || subjectQuizBanksQuery.isLoading);
-
-  if (topicsLoading || activeSchoolLevel.isLoading || isResolvingExamPrepFallback || isResolvingQuizFallback) {
+  if (topicsLoading || activeSchoolLevel.isLoading || profileLoading || bankCatalogue.isLoading || isResolvingExamPrepFallback) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <PageMeta title={pageTitle} description="" />
@@ -460,30 +411,6 @@ export default function PracticeSubjectPage() {
           </div>
         )}
 
-        {!recommendedTopic && firstSubjectQuizBank && (
-          <div className="rounded-2xl border-2 p-4" style={{ background: '#F2FBF8', borderColor: '#12C6A0' }}>
-            <p className="mb-1 text-xl font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
-              {firstSubjectQuizBank.title}
-            </p>
-            <p className="mb-4 text-xs" style={{ color: '#667085' }}>
-              {ui("Quiz disponible pour cette matière")}
-            </p>
-            <button
-              onClick={() => {
-                setSearchParams((current) => {
-                  const next = new URLSearchParams(current);
-                  next.set('quiz', firstSubjectQuizBank.id);
-                  return next;
-                });
-              }}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold"
-              style={{ background: '#12C6A0', color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
-            >
-              {ui("Commencer le quiz")}
-            </button>
-          </div>
-        )}
-
         {enrichedDomains.length > 0 && (
           <div>
             <h2 className="mb-3 text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
@@ -510,7 +437,7 @@ export default function PracticeSubjectPage() {
                     disabled={!isClickable}
                     onClick={() => {
                       if (firstBankId) {
-                        navigate(practiceTopicPath(subjectSlug, firstBankId));
+                        navigate(`/practice/${encodeURIComponent(subjectSlug)}/topics`);
                       }
                     }}
                     className="flex w-full items-center gap-3 rounded-2xl border bg-white p-3 text-left transition-opacity disabled:opacity-50"

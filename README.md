@@ -25,7 +25,7 @@ following links identify the specific deployments confirmed ready on
 | Development | [Open development deployment](https://stuwy-2lqvpwjb3-stuwy.vercel.app) | `a8708d5459e7c2bd94d85cf4ef6440c2c52622f1` | [Build details](https://vercel.com/stuwy/stuwy/HcSPQVC5YxWyh8w5aHJyLCsUsWUp) |
 | Practice | [Open practice deployment](https://stuwy-lz52zo37c-stuwy.vercel.app) | `cf8d3348072075d70abe9c4caa4ca36283ab6fc6` | [Build details](https://vercel.com/stuwy/stuwy/DTQ4XTMAubwPRc2p4HRC2Ba6C9Bf) |
 
-[Coordinates preview — France, 5ème](https://stuwy-git-feature-guided-practice-lessons-stuwy.vercel.app/practice/coordinates). Use the matching learner profile or authorized school-level preview.
+[Practice — choose a subject, then an assigned topic quiz](https://stuwy-git-feature-guided-practice-lessons-stuwy.vercel.app/practice). New interactive modules are quiz question types, not standalone student activities. Their former demo URLs redirect here. See the [catalogue correction and level rules](docs/tutorly-learning-project/QUIZ-CATALOGUE-ORGANIZATION.md).
 
 [Manage the Stuwy Vercel project](https://vercel.com/stuwy/stuwy).
 

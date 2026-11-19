@@ -1,5 +1,6 @@
-import { isCoordinateExercise } from '@/features/practice/coordinatePlane';
-import { isGuidedFamilyExercise } from '@/features/practice/guidedFamilies';
+import { isArithmeticQuizExercise, isArithmeticQuizComplete } from '@/features/practice/arithmeticQuiz';
+import { isCurriculumExercise } from '@/features/practice/exerciseCurriculum';
+import { scoreQuizQuestion } from '@/utils/quizEvaluation';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -10,7 +11,6 @@ import {
   gradeQuizWithDetails,
   shuffle,
   evaluateQuestion,
-  scoreQuestionWithPenalty,
   isQuizAnswerComplete,
   type QuizQuestionGradeDetail,
 } from '@/utils/quizEvaluation';
@@ -170,6 +170,9 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
 
   const currentQuestion = questions[currentIndex];
   const currentAnswerReady = currentQuestion ? isQuizAnswerComplete(currentQuestion, answers[currentQuestion.id]) : false;
+  const completedArithmetic = currentQuestion
+    ? isArithmeticQuizExercise(currentQuestion) && isArithmeticQuizComplete(currentQuestion, answers[currentQuestion.id])
+    : false;
   const gradedQuiz = useMemo(
     () => gradeQuizWithDetails(questions, questionGrades),
     [questions, questionGrades],
@@ -220,12 +223,12 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
     const currentAnswer = answers[currentQuestion.id];
     const correct = evaluateQuestion(currentQuestion, currentAnswer);
     const previousAttempts = questionAttemptCountsRef.current[currentQuestion.id] || 0;
-    const guidedAttempts = (isGuidedFamilyExercise(currentQuestion) || isCoordinateExercise(currentQuestion)) && Number.isInteger(currentAnswer?.attempts) ? currentAnswer.attempts : 0;
+    const guidedAttempts = (isCurriculumExercise(currentQuestion)) && Number.isInteger(currentAnswer?.attempts) ? currentAnswer.attempts : 0;
     const attemptNumber = Math.max(previousAttempts + 1, guidedAttempts);
     questionAttemptCountsRef.current[currentQuestion.id] = attemptNumber;
     const timeToAnswerMs = Date.now() - questionViewStartedAtRef.current;
     const maxPoints = currentQuestion.points ?? 1;
-    const { awardedPoints, penaltyFactor } = scoreQuestionWithPenalty(maxPoints, attemptNumber, correct);
+    const { awardedPoints, penaltyFactor } = scoreQuizQuestion(currentQuestion, currentAnswer, attemptNumber);
 
     trackLearningInteraction({
       studentId: userId,
@@ -241,7 +244,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
       wasCorrect: correct,
       attemptNumber,
       timeToAnswerMs,
-      hintUsed: (isGuidedFamilyExercise(currentQuestion) || isCoordinateExercise(currentQuestion)) ? currentAnswer?.supported === true : false,
+      hintUsed: (isCurriculumExercise(currentQuestion)) ? currentAnswer?.supported === true : false,
     });
 
     if (!correct) {
@@ -259,7 +262,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
         wasCorrect: false,
         attemptNumber,
         timeToAnswerMs,
-        hintUsed: (isGuidedFamilyExercise(currentQuestion) || isCoordinateExercise(currentQuestion)) ? currentAnswer?.supported === true : false,
+        hintUsed: (isCurriculumExercise(currentQuestion)) ? currentAnswer?.supported === true : false,
       });
     }
 
@@ -302,6 +305,8 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
         finalAnswer: currentAnswer,
       },
     }));
+    // A complete deck can still contain wrong answers. Keep completion separate
+    // from correctness so partial credit never gets the green correct-answer UI.
     setQuestionResult(correct);
     if (correct) setShowXpPill(true);
     setQuestionSubmitted(true);
@@ -444,7 +449,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
   if (submitted) {
     const pct = gradedQuiz.maxScore ? Math.round((100 * gradedQuiz.score) / gradedQuiz.maxScore) : 0;
     const xpEarned = gradedQuiz.score * 10;
-    const isMastered = pct >= 80 && !questions.some(question => isGuidedFamilyExercise(question) || question.kind === 'coordinate-plane');
+    const isMastered = pct >= 80 && !questions.some(question => isCurriculumExercise(question));
 
     return (
       <div
@@ -597,8 +602,8 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
                   question={currentQuestion}
                   onChange={val => onAnswer(currentQuestion.id, val)}
                   submittedAnswer={questionSubmitted ? answers[currentQuestion.id] : undefined}
-                  isCorrect={questionSubmitted ? (questionResult ?? undefined) : undefined}
-                  hideCorrect={questionSubmitted && questionResult === false}
+                  isCorrect={questionSubmitted && !completedArithmetic ? (questionResult ?? undefined) : undefined}
+                  hideCorrect={questionSubmitted && !completedArithmetic && questionResult === false}
                 />
               </motion.div>
             </AnimatePresence>
@@ -633,17 +638,17 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
           >
             <div
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
-              style={{ background: questionResult ? '#12C6A0' : '#EF4444' }}
+              style={{ background: questionResult ? '#12C6A0' : completedArithmetic ? '#F59E0B' : '#EF4444' }}
             >
-              {questionResult
+              {questionResult || completedArithmetic
                 ? <Check className="h-5 w-5" style={{ color: '#0F172A' }} />
                 : <X className="h-5 w-5" style={{ color: '#0F172A' }} />}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold" style={{ color: questionResult ? '#27500A' : '#633806', fontFamily: 'Poppins, sans-serif' }}>
-                {questionResult ? ui("Exacte !") : ui("Pas cette fois...")}
+                {isArithmeticQuizExercise(currentQuestion) ? ui("Série terminée") : questionResult ? ui("Exacte !") : ui("Pas cette fois...")}
               </p>
-              {questionResult === false && (
+              {questionResult === false && !completedArithmetic && (
                 <button
                   type="button"
                   onClick={handleShowExplanation}
@@ -662,7 +667,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
                 +10 XP
               </span>
             )}
-            {questionResult ? (
+            {questionResult || completedArithmetic ? (
               <button
                 onClick={handleNext}
                 className="flex-shrink-0 rounded-xl px-4 py-2 text-sm font-bold"

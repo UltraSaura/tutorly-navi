@@ -30,6 +30,13 @@ interface AiApiKey {
 
 export type ModelMetadataError = { code?: string; message: string; status?: number };
 
+/** Navigation can cancel auxiliary reads. Cancellation is not a provider failure. */
+export function isAbortedModelRead(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const value = error as { name?: unknown; message?: unknown };
+  return value.name === 'AbortError' || (typeof value.message === 'string' && /^AbortError\b/.test(value.message));
+}
+
 /** Model metadata is auxiliary to the admin shell; keep failures structured and non-blocking. */
 export function describeModelMetadataError(error: unknown): ModelMetadataError {
   const value = error && typeof error === 'object' ? error as Record<string, unknown> : {};
@@ -65,6 +72,7 @@ export const useAiModelManagementSecure = () => {
       if (error) throw error;
       setProviders(data || []);
     } catch (error) {
+      if (isAbortedModelRead(error)) return;
       console.error('Error fetching providers:', error);
       toast.error('Failed to fetch AI providers');
     }
@@ -100,6 +108,7 @@ export const useAiModelManagementSecure = () => {
       if (error) throw error;
       setApiKeys(data || []);
     } catch (error) {
+      if (isAbortedModelRead(error)) return;
       console.error('Error fetching API keys:', error);
       // Don't show error toast here as non-admin users won't have access
     }

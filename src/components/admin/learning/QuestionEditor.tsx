@@ -1,6 +1,10 @@
+import { ArithmeticQuizEditor } from './ArithmeticQuizEditor';
+import { createArithmeticQuizExercise, isArithmeticQuizExercise, validateArithmeticQuizExercise, arithmeticQuizPrompt, type ArithmeticQuizExercise } from '@/features/practice/arithmeticQuiz';
+import { VisualQuizEditor } from './VisualQuizEditor';
+import { createVisualQuizDraft, isVisualQuizExercise, validateVisualQuizExercise, visualQuizPrompt, type VisualQuizExercise } from '@/features/practice/visualQuiz';
 import { CoordinatePlaneEditor } from './CoordinatePlaneEditor';
 import { createCoordinateExercise, validateCoordinateExercise, type CoordinatePlaneExercise } from '@/features/practice/coordinatePlane';
-import { canAuthorCoordinates, type CoordinateAuthoringContext } from '@/features/practice/exerciseCurriculum';
+import { canAuthorCoordinates, canAuthorExerciseType, canAuthorExercise, arithmeticDifficulty, EXERCISE_TYPE_LEVELS, type CoordinateAuthoringContext } from '@/features/practice/exerciseCurriculum';
 import { createGuidedFamilyExercise, guidedFamilyPrompt, isGuidedFamilyExercise, validateGuidedFamilyExercise, type GuidedFamilyExercise } from '@/features/practice/guidedFamilies';
 import { GuidedFamilyEditor } from './GuidedFamilyEditor';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
@@ -59,7 +63,13 @@ const createDefaultVisual = (): VisualUnion => ({
 export function QuestionEditor({ question, isOpen, onClose, onSave, position, coordinateContext }: QuestionEditorProps) {
   const ui = useInterfaceTranslation();
   const coordinateAllowed = canAuthorCoordinates(coordinateContext);
+  const arithmeticBands = coordinateContext?.topics.map(topic => arithmeticDifficulty(topic.levelCode)) ?? [];
+  const arithmeticMaxDigits = arithmeticBands.length ? Math.min(...arithmeticBands.map(band => band.maxDigits)) : 1;
+  const arithmeticAllowedOperations = (['addition', 'subtraction', 'multiplication', 'division'] as const).filter(operation => arithmeticBands.length && arithmeticBands.every(band => band.operations.includes(operation)));
+  const arithmeticAllowNegative = arithmeticBands.length > 0 && arithmeticBands.every(band => band.allowNegative);
   const [coordinateExercise, setCoordinateExercise] = useState<CoordinatePlaneExercise>(() => question?.kind === 'coordinate-plane' ? question : createCoordinateExercise());
+  const [arithmeticExercise, setArithmeticExercise] = useState<ArithmeticQuizExercise>(() => isArithmeticQuizExercise(question) ? question : createArithmeticQuizExercise('calculation-race'));
+  const [visualExercise, setVisualExercise] = useState<VisualQuizExercise>(() => isVisualQuizExercise(question) ? question : createVisualQuizDraft('analogue-clock', 'clock-draft'));
   const [kind, setKind] = useState<Question['kind']>(question?.kind || 'single');
   const [prompt, setPrompt] = useState(question?.prompt || '');
   const [hint, setHint] = useState(question?.hint || '');
@@ -81,6 +91,11 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
     if (['guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind)) {
       setGuidedExercise(current => current?.kind === kind ? current : createGuidedFamilyExercise(kind as GuidedFamilyExercise['kind']));
     }
+  }, [kind]);
+
+  useEffect(() => {
+    if (kind === 'calculation-race' || kind === 'number-flashcards') setArithmeticExercise(current => current.kind === kind ? current : createArithmeticQuizExercise(kind));
+    if (kind === 'analogue-clock' || kind === 'graduated-number-line') setVisualExercise(current => current.kind === kind ? current : createVisualQuizDraft(kind, `visual-${Date.now()}`));
   }, [kind]);
 
   // Single/Multi choice state
@@ -202,6 +217,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
   useEffect(() => {
     if (question) {
       setKind(question.kind);
+      if (isArithmeticQuizExercise(question)) setArithmeticExercise(question);
+      if (isVisualQuizExercise(question)) setVisualExercise(question);
       setCoordinateExercise(question.kind === 'coordinate-plane' ? question : createCoordinateExercise());
       setGuidedExercise(isGuidedFamilyExercise(question) ? question as GuidedFamilyExercise : null);
       setPrompt(question.prompt);
@@ -380,14 +397,24 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
   };
 
   const handleSave = () => {
-    if (!['coordinate-plane', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && !prompt.trim()) {
+    if (!['calculation-race', 'number-flashcards', 'analogue-clock', 'graduated-number-line', 'coordinate-plane', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && !prompt.trim()) {
       alert('Please enter a question prompt');
       return;
     }
 
     let questionData: Question;
 
-    if (kind === 'coordinate-plane') {
+    if (kind === 'calculation-race' || kind === 'number-flashcards') {
+      const candidate = { ...arithmeticExercise, kind, id, points, prompt: arithmeticQuizPrompt({ kind }), hint: undefined };
+      const errors = validateArithmeticQuizExercise(candidate);
+      if (errors.length) { alert(errors.join('\n')); return; }
+      questionData = candidate;
+    } else if (kind === 'analogue-clock' || kind === 'graduated-number-line') {
+      const candidate = { ...visualExercise, id, points, prompt: visualQuizPrompt(visualExercise), hint: undefined };
+      const errors = validateVisualQuizExercise(candidate);
+      if (errors.length) { alert(errors.join('\n')); return; }
+      questionData = candidate;
+    } else if (kind === 'coordinate-plane') {
       if (!coordinateAllowed) { alert('Affecte cette banque uniquement à un thème du programme français de 5ème avant de créer cet exercice.'); return; }
       const candidate = { ...coordinateExercise, id, points, curriculumCountry: 'fr' as const, schoolLevels: ['5eme'], prompt: coordinateExercise.mode === 'read' ? 'Lis les coordonnées du point A.' : `Place le point A (${coordinateExercise.target.x} ; ${coordinateExercise.target.y}).` };
       const errors = validateCoordinateExercise(candidate);
@@ -637,6 +664,13 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
       return;
     }
 
+    if (!canAuthorExercise(questionData, coordinateContext)) {
+      alert("Ce type ou ces paramètres ne correspondent pas au niveau des thèmes de cette banque. Vérifie le niveau, les nombres et les opérations.");
+      return;
+    }
+    if (Object.prototype.hasOwnProperty.call(EXERCISE_TYPE_LEVELS, questionData.kind)) {
+      questionData = { ...questionData, curriculumCountry: 'fr', schoolLevels: [...new Set(coordinateContext?.topics.map(topic => topic.levelCode).filter((level): level is string => Boolean(level)) ?? [])] } as Question;
+    }
     onSave(questionData, position);
     onClose();
   };
@@ -649,10 +683,11 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
         </DialogHeader>
 
         <div className="space-y-4">
+          <p className="rounded-xl bg-slate-50 p-3 text-sm">Les types sont filtrés par le programme et le niveau des thèmes de la banque. Les exercices ne sont visibles aux élèves qu’après création et affectation à un thème.</p>
           <div>
             <Label htmlFor="kind">{ui("Question Type")}</Label>
             <Select value={kind} onValueChange={(value: Question['kind']) => setKind(value)}>
-              <SelectTrigger>
+              <SelectTrigger id="kind">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -666,13 +701,14 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
                 <SelectItem value="slider">{ui("Slider")}</SelectItem>
                 <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
+                {(['calculation-race', 'number-flashcards', 'analogue-clock', 'graduated-number-line'] as const).map(type => <SelectItem key={type} value={type} disabled={!canAuthorExerciseType(type, coordinateContext)}>{{'calculation-race':'Course de calcul · difficulté selon le niveau', 'number-flashcards':'Cartes de calcul · difficulté selon le niveau', 'analogue-clock':'Horloge · CE1–CE2', 'graduated-number-line':'Droite graduée · CM1–6ème'}[type]}</SelectItem>)}
                 <SelectItem value="coordinate-plane" disabled={!coordinateAllowed}>Coordonnées dans le plan · France · 5ème</SelectItem>
-                <SelectItem value="guided-word-problem">Problème guidé — choisir puis calculer</SelectItem>
-                <SelectItem value="equal-groups">Groupes égaux — multiplication</SelectItem>
-                <SelectItem value="colour-grid">Compter dans une grille de couleurs</SelectItem>
-                <SelectItem value="counting">Count objects in groups of ten</SelectItem>
-                <SelectItem value="addition-across-ten">Addition · cross the next ten</SelectItem>
-                <SelectItem value="subtraction-with-dots">Subtraction · countable objects</SelectItem>
+                <SelectItem value="guided-word-problem" disabled={!canAuthorExerciseType('guided-word-problem', coordinateContext)}>Problème guidé — choisir puis calculer</SelectItem>
+                <SelectItem value="equal-groups" disabled={!canAuthorExerciseType('equal-groups', coordinateContext)}>Groupes égaux — multiplication</SelectItem>
+                <SelectItem value="colour-grid" disabled={!canAuthorExerciseType('colour-grid', coordinateContext)}>Compter dans une grille de couleurs · CP uniquement</SelectItem>
+                <SelectItem value="counting" disabled={!canAuthorExerciseType('counting', coordinateContext)}>Count objects in groups of ten</SelectItem>
+                <SelectItem value="addition-across-ten" disabled={!canAuthorExerciseType('addition-across-ten', coordinateContext)}>Addition · cross the next ten</SelectItem>
+                <SelectItem value="subtraction-with-dots" disabled={!canAuthorExerciseType('subtraction-with-dots', coordinateContext)}>Subtraction · countable objects</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -688,7 +724,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
             />
           </div>
 
-          {!['coordinate-plane', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && <div>
+          {!['calculation-race', 'number-flashcards', 'analogue-clock', 'graduated-number-line', 'coordinate-plane', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) && <div>
             <Label htmlFor="prompt">{ui("Question Prompt")}</Label>
             <Textarea
               id="prompt"
@@ -700,6 +736,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
             />
           </div>}
 
+          {(kind === 'calculation-race' || kind === 'number-flashcards') && <ArithmeticQuizEditor exercise={arithmeticExercise} onChange={setArithmeticExercise} maxDigits={arithmeticMaxDigits} allowedOperations={arithmeticAllowedOperations} allowNegative={arithmeticAllowNegative} />}
+          {(kind === 'analogue-clock' || kind === 'graduated-number-line') && <VisualQuizEditor exercise={visualExercise} onChange={setVisualExercise} />}
           {kind === 'coordinate-plane' && <><p role={coordinateAllowed ? undefined : 'alert'} className="text-sm text-violet-900">{coordinateAllowed ? 'Type disponible pour le thème France · 5ème de cette banque.' : 'Ce type nécessite une banque affectée exclusivement à un thème France · 5ème.'}</p><CoordinatePlaneEditor exercise={coordinateExercise} onChange={setCoordinateExercise} /></>}
           {guidedExercise?.kind === kind && <GuidedFamilyEditor exercise={guidedExercise} onChange={setGuidedExercise} />}
 
@@ -755,14 +793,14 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
                 <div><Label htmlFor="subtraction-take-away">Amount to take away</Label><Input id="subtraction-take-away" type="number" min="1" max="99" value={subtractionTakeAway} onChange={(event) => setSubtractionTakeAway(Number(event.target.value))} /></div>
               </div>
               <div className="flex items-start gap-2">
-                <Checkbox id="subtraction-count-by-color" checked={subtractionCountByColor} onCheckedChange={(checked) => setSubtractionCountByColor(checked === true)} />
-                <div><Label htmlFor="subtraction-count-by-color">Ask how many objects of one color remain</Label><p className="text-xs text-muted-foreground">The question will choose a color for the learner to count.</p></div>
+                <Checkbox id="subtraction-count-by-color" disabled={!canAuthorExerciseType('colour-grid', coordinateContext)} checked={subtractionCountByColor} onCheckedChange={(checked) => setSubtractionCountByColor(checked === true)} />
+                <div><Label htmlFor="subtraction-count-by-color">Ask how many objects of one color remain · CP only</Label><p className="text-xs text-muted-foreground">The question will choose a color for the learner to count.</p></div>
               </div>
               <p className="text-sm font-medium">{subtractionTarget} − {subtractionTakeAway} = {subtractionTarget - subtractionTakeAway}</p>
             </div>
           )}
 
-          {['coordinate-plane', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Les indices de ces activités expliquent la méthode et sont générés à partir du type d’exercice, sans donner le résultat.</p> : (
+          {['calculation-race', 'number-flashcards', 'analogue-clock', 'graduated-number-line', 'coordinate-plane', 'guided-word-problem', 'equal-groups', 'colour-grid'].includes(kind) ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Les indices de ces activités expliquent la méthode et sont générés à partir du type d’exercice, sans donner le résultat.</p> : (
           <div>
             <Label htmlFor="hint">{ui("Hint (optional)")}</Label>
             <Textarea

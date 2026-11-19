@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { describeModelMetadataError, resolveModelMetadata } from './useAiModelManagementSecure';
+import { describeModelMetadataError, resolveModelMetadata, isAbortedModelRead } from './useAiModelManagementSecure';
 
 describe('optional AI model metadata', () => {
+  it('distinguishes cancelled reads from permission, timeout and network failures', () => {
+    expect(isAbortedModelRead({ name: 'AbortError', message: 'The operation was aborted.' })).toBe(true);
+    expect(isAbortedModelRead({ message: 'AbortError: signal is aborted without reason', code: 20 })).toBe(true);
+    for (const error of [null, {}, { code: 20, message: 'permission denied' }, { name: 'TimeoutError', message: 'request timed out' }, { message: 'Failed to fetch' }, { code: '42501', message: 'permission denied' }]) {
+      expect(isAbortedModelRead(error)).toBe(false);
+    }
+  });
   it('accepts a successful model fetch', () => {
     const result = resolveModelMetadata([{ id: 'deepseek', name: 'DeepSeek' }], null);
     expect(result.models).toHaveLength(1);

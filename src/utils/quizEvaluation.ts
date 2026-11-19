@@ -1,3 +1,5 @@
+import { isArithmeticQuizExercise, isArithmeticQuizComplete, arithmeticQuizFraction } from '@/features/practice/arithmeticQuiz';
+import { isVisualQuizExercise, isVisualQuizAnswerCorrect } from '@/features/practice/visualQuiz';
 import { isCoordinateExercise, isCoordinateAnswerCorrect } from '@/features/practice/coordinatePlane';
 import { isGuidedFamilyExercise, isGuidedFamilyAnswerCorrect } from '@/features/practice/guidedFamilies';
 import type { Question } from '@/types/quiz-bank';
@@ -17,6 +19,8 @@ export type QuizQuestionGradeDetail = {
 };
 
 export function evaluateQuestion(q: Question, answer: any): boolean {
+  if (q.kind === 'calculation-race' || q.kind === 'number-flashcards') return isArithmeticQuizExercise(q) && isArithmeticQuizComplete(q, answer) && arithmeticQuizFraction(q, answer) === 1;
+  if (q.kind === 'analogue-clock' || q.kind === 'graduated-number-line') return isVisualQuizExercise(q) && isVisualQuizAnswerCorrect(q, answer);
   if (q.kind === 'coordinate-plane') return isCoordinateExercise(q) && isCoordinateAnswerCorrect(q, answer);
   if (isGuidedFamilyExercise(q)) return isGuidedFamilyAnswerCorrect(q, answer);
   if (q.kind === "single") {
@@ -108,6 +112,8 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
 }
 
 export function isQuizAnswerComplete(q: Question, answer: unknown): boolean {
+  if (q.kind === 'calculation-race' || q.kind === 'number-flashcards') return isArithmeticQuizExercise(q) && isArithmeticQuizComplete(q, answer);
+  if (q.kind === 'analogue-clock' || q.kind === 'graduated-number-line') return isVisualQuizExercise(q) && isVisualQuizAnswerCorrect(q, answer);
   if (q.kind === 'coordinate-plane') return isCoordinateExercise(q) && isCoordinateAnswerCorrect(q, answer);
   const value = answer && typeof answer === 'object' ? answer as Record<string, unknown> : {};
   if (isGuidedFamilyExercise(q)) return value.complete === true && isGuidedFamilyAnswerCorrect(q, answer);
@@ -139,7 +145,7 @@ export function gradeQuiz(questions: Question[], answers: Record<string, any>) {
     const pts = q.points ?? 1;
     maxScore += pts;
     const correct = evaluateQuestion(q, answers[q.id]);
-    if (correct) score += pts;
+    score += scoreQuizQuestion(q, answers[q.id], 1).awardedPoints;
     return {
       questionId: q.id,
       correct,
@@ -167,6 +173,15 @@ export function scoreQuestionWithPenalty(points: number, attemptNumber: number, 
     awardedPoints: points * penaltyFactor,
     penaltyFactor,
   };
+}
+
+/** Standard question points and retry penalties, with card-by-card partial credit for authored decks. */
+export function scoreQuizQuestion(question: Question, answer: unknown, attemptNumber: number) {
+  if (isArithmeticQuizExercise(question)) {
+    const penaltyFactor = getPenaltyFactorForAttempt(attemptNumber);
+    return { awardedPoints: (question.points ?? 1) * arithmeticQuizFraction(question, answer) * penaltyFactor, penaltyFactor };
+  }
+  return scoreQuestionWithPenalty(question.points ?? 1, attemptNumber, evaluateQuestion(question, answer));
 }
 
 export function gradeQuizWithDetails(

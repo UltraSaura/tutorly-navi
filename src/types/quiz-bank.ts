@@ -8,6 +8,8 @@ export type QuizBankSourceType = 'manual' | 'video_transcript' | 'multi_video_tr
 export type BaseQ = {
   id: string;
   prompt: string;
+  curriculumCountry?: string;
+  schoolLevels?: string[];
   hint?: string;
   points?: number;
   tags?: string[];
@@ -161,7 +163,12 @@ export type GuidedFamilyQ = BaseQ & import('@/features/practice/guidedFamilies')
 
 export type CoordinateQ = BaseQ & import('@/features/practice/coordinatePlane').CoordinatePlaneExercise;
 
+export type ArithmeticQuizQ = BaseQ & import('@/features/practice/arithmeticQuiz').ArithmeticQuizExercise;
+export type VisualQuizQ = BaseQ & import('@/features/practice/visualQuiz').VisualQuizExercise;
+
 export type Question =
+  | ArithmeticQuizQ
+  | VisualQuizQ
   | CoordinateQ
   | GuidedFamilyQ
   | SingleQ

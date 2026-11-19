@@ -1,4 +1,4 @@
-import { canAuthorCoordinates } from '@/features/practice/exerciseCurriculum';
+import { canAuthorExercise } from '@/features/practice/exerciseCurriculum';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -104,7 +104,8 @@ const BankManager = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quiz_bank_assignments')
-        .select('bank_id, topic_id');
+        .select('bank_id, topic_id, is_active')
+        .eq('is_active', true);
       if (error) throw error;
       return data || [];
     },
@@ -334,7 +335,7 @@ const BankManager = () => {
   const handleQuestionSave = async (question: Question, position: number) => {
     if (!selectedBank) return;
 
-    if (question.kind === 'coordinate-plane' && !canAuthorCoordinates(coordinateContext)) { toast.error('Les coordonnées dans le plan nécessitent une banque affectée uniquement au programme français de 5ème.'); return; }
+    if (!canAuthorExercise(question, coordinateContext)) { toast.error('Le type ou la difficulté ne correspond pas au niveau des thèmes de cette banque.'); return; }
 
     if (editingQuestion?.dbId) {
       await updateQuestion.mutateAsync({
@@ -368,7 +369,7 @@ const BankManager = () => {
 
   const handleAssignmentSave = async (assignmentData: any) => {
     if (!selectedBank) return;
-    if (questions.some(question => question.kind === 'coordinate-plane') && !canAuthorCoordinates({ topics: [coordinateTopic(assignmentData.topic_id)] })) { toast.error('Cette banque contient des coordonnées : affectation autorisée uniquement à un thème France · 5ème.'); return; }
+    if (questions.some(question => !canAuthorExercise(question, { ...coordinateContext, topics: [coordinateTopic(assignmentData.topic_id)] }))) { toast.error('Cette banque contient un type ou une difficulté incompatible avec le niveau du thème choisi.'); return; }
 
     if (editingAssignment) {
       await updateAssignment.mutateAsync({

@@ -42,16 +42,6 @@ const LessonPage = lazy(() => import("./pages/learning/LessonPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
-const CoordinatePlanePage = lazy(() => import('./pages/practice/CoordinatePlanePage'));
-const GraduatedNumberLinePage = lazy(() => import("./pages/practice/GraduatedNumberLinePage"));
-const AddUpTo100Page = lazy(() => import("./pages/practice/AddUpTo100Page"));
-const FlashcardPracticePage = lazy(() => import("./pages/practice/FlashcardPracticePage"));
-const MentalCalculationRacePage = lazy(() => import("./pages/practice/MentalCalculationRacePage"));
-const NumbersAfterTenPage = lazy(() => import("./pages/practice/NumbersAfterTenPage"));
-const AdditionAcrossTenPage = lazy(() => import("./pages/practice/AdditionAcrossTenPage"));
-const SubtractionWithDotsPage = lazy(() => import("./pages/practice/SubtractionWithDotsPage"));
-const GuidedFamiliesPracticePage = lazy(() => import("./pages/practice/GuidedFamiliesPracticePage"));
-const OneHourLaterPracticePage = lazy(() => import("./pages/practice/OneHourLaterPracticePage"));
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
@@ -256,16 +246,8 @@ const App = () => {
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         <Route path="/practice" element={<MainLayout />}>
                           <Route index element={<PracticePage />} />
-                          <Route path="add-up-to-100" element={<AddUpTo100Page />} />
-                          <Route path="flashcards/numbers" element={<FlashcardPracticePage />} />
-                          <Route path="mental-calculation-race" element={<MentalCalculationRacePage />} />
-                          <Route path="numbers-after-ten" element={<NumbersAfterTenPage />} />
-                          <Route path="addition-across-ten" element={<AdditionAcrossTenPage />} />
-                          <Route path="subtraction-within-ten" element={<SubtractionWithDotsPage />} />
-                          <Route path="guided/:family" element={<GuidedFamiliesPracticePage />} />
-                          <Route path="one-hour-later" element={<OneHourLaterPracticePage />} />
-                          <Route path="coordinates" element={<CoordinatePlanePage />} />
-                          <Route path="number-line" element={<GraduatedNumberLinePage />} />
+                          {/* Legacy demo links lead back to subjects; exercises now come from topic quiz banks. */}
+                          {["coordinates", "number-line", "add-up-to-100", "flashcards/numbers", "mental-calculation-race", "numbers-after-ten", "addition-across-ten", "subtraction-within-ten", "guided/:family", "one-hour-later"].map(path => <Route key={path} path={path} element={<Navigate to="/practice" replace />} />)}
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />

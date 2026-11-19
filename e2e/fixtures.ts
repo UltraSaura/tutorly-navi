@@ -11,13 +11,13 @@ export const test = base.extend<{ browserHealth: void }>({
     const errors: string[] = [];
     const requests: string[] = [];
     const cancelledSyntheticReads: string[] = [];
-    const fixtureTables = new Set(['objectives', 'school_levels', 'countries', 'domains', 'subdomains', 'ai_model_providers', 'ai_model_keys', 'prompt_templates', 'subject_prompt_assignments', 'subjects', 'learning_categories', 'exam_papers', 'exam_training_items', 'topics', 'videos', 'users', 'user_roles', 'children']);
+    const fixtureTables = new Set(['objectives', 'school_levels', 'countries', 'domains', 'subdomains', 'ai_model_providers', 'ai_model_keys', 'prompt_templates', 'subject_prompt_assignments', 'subjects', 'learning_categories', 'exam_papers', 'exam_training_items', 'topics', 'videos', 'users', 'user_roles', 'children', 'user_learning_progress']);
     page.on('pageerror', (error) => errors.push(`page: ${error.message}`));
     page.on('console', (message) => { if (message.type() === 'error' || /Failed to decode downloaded font|OTS parsing error/.test(message.text())) errors.push(`console: ${message.text()}`); });
     page.on('requestfailed', (request) => {
       // The app deliberately aborts superseded read queries on route/profile changes.
       const url = new URL(request.url());
-      const knownRead = request.method() === 'GET' && url.hostname === 'sibprjxhbxahouejygeu.supabase.co' && url.pathname.startsWith('/rest/v1/') && fixtureTables.has(url.pathname.slice('/rest/v1/'.length));
+      const knownRead = ['GET', 'HEAD'].includes(request.method()) && url.hostname === 'sibprjxhbxahouejygeu.supabase.co' && url.pathname.startsWith('/rest/v1/') && fixtureTables.has(url.pathname.slice('/rest/v1/'.length));
       if (request.failure()?.errorText === 'net::ERR_ABORTED' && knownRead) cancelledSyntheticReads.push(request.url());
       else errors.push(`request: ${request.url()} ${request.failure()?.errorText}`);
     });
@@ -32,15 +32,16 @@ export const test = base.extend<{ browserHealth: void }>({
       const request = route.request();
       const url = new URL(request.url());
       if (url.origin === appOrigin) return route.continue();
-      if (url.hostname === 'sibprjxhbxahouejygeu.supabase.co' && request.method() === 'GET' && url.pathname.startsWith('/rest/v1/')) {
+      if (url.hostname === 'sibprjxhbxahouejygeu.supabase.co' && ['GET', 'HEAD'].includes(request.method()) && url.pathname.startsWith('/rest/v1/')) {
         const table = url.pathname.slice('/rest/v1/'.length);
-        const emptyTables = ['objectives', 'school_levels', 'countries', 'domains', 'subdomains', 'ai_model_providers', 'ai_model_keys', 'prompt_templates', 'subject_prompt_assignments', 'exam_papers', 'exam_training_items', 'topics', 'videos'];
+        const emptyTables = ['objectives', 'school_levels', 'countries', 'domains', 'subdomains', 'ai_model_providers', 'ai_model_keys', 'prompt_templates', 'subject_prompt_assignments', 'exam_papers', 'exam_training_items', 'topics', 'videos', 'user_learning_progress'];
         let data: unknown;
         if (table === 'subjects') data = request.headers().accept?.includes('vnd.pgrst.object') ? subject : [subject];
         else if (table === 'learning_categories') data = categories;
         else if (emptyTables.includes(table)) data = [];
         else { errors.push(`Unconfigured synthetic table: ${table}`); return route.abort(); }
         requests.push(`${request.method()} ${url.pathname}`);
+        if (request.method() === 'HEAD') return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'x-tutorly-test-data': 'synthetic', 'content-range': '*/0' } });
         return route.fulfill({ json: data, headers: { 'access-control-allow-origin': '*', 'x-tutorly-test-data': 'synthetic' } });
       }
       errors.push(`Unexpected external request (blocked): ${request.method()} ${url.origin}${url.pathname}`);

@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, GripVertical, RotateCcw, Settings2
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
-import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useTranslation } from 'react-i18next';
 import { PracticeFeedback, type PracticeFeedbackStatus } from '@/components/practice/PracticeFeedback';
 import type { GraduatedNumberLineConfiguration, GraduatedNumberLineItem, GraduatedNumberLineResult } from './numberLineTypes';
 import { formatNumberLineValue, initialNumberLinePositions, normalizedNumberLinePosition, numberLineTickValues, numberLineValidPositions, snapNumberLinePosition } from './numberLineUtils';
@@ -46,14 +46,16 @@ function Line({ config, points = [], interactive = false, onTickSelect, handle, 
 
 const display = (item: GraduatedNumberLineItem) => item.displayValue ?? String(item.value);
 
-type ActivityProps = { config: GraduatedNumberLineConfiguration; onResult?: (result: GraduatedNumberLineResult) => void; onReset?: () => void };
+export type NumberLineAnswerState = { answers: Record<string, string>; placements: Record<string, number>; attempts: number; supported: boolean; complete: boolean };
+type ActivityProps = { config: GraduatedNumberLineConfiguration; language?: string; disabled?: boolean; onStateChange?: (state: NumberLineAnswerState) => void; onResult?: (result: GraduatedNumberLineResult) => void; onReset?: () => void };
 export function GraduatedNumberLineActivity(props: ActivityProps) {
   return <NumberLineSession key={JSON.stringify(props.config)} {...props} />;
 }
 
-function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
+function NumberLineSession({ config, onResult, onReset, language: languageOverride, disabled = false, onStateChange }: ActivityProps) {
   const ui = useInterfaceTranslation();
-  const { language } = useLanguage();
+  const { i18n } = useTranslation('interface');
+  const language = languageOverride ?? i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
   const fr = language.startsWith('fr');
   const [supportRequested, setSupportRequested] = useState(false);
   const [confirmed, setConfirmed] = useState<string[]>([]);
@@ -76,12 +78,16 @@ function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
   const supportStage = numberLineSupportStage(attempts, supportRequested);
   const showItemResults = supportStage === 'guided' || Boolean(validationResults && Object.values(validationResults).every(Boolean));
   const itemCorrect = (id: string) => showItemResults ? validationResults?.[id] ?? (confirmed.includes(id) ? true : undefined) : undefined;
-  const locked = (id: string) => confirmed.includes(id) || validationResults !== null;
+  const locked = (id: string) => disabled || confirmed.includes(id) || validationResults !== null;
+  const onStateChangeRef = useRef(onStateChange);
+  useEffect(() => { onStateChangeRef.current = onStateChange; }, [onStateChange]);
+  const complete = Boolean(validationResults && Object.values(validationResults).length && Object.values(validationResults).every(Boolean));
+  useEffect(() => { onStateChangeRef.current?.({ answers, placements, attempts, supported: supportRequested, complete }); }, [answers, placements, attempts, supportRequested, complete]);
   const hasPlacements = Object.keys(placements).length > 0;
   const placeValuePoints = config.items.flatMap((item) => typeof placements[item.id] === 'number' ? [{ label: display(item), position: placements[item.id], itemId: item.id, correct: itemCorrect(item.id), locked: locked(item.id) }] : []);
 
   useEffect(() => {
-    if (!draggingItemId && !pendingDrag) return undefined;
+    if (disabled || (!draggingItemId && !pendingDrag)) return undefined;
     const update = (event: PointerEvent) => {
       if (!draggingItemId && pendingDrag) {
         const distance = Math.hypot(event.clientX - pendingDrag.x, event.clientY - pendingDrag.y);
@@ -112,7 +118,7 @@ function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
     window.addEventListener('pointerup', finish, { once: true });
     window.addEventListener('pointercancel', finish, { once: true });
     return () => { window.removeEventListener('pointermove', update); window.removeEventListener('pointerup', finish); window.removeEventListener('pointercancel', finish); };
-  }, [draggingItemId, pendingDrag, dragPosition, validPositions]);
+  }, [draggingItemId, pendingDrag, dragPosition, validPositions, disabled]);
 
   function beginChipDrag(itemId: string, event: React.PointerEvent<HTMLButtonElement>) {
     if (locked(itemId)) return;
@@ -129,10 +135,12 @@ function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
   }
 
   function resetActivity() {
+    if (disabled) return;
     setConfirmed([]); setHintOpen(false); setAnswers({}); setPlacements(config.mode === 'order_values' ? initialNumberLinePositions(config.items, validPositions) : {}); setSelectedItemId(null); setValidationResults(null); setPlacementFeedback({}); setDraggingItemId(null); setPendingDrag(null); setDragPointer(null); setDragPosition(null); onReset?.();
   }
 
   function retryActivity() {
+    if (disabled) return;
     // Never erase work on retry. Only explicitly guided work has confirmed parts.
     setSelectedItemId(null);
     setValidationResults(null);
@@ -145,7 +153,7 @@ function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
   }
 
   function submit() {
-    if (validationResults) return;
+    if (disabled || validationResults) return;
     setSelectedItemId(null);
     const nextAttempts = attempts + 1; setAttempts(nextAttempts);
     const results = evaluateNumberLineItems(config, answers, placements);
@@ -154,10 +162,12 @@ function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
     setValidationResults(Object.fromEntries(results.map((item) => [item.id, item.correct])));
     setConfirmed(supportRequested || correct ? results.filter(item => item.correct).map(item => item.id) : []);
     if (config.mode === 'place_value') setPlacementFeedback(Object.fromEntries(results.map((item) => [item.id, placementHint(config, item.correct)])));
+    onStateChangeRef.current?.({ answers, placements, attempts: nextAttempts, supported: supportRequested, complete: correct });
     onResult?.(result);
   }
 
   function requestSupport() {
+    if (disabled) return;
     setSupportRequested(true);
     setHintOpen(true);
     // Checked answers cannot be edited while feedback is shown. Clearing feedback
@@ -183,7 +193,7 @@ function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
       ? { message: ui('Some values do not match the points.'), hint: ui('Hint: observe the value of one graduation.') }
       : { message: ui('Some labels are not on the right graduation.'), hint: ui('Hint: look at the value of one graduation.') };
 
-  return <div className="space-y-5" data-testid="number-line-activity">
+  return <fieldset disabled={disabled} className="min-w-0 space-y-5 border-0 p-0" data-testid="number-line-activity">
     <p className="text-sm text-muted-foreground">{config.instruction}</p>
     <Line config={config} points={config.mode === 'place_value' ? placeValuePoints : config.mode === 'order_values' ? config.items.map((item) => ({ label: display(item), value: item.value, itemId: item.id, position: placements[item.id], correct: itemCorrect(item.id), locked: locked(item.id) })) : config.items.map((item) => ({ label: item.label, value: item.value }))} interactive={config.mode !== 'read_point_value' && validationResults === null} onTickSelect={config.mode !== 'read_point_value' ? placeSelected : undefined} onHandlePosition={placeSelected} dropPosition={dragPosition} dropActive={Boolean(draggingItemId)} dropCue={config.mode === 'place_value' && Object.keys(placements).length === 0} dropLabel={draggingItemId ? display(config.items.find((item) => item.id === draggingItemId) ?? config.items[0]) : undefined} containerRef={lineContainerRef} onPointPointerDown={beginChipDrag} />
     {feedbackStatus && <PracticeFeedback status={feedbackStatus} language={language} />}
@@ -201,6 +211,6 @@ function NumberLineSession({ config, onResult, onReset }: ActivityProps) {
     {feedbackStatus !== 'correct' && <div className="flex flex-col gap-2"><Button type="button" className="w-full" onClick={validationResults ? retryActivity : submit}>{validationResults ? ui('Try again') : ui('Check answer')}</Button>{config.mode === 'place_value' && hasPlacements ? <Button type="button" variant="ghost" size="sm" className="self-center text-muted-foreground" onClick={() => { resetActivity(); }}>{ui('Reset')}</Button> : null}</div>}
     {feedbackStatus === 'correct' && <p role="status" className="text-sm text-emerald-900">{supportRequested ? (fr ? 'Réussi avec une aide. Essaie ensuite un nouvel exemple sans aide.' : 'Solved with help. Try a fresh example without help next.') : (fr ? 'Réussi sans aide.' : 'Solved without help.')}</p>}
     {draggingItemId && dragPointer ? <div className="pointer-events-none fixed z-[80] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-3 py-2 text-sm font-bold text-primary-foreground shadow-xl" style={{ left: dragPointer.x, top: dragPointer.y }}>{display(config.items.find((item) => item.id === draggingItemId) ?? config.items[0])}</div> : null}
-  </div>;
+  </fieldset>;
 }
 export default GraduatedNumberLineActivity;

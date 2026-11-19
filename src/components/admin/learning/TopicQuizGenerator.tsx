@@ -1,4 +1,4 @@
-import { canAuthorCoordinates } from '@/features/practice/exerciseCurriculum';
+import { canAuthorExercise } from '@/features/practice/exerciseCurriculum';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -569,7 +569,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   };
 
   const handleSave = async () => {
-    if (generatedQuestions.some(question => question.kind === 'coordinate-plane') && !canAuthorCoordinates(coordinateContext)) { toast.error('Les coordonnées nécessitent un thème de géométrie du programme français de 5ème.'); return; }
+    if (generatedQuestions.some(question => !canAuthorExercise(question, coordinateContext))) { toast.error('Le type ou la difficulté ne correspond pas au niveau des thèmes sélectionnés.'); return; }
     if (!bankTitle.trim()) {
       toast.error('Please enter a title');
       return;
@@ -635,7 +635,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
   // Batch save: one bank per unit (auto-titled), each auto-assigned to its topic as Practice.
   const handleSaveBatch = async () => {
-    if (batchUnits.some(unit => unit.questions.some(question => question.kind === 'coordinate-plane')) && !canAuthorCoordinates(coordinateContext)) { toast.error('Les coordonnées nécessitent un thème de géométrie du programme français de 5ème.'); return; }
+    if (batchUnits.some(unit => unit.questions.some(question => !canAuthorExercise(question, coordinateContext)))) { toast.error('Le type ou la difficulté ne correspond pas au niveau des thèmes sélectionnés.'); return; }
     if (partialGeneration && !partialGenerationConfirmed) {
       toast.error('Confirmez explicitement la sauvegarde des banques complètes disponibles.');
       return;

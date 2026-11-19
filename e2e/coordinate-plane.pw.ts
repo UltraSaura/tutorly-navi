@@ -1,100 +1,103 @@
-import { test, expect, ready, assertUsable } from './fixtures';
+import { test, expect, ready } from './fixtures';
 import { coordinateLearner } from './coordinate-fixture';
 
-test('coordinate practice is hidden and direct access is blocked for an unmapped learner', async ({ page }) => {
-  await coordinateLearner(page, 'cm2');
+const coordinateQuestion = {
+  id: 'coordinate-read-qa', kind: 'coordinate-plane', mode: 'read', maxX: 6, maxY: 6,
+  target: { x: 3, y: 4 }, prompt: 'Read the marked point.', points: 1,
+  curriculumCountry: 'fr', schoolLevels: ['5eme'],
+};
+
+const colourQuestion = {
+  id: 'colour-grid-qa', kind: 'colour-grid', prompt: 'Count the red squares.',
+  rows: 2, columns: 3, cells: ['red', 'blue', 'red', 'green', 'blue', 'yellow'], targetColor: 'red', points: 1,
+};
+
+test('legacy demo routes return to Practice and the index has no standalone activity cards', async ({ page }, testInfo) => {
   await ready(page, '/practice');
-  await expect(page.getByRole('button', { name: 'Commencer : Coordonnées dans le plan', exact: true })).toHaveCount(0);
-  await page.goto('/practice/coordinates');
-  await expect(page.getByRole('alert').filter({ hasText: 'uniquement pour le programme français de 5ème' })).toBeVisible();
-  await expect(page.getByTestId('coordinate-activity')).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('practice-landing.png'), fullPage: true });
+  await expect(page.getByRole('button', { name: 'Maths', exact: true })).toBeVisible();
+  for (const path of [
+    '/practice/coordinates', '/practice/add-up-to-100', '/practice/addition-across-ten',
+    '/practice/subtraction-within-ten', '/practice/guided/equal-groups', '/practice/number-line',
+  ]) {
+    await page.evaluate((nextPath) => {
+      window.history.pushState({}, '', nextPath);
+      window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    }, path);
+    await expect(page).toHaveURL(/\/practice$/);
+    await expect(page.getByTestId(/coordinate-activity|guided-family|number-line-activity/)).toHaveCount(0);
+  }
+  await expect(page.getByRole('button', { name: /Coordonnées dans le plan|Demi-droite graduée|Groupes égaux/ })).toHaveCount(0);
 });
 
-test('a different country with the same level cannot open coordinates', async ({ page }) => {
-  await coordinateLearner(page, '5eme', 'be');
-  await ready(page, '/practice/coordinates');
-  await expect(page.getByRole('alert').filter({ hasText: 'uniquement pour le programme français de 5ème' })).toBeVisible();
-  await expect(page.getByTestId('coordinate-activity')).toHaveCount(0);
-});
-
-test('admin can author coordinates only inside the mapped bank and preserve zero points', async ({ page }) => {
-  await coordinateLearner(page, '5eme', 'fr', true);
-  let saved: Record<string, unknown> | null = null;
-  await page.route('**/rest/v1/quiz_bank_questions**', async route => {
-    if (route.request().method() === 'POST') {
-      saved = route.request().postDataJSON();
-      return route.fulfill({ json: saved, headers: { 'access-control-allow-origin': '*', 'x-tutorly-test-data': 'synthetic' } });
-    }
-    if (saved) return route.fulfill({ json: [saved], headers: { 'access-control-allow-origin': '*' } });
-    return route.fallback();
-  });
-  await ready(page, '/admin/learning');
-  await page.getByRole('tab', { name: 'Quiz Banks', exact: true }).click();
-  await page.getByText('QA Coordinates', { exact: true }).click();
-  await page.getByRole('button', { name: 'Add Question', exact: true }).click();
-  const dialog = page.getByRole('dialog');
-  await dialog.getByRole('combobox').first().click();
-  await page.getByRole('option', { name: 'Coordonnées dans le plan · France · 5ème', exact: true }).click();
-  await expect(page.getByTestId('coordinate-editor')).toContainText('France · 5ème');
-  await page.getByLabel('Points', { exact: true }).fill('0');
-  await dialog.getByRole('button', { name: 'Add Question', exact: true }).click();
-  await expect.poll(() => (saved?.payload as Record<string, unknown> | undefined)?.kind).toBe('coordinate-plane');
-  expect((saved!.payload as Record<string, unknown>).schoolLevels).toEqual(['5eme']);
-  expect((saved!.payload as Record<string, unknown>).curriculumCountry).toBe('fr');
-  expect((saved!.payload as Record<string, unknown>).points).toBe(0);
-});
-
-test('admin editor disables the type for an out-of-level topic', async ({ page }) => {
-  await coordinateLearner(page, 'cm2', 'fr', true);
-  await ready(page, '/admin/learning');
-  await page.getByRole('tab', { name: 'Quiz Banks', exact: true }).click();
-  await page.getByText('QA Coordinates', { exact: true }).click();
-  await page.getByRole('button', { name: 'Add Question', exact: true }).click();
-  await page.getByRole('dialog').getByRole('combobox').first().click();
-  await expect(page.getByRole('option', { name: 'Coordonnées dans le plan · France · 5ème', exact: true })).toHaveAttribute('aria-disabled', 'true');
-});
-
-test('eligible learner can read and plot, retry independently, request guidance and complete', async ({ page }, testInfo) => {
-  test.setTimeout(90000);
-  await coordinateLearner(page);
-  await page.addInitScript(() => { Math.random = () => 0.5; });
+test('French 5ème assigned coordinate bank is listed by topic and renders read, hint and retry from its stored payload', async ({ page }) => {
+  await coordinateLearner(page, '5eme', 'fr', false, [coordinateQuestion]);
   await ready(page, '/practice');
-  await page.getByRole('button', { name: 'Commencer : Coordonnées dans le plan', exact: true }).click();
+  await page.getByRole('button', { name: 'Maths', exact: true }).click();
+  await expect(page).toHaveURL(/\/practice\/mathematiques\/topics$/);
+  await expect(page.getByText('Coordonnées', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
+
   const activity = page.getByTestId('coordinate-activity');
   await expect(activity).toBeVisible();
-  const x = activity.getByRole('spinbutton', { name: 'x-coordinate', exact: true });
-  const y = activity.getByRole('spinbutton', { name: 'y-coordinate', exact: true });
-  // Deterministic generator gives A(3,4), without printing that answer for reading.
-  await expect(activity).not.toContainText('(3');
-  await x.fill('3'); await y.fill('2');
+  await expect(activity.getByText('Read the marked point.', { exact: true })).toBeVisible();
+  await expect(activity).not.toContainText('(3, 4)');
+  await activity.getByRole('spinbutton', { name: 'x-coordinate', exact: true }).fill('3');
+  await activity.getByRole('spinbutton', { name: 'y-coordinate', exact: true }).fill('2');
   await activity.getByRole('button', { name: 'Check answer', exact: true }).click();
-  await expect(activity).not.toContainText('correct and kept');
-  await expect(activity.getByTestId('coordinate-support-offer')).toHaveCount(0);
+  await expect(activity.getByRole('status')).toContainText('Not yet.');
   await activity.getByRole('button', { name: 'Try again', exact: true }).click();
-  await expect(x).toBeEnabled(); await expect(y).toHaveValue('2');
+  await expect(activity.getByRole('spinbutton', { name: 'x-coordinate', exact: true })).toHaveValue('3');
+  await expect(activity.getByRole('spinbutton', { name: 'y-coordinate', exact: true })).toHaveValue('2');
+  await activity.getByRole('button', { name: 'Show hint', exact: true }).click();
+  const hint = activity.getByTestId('coordinate-hint');
+  await expect(hint).toBeVisible();
+  await expect(hint).not.toContainText(/\b[0-6]\b/);
+  await activity.getByRole('button', { name: 'Hide hint', exact: true }).click();
+  await activity.getByRole('spinbutton', { name: 'y-coordinate', exact: true }).fill('4');
   await activity.getByRole('button', { name: 'Check answer', exact: true }).click();
-  await activity.getByRole('button', { name: 'Guide me', exact: true }).click();
-  await expect(activity.getByTestId('coordinate-hint')).not.toContainText(/\d/);
-  await activity.getByRole('button', { name: 'Try again', exact: true }).click();
-  await expect(x).toBeDisabled(); await expect(y).toBeEnabled();
-  await y.fill('4');
-  await activity.getByRole('button', { name: 'Check answer', exact: true }).press('Enter');
-  await expect(page.getByTestId('coordinate-complete')).toContainText('Solved with help.');
-  await expect(page.getByText('Score de cet exercice : 0.25 / 1', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Essayer un nouvel exemple sans aide', exact: true }).click();
-  await x.fill('4'); await y.fill('5');
-  await activity.getByRole('button', { name: 'Check answer', exact: true }).click();
-  await expect(page.getByTestId('coordinate-complete')).toContainText('Solved without help.');
-  await page.getByRole('button', { name: 'Placer un point', exact: true }).click();
-  await assertUsable(page, x);
-  // Exercise the actual SVG hit testing, then the keyboard alternative.
-  const grid = activity.getByRole('img');
-  const bounds = await grid.boundingBox();
-  const position = { x: (44 + 3 / 6 * 282) / 360 * bounds!.width, y: (268 - 4 / 6 * 240) / 310 * bounds!.height };
-  if (testInfo.project.name === 'mobile') await grid.tap({ position }); else await grid.click({ position });
-  await expect(x).toHaveValue('3'); await expect(y).toHaveValue('4');
-  await x.fill('3'); await y.fill('4');
-  await page.screenshot({ path: testInfo.outputPath('coordinate-plot.png'), fullPage: true });
-  await activity.getByRole('button', { name: 'Check answer', exact: true }).click();
-  await expect(page.getByTestId('coordinate-complete')).toBeVisible();
+  await expect(activity.getByTestId('coordinate-complete')).toContainText('Solved with help.');
+});
+
+test('a 5ème bank containing CP-only colour grid is hidden and direct quiz URLs are rejected', async ({ page }) => {
+  await coordinateLearner(page, '5eme', 'fr', false, [colourQuestion]);
+  await ready(page, '/practice');
+  await page.getByRole('button', { name: 'Maths', exact: true }).click();
+  await expect(page).toHaveURL(/\/practice\/mathematiques\/topics$/);
+  await expect(page.getByText('Coordonnées', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('No practice questions available for this subject yet.')).toBeVisible();
+
+  await page.goto('/practice/mathematiques/topics?quiz=coordinate-qa-bank');
+  await expect(page.getByRole('alert')).toContainText('Ce quiz n’est pas disponible pour le programme, le niveau ou le thème sélectionné.');
+  await expect(page.getByTestId('guided-family-colour-grid')).toHaveCount(0);
+});
+
+test('a CP colour-grid question assigned to its CP topic renders from the bank payload', async ({ page }, testInfo) => {
+  await coordinateLearner(page, 'cp', 'fr', false, [colourQuestion]);
+  await ready(page, '/practice');
+  await page.getByRole('button', { name: 'Maths', exact: true }).click();
+  await expect(page).toHaveURL(/\/practice\/mathematiques\/topics$/);
+  await expect(page.getByText('Coordonnées', { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('practice-topic.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
+  const activity = page.getByTestId('guided-family-colour-grid');
+  await expect(activity).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('practice-cp-colour-grid.png'), fullPage: true });
+  await expect(activity.getByRole('heading', { name: 'How many tiles have the colour red (R)?', exact: true })).toBeVisible();
+  const firstRed = activity.getByRole('button', { name: 'Tile 1, 1: red', exact: true });
+  const secondRed = activity.getByRole('button', { name: 'Tile 1, 3: red', exact: true });
+  await expect(firstRed).toBeVisible();
+  if (testInfo.project.name === 'mobile') {
+    await firstRed.tap(); await secondRed.tap();
+    await activity.getByRole('group', { name: 'Answer choices' }).getByRole('button', { name: '2', exact: true }).tap();
+    await activity.getByRole('button', { name: 'Check answer', exact: true }).tap();
+  } else {
+    await firstRed.focus(); await firstRed.press('Enter');
+    await secondRed.focus(); await secondRed.press('Enter');
+    const answer = activity.getByRole('group', { name: 'Answer choices' }).getByRole('button', { name: '2', exact: true });
+    await answer.focus(); await answer.press('Enter');
+    const check = activity.getByRole('button', { name: 'Check answer', exact: true });
+    await check.focus(); await check.press('Enter');
+  }
+  await expect(activity.getByTestId('guided-family-complete')).toContainText('Good work: you counted the requested colour.');
 });

@@ -1,3 +1,8 @@
+import { useTranslation } from 'react-i18next';
+import { ArithmeticQuizActivity } from '@/components/practice/ArithmeticQuizActivity';
+import { isArithmeticQuizExercise, arithmeticQuizFraction } from '@/features/practice/arithmeticQuiz';
+import { VisualQuizActivity } from '@/components/practice/VisualQuizActivity';
+import { isVisualQuizExercise } from '@/features/practice/visualQuiz';
 import { CoordinateQuestion } from '@/components/practice/CoordinateQuestion';
 import { isCoordinateExercise } from '@/features/practice/coordinatePlane';
 import { GuidedFamilyActivity } from '@/components/practice/GuidedFamilyActivity';
@@ -746,6 +751,8 @@ export function QuestionCard({
   hideCorrect = false,
 }: QuestionCardProps) {
   const ui = useInterfaceTranslation();
+  const { i18n } = useTranslation();
+  const activityLanguage = i18n?.resolvedLanguage ?? i18n?.language ?? 'fr';
   const initialValue = useMemo(() => {
     if (question.kind === "multi") return [];
     if (question.kind === "counting") return { addedGroups: 0, selectedAnswer: null };
@@ -781,7 +788,7 @@ export function QuestionCard({
   const [subtractionFeedback, setSubtractionFeedback] = useState<string | null>(null);
   const onChangeRef = useRef(onChange);
   const inferredPromptFigure = useMemo(() => {
-    if (question.kind === 'coordinate-plane' || question.kind === 'counting' || isGuidedFamilyExercise(question)) return null;
+    if (isArithmeticQuizExercise(question) || isVisualQuizExercise(question) || question.kind === 'coordinate-plane' || question.kind === 'counting' || isGuidedFamilyExercise(question)) return null;
     if ((question as any).context_visual) return null;
     return inferPromptFigure(question);
   }, [question]);
@@ -861,6 +868,14 @@ export function QuestionCard({
     return "faded";
   };
 
+  if (question.kind === 'calculation-race' || question.kind === 'number-flashcards') {
+    if (!isArithmeticQuizExercise(question)) return <p role="alert">Cette série de calculs est mal configurée.</p>;
+    return <ArithmeticQuizActivity language={activityLanguage} exercise={question} disabled={externallySubmitted} onChange={state => onChange?.(state)} onComplete={state => { onChange?.(state); onFinish?.(arithmeticQuizFraction(question, state) === 1, 1); }} />;
+  }
+  if (question.kind === 'analogue-clock' || question.kind === 'graduated-number-line') {
+    if (!isVisualQuizExercise(question)) return <p role="alert">Cette question visuelle est mal configurée.</p>;
+    return <VisualQuizActivity language={activityLanguage} exercise={question} disabled={externallySubmitted} onChange={state => onChange?.(state)} onComplete={state => { onChange?.(state); onFinish?.(true, state.attempts); }} />;
+  }
   if (question.kind === 'coordinate-plane') {
     if (!isCoordinateExercise(question)) return <p role="alert">Cet exercice de coordonnées est mal configuré.</p>;
     return <CoordinateQuestion exercise={question} disabled={externallySubmitted} onChange={state => onChange?.(state)} onComplete={state => { onChange?.(state); onFinish?.(true, state.attempts); }} />;
@@ -871,7 +886,7 @@ export function QuestionCard({
   }
 
   if (isGuidedFamilyExercise(question)) {
-    return <GuidedFamilyActivity key={question.id} exercise={question} disabled={externallySubmitted}
+    return <GuidedFamilyActivity key={question.id} language={activityLanguage} exercise={question} disabled={externallySubmitted}
       onChange={state => onChange?.(state)}
       onComplete={result => { onChange?.(result); onFinish?.(true, result.attempts); }} />;
   }

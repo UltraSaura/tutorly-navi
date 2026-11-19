@@ -5,6 +5,8 @@ export type PracticeTopic = {
   id: string;
   topicLabel: string;
   orderIndex: number;
+  curriculum_country_code: string | null;
+  curriculum_level_code: string | null;
 };
 
 export type PracticeDomainGroup = {
@@ -18,12 +20,14 @@ type TopicRow = {
   name: string;
   order_index: number;
   curriculum_domain_id: string | null;
+  curriculum_country_code: string | null;
+  curriculum_level_code: string | null;
 };
 
 export function usePracticeTopics(
   subjectSlug: string,
-  levelCode: string,
-  countryCode = 'fr',
+  levelCode: string | null,
+  countryCode: string | null,
 ) {
   const query = useQuery({
     queryKey: ['practice-topics', subjectSlug, levelCode, countryCode],
@@ -46,7 +50,7 @@ export function usePracticeTopics(
       // Step 2 - fetch topics using the UUID stored in curriculum_subject_id.
       const { data: topics, error: topicsError } = await supabase
         .from('topics')
-        .select('id, name, order_index, curriculum_domain_id')
+        .select('id, name, order_index, curriculum_domain_id, curriculum_country_code, curriculum_level_code')
         .ilike('curriculum_level_code', levelCode)
         .eq('curriculum_subject_id', subjectData.id)
         .ilike('curriculum_country_code', countryCode)
@@ -107,6 +111,8 @@ export function usePracticeTopics(
           id: topic.id,
           topicLabel: topic.name,
           orderIndex: topic.order_index,
+          curriculum_country_code: topic.curriculum_country_code,
+          curriculum_level_code: topic.curriculum_level_code,
         });
       });
 
