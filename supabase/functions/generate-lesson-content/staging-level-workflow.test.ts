@@ -23,6 +23,7 @@ import {
   SPATIAL_MOVEMENT_TOPIC_NAME,
   stagingValidationFailure,
   runWithBoundedJsonRetry,
+  stagingJsonRetryPrompt,
   StagingLevelJsonParseError,
   validateStagingLevel,
 } from './staging-level-workflow.ts';
@@ -65,6 +66,13 @@ const level2Candidate = () => {
 };
 
 describe('staging level workflow', () => {
+  it('changes the bounded JSON retry prompt to request a fresh syntactically valid object', () => {
+    const original = 'Return a lesson object.';
+    expect(stagingJsonRetryPrompt(original, 0)).toBe(original);
+    expect(stagingJsonRetryPrompt(original, 1)).toContain('Regenerate the complete requested object from scratch');
+    expect(stagingJsonRetryPrompt(original, 1)).toContain('double-quoted property names');
+  });
+
   it('keeps the staging completion budget bounded but above the compact contract size', () => {
     expect(STAGING_LEVEL_MAX_TOKENS).toBe(4096);
   });
