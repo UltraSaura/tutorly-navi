@@ -137,37 +137,51 @@ function buildTimeChips(q: any): number[] {
 }
 
 /**
- * Resolve the unit shown beside a numeric answer.  Conversion questions have
- * two units in their prompt; the answer unit is always the requested (target)
- * unit, never the source unit mentioned first.
+ * Resolve the unit shown beside a numeric answer. Conversion questions have
+ * two units in their prompt; the answer unit is the requested target, not the
+ * first unit mentioned. Use Unicode-aware boundaries because JavaScript's
+ * ASCII \b treats letters such as â as word separators in French words.
  */
 export function inferAnswerUnit(question: any): string | undefined {
   const explicit = question.answerUnit ?? question.answer_unit ?? question.targetUnit ?? question.target_unit;
   if (explicit) return normalizeAnswerUnit(String(explicit));
 
   const prompt = String(question.prompt ?? question.question ?? '');
-  const target = prompt.match(/\b(?:en|vers|to|into)\s+(?:des?\s+|les?\s+)?(secondes?|secs?|s|minutes?|min|heures?|h|jours?|j|millisecondes?|ms|centim[eè]tres?|cm|m[eè]tres?|m|kilom[eè]tres?|km|kilogrammes?|kg|grammes?|g|millilitres?|ml|litres?|l)\b/i);
+  const unitPattern = '(secondes?|secs?|s|minutes?|min|heures?|h|jours?|j|millisecondes?|ms|centim[eè]tres?|cm|m[eè]tres?|m|kilom[eè]tres?|km|kilogrammes?|kg|grammes?|g|millilitres?|ml|litres?|l)';
+  const unitEnd = '(?![\\p{L}]|[’\'][\\p{L}])';
+  const target = prompt.match(new RegExp('\\\\b(?:en|vers|to|into)\\\\s+(?:des?\\\\s+|les?\\\\s+)?(?<![\\\\p{L}])' + unitPattern + unitEnd, 'iu'));
   if (target) return normalizeAnswerUnit(target[1]);
 
-  // Questions phrased as “combien de minutes/heures…?” also name the target
-  // unit directly, while the hint may contain a different source unit.
-  const requested = prompt.match(/\bcombien\s+(?:de|d')\s+(secondes?|secs?|s|minutes?|min|heures?|h|jours?|j|millisecondes?|ms|centim[eè]tres?|cm|m[eè]tres?|m|kilom[eè]tres?|km|kilogrammes?|kg|grammes?|g|millilitres?|ml|litres?|l)\b/i);
+  // Questions phrased as “combien de minutes/heures…?” name the requested unit.
+  const requested = prompt.match(new RegExp('\\\\bcombien\\\\s+(?:de|d\\\\')\\\\s*' + unitPattern + unitEnd, 'iu'));
   if (requested) return normalizeAnswerUnit(requested[1]);
 
-  const text = `${prompt} ${String(question.hint ?? '')}`.toLowerCase();
-  if (/\b(secondes?|secs?|s)\b/.test(text)) return 's';
-  if (/\b(minutes?|min)\b/.test(text)) return 'min';
-  if (/\b(heures?|h)\b/.test(text)) return 'h';
-  if (/\b(jours?|j)\b/.test(text)) return 'j';
-  if (/\bkilom[eè]tres?\b|\bkm\b/.test(text)) return 'km';
-  if (/\bcentim[eè]tres?\b|\bcm\b/.test(text)) return 'cm';
-  if (/\bmillim[eè]tres?\b|\bmm\b/.test(text)) return 'mm';
-  if (/\bm[eè]tres?\b(?!\s*carr)/.test(text)) return 'm';
-  if (/\bkilogrammes?\b|\bkg\b/.test(text)) return 'kg';
-  if (/\bgrammes?\b|\bg\b/.test(text)) return 'g';
-  if (/\bmillilitres?\b|\bml\b/.test(text)) return 'mL';
-  if (/\blitres?\b|\bl\b/.test(text)) return 'L';
-  if (/€|euros?/.test(text)) return '€';
+  const finalQuestionMark = prompt.lastIndexOf('?');
+  const questionStart = finalQuestionMark < 0 ? -1 : Math.max(
+    prompt.lastIndexOf('.', finalQuestionMark),
+    prompt.lastIndexOf('!', finalQuestionMark),
+    prompt.lastIndexOf('\\\\n', finalQuestionMark),
+  );
+  const finalQuestion = finalQuestionMark < 0 ? prompt : prompt.slice(questionStart + 1, finalQuestionMark + 1);
+  const hasCurrency = /€|euros?/i.test(prompt);
+  const asksForPrice = /\\\\b(?:payer|paie|paye|prix|montant|co[uû]t(?:e|ent|era|eront|er|é|ée|és|ées)?)\\\\b/i.test(finalQuestion);
+  if (hasCurrency && asksForPrice) return '€';
+
+  const text = `${prompt} ${String(question.hint ?? '')}`;
+  const hasUnit = (pattern: string) => new RegExp('(?:^|[^\\\\p{L}])(?:' + pattern + ')(?![\\\\p{L}]|[’\\'][\\\\p{L}])', 'iu').test(text);
+  if (hasUnit('secondes?|secs?|s')) return 's';
+  if (hasUnit('minutes?|min')) return 'min';
+  if (hasUnit('heures?|h')) return 'h';
+  if (hasUnit('jours?|j')) return 'j';
+  if (hasUnit('kilom[eè]tres?|km')) return 'km';
+  if (hasUnit('centim[eè]tres?|cm')) return 'cm';
+  if (hasUnit('millim[eè]tres?|mm')) return 'mm';
+  if (hasUnit('m[eè]tres?|m')) return 'm';
+  if (hasUnit('kilogrammes?|kg')) return 'kg';
+  if (hasUnit('grammes?|g')) return 'g';
+  if (hasUnit('millilitres?|ml')) return 'mL';
+  if (hasUnit('litres?|l')) return 'L';
+  if (/€|euros?/i.test(text)) return '€';
   return undefined;
 }
 
