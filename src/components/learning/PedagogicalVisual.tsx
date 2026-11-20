@@ -302,6 +302,56 @@ function UnitConversion({ d }: { d: Data }) {
     </div>)}
   </div>;
 }
+type ComparisonPanel = { label: string; items: string[] };
+function comparisonItemText(value: unknown): string {
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  const item = data(value);
+  return s(item.label ?? item.name ?? item.value ?? item.title ?? item.text ?? item.description);
+}
+function comparisonItems(value: unknown): string[] {
+  if (typeof value === 'string' || typeof value === 'number') return [String(value)];
+  if (Array.isArray(value)) return value.map(comparisonItemText).filter(Boolean);
+  const record = data(value);
+  const list = record.items ?? record.values ?? record.entries ?? record.nodes;
+  if (Array.isArray(list)) return list.map(comparisonItemText).filter(Boolean);
+  const single = record.value ?? record.text ?? record.content ?? record.description;
+  return single === undefined || single === null || String(single).trim() === '' ? [] : [String(single)];
+}
+function Comparison({ d }: { d: Data }) {
+  const left = comparisonItems(d.left);
+  const right = comparisonItems(d.right);
+  const result = comparisonItems(d.result);
+  const leftRecord = data(d.left);
+  const rightRecord = data(d.right);
+  const resultRecord = data(d.result);
+  const panels: ComparisonPanel[] = [
+    { label: s(leftRecord.label ?? leftRecord.title ?? d.left_label ?? d.leftLabel, 'Situation 1'), items: left },
+    { label: s(rightRecord.label ?? rightRecord.title ?? d.right_label ?? d.rightLabel, 'Situation 2'), items: right },
+  ];
+  if (left.length === 0 && right.length === 0 && result.length === 0) {
+    if (Array.isArray(d.items) || Array.isArray(d.nodes) || Array.isArray(d.labels)) {
+      return <div data-testid="comparison-visual"><Generic d={d}/></div>;
+    }
+    return <div data-testid="comparison-visual" role="status" className="rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-3 text-sm text-[#475569]">Données de comparaison indisponibles.</div>;
+  }
+  return <div data-testid="comparison-visual" role="group" aria-label="Comparaison de situations" className="w-full min-w-0 space-y-3">
+    <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+      {panels.map((panel, index) => <article key={index} className="min-w-0 rounded-lg border border-[#D8E1F0] bg-white p-3">
+        <h4 className="mb-2 break-words text-sm font-bold text-[#3448A5]">{panel.label}</h4>
+        {panel.items.length > 0
+          ? <ul className="space-y-2">{panel.items.map((item, itemIndex) => <li key={itemIndex} className="break-words rounded-md bg-[#F8FAFC] px-3 py-2 text-sm font-semibold leading-5 text-[#111827]">{item}</li>)}</ul>
+          : <p className="text-sm text-[#667085]">Données de cette situation indisponibles.</p>}
+      </article>)}
+    </div>
+    {result.length > 0 && <div className="space-y-2">
+      <p className="text-center text-sm font-bold text-[#4F6FD8]" aria-hidden="true">↓</p>
+      <article className="mx-auto w-full min-w-0 rounded-lg border border-[#B8C8F0] bg-white p-3 sm:max-w-md">
+        <h4 className="mb-2 break-words text-center text-sm font-bold text-[#3448A5]">{s(resultRecord.label ?? resultRecord.title, 'Résultat')}</h4>
+        <ul className="space-y-2">{result.map((item, index) => <li key={index} className="break-words rounded-md bg-[#F8FAFC] px-3 py-2 text-center text-sm font-semibold leading-5 text-[#111827]">{item}</li>)}</ul>
+      </article>
+    </div>}
+  </div>;
+}
 function Generic({ d }: { d: Data }) {
   const xs = arr(d.items ?? d.nodes ?? d.groups ?? d.labels);
   if (xs.length === 0 && typeof d.text === 'string') return <p className="rounded-lg bg-white p-3 text-center text-lg font-semibold text-[#111827]">{d.text}</p>;
@@ -311,4 +361,4 @@ function Generic({ d }: { d: Data }) {
     return <div key={i} className="flex items-center justify-center gap-2 rounded-xl border border-[#D8E1F0] bg-white p-3 text-lg font-semibold text-[#111827]"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4F6FD8] text-sm font-bold text-white">{i + 1}</span>{label || `Groupe ${i + 1}`}{detail}</div>;
   })}</div>;
 }
-export function PedagogicalVisual({ block }: { block: Block }) { const d=data(block.visual.data), supported=isVisualKind(block.visual.kind), k=supported?block.visual.kind:'diagram'; let visual:ReactNode; try { if(!supported) visual=fallback(`Type de visuel non pris en charge : ${s(block.visual.kind, 'inconnu')}.`, 'Représentation de secours'); else if(k==='clock')visual=<Clock d={d}/>; else if(k==='timeline')visual=<Timeline d={d}/>; else if(k==='number_line')visual=<NumberLine d={d}/>; else if(k==='fraction_bar')visual=<Fraction d={d}/>; else if(k==='fraction_circle')visual=<Fraction d={d} circle/>; else if(k==='unit_conversion')visual=<UnitConversion d={d}/>; else if(['triangle','rectangle','circle','polygon','angle','symmetry','diagram','coordinate_plane','geometric_solid','solid_section'].includes(k))visual=<Geometry kind={k} d={d}/>; else visual=<Generic d={d}/>; } catch(error) { console.warn('[LessonV2] visual fallback',{k,error}); visual=fallback(s(d.alt_text,block.content), 'Représentation de secours'); } return <div data-testid="visual-card" className="rounded-xl border border-[#D8E1F0] bg-[#F4F7FF] p-4" role="group" aria-label={block.visual.alt_text||block.title}><p className="text-xs font-bold uppercase tracking-wide text-[#3448A5]">{k.replace('_',' ')}</p>{block.showText !== false && <p className="mt-2 text-sm text-[#111827]">{block.content}</p>}{block.visual.purpose&&<p className="mt-1 text-xs text-[#667085]">{block.visual.purpose}</p>}<div className="mt-4 rounded-lg bg-white p-3">{visual}</div></div>; }
+export function PedagogicalVisual({ block }: { block: Block }) { const d=data(block.visual.data), supported=isVisualKind(block.visual.kind), k=supported?block.visual.kind:'diagram'; let visual:ReactNode; try { if(!supported) visual=fallback(`Type de visuel non pris en charge : ${s(block.visual.kind, 'inconnu')}.`, 'Représentation de secours'); else if(k==='clock')visual=<Clock d={d}/>; else if(k==='timeline')visual=<Timeline d={d}/>; else if(k==='number_line')visual=<NumberLine d={d}/>; else if(k==='fraction_bar')visual=<Fraction d={d}/>; else if(k==='fraction_circle')visual=<Fraction d={d} circle/>; else if(k==='unit_conversion')visual=<UnitConversion d={d}/>; else if(k==='comparison')visual=<Comparison d={d}/>; else if(['triangle','rectangle','circle','polygon','angle','symmetry','diagram','coordinate_plane','geometric_solid','solid_section'].includes(k))visual=<Geometry kind={k} d={d}/>; else visual=<Generic d={d}/>; } catch(error) { console.warn('[LessonV2] visual fallback',{k,error}); visual=fallback(s(d.alt_text,block.content), 'Représentation de secours'); } return <div data-testid="visual-card" className="rounded-xl border border-[#D8E1F0] bg-[#F4F7FF] p-4" role="group" aria-label={block.visual.alt_text||block.title}><p className="text-xs font-bold uppercase tracking-wide text-[#3448A5]">{k.replace('_',' ')}</p>{block.showText !== false && <p className="mt-2 text-sm text-[#111827]">{block.content}</p>}{block.visual.purpose&&<p className="mt-1 text-xs text-[#667085]">{block.visual.purpose}</p>}<div className="mt-4 rounded-lg bg-white p-3">{visual}</div></div>; }
