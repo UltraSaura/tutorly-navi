@@ -27,3 +27,10 @@ it('decimal-number concepts accept a number line or a complete rectangle, withou
   expect(policy.suggestedKinds).not.toContain('fraction_bar');
   expect(policy.suggestedKinds).not.toContain('fraction_circle');
 });
+
+it('generic proportionality conversion wording does not force a measurement visual', () => {
+  const policy = determineVisualRequirement({ title: 'La proportionnalité', content: 'On passe d’une quantité à une autre par conversion avec le coefficient.' });
+  expect(policy.requirement).not.toBe('required');
+  expect(policy.suggestedKinds).not.toContain('unit_conversion');
+  expect(policy.suggestedKinds).not.toContain('timeline');
+});
