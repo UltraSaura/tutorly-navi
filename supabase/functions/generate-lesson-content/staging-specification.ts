@@ -243,7 +243,97 @@ export function buildSolidsSpecificationProposal(
 
 /** Server-controlled reviewed specifications. Empty until a human-reviewed
  * specification is added in code; request-body fields cannot populate it. */
-export const SERVER_APPROVED_STAGING_SPECIFICATIONS: Readonly<Record<string, StagingSpecification>> = {};
+export const SERVER_APPROVED_STAGING_SPECIFICATIONS: Readonly<Record<string, StagingSpecification>> = {
+  'ce93a21e-fce2-4f19-b4b8-4979afe69dc7': {
+    version: STAGING_SPECIFICATION_VERSION,
+    topicId: 'ce93a21e-fce2-4f19-b4b8-4979afe69dc7',
+    curriculum: 'CM2',
+    language: 'fr',
+    topicKind: 'general',
+    objectiveProvenance: 'linked',
+    objectiveSource: 'topic_objective_links',
+    levels: [
+      {
+        levelNumber: 1,
+        title: 'Repérer une situation proportionnelle',
+        purpose: 'Distinguer des situations proportionnelles et non proportionnelles dans des contextes de grandeurs. Expliquer le même multiplicateur en langage naturel; ne pas utiliser de tableau ni de coefficient.',
+        objectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983'],
+        successCriteria: [
+          'Je reconnais une situation proportionnelle en expliquant que si une grandeur est multipliée par un nombre, l’autre l’est par le même nombre.',
+          'Je justifie mon choix avec les données du contexte, y compris pour une situation non proportionnelle.',
+        ],
+        teachingObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983'],
+        assessmentObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983'],
+        exerciseObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983'],
+        masteryObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983'],
+        visualKinds: ['groups', 'comparison', 'diagram'],
+        visualsRequired: false,
+        evaluationStatus: 'planned',
+        evaluationNote: 'Vérifier dans le brouillon que l’identification est enseignée et évaluée avec des situations contextualisées proportionnelles et non proportionnelles.',
+      },
+      {
+        levelNumber: 2,
+        title: 'Multiplier les deux grandeurs',
+        purpose: 'Résoudre un problème contextualisé en une étape en appliquant le même multiplicateur aux deux grandeurs et en gardant les unités. Ne pas utiliser de tableau, de coefficient, de produit en croix ni de retour à l’unité.',
+        objectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983', '9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        successCriteria: [
+          'Je vérifie que la situation est proportionnelle avant de calculer.',
+          'Je résous un problème à une étape en multipliant les deux grandeurs par le même nombre, puis j’écris la réponse avec son unité.',
+        ],
+        teachingObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983', '9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        assessmentObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983', '9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        exerciseObjectiveIds: ['9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        masteryObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983', '9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        visualKinds: ['groups', 'comparison', 'diagram'],
+        visualsRequired: false,
+        evaluationStatus: 'planned',
+        evaluationNote: 'Vérifier dans le brouillon la reconnaissance préalable, le raisonnement multiplicatif contextualisé et les unités.',
+      },
+      {
+        levelNumber: 3,
+        title: 'Additionner des cas connus',
+        purpose: 'Combiner deux cas connus par addition des grandeurs correspondantes dans une même situation proportionnelle, avec une justification en langage naturel. Ne pas utiliser de tableau, de coefficient, de produit en croix ni de retour à l’unité.',
+        objectiveIds: ['9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        successCriteria: [
+          'Je combine deux cas connus en additionnant les quantités correspondantes.',
+          'J’explique pourquoi cette addition conserve la relation dans le contexte.',
+        ],
+        teachingObjectiveIds: ['9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        assessmentObjectiveIds: ['9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        exerciseObjectiveIds: ['9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        masteryObjectiveIds: ['9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        visualKinds: ['groups', 'comparison', 'diagram'],
+        visualsRequired: false,
+        evaluationStatus: 'planned',
+        evaluationNote: 'Vérifier dans le brouillon que l’addition porte sur des grandeurs correspondantes d’une même situation.',
+      },
+      {
+        levelNumber: 4,
+        title: 'Résoudre un problème en plusieurs étapes',
+        purpose: 'Résoudre un problème contextualisé à plusieurs étapes en combinant les propriétés de linéarité pour la multiplication et l’addition, en justifiant chaque étape et les unités. Ne pas utiliser de tableau, de coefficient, de produit en croix ni de retour à l’unité.',
+        objectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983', '9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        successCriteria: [
+          'Je résous un problème en plusieurs étapes avec des multiplications et/ou des additions des grandeurs correspondantes.',
+          'J’explique chaque étape dans le contexte, je garde les unités et je vérifie que ma réponse répond à la question.',
+        ],
+        teachingObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983', '9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        assessmentObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983', '9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        exerciseObjectiveIds: ['9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        masteryObjectiveIds: ['0db7edce-adf8-48ac-9be3-840994597983', '9d8bc3fe-7e1c-4998-8b64-b0897b0f3769'],
+        visualKinds: ['groups', 'comparison', 'diagram'],
+        visualsRequired: false,
+        evaluationStatus: 'planned',
+        evaluationNote: 'Vérifier dans le brouillon la résolution autonome d’un problème à plusieurs étapes avec raisonnement additif et multiplicatif.',
+      },
+    ],
+    rendererCapabilities: [...RENDERER_CAPABILITIES],
+    review: {
+      status: 'approved',
+      reviewedBy: 'Harouna Moctar Traoré (product owner; CM2 teacher review pending)',
+      reviewedAt: '2026-11-20T15:58:20.336Z',
+    },
+  },
+};
 export function getServerApprovedStagingSpecification(topicId: string): StagingSpecification | null {
   return SERVER_APPROVED_STAGING_SPECIFICATIONS[topicId] ?? null;
 }
