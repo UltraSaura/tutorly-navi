@@ -5,6 +5,7 @@ import { solidVisualDataErrors, SOLID_GALLERY_FIXTURES } from '../../../shared/s
 import { INVALID_CONNECTED_RECTANGLE_CUBE_NET, INVALID_DIMENSION_RECTANGULAR_PRISM_NET, INVALID_DISJOINT_CUBE_NET, INVALID_OVERLAPPING_CUBE_NET, solidNetErrors, VALID_CUBE_NET, VALID_RECTANGULAR_PRISM_NET } from '../../../shared/solid-net-contract.ts';
 import {
   buildProviderFreeApprovedSpecification,
+  getServerApprovedStagingSpecification,
   buildProposedSpecification,
   buildSolidsSpecificationProposal,
   checkStagingCoverage,
@@ -168,4 +169,12 @@ it('checks approved criterion text exactly and leaves objective meaning for revi
   const unassigned = { ...level, objectiveIds: [] };
   expect(validateStagingSpecification({ ...specification, levels: [unassigned, ...specification.levels.slice(1)] }, selection))
     .toContainEqual(expect.objectContaining({ code: 'invalid_objective_reference', path: 'levels[0].teachingObjectiveIds' }));
+});
+
+it('keeps the approved CM2 proportionality staging pilot teacher-reviewable', () => {
+  const specification = getServerApprovedStagingSpecification('ce93a21e-fce2-4f19-b4b8-4979afe69dc7');
+  expect(specification?.review.status).toBe('approved');
+  expect(specification?.review.reviewedBy).toContain('CM2 teacher review pending');
+  expect(specification?.levels).toHaveLength(4);
+  expect(specification?.levels.map((level) => level.successCriteria?.length ?? 0).every((count) => count > 0)).toBe(true);
 });
