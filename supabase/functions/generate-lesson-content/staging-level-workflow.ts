@@ -105,6 +105,15 @@ export class StagingLevelJsonParseError extends Error {
   }
 }
 
+/**
+ * The bounded parse retry must change the provider input so a deterministic
+ * model response is asked to correct its JSON syntax instead of being repeated.
+ */
+export function stagingJsonRetryPrompt(message: string, attempt: number): string {
+  if (attempt < 1) return message;
+  return message + '\n\nJSON SYNTAX RETRY: The previous response was not valid JSON. Regenerate the complete requested object from scratch; do not copy malformed JSON. Use double-quoted property names and correctly escape quotation marks inside strings. Return exactly one complete JSON object, with no trailing commas, comments, Markdown, or text outside the object. Preserve the requested lesson content and every required field.';
+}
+
 export async function runWithBoundedJsonRetry<T>(
   call: (attempt: number) => Promise<T>,
   onRetry?: (retryCount: number, error: StagingLevelJsonParseError) => void,
