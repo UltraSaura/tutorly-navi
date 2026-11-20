@@ -14,7 +14,7 @@ const REQUIRED: Array<{ pattern: RegExp; kinds: string[]; reason: string }> = [
   { pattern: /fraction|numérateur|dénominateur|parts? égales?|partie(?:s)?[- ]tout/i, kinds: ['fraction_bar', 'fraction_circle'], reason: 'La relation partie/tout doit être visible.' },
   { pattern: /droite graduée|ligne numérique|position(?:ner|nement)? .*nombre|repérer un nombre/i, kinds: ['number_line'], reason: 'La position et les écarts doivent être visibles.' },
   { pattern: /angle|symétri|coordonnée|repère cartésien|triangle|rectangle|carré|losange|cercle|polygone|figures? planes?|solide|géométri|périmètre|aire|sommet|côtés?|rayon|diamètre|segment|perpendiculaire|parallèle/i, kinds: GEOMETRY_KINDS, reason: 'La propriété géométrique doit être montrée par une figure.' },
-  { pattern: /conversion|convertir|unités? de durée|durée.*unités?|unités?.*(?:seconde|minute|heure|jour)|(?:60|24|100|1000)\s*(?:secondes?|minutes?|heures?|jours?|ans?)/i, kinds: ['unit_conversion', 'timeline'], reason: 'La relation entre unités ou facteurs doit être visible.' },
+  { pattern: /(?:\b(?:conversion|convertir|converti(?:r|e|t|s|es|ent|ssent)?|convertie?s?)\b.{0,48}\b(?:mm|cm|dm|mètres?|km|mg|g|kg|ml|cl|l|secondes?|minutes?|heures?|jours?)\b|\b(?:mm|cm|dm|mètres?|km|mg|g|kg|ml|cl|l|secondes?|minutes?|heures?|jours?)\b.{0,48}\b(?:conversion|convertir|converti(?:r|e|t|s|es|ent|ssent)?|convertie?s?)\b|unités? de durée|durée.*unités?|unités?.*(?:seconde|minute|heure|jour)|(?:60|24|100|1000)\s*(?:secondes?|minutes?|heures?|jours?|ans?))/i, kinds: ['unit_conversion', 'timeline'], reason: 'La relation entre unités ou facteurs doit être visible.' },
 ];
 
 /**
