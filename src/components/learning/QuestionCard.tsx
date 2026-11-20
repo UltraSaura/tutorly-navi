@@ -149,26 +149,26 @@ export function inferAnswerUnit(question: any): string | undefined {
   const prompt = String(question.prompt ?? question.question ?? '');
   const unitPattern = '(secondes?|secs?|s|minutes?|min|heures?|h|jours?|j|millisecondes?|ms|centim[eè]tres?|cm|m[eè]tres?|m|kilom[eè]tres?|km|kilogrammes?|kg|grammes?|g|millilitres?|ml|litres?|l)';
   const unitEnd = '(?![\\p{L}]|[’\'][\\p{L}])';
-  const target = prompt.match(new RegExp('\\\\b(?:en|vers|to|into)\\\\s+(?:des?\\\\s+|les?\\\\s+)?(?<![\\\\p{L}])' + unitPattern + unitEnd, 'iu'));
+  const target = prompt.match(new RegExp('\\b(?:en|vers|to|into)\\s+(?:des?\\s+|les?\\s+)?(?<![\\p{L}])' + unitPattern + unitEnd, 'iu'));
   if (target) return normalizeAnswerUnit(target[1]);
 
   // Questions phrased as “combien de minutes/heures…?” name the requested unit.
-  const requested = prompt.match(new RegExp('\\\\bcombien\\\\s+(?:de|d\\\\')\\\\s*' + unitPattern + unitEnd, 'iu'));
+  const requested = prompt.match(new RegExp('\\bcombien\\s+(?:de|d\')\\s*' + unitPattern + unitEnd, 'iu'));
   if (requested) return normalizeAnswerUnit(requested[1]);
 
   const finalQuestionMark = prompt.lastIndexOf('?');
   const questionStart = finalQuestionMark < 0 ? -1 : Math.max(
     prompt.lastIndexOf('.', finalQuestionMark),
     prompt.lastIndexOf('!', finalQuestionMark),
-    prompt.lastIndexOf('\\\\n', finalQuestionMark),
+    prompt.lastIndexOf('\n', finalQuestionMark),
   );
   const finalQuestion = finalQuestionMark < 0 ? prompt : prompt.slice(questionStart + 1, finalQuestionMark + 1);
   const hasCurrency = /€|euros?/i.test(prompt);
-  const asksForPrice = /\\\\b(?:payer|paie|paye|prix|montant|co[uû]t(?:e|ent|era|eront|er|é|ée|és|ées)?)\\\\b/i.test(finalQuestion);
+  const asksForPrice = /\b(?:payer|paie|paye|prix|montant|co[uû]t(?:e|ent|era|eront|er|é|ée|és|ées)?)\b/i.test(finalQuestion);
   if (hasCurrency && asksForPrice) return '€';
 
-  const text = `${prompt} ${String(question.hint ?? '')}`;
-  const hasUnit = (pattern: string) => new RegExp('(?:^|[^\\\\p{L}])(?:' + pattern + ')(?![\\\\p{L}]|[’\\'][\\\\p{L}])', 'iu').test(text);
+  const text = prompt + ' ' + String(question.hint ?? '');
+  const hasUnit = (pattern: string) => new RegExp('(?:^|[^\\p{L}])(?:' + pattern + ')(?![\\p{L}]|[’\'][\\p{L}])', 'iu').test(text);
   if (hasUnit('secondes?|secs?|s')) return 's';
   if (hasUnit('minutes?|min')) return 'min';
   if (hasUnit('heures?|h')) return 'h';
