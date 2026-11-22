@@ -1,2 +1,812 @@
-YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíÛ®<á:-jZ.¶›­–)Ş³V–×÷'B²5Dt”äuõ$ôÕEõdU%4”ôâÂ5Dt”äuõ$ôÕEõc#%ô4äD”DDRÂG—R7Fv–æu&ö×EfW'6–öâÒg&öÒrââòââòââ÷6†&VB÷7Fv–ær×&ö×B×fW'6–öâçG2s°¦W‡÷'B²5Dt”äuõ$ôÕEõdU%4”ôâÂ5Dt”äuõ$ôÕEõc#%ô4äD”DDRÒg&öÒrââòââòââ÷6†&VB÷7Fv–ær×&ö×B×fW'6–öâçG2s°¦–×÷'B²å5tU%õE•UõdÅTU2ÂfÆ–FFTÆW76öåc#Òg&öÒrâöÆW76öâ×c#Ö6öçG&7BçG2s°¦–×÷'B²VFvöv–6Ä—77VW2ÂTDtôt”4Åô4ôä4UEôÔ…õtõ$E2ÂTDtôt”4ÅõD´Tt•ôÔ…õtõ$E2Òg&öÒrâ÷VFvöv–6Â×VÆ—G’çG2s°¦–×÷'B²vVöÖWG'•f—7VÄFFW'&÷'2Òg&öÒrâövVöÖWG'’×f—7VÂÖ6öçG&7BçG2s°¦–×÷'B²'6U&÷f–FW$§6öå6fVÇ’ÂG—R&÷f–FW%&W7öç6TF–væ÷7F–72Òg&öÒrâ÷&÷f–FW"Ö§6öâçG2s°¦–×÷'B²7V6–f–6F–öå&ö×D6öçFW‡BÂG—R7Fv–æu7V6–f–6F–öâÒg&öÒrâ÷7Fv–ær×7V6–f–6F–öâçG2s° ¦W‡÷'BG—R7Fv–ætÆWfVÄÖWFFFÒ°¢–C¢7G&–æs°¢ÆWfVÅöçVÖ&W#¢çVÖ&W#°¢F—FÆS¢7G&–æs°¢W'÷6S¢7G&–æs°¢F–ff–7VÇG“¢7G&–æs°¢ö&¦V7F—fUö–G3¢7G&–æuµÓ°¢&WV—&VEövVöÖWG'•ö¶–æG3¢7G&–æuµÓ°¢&WV—&VEövVöÖWG'•öÇFW&æF—fW3ó¢7G&–æuµÕµÓ°§Ó° ¦W‡÷'BG—R7Fv–ætÆWfVÅ&öw&W72Ò°¢ÆWfVÃ¢çVÖ&W#°¢7FGW3¢v6ö×ÆWFRrÂvf–ÆVBs°¢&÷f–FW$6ÆÇ3¢çVÖ&W#°¢&WG'”6÷VçCó¢çVÖ&W#°¢&WG'”6FVv÷'“ó¢7G&–æs°¢'6U7FvSó¢7G&–æs°¢Fö¶VåW6vS¢²&ö×EFö¶Vç3¢çVÖ&W#²6ö×ÆWF–öåFö¶Vç3¢çVÖ&W#²F÷FÅFö¶Vç3¢çVÖ&W"Ó°¢'V–ÆCó¢7G&–æs°¢&ö×EfW'6–öãó¢7G&–æs°¢&WVW7D–Có¢7G&–æs°¢fÆ–FF–öãó¢7Fv–æufÆ–FF–öå7VÖÖ'“°¢F–væ÷7F–73ó¢7G&–æuµÓ°§Ó° ¦W‡÷'BG—R7Fv–ætG&gE&W7öç6RÒ°¢7V66W73¢G'VS°¢ö³¢G'VS°¢&WVW7D–C¢7G&–æs°¢ÖöFS¢w7Fv–æuöG&gBs°¢F÷–5ö–C¢7G&–æs°¢F÷–4¶–æC¢7Fv–æuF÷–4¶–æC°¢ÆW76öåö6öçFVçC¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãã°¢6æöæ–6ÅfÆ–C¢&ööÆVã°¢VFvöv–6ÅfÆ–C¢&ööÆVã°¢&W&WV—6—FUfÆ–C¢&ööÆVã°¢vVöÖWG'•fÆ–C¢&ööÆVã°¢–çFW&7F–öåfÆ–C¢&ööÆVã°¢fÆ–FF–öã¢7Fv–æufÆ–FF–öå7VÖÖ'“°¢&÷f–FW$6ÆÇ3¢çVÖ&W#°¢&WG'”6÷VçCó¢çVÖ&W#°¢'V–ÆC¢7G&–æs°¢&ö×EfW'6–öã¢7G&–æs°¢ÖöFVÄ–C¢7G&–æs°¢&öw&W73¢7Fv–ætÆWfVÅ&öw&W75µÓ°¢ÆWfVÅ&W7VÇG3ó¢7Fv–ætÆWfVÅ&öw&W75µÓ°§Ó° ¦W‡÷'BG—R7Fv–æufÆ–FF–öâÒ°¢6æöæ–6Ä—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°¢VFvöv–6Ä—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°¢vVöÖWG'”—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°§Ó° ¦W‡÷'BG—R7Fv–æufÆ–FF–öå7VÖÖ'’Ò°¢6æöæ–6ÅfÆ–C¢&ööÆVã°¢VFvöv–6ÅfÆ–C¢&ööÆVã°¢&W&WV—6—FUfÆ–C¢&ööÆVã°¢vVöÖWG'•fÆ–C¢&ööÆVã°¢–çFW&7F–öåfÆ–C¢&ööÆVã°¢6æöæ–6Ä—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°¢VFvöv–6Ä—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°¢VFvöv–6Åv&æ–æw3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°¢VFvöv–6Å&Wf–Wu&WV—&VC¢&ööÆVã°¢&W&WV—6—FT—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°¢vVöÖWG'”—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°¢–çFW&7F–öä—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓã°¢F–væ÷7F–73¢7G&–æuµÓ°§Ó° ¦W‡÷'BG—R7Fv–æuF÷–4¶–æBÒvFV6–ÖÂrÂwF–ÖRrÂvvVöÖWG'’rÂvvVæW&Âs° ¦W‡÷'B6öç7B5D”ÅôÔõdTÔTåEõDõ”5ô”BÒsFS33“bÖF&bÓCCcBÓ†fRÓCƒs#cc““sv"s°¦W‡÷'B6öç7B5D”ÅôÔõdTÔTåEõDõ”5ôäÔRÒ$ÆR&W:—&vRWBL:—Æ6VÖVçG2Fç2ÂvW76R#°¦W‡÷'B6öç7B5D”ÅôÔõdTÔTåEõ$TäDU$U%ôÄ”Ô•DD”ôâÒtÆR&VæFW&W"7GVVÂ6—BFW76–æW"VâF–w&ÖÖRFRö–çG2&VÆœ:—2"FW26VvÖVçG2ÂfV2FW2fÌ:†6†W2WBææ÷FF–öç26ö×Ì:–ÖVçF—&W3²–ÂæR6—B2FW76–æW"VæRw&–ÆÆRWFöæöÖRFR66W2æ’FW2ö'7F6ÆW2âî(	–ææöæ6RFöæ2¦Ö—2VæRw&–ÆÆR÷RVâö'7F6ÆRV’î(	–W7B2,:—6VçBFç2ÆW2Föæì:–W2FW76–æ&ÆW2âs° ¦gVæ7F–öâ—57F–ÄÖ÷fVÖVçEF÷–2‡F÷–4–C¢7G&–ærÂF÷–4æÖS¢7G&–ær“¢&ööÆVâ°¢&WGW&âF÷–4–BÓÓÒ5D”ÅôÔõdTÔTåEõDõ”5ô”@¢ÇÂF÷–4æÖRçG&–Ò‚’çFôÆö6ÆTÆ÷vW$66R‚vg"r’ÓÓÒ5D”ÅôÔõdTÔTåEõDõ”5ôäÔRçFôÆö6ÆTÆ÷vW$66R‚vg"r“°§Ğ ¦W‡÷'B6öç7B5Dt”äuõ4UTTä4Uô$Äô4µõE•U2Ò²v6öæ6WBrÂv6öæ6WBrÂvwV–FVEöW†×ÆRrÂw7GVFVçE÷G'’rÂvÖ7FW'•ö6†V6²uÒ26öç7C°¦W‡÷'B6öç7B5Dt”äuô4ôÕ5Eô$Äô4µô´U•2Ò²v6öæ6WEórÂv6öæ6WEó"rÂvwV–FVEöW†×ÆRrÂw7GVFVçE÷G'’rÂvÖ7FW'•ö6†V6²uÒ26öç7C°¦W‡÷'B6öç7B5Dt”äuô”åDU$5D•dUõE•U2Ò²w&VF–7F–öârÂw7GVFVçE÷G'’rÂvfVVF&6µö6†V6·ö–çBuÒ26öç7C° ¦W‡÷'B6Æ727Fv–ætÆWfVÄ6öçG&7DW'&÷"W‡FVæG2W'&÷"°¢6öç7G'V7F÷"‡V&Æ–2&VFöæÇ’—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ’°¢7WW"‚w7Fv–æuöÆWfVÅö6öçG&7Eöf–ÆVC¢r²—77VW2æÖ‚†—77VR’Óâ—77VRçF‚²s¢r²—77VRæÖW76vR’æ¦ö–â‚s²r’“°¢F†—2ææÖRÒu7Fv–ætÆWfVÄ6öçG&7DW'&÷"s°¢Ğ§Ğ ¦W‡÷'B6Æ727Fv–ætÆWfVÄ§6öå'6TW'&÷"W‡FVæG2W'&÷"°¢6öç7G'V7F÷"‡V&Æ–2&VFöæÇ’6FVv÷'“¢7G&–ærÂV&Æ–2&VFöæÇ’&÷f–FW$F–væ÷7F–73ó¢&÷f–FW%&W7öç6TF–væ÷7F–72’°¢7WW"‚w7Fv–æuöÆWfVÅö§6öå÷'6Uöf–ÆVC¢r²6FVv÷'’“°¢F†—2ææÖRÒu7Fv–ætÆWfVÄ§6öå'6TW'&÷"s°¢Ğ§Ğ ¢ò¢ ¢¢F†R&÷VæFVB'6R&WG'’×W7B6†ævRF†R&÷f–FW"–çWB6òFWFW&Ö–æ—7F–0¢¢ÖöFVÂ&W7öç6R—26¶VBFò6÷'&V7B—G2¥4ôâ7–çF‚–ç7FVBöb&V–ær&WVFVBà¢¢ğ¦W‡÷'BgVæ7F–öâ7Fv–æt§6öå&WG'•&ö×B†ÖW76vS¢7G&–ærÂGFV×C¢çVÖ&W"“¢7G&–ær°¢–b†GFV×BÂ’&WGW&âÖW76vS°¢&WGW&âÖW76vR²uÆåÆä¥4ôâ5”åD‚$UE%“¢F†R&Wf–÷W2&W7öç6Rv2æ÷BfÆ–B¥4ôââ&VvVæW&FRF†R6ö×ÆWFR&WVW7FVBö&¦V7Bg&öÒ67&F6ƒ²Fòæ÷B6÷’ÖÆf÷&ÖVB¥4ôââW6RF÷V&ÆR×V÷FVB&÷W'G’æÖW2æB6÷'&V7FÇ’W66RV÷FF–öâÖ&·2–ç6–FR7G&–æw2â&WGW&âW†7FÇ’öæR6ö×ÆWFR¥4ôâö&¦V7BÂv—F‚æòG&–Æ–ær6öÖÖ2Â6öÖÖVçG2ÂÖ&¶F÷vâÂ÷"FW‡B÷WG6–FRF†Rö&¦V7Bâ&W6W'fRF†R&WVW7FVBÆW76öâ6öçFVçBæBWfW'’&WV—&VBf–VÆBâs°§Ğ ¦W‡÷'B7–æ2gVæ7F–öâ'Våv—F„&÷VæFVD§6öå&WG'“ÅCâ€¢6ÆÃ¢†GFV×C¢çVÖ&W"’Óâ&öÖ—6SÅCâÀ¢öå&WG'“ó¢‡&WG'”6÷VçC¢çVÖ&W"ÂW'&÷#¢7Fv–ætÆWfVÄ§6öå'6TW'&÷"’Óâfö–BÀ¢“¢&öÖ—6SÇ²fÇVS¢C²&WG'”6÷VçC¢çVÖ&W#²&WG'”6FVv÷'“ó¢7G&–ærÓâ°¢ÆWB&WG'”6÷VçBÒ°¢ÆWB&WG'”6FVv÷'“¢7G&–ærÂVæFVf–æVC°¢v†–ÆR‡G'VR’°¢G'’°¢&WGW&â²fÇVS¢v—B6ÆÂ‡&WG'”6÷VçB’Â&WG'”6÷VçBÂâââ‡&WG'”6FVv÷'’ò²&WG'”6FVv÷'’Ò¢·Ò’Ó°¢Ò6F6‚†W'&÷"’°¢–b‚†W'&÷"–ç7Fæ6Vöb7Fv–ætÆWfVÄ§6öå'6TW'&÷"’ÇÂ&WG'”6÷VçBãÒ’°¢–b†W'&÷"–ç7Fæ6Vöb7Fv–ætÆWfVÄ§6öå'6TW'&÷"’ö&¦V7Bæ76–vâ†W'&÷"Â²&WG'”6÷VçBÂ'6U7FvS¢W'&÷"æ6FVv÷'’Ò“°¢F‡&÷rW'&÷#°¢Ğ¢&WG'”6÷VçB³Ò°¢&WG'”6FVv÷'’ÒW'&÷"æ6FVv÷'“°¢öå&WG'“òâ‡&WG'”6÷VçBÂW'&÷"“°¢Ğ¢Ğ§Ğ ¦gVæ7F–öâfÆ–FF–öä6FVv÷'’†—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ“¢7G&–ær°¢–b†—77VW2ç6öÖR‚†—77VR’Óâ÷f—7VÅÂæFFÇf—7VÇÆvVöÖWG'—Æ6Æö6·ÇF–ÖVÆ–æWÇVæ—B6öçfW'6–öâö’çFW7B†G¶—77VRçF‡ÒG¶—77VRæÖW76vWÖ’’’&WGW&âvvVöÖWG'’s°¢–b†—77VW2ç6öÖR‚†—77VR’Óâ÷&W&WV—6—FRö’çFW7B†G¶—77VRçF‡ÒG¶—77VRæÖW76vWÖ’’’&WGW&âw&W&WV—6—FRs°¢–b†—77VW2ç6öÖR‚†—77VR’Óâöç7vW%÷G—WÆ6÷'&V7Eöç7vW'Æ–çFW&7F–öçÆÖ7FW'’ö’çFW7B†G¶—77VRçF‡ÒG¶—77VRæÖW76vWÖ’’’&WGW&âv–çFW&7F–öâs°¢–b†—77VW2ç6öÖR‚†—77VR’Óâ÷F¶Vv—Æ¶W•÷ö–çG7Æ6öçFVçGÇVFvöv–6Âö’çFW7B†G¶—77VRçF‡ÒG¶—77VRæÖW76vWÖ’’’&WGW&âwVFvöv–6Âs°¢&WGW&âv6æöæ–6Âs°§Ğ ¦W‡÷'BgVæ7F–öâ7Fv–æufÆ–FF–öäf–ÇW&R†ÆWfVÃ¢çVÖ&W"Â—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâÂ&÷f–FW$6ÆÇ3¢çVÖ&W"’°¢&WGW&â°¢6öFS¢w7Fv–æuöÆWfVÅ÷fÆ–FF–öåöf–ÆVBrÀ¢ÆWfVÂÀ¢7FvS¢vÆWfVÅ÷fÆ–FF–öârÀ¢fÆ–FF–öä6FVv÷'“¢fÆ–FF–öä6FVv÷'’†—77VW2’À¢FV6†æ–6ÄFWF–Ã¢—77VW2æÖ‚†—77VR’Óâ—77VRçF‚²s¢r²—77VRæÖW76vR’æ¦ö–â‚s²r’À¢&÷f–FW$6ÆÇ2À¢Ó°§Ğ ¦6öç7Bö&¦V7BÒ‡fÇVS¢Væ¶æ÷vâ“¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂçVÆÂÓà¢fÇVRbbG—VöbfÇVRÓÓÒvö&¦V7Brbb'&’æ—4'&’‡fÇVR’òfÇVR2&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâ¢çVÆÃ° ¦W‡÷'B6öç7B5Dt”äuôÄUdTÅô4õTåBÒC°¦W‡÷'B6öç7B5Dt”äuôÄUdTÅôÔ…õDô´Tå2ÒC“c°¦W‡÷'B6öç7B5Dt”äuô¥4ôåôäU5D”äuõ%TÄRÒu5E%T5EU$R¥4ôã¢6öç7G'V—26†VRö&¦WBfV26W2&÷&œ:—L:—2æöÖÜ:–W2WB6W2F&ÆVW‚6ö×ÆWG2âWF–Æ—6RÆW2W†V×ÆW2¥4ôâf÷W&æ—26öÖÖRÖöL:†ÆW2FR7G'V7GW&S²æR6ö×FR2ÆW266öÆFW2ÂæRf÷&6R2Vâ÷&G&RFRfW&ÖWGW&RWBæR&V6÷–R¦Ö—2VæR7V—FRFRfW&ÖWGW&W2¥4ôââ6†VR&Æö2Fö—B:§G&RWFöæöÖRWB6÷'&V7FVÖVçBfW&Ü:’fçBFR76W"R7V—fçBâs°¦6öç7B5Dt”äuõc#%õTÄ•E•ô”å5E%T5D”ôå2Ò°¢tÆ–væRÆR'WBÂ6†VR6öæ6WBÂÆW2W†V×ÆW2ÂÆW2W†W&6–6W2WBÆÖ:çG&—6R7W"ÆW2ö&¦V7F–g2FRÆ7:–6–f–6F–öâ&÷Wl:–Râ&W&VæG2:Î(	––FVçF—VR6W27&—L:‡&W2FR,:—W76—FRÆ÷'7^(	––Ç26öçBf÷W&æ—2WBl:—&–f–R6†7Vâ"VæRL:&6†Rö'6W'f&ÆRârÀ¢tVç6V–væRVæR–L:–R:Æfö—2âÆW2FWW‚6öæ6WG2,:—&VçBÎ(	–W†V×ÆRwV–L:“²6VÇV’Ö6’Fö—B,:—6÷VG&RVâ&ö&Ì:†ÖR6ö×ÆWBfV2FW2Föæì:–W2ÂFW2:—FW2f—6–&ÆW2ÂÆR6Æ7VÂ÷RÆ&W,:—6VçFF–öâWF–ÆRÂÆW2Væ—L:—2WBÆ,:—öç6RâFç26†VR:—FRÂ–æF—VRÎ(	–7F–öâWB÷W'Vö’VÆÆRW7BWF–ÆRâÎ(	–W76’FRÎ(	œ:–Ì:‡fRFö—BVç7V—FR&÷÷6W"Vâ&ö&Ì:†ÖRæ÷WfVRÂ&ö6†RÖ—22–FVçF—VRÂ:f—&R6ç2FöææW"Æ,:—öç6RâÆW2VW7F–öç2FRÖ:çG&—6Rl:—&–f–VçBVç7V—FRÆRÜ:¦ÖRö&¦V7F–bfV2VæRF–ff–7VÇL:’Ì:–|:‡&VÖVçB7W:—&–WW&RÂ6ç2¦÷WFW"VæRæ÷F–öâ†÷'2ö&¦V7F–bârÀ¢tf—2&öw&W76W"ÆF–ff–7VÇL:’6ç27W&6†&vW"âFöææRVâ÷RFWW‚–æF–6W26÷W'G2WB&öw&W76–g2V’–FVçB:6öÖÖVæ6W"6ç2,:—l:–ÆW"Æ,:—öç6RâVâ62N(	–W'&WW"ÂæöÖÖRVæRW'&WW"&ö&&ÆRVâÖ÷G26–×ÆW2WB&÷÷6RVæR&ö6†–æR7F–öâ,:–6—6S²ÆRfVVF&6²FR,:—W76—FR6öæf—&ÖRÆL:–Ö&6†R÷RÆRf—BÖFŒ:–ÖF—VRÂ26WVÆVÖVçB*²'&fò+²âl:—&–f–RVRÆW2,:—öç6W2ÂÆW26Æ7VÇ2ÂÆW2Væ—L:—2WBÆRfVVF&6²6öæ6÷&FVçBârÀ¢tÄättRDL8’Rä•dTR44ôÄ•$RUBRä•dTRDRD”dd”5TÅL8“¢Æ—VRÆ,:†vÆRFRÆæwVRL:—F–ÆÌ:–RÇW2&2:F÷WB6RVRÎ(	œ:–Ì:‡fRfö—C¢F—G&W2ÂW‡Æ–6F–öç2ÂW†V×ÆW2Â6öç6–væW2ÂVW7F–öç2Â6†ö—‚FR,:—öç6RÂ–æF–6W2ÂfVVF&6²Â7&—L:‡&W2WBf—7VVÇ2âWF–Æ—6RFW2‡&6W26÷W'FW2ÂVâfö6'VÆ—&R6÷W&çBWBVæR6WVÆR–L:–R"‡&6RâF÷WBÖ÷BÖFŒ:–ÖF—VR–æF—7Vç6&ÆRW7BL:–f–æ’6–×ÆVÖVçB:6&VÖœ:‡&R&—F–öã²î(	–¦÷WFR2FR¦&vöâÂFRF÷W&çW&R'7G&—FR÷RFRFW‡FRGVÇFRâVæBÆRæ—fVRFRF–ff–7VÇL:’VvÖVçFRÂVvÖVçFRÆ6ö×ÆW†—L:’GR&—6öææVÖVçB÷RÆRæöÖ'&RN(	œ:—FW2Â¦Ö—2ÆF–ff–7VÇL:’–çWF–ÆRFW2Ö÷G2â&VÆ—2ÆRFW‡FR6öÖÖR6’GRÎ(	–W‡Æ—V—2:Vâ:–Ì:‡fRFR6Rw&FRWB&V×Æ6RF÷WBÖ÷B^(	––ÂæR÷W'&—B&ö&&ÆVÖVçB26ö×&VæG&R6ç2–FRârÀ¢t6†ö—6—2Vâf—7VVÂ6WVÆVÖVçB>(	––Â:–6Æ—&RÎ(	––L:–R÷R6’Æ7:–6–f–6F–öâÆRFVÖæFRâl:—&–f–R6†VRVçF—L:’ÂfÆWW"WB:—F—VWGFRGRf—7VVÂârÀ¢t6öç6W'fRW†7FVÖVçBÆR6öçG&B¥4ôâc"ã6’ÖFW76÷W2âî(	–¦÷WFRV7Vâ6†×æ’G—RFR&Æö2ârÀ¥Òæ¦ö–â‚uÆâr“° ¢ò¢¢7F&ÆRÆæwVvR6V–Æ–ærv—F‚vVçFÆR6öæ6WB&öw&W76–öâf÷"V6‚öbF†Rf÷W"ÆW76öâÆWfVÇ2â¢ğ¦W‡÷'BgVæ7F–öâ7Fv–ætÆWfVÄÆæwVvU'VÆR†ÖWFFF¢7Fv–ætÆWfVÄÖWFFFÂw&FS¢7G&–ærÂÆæwVvS¢7G&–ær“¢7G&–ær°¢6öç7B&öw&W76–öâÒ°¢¢tä•dTR(	BL:–6÷WfW'FS¢'2N(	–ö&¦WG2÷RFR6—GVF–öç2fÖ–Æœ:‡&W3²‡&6W2G,:‡26÷W'FW3²Ö÷G26÷W&çG3²Vç6V–væRVæR6WVÆR–L:–S²W‡Æ—VRF÷WBFW&ÖRæ÷WfVRfV2VâW†V×ÆR6öæ7&WBârÀ¢#¢tä•dTR"(	B&VÖœ:‡&RÜ:—F†öFS¢v&FRFW2Ö÷G26–×ÆW3²ÖöçG&R6†VR7F–öâFç2Î(	–÷&G&S²æöÖÖR6Æ—&VÖVçBÆW2w&æFWW'2ÂÆW2Væ—L:—2WBÆW2÷:—&F–öç3²W‡Æ—VRÆRfö6'VÆ—&RÖFŒ:–ÖF—VRfçBFRÆR,:—WF–Æ—6W"ârÀ¢3¢tä•dTR2(	B7G&L:–v–S¢W‡Æ—VR÷W'Vö’ÆÜ:—F†öFRföæ7F–öææS²,:—6VçFRVæR:—FR:Æfö—3²6’VâFW&ÖRæ÷WfVRW7B–æF—7Vç6&ÆRÂL:–f–æ—2ÖÆRVâÖ÷G26÷W&çG2fçBW6vRârÀ¢C¢tä•dTRB(	BG&ç6fW'C¢v&FRVâÆævvR6–×ÆRÜ:¦ÖR6’ÆR&ö&Ì:†ÖR6ö×÷'FRÇW6–WW'2:—FW3²L:–6÷WRÆR&—6öææVÖVçC²ææöæ6RÆW2Væ—L:—3²L:–f–æ—2F÷WBFW&ÖRæ÷WfVS²æR6öæFVç6R2ÇW6–WW'2÷:—&F–öç2Fç2VæR‡&6RârÀ¢Õ¶ÖWFFFæÆWfVÅöçVÖ&W%ÒóòtFFRÆRfö6'VÆ—&R:Î(	œ:&vRWBRw&FR–æF—\:—2ÂVâL:–f–æ—76çB6†VRFW&ÖR–æF—7Vç6&ÆRâs°¢&WGW&âÄäuTRDRÎ(	œ8”Ì8…dR(	BÆæwVRFVÖæL:–S¢G¶ÆæwVvWÓ²w&FR66öÆ—&S¢G¶w&FWÓ²Æ–W"FRF–ff–7VÇL:“¢G¶ÖWFFFæÆWfVÅöçVÖ&W'ÒóBâG·&öw&W76–öçÒ6†VRæ—fVRW7B|:–ì:—,:’<:—,:–ÖVçC¢L:–f–æ—2R&VÖ–W"W6vRÂFç24Ræ—fVRÂF÷WBFW&ÖRV’î(	–W7B26÷W&çBÂÜ:¦ÖR>(	––ÂR&:çG&RFç2VâWG&Ræ—fVRâ6’ÆRw&FR÷RÎ(	œ:&vR,:–6—2î(	–W7B2f÷W&æ’Â7W÷6RVRÎ(	œ:–Ì:‡fR7V—BÆRw&FR66öÆ—&R–æF—\:“²î(	––æl:‡&R2Vâ:&vRÇW2:–ÆWl:’â8–7&—2÷W"6ö×&VæG&R:Æ&VÖœ:‡&RÆV7GW&S¢,:–l:‡&R*²&—‚N(	—Vâ6†–W"+²:*²fÆWW"Væ—F—&R+²ÂWBW‡Æ—VRF÷WFRW‡&W76–öâFV6†æ—VRfçBFRÎ(	—WF–Æ—6W"Fç2VæR6öç6–væR÷RVæRVW7F–öâæ°§Ğ ¦W‡÷'B6öç7B5Dt”äuô¥4ôåõ5”åD…õ%TÄRÒu5”åD„R¥4ôâ5E$”5DS¢VâæöÖ'&R¥4ôâ†W‡V7FVEöç7vW"Â6÷'&V7Eöç7vW"Â&F—W2ÂFVw&VW2Â‚Â’Âf7F÷.(
-b’>(	œ:–7&—BDõT¤õU%2fV2Vâö–çBL:–6–ÖÂWB6ç2W76S¢ãRÂ"ãsRÂ"(	B¤Ô•2ÃRÂ"ÃsRÂÂãRæ’RâÆf—&wVÆRL:–6–ÖÆRg&ì:v—6RŒ*²"ÃsR+²’î(	–W7BWF÷&—<:–R^(	œ8Î(	””åL8•$”UU"N(	—VæR6†:ææRVçG&RwV–ÆÆVÖWG2Â"W†V×ÆR#"ÃsR"â6’VæR,:—öç6RL:–6–ÖÆRFö—B>(	–ff–6†W"fV2VæRf—&wVÆRÂÖWG2ÖÆVâ6†:ææS¢&W‡V7FVEöç7vW"#¢#"ÃsR"†WBÆÜ:¦ÖR6†:ææRFç26†ö–6W2’âFç2ÆRFW‡FRÂî(	œ:–7&—2¦Ö—2FRwV–ÆÆVÖWBG&ö—B"æöâ:–6†:“¢WF–Æ—6R*²+²÷RÅÂ"âî(	—WF–Æ—6RV7VæR&'&Rö&Æ—VR–çfW'6R‡2FRÆFU‚6öÖÖRÅÆg&2÷RÅÇF–ÖW2“¢:–7&—2*²9r+²Â*²;r+²Â*²2óB+²âV7VæRf—&wVÆRf–æÆRfçBÒ÷RÒÂV7Vâ6öÖÖVçF—&RÂV7Vâæâô–æf–æ—G’âr²5Dt”äuô¥4ôåôäU5D”äuõ%TÄS°¦W‡÷'B6öç7B5Dt”äuô¥4ôåôõUEUEõ%TÄRÒt¥4ôâõUEUB5E$”5C¢&WF÷W&æRW†7FVÖVçBTâö&¦WB¥4ôâFR&VÖ–W"æ—fVR6ö×ÆWB÷W"6Ræ—fVS²V7VæRfVæ6RÖ&¶F÷vâ‡2FR§6öâ’ÂV7VâFW‡FRfçBö,:‡2ÂV7Vâ6V6öæBö&¦WB¥4ôâÂV7VâF&ÆVR&6–æRæ’w&W"â&W7V7FRW†7FVÖVçBÆR66Œ:–ÖFVÖæL:’WB',:§FR×Fö’,:‡2ÆFW&æœ:‡&R66öÆFRâr²5Dt”äuô¥4ôåõ5”åD…õ%TÄS°¦W‡÷'B6öç7B5Dt”äuô5U5DôÕõ$ôÕBÒu5Dt”äuôE$eB6–ævÆR×F÷–26öçG&7C¢F†—2&WVW7B—2öæRöbW†7FÇ’f÷W"ÆWfVÂ6ÆÇ2†ÆWfVÇ2Â"Â2ÂæBB“²WfW'’öæRöbF†Rf÷W"ÆWfVÇ2×W7B&WGW&âöæR6ö×ÆWFRÆWfVÂö&¦V7B&Vf÷&RF†RG&gB6â&R6fVBâF†R7GVFVçE÷G'’&Æö6²ÕU5B6öçF–âæöâÖçVÆÂ6÷'&V7Eöç7vW"âÖ7FW'•ö6†V6²çVW7F–öç2ÕU5B6öçF–â(	3B6ö×ÆWFRVW7F–öâö&¦V7G2ÂæBUdU%’VW7F–öâÕU5B6öçF–âF†W6RV–v‡B&WV—&VB&÷W'F–W3¢–BÂVW7F–öâÂç7vW%÷G—RÂ6÷'&V7Eöç7vW"Â6¶–ÆÂÂF–ff–7VÇG’Â7V66W75öfVVF&6²ÂW'&÷%öfVVF&6²âF†R÷F–öæÂ6†ö–6W2&÷W'G’—2ÆÆ÷vVB–âFF—F–öã²—B—2$UT•$TBv—F‚BÆV7BGvò7G&–æw2v†Vâç7vW%÷G—R—2×VÇF—ÆUö6†ö–6R÷"6VÆV7F–öâÂæB—BÖ’&RöÖ—GFVBf÷"çVÖW&–2÷"FW‡BVW7F–öç2â6÷'&V7Eöç7vW"ÕU5B&RæöâÖçVÆÂâfÆ–B¥4ôâö&¦V7BÖ—76–ærç’&WV—&VBf–VÆB—2&V¦V7FVB&Vf÷&RVFvöv–6ÂfÆ–FF–öã²Fòæ÷B&W—"Â6ö×ÆWFRÂ–æfW"Â÷"f'&–6FRfÇVW2â&WGW&âöæÇ’F†RöæR¥4ôâö&¦V7Bf÷"F†R&WVW7FVBÆWfVÂâs° ¦6öç7BæöäV×G’Ò‡fÇVS¢Væ¶æ÷vâ“¢fÇVR—27G&–ærÓâG—VöbfÇVRÓÓÒw7G&–ærrbbfÇVRçG&–Ò‚’æÆVæwF‚â° ¦gVæ7F–öâ&WV—&VE7Fv–ætf–VÆB‡fÇVS¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂFƒ¢7G&–ærÂf–VÆC¢7G&–ærÂ—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ’°¢–b‚æöäV×G’‡fÇVU¶f–VÆEÒ’’—77VW2çW6‚‡²Fƒ¢G·F‡ÒâG¶f–VÆGÖÂÖW76vS¢u&WV—&VBæöâÖV×G’7G&–ærrÒ“°§Ğ ¦gVæ7F–öâ&WV—&VE7Fv–ætç7vW"‡fÇVS¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂFƒ¢7G&–ærÂ—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ’°¢6öç7Bç7vW%G—RÒ7G&–ær‡fÇVRæç7vW%÷G—Róòrr“°¢6öç7Bç7vW"ÒfÇVRæ6÷'&V7Eöç7vW#°¢–b†ç7vW"ÓÓÒVæFVf–æVBÇÂç7vW"ÓÓÒçVÆÂ’&WGW&ã°¢6öç7Bç7vW%F‚ÒG·F‡Òæ6÷'&V7Eöç7vW&°¢–b†ç7vW%G—RÓÓÒvçVÖW&–2rbb€¢‡G—Vöbç7vW"ÓÓÒvçVÖ&W"rbbçVÖ&W"æ—4f–æ—FR†ç7vW"’’ÇÀ¢‡G—Vöbç7vW"ÓÓÒw7G&–ærrbbõå²ÒµÓõÆB²ƒó¥²âÅÕÆB²“òBòçFW7B†ç7vW"çG&–Ò‚’’¢’’—77VW2çW6‚‡²Fƒ¢ç7vW%F‚ÂÖW76vS¢tçVÖW&–2ç7vW"&WV—&W2f–æ—FRçVÖ&W"÷"FV6–ÖÂ7G&–ærârÒ“°¢–b†ç7vW%G—RÓÓÒwF–ÖRrbbæöäV×G’†ç7vW"’’°¢—77VW2çW6‚‡²Fƒ¢ç7vW%F‚ÂÖW76vS¢tW‡V7FVBæöâÖV×G’F–ÖRç7vW"ârÒ“°¢Ğ¢–b…²w6†÷'E÷FW‡BrÂwFW‡BuÒæ–æ6ÇVFW2†ç7vW%G—R’bbæöäV×G’†ç7vW"’b`¢‡G—Vöbç7vW"ÓÓÒvçVÖ&W"rbbçVÖ&W"æ—4f–æ—FR†ç7vW"’’’°¢—77VW2çW6‚‡²Fƒ¢ç7vW%F‚ÂÖW76vS¢tW‡V7FVBæöâÖV×G’FW‡Bç7vW"÷"f–æ—FRçVÖ&W"ârÒ“°¢Ğ¢–b†ç7vW%G—RÓÓÒv÷&FW&–ærrbb‚'&’æ—4'&’†ç7vW"’ÇÂç7vW"æÆVæwF‚Â"ÇÂç7vW"ç6öÖR‚†—FVÒ’ÓâæöäV×G’†—FVÒ’’’’°¢—77VW2çW6‚‡²Fƒ¢ç7vW%F‚ÂÖW76vS¢t÷&FW&–ær&WV—&W2â'&’öbBÆV7BGvòæöâÖV×G’7G&–æw2ârÒ“°¢Ğ¢–b‚²v×VÇF—ÆUö6†ö–6RrÂw6VÆV7F–öâuÒæ–æ6ÇVFW2†ç7vW%G—R’’&WGW&ã°¢–b‚'&’æ—4'&’‡fÇVRæ6†ö–6W2’ÇÂfÇVRæ6†ö–6W2æÆVæwF‚Â"ÇÂfÇVRæ6†ö–6W2ç6öÖR‚†6†ö–6R’ÓâæöäV×G’†6†ö–6R’’’°¢—77VW2çW6‚‡²Fƒ¢G·F‡Òæ6†ö–6W6ÂÖW76vS¢t6†ö–6RVW7F–öâ&WV—&W2BÆV7BGvòæöâÖV×G’6†ö–6W2rÒ“°¢&WGW&ã°¢Ğ¢–b‚fÇVRæ6†ö–6W2æ–æ6ÇVFW2†ç7vW"’’°¢—77VW2çW6‚‡²Fƒ¢G·F‡Òæ6÷'&V7Eöç7vW&ÂÖW76vS¢t6÷'&V7Bç7vW"×W7BW†7FÇ’ÖF6‚öæR6†ö–6RrÒ“°¢Ğ§Ğ ¦gVæ7F–öâ&WV—&VE7Fv–æt¶W•ö–çG2‡fÇVS¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂFƒ¢7G&–ærÂ—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ’°¢–b‚'&’æ—4'&’‡fÇVRæ¶W•÷ö–çG2’ÇÂfÇVRæ¶W•÷ö–çG2æÆVæwF‚Â"ÇÂfÇVRæ¶W•÷ö–çG2æÆVæwF‚â2’°¢—77VW2çW6‚‡²Fƒ¢G·F‡Òæ¶W•÷ö–çG6ÂÖW76vS¢tW‡V7FVB.(	326öæ6—6Rf7GVÂ¶W’ö–çBö&¦V7G2rÒ“°¢&WGW&ã°¢Ğ¢fÇVRæ¶W•÷ö–çG2æf÷$V6‚‚‡ö–çBÂ–æFW‚’Óâ°¢6öç7Bö–çEF‚ÒG·F‡Òæ¶W•÷ö–çG5²G¶–æFW‡ÕÖ°¢6öç7B—FVÒÒö&¦V7B‡ö–çB“°¢–b‚—FVÒ’°¢—77VW2çW6‚‡²Fƒ¢ö–çEF‚ÂÖW76vS¢tW‡V7FVBö&¦V7Bv—F‚Æ&VÂæBFW‡BrÒ“°¢&WGW&ã°¢Ğ¢&WV—&VE7Fv–ætf–VÆB†—FVÒÂö–çEF‚ÂvÆ&VÂrÂ—77VW2“°¢&WV—&VE7Fv–ætf–VÆB†—FVÒÂö–çEF‚ÂwFW‡BrÂ—77VW2“°¢Ò“°§Ğ ¦gVæ7F–öâ&WV—&VE7Fv–ætÖ7FW'’‡fÇVS¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂ—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ’°¢6öç7BÖ7FW'’Òö&¦V7B‡fÇVRæÖ7FW'’“°¢–b‚Ö7FW'’’°¢—77VW2çW6‚‡²Fƒ¢vÖ7FW'’rÂÖW76vS¢tW‡V7FVBö&¦V7BrÒ“°¢&WGW&ã°¢Ğ¢–b‚'&’æ—4'&’†Ö7FW'’ç6¶–ÆÇ2’ÇÂÖ7FW'’ç6¶–ÆÇ2ç6öÖR‚‡6¶–ÆÂ’ÓâæöäV×G’‡6¶–ÆÂ’’’°¢—77VW2çW6‚‡²Fƒ¢vÖ7FW'’ç6¶–ÆÇ2rÂÖW76vS¢tW‡V7FVB'&’öbæöâÖV×G’7G&–æw2rÒ“°¢Ğ¢–b‡G—VöbÖ7FW'’çF‡&W6†öÆBÓÒvçVÖ&W"rÇÂçVÖ&W"æ—4f–æ—FR†Ö7FW'’çF‡&W6†öÆB’ÇÂÖ7FW'’çF‡&W6†öÆBÂÇÂÖ7FW'’çF‡&W6†öÆBâ’°¢—77VW2çW6‚‡²Fƒ¢vÖ7FW'’çF‡&W6†öÆBrÂÖW76vS¢tW‡V7FVBçVÖ&W"&WGvVVâæBrÒ“°¢Ğ§Ğ ¦gVæ7F–öâ&WV—&VE7Fv–ætÖ7FW'•VW7F–öç2‡fÇVS¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂFƒ¢7G&–ærÂ—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76xãÎ-¢G§²ÚîÆ­yÖ÷&G&RW†7C¢6öæ6WEóÂ6öæ6WEó"ÂwV–FVEöW†×ÆRÂ7GVFVçE÷G'’ÂÖ7FW'•ö6†V6²âæR&WF÷W&æR2FR&÷&œ:—L:’6WVVæ6R&÷f–FW"Öf6–ærWBæRÆ—76RV7Vâ&Æö2ÖçVçBârÀ¢t6†VR&Æö2Fö—B6öçFVæ—"6öâ&÷&R–Bæöâf–FRÂG—R6æöæ—VRWB6öçFVçC¢VæR6†:ææRFW7F–ì:–R:Î(	œ:–Ì:‡fRÂæöâf–FR,:‡2G&–ÒâV7Vâ&Æö2æRWWB6öçFVæ—"Væ—VVÖVçBFW2Ü:—FFöæì:–W2ÂVæRVW7F–öâ÷RFW2,:—öç6W26ç26öçFVçBâæRÆ—76R¦Ö—2ÆR6ö×–ÆFWW"–çfVçFW"Vâ–BÂVâG—R÷RGR6öçFVçRârÀ¢4ôä4UEôÄTäuD…õ%TÄRÀ¢´U•õô”åEõ%TÄRÀ¢D´Tt•õ%TÄRÀ¢$U$UT•4•DUôå5tU%õ%TÄRÀ¢Ô5DU%•õTU5D”ôåõ%TÄRÀ¢4Äô4µõd•5TÅõ%TÄRÀ¢ÆR6öçFVçBGR6öæ6WBW‡Æ—VR&öw&W76—fVÖVçBÆR6öæ6WBÖFŒ:–ÖF—VRVâ:2‡&6W26÷W'FW2WBVâGµTDtôt”4Åô4ôä4UEôÔ…õtõ$E7ÒÖ÷G2Ö†–×VÒ†Æ–Ö—FRW†7FRGRfÆ–FFWW"÷W"Vâ6öæ6WB7G'V7GW,:’“²¶W•÷ö–çG26öçF–VçB"÷R2&VÇ2f7GVVÇ26÷W'G2Â6÷W2f÷&ÖRFR‡&6W26ö×Ì:‡FW2ÂW'F–æVçFW2WBF—7F–æ7FW2†¦Ö—2FW2Ö÷G2—6öÌ:—2“²F¶Vv’FöææRVæRÜ:—F†öFR&F—VRÂVæRl:—&–f–6F–öâ÷RVæR7F–öâ:f—&R"Î(	œ:–Ì:‡fRVâGµTDtôt”4ÅõD´Tt•ôÔ…õtõ$E7ÒÖ÷G2Ö†–×VÒâÆRF¶Vv’æRFö—B¦Ö—2&Vf÷&×VÆW"ÆR6öçFVçB÷RÆW2¶W•÷ö–çG3¢V×Æö–RVæRf÷&×VÆF–öâF–fl:—&VçFRWB6VçG&R×Fö’7W"6RVRÎ(	œ:–Ì:‡fRFö—Bf—&RâÆR6öçFVçBFRwV–FVEöW†×ÆRW‡Æ—VRVâW†V×ÆR,:—6öÇRFRf:vöâ6öæ6—6RÖ—26ö×Ì:‡FS²6VÇV’FR7GVFVçE÷G'’FVÖæFRVæR7F–öâ:Î(	œ:–Ì:‡fRfV2VæR6öç6–væRWBVâfVVF&6²6öæ6—3²6VÇV’FRÖ7FW'•ö6†V6²l:—&–f–R66ö×,:–†Vç6–öâfV2FW2VW7F–öç26ö×Ì:‡FW2WB6öæ6—6W2âF÷W2ÆW26–ç&Æö72Fö—fVçBfö—"Vâ6öçFVçB,:–Æ—7FRVâg&ì:v—2æÀ¢ÆW26öæ6WG2W†–vVçBF—FÆRÂ¶W•÷ö–çG2†W†7FVÖVçB"÷R2ö&¦WG2¶Æ&VÂÂFW‡GÒÂ&VÇ2f7GVVÇ26÷W'G2WBF—7F–æ7G2Â2VæR‡&6R6÷œ:–RGR6öçFVçB’ÂF¶Vv’7F–öææ&ÆRFRGµTDtôt”4ÅõD´Tt•ôÔ…õtõ$E7ÒÖ÷G2Ö†–×VÒWBf—7VÂâF÷W2ÆW2&Æö72–çFW&7F–g2‡7GVFVçE÷G'’WBÆW2VW7F–öç2FRÖ7FW'•ö6†V6²’Fö—fVçBWF–Æ—6W"W†7FVÖVçBÎ(	—VâFR6W2ç7vW%÷G—S¢G´å5tU%õE•UõdÅTU2æ¦ö–â‚rÂr—Ó²æR6öçfW'F—2¦Ö—2VæRfÆWW"–æ6öæçVRâwV–FVEöW†×ÆRW†–vR6öçFW‡BWB7FW26öæ6—2Ö—26ö×ÆWG2â7GVFVçE÷G'’W†–vRVW7F–öâÂç7vW%÷G—RWF÷&—<:’Â6÷'&V7Eöç7vW"æöâçVÂÂ7V66W75öfVVF&6²WBW'&÷%öfVVF&6²6öæ6—2ÂÇW2÷R"†–çG2&öw&W76–g2WB'&Vg2V’æRFöææVçB2Æ,:—öç6RâÖ7FW'•ö6†V6²çVW7F–öç2W†–vR:Bö&¦WG26ö×ÆWG3²4„TRö&¦WBW†–vR–BÂVW7F–öâÂç7vW%÷G—RWF÷&—<:’Â6÷'&V7Eöç7vW"æöâçVÂÂ6¶–ÆÂÂF–ff–7VÇG’çVÜ:—&—VRÂ7V66W75öfVVF&6²WBW'&÷%öfVVF&6²âVâ¥4ôâfÆ–FRWVVÂ–ÂÖçVRVâFR6W26†×2W7B7G'V7GW&VÆÆVÖVçB&V¦WL:’fçBF÷WFRfÆ–FF–öâ:–Fvöv—VS¢æR6ö×Ì:‡FRÂæR,:œ:–7&—2WBî(	––çfVçFR¦Ö—2ÆfÆWW"ÖçVçFRæÀ¢vÖ7FW'’Fö—B:§G&RW†7FVÖVçB²'6¶–ÆÇ2#¥²,:—F—VWGFR6÷W'FR"Â,:—F—VWGFR6÷W'FR"%ÒÂ'F‡&W6†öÆB#£ã‡Ó¢6¶–ÆÇ2W7BVâF&ÆVRFR6†:ææW2æöâf–FW2Â¦Ö—2VâF&ÆVRN(	–ö&¦WG2ÂVâö&¦WB÷RVâ&w&†RârÀ¢w&W&WV—6—FW2WBÖ—66öæ6WF–öç2Fö—fVçB:§G&RFW2F&ÆVW‚N(	–ö&¦WG26ö×ÆWG2Â¦Ö—2FW2F&ÆVW‚FR6†:ææW2ârÀ¢t6†VR&W&WV—6—FRçVÜ:—&—VRFö—BWF–Æ—6W"W†7FVÖVçBG—S¢&çVÖW&–2"Â&ö×BWBW‡V7FVEöç7vW"çVÜ:—&—VS²î(	–öÖWG2¦Ö—2W‡V7FVEöç7vW"WBæRÆR&V×Æ6R¦Ö—2"VæR6†:ææRâW†V×ÆRæ—fVR"6öç7G'V—B"¥4ôâç7G&–æv–g“¢r²¥4ôâç7G&–æv–g’…5Dt”äuôåTÔU$”5õ$U$UT•4•DUôU„ÕÄR’À¢tW†V×ÆR&W&WV—6—FR:,:—öç6R6÷W'FR6æöæ—VR6öç7G'V—B"¥4ôâç7G&–æv–g“¢r²¥4ôâç7G&–æv–g’…5Dt”äuõ4„õ%EõDU…Eõ$U$UT•4•DUôU„ÕÄR’À¢tW†V×ÆRÖ—66öæ6WF–öâfÆ–FR6öç7G'V—B"¥4ôâç7G&–æv–g“¢r²¥4ôâç7G&–æv–g’…5Dt”äuôÔ•44ôä4UD”ôåôU„ÕÄR’À¢ÖWFFFæÆWfVÅöçVÖ&W"ÓÓÒ0¢òtW†V×ÆW2–çFW&7F–g2fÆ–FW26öç7G'V—G2"¥4ôâç7G&–æv–g’÷W"Æ7–Ü:—G&–S¢7GVFVçE÷G'’r²¥4ôâç7G&–æv–g’‡²VW7F–öã¢uVVÂö–çBW7B:ÆÜ:¦ÖRF—7Fæ6RFRÎ(	–†RòrÂç7vW%÷G—S¢v×VÇF—ÆUö6†ö–6RrÂ6†ö–6W3¢²trÂt"uÒÂ6÷'&V7Eöç7vW#¢t"rÂ7V66W75öfVVF&6³¢t÷V’ârÂW'&÷%öfVVF&6³¢t6ö×&RÆW26'&VW‚ârÒ’²s²Ö7FW'•ö6†V6²VW7F–öâr²¥4ôâç7G&–æv–g’‡²–C¢w×7–ÒrÂVW7F–öã¢tW‡Æ—VR6öÖÖVçB&W÷'FW"Vâö–çBârÂç7vW%÷G—S¢w6†÷'E÷FW‡BrÂ6÷'&V7Eöç7vW#¢tÜ:¦ÖRæöÖ'&RFR6'&VW‚FRÎ(	–WG&R<;GL:’rÂ6¶–ÆÃ¢w7–Ü:—G&–RrÂF–ff–7VÇG“¢Â7V66W75öfVVF&6³¢tW†7BârÂW'&÷%öfVVF&6³¢t6ö×FRÆW26'&VW‚ârÒ’²râp¢¢rrÀ¢ç7vW%÷G—RWF÷&—<:—3¢G´å5tU%õE•UõdÅTU2æ¦ö–â‚rÂr—ÒæÀ¢d•5TÅôd”TÄEõ%TÄU2À¢ââæW†×ÆW2À¢tW†V×ÆR6ö×ÆWBFW26–ç&Æö72†f÷&ÖB6ö×7B’WBFRÖ7FW'’ç6¶–ÆÇ2‡F÷W2ÆW26öçFVçB6öçBö&Æ–vFö—&W2“¢r²¥4ôâç7G&–æv–g’‡7Fv–ætgVÆÄÆWfVÄ6ö×7DW†×ÆR†ÖWFFF’’À¢tÆR6öFR76VÖ&ÆR6WVVæ6RfV2FWW‚W‡Æ–6F–öç26öæ6—6W2–ÆÇW7G,:–W2ÂVâW†V×ÆRwV–L:’ÂVæRVW7F–öâ–çFW&7F—fRfçBÖ7FW'•ö6†V6²WBVâ6öçG,;FÆRFR6ö×,:–†Vç6–öâârÀ¢ÆWfVÄöæTvVöÖWG'”6÷fW&vRÀ¢tæRF—2¦Ö—2*·fö—"Æf–wW&\+²âp¢Òæ¦ö–â‚uÆâr“°§Ğ ¦W‡÷'BgVæ7F–öâ'6U7Fv–ætÆWfVÅ&W7öç6R‡&s¢Væ¶æ÷vâÂÖWFFFó¢7Fv–ætÆWfVÄÖWFFF“¢²fÇVS¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãã²GFV×FVE&W—#¢&ööÆVâÒ°¢6öç7B'6VBÒ'6U&÷f–FW$§6öå6fVÇ’‡&r“°¢–b‡'6VBæö²ÓÓÒfÇ6R’F‡&÷ræWr7Fv–ætÆWfVÄ§6öå'6TW'&÷"‡'6VBæ6FVv÷'’“°¢6öç7BfÇVRÒö&¦V7B‡'6VBçfÇVR“°¢–b‚fÇVR’F‡&÷ræWrW'&÷"‚w7Fv–æuöÆWfVÅö§6öå÷'6Uöf–ÆVC¢&W7öç6R×W7B&Râö&¦V7Br“°¢6öç7BÆWfVÂÒ76VÖ&ÆU7Fv–æu6WVVæ6Tg&öÔ6ö×7B†ö&¦V7B‡fÇVRæÆW76öâ’óòfÇVR“°¢–b†ÖWFFF’°¢6öç7B6öçG&7D—77VW2Ò7Fv–æu6WVVæ6T6öçG&7D—77VW2†ÆWfVÂÂÖWFFF“°¢–b†6öçG&7D—77VW2æÆVæwF‚â’F‡&÷ræWr7Fv–ætÆWfVÄ6öçG&7DW'&÷"†6öçG&7D—77VW2“°¢Ğ¢&WGW&â²fÇVS¢ÆWfVÂÂGFV×FVE&W—#¢'6VBæGFV×FVE&W—"Ó°§Ğ ¦gVæ7F–öâf—7VÄvVöÖWG'”—77VW2†ÆW76öã¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâ“¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ°¢6öç7B6WVVæ6RÒ'&’æ—4'&’†ÆW76öâç6WVVæ6R’òÆW76öâç6WVVæ6R2'&“Å&V6÷&CÇ7G&–ærÂVæ¶æ÷vããâ¢µÓ°¢&WGW&â6WVVæ6RæfÆDÖ‚†&Æö6²Â–æFW‚’Óâ°¢6öç7Bf—7VÂÒö&¦V7B†&Æö6³òçf—7VÂ“°¢–b‚f—7VÂ’&WGW&âµÓ°¢6öç7B¶–æBÒ7G&–ær‡f—7VÂæ¶–æBóòrr“°¢6öç7BFFÒö&¦V7B‡f—7VÂæFF“°¢6öç7BW'&÷'2ÒvVöÖWG'•f—7VÄFFW'&÷'2†¶–æBÂf—7VÂæFFÂw6WVVæ6U²r²–æFW‚²uÒçf—7VÂæFFrÂG'VR¢æÖ‚†W'&÷"’Óâ‡²Fƒ¢W'&÷"çF‚ÂÖW76vS¢W'&÷"æÖW76vRÒ’“°¢–b†FFbb†¶–æBÓÓÒw&V7FævÆRrÇÂ†¶–æBÓÓÒwöÇ–vöârbbFFç6†RÓÓÒw&V7FævÆRr’’’°¢6öç7B†56–FW2Ò„'&’æ—4'&’†FFç6–FUöÆ&VÇ2’bbFFç6–FUöÆ&VÇ2æÆVæwF‚ãÒB’ÇÂ„çVÖ&W"æ—4f–æ—FR„çVÖ&W"†FFçv–GF‚’’bbçVÖ&W"æ—4f–æ—FR„çVÖ&W"†FFæ†V–v‡B’’“°¢–b‚†56–FW2’W'&÷'2çW6‚‡²Fƒ¢w6WVVæ6U²r²–æFW‚²uÒçf—7VÂæFFç6–FUöÆ&VÇ2rÂÖW76vS¢u&V7FævÆR&WV—&W2f÷W"6–FRÆ&VÇ2÷"çVÖW&–2v–GF‚æB†V–v‡BârÒ“°¢Ğ¢–b†FFbb†¶–æBÓÓÒwG&–ævÆRrÇÂ†¶–æBÓÓÒwöÇ–vöârbbFFç6†RÓÓÒwG&–ævÆRr’’’°¢6öç7B†56–FW2Ò„'&’æ—4'&’†FFç6–FUöÆ&VÇ2’bbFFç6–FUöÆ&VÇ2æÆVæwF‚ãÒ2’ÇÂ„'&’æ—4'&’†FFç6–FUöÆVæwF‡2’bbFFç6–FUöÆVæwF‡2æÆVæwF‚ãÒ2“°¢–b‚†56–FW2’W'&÷'2çW6‚‡²Fƒ¢w6WVVæ6U²r²–æFW‚²uÒçf—7VÂæFFç6–FUöÆ&VÇ2rÂÖW76vS¢uG&–ævÆR&WV—&W2F‡&VR6–FRÆ&VÇ2÷"6–FRÆVæwF‡2ârÒ“°¢Ğ¢–b†FFbb¶–æBÓÓÒv6—&6ÆRr’°¢6öç7B†4F–ÖWFW"Ò„çVÖ&W"æ—4f–æ—FR„çVÖ&W"†FFæF–ÖWFW"’’bbçVÖ&W"†FFæF–ÖWFW"’â¢ÇÂö&¦V7B†FFæF–ÖWFW$VæB’ÓÒçVÆÀ¢ÇÂFFæF–ÖWFW"ÓÓÒG'VS°¢–b‚†4F–ÖWFW"’W'&÷'2çW6‚‡²Fƒ¢w6WVVæ6U²r²–æFW‚²uÒçf—7VÂæFFæF–ÖWFW"rÂÖW76vS¢t6—&6ÆR&WV—&W2W‡Æ–6—BF–ÖWFW"FFârÒ“°¢Ğ¢–b†FFbb†¶–æBÓÓÒw&V7FævÆRrÇÂ†¶–æBÓÓÒwöÇ–vöârbbFFç6†RÓÓÒw&V7FævÆRr’ÇÂ†¶–æBÓÓÒwG&–ævÆRrÇÂ†¶–æBÓÓÒwöÇ–vöârbbFFç6†RÓÓÒwG&–ævÆRr’’’’°¢6öç7BW‡V7FVEfW'F–6W2Ò¶–æBÓÓÒw&V7FævÆRrÇÂFFç6†RÓÓÒw&V7FævÆRròB¢3°¢6öç7BfW'F–6W2Ò'&’æ—4'&’†FFçfW'F–6W2’òFFçfW'F–6W2¢'&’æ—4'&’†FFçö–çG2’òFFçö–çG2¢µÓ°¢–b‡fW'F–6W2æÆVæwF‚ÓÒW‡V7FVEfW'F–6W2ÇÂfW'F–6W2ç6öÖR‚‡ö–çB’Óâö&¦V7B‡ö–çB’ÇÂçVÖ&W"æ—4f–æ—FR„çVÖ&W"‡ö–çBç‚’’ÇÂçVÖ&W"æ—4f–æ—FR„çVÖ&W"‡ö–çBç’’’ÇÂæöäV×G’‡ö–çBæÆ&VÂ’’’°¢W'&÷'2çW6‚‡²Fƒ¢w6WVVæ6U²r²–æFW‚²uÒçf—7VÂæFFçfW'F–6W2rÂÖW76vS¢f–wW&R&WV—&W2W†7FÇ’G¶W‡V7FVEfW'F–6W7ÒÆ&VÆÆVBfW'F–6W2v—F‚çVÖW&–26ö÷&F–æFW2æÒ“°¢Ğ¢6öç7B6–FW2Ò'&’æ—4'&’†FFç6–FUöÆ&VÇ2’òFFç6–FUöÆ&VÇ2¢'&’æ—4'&’†FFç6VvÖVçG2’òFFç6VvÖVçG2¢µÓ°¢–b‡6–FW2æÆVæwF‚ÂW‡V7FVEfW'F–6W2ÇÂ6–FW2ç6öÖR‚‡6–FR’Óâö&¦V7B‡6–FR’ÇÂæöäV×G’‡6–FRæg&öÒ’ÇÂæöäV×G’‡6–FRçFò’ÇÂæöäV×G’‡6–FRæÆ&VÂ’’’°¢W'&÷'2çW6‚‡²Fƒ¢w6WVVæ6U²r²–æFW‚²uÒçf—7VÂæFFç6–FUöÆ&VÇ2rÂÖW76vS¢f–wW&R&WV—&W2G¶W‡V7FVEfW'F–6W7ÒG&v&ÆRÆ&VÆÆVB6–FW2÷"6VvÖVçG2æÒ“°¢Ğ¢–b†FFçv–GF‚ÓÒVæFVf–æVBÇÂFFæ†V–v‡BÓÒVæFVf–æVB’°¢6öç7Bv–GF‚ÒçVÖ&W"†FFçv–GF‚“²6öç7B†V–v‡BÒçVÖ&W"†FFæ†V–v‡B“°¢6öç7B‡2ÒfW'F–6W2æÖ‚‡ö–çB’ÓâçVÖ&W"‚‡ö–çB2&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâ’ç‚’“°¢6öç7B—2ÒfW'F–6W2æÖ‚‡ö–çB’ÓâçVÖ&W"‚‡ö–çB2&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâ’ç’’“°¢6öç7B6ö÷&F–æFU&F–òÒ„ÖF‚æÖ‚‚ââç‡2’ÒÖF‚æÖ–â‚ââç‡2’’ò„ÖF‚æÖ‚‚ââç—2’ÒÖF‚æÖ–â‚ââç—2’“°¢–b‚„çVÖ&W"æ—4f–æ—FR‡v–GF‚’bbv–GF‚âbbçVÖ&W"æ—4f–æ—FR††V–v‡B’bb†V–v‡Bâ’ÇÂçVÖ&W"æ—4f–æ—FR†6ö÷&F–æFU&F–ò’ÇÂÖF‚æ'2‚‡v–GF‚ò†V–v‡B’Ò6ö÷&F–æFU&F–ò’âãR’°¢W'&÷'2çW6‚‡²Fƒ¢w6WVVæ6U²r²–æFW‚²uÒçf—7VÂæFFçv–GF‚rÂÖW76vS¢tf–wW&RF–ÖVç6–öç2×W7B&R÷6—F—fRæB&÷÷'F–öæÆÇ’6öç6—7FVçBv—F‚çVÖW&–26ö÷&F–æFW2ârÒ“°¢Ğ¢Ğ¢Ğ¢&WGW&âW'&÷'3°¢Ò“°§Ğ ¦W‡÷'BgVæ7F–öâfÆ–FFU7Fv–ætÆWfVÂ†ÆW76öã¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂÖWFFF¢7Fv–ætÆWfVÄÖWFFFÂF÷–4æÖS¢7G&–ærÂw&FS¢7G&–ær“¢7Fv–æufÆ–FF–öâ°¢6öç7B6æF–FFRÒ²fW'6–öã¢s"ãrÂF÷–5övöÃ¢F÷–4æÖRÂÆWfVÇ3¢·²ââæÖWFFFÂÆW76öâÕÒÓ°¢6öç7B6æöæ–6ÂÒfÆ–FFTÆW76öåc#†6æF–FFRÂ²&W&WV—6—FTf÷&ÖC¢w7Fv–ærrÒ“°¢6öç7BÆö6ÅF‚Ò‡Fƒ¢7G&–ær’ÓâF‚ç&WÆ6R‚õæÆWfVÇ5Å³ÅÕÂæÆW76öåÂãòòÂrr“°¢6öç7B†4W‡Æ–6—Ef—7VÄ6öçG&7BÒÖWFFFç&WV—&VEövVöÖWG'•ö¶–æG2æÆVæwF‚â ¢ÇÂ†ÖWFFFç&WV—&VEövVöÖWG'•öÇFW&æF—fW2óòµÒ’ç6öÖR‚†ÇFW&æF—fR’ÓâÇFW&æF—fRæÆVæwF‚â“°¢&WGW&â°¢6æöæ–6Ä—77VW3¢²âââ†6æöæ–6Âç7V66W72ÓÓÒfÇ6Rò6æöæ–6Âæ—77VW2æÖ‚†—77VR’Óâ‡²Fƒ¢Æö6ÅF‚†—77VRçF‚’ÂÖW76vS¢—77VRæÖW76vRÒ’’¢µÒ’Âââç7Fv–æu6WVVæ6T6öçG&7D—77VW2†ÆW76öâÂÖWFFF•ÒÀ¢òòF†R7Fv–ærÖWFFF÷vç2F†Rf—7VÂ6öçG&7BâF†RvVæW&–2VFvöv–6À¢òòöÆ–7’—27F–ÆÂW6VBf÷"G&v&ÆRÖFFæB6Æö6²6öç6—7FVæ7’6†V6·2Â'W@¢òò—G2ÆW†–6Â&WV—&VBö–æ6ö×F–&ÆRÖ¶–æBÖW76vW2×W7Bæ÷B÷fW'&–FRF†P¢òòW‡Æ–6—BF÷–2öö&¦V7F—fR6öçG&7BfÆ–FFVB&VÆ÷r'’&WV—&VDvVöÖWG'”¶–æG4—77VW2à¢VFvöv–6Ä—77VW3¢VFvöv–6Ä—77VW2†ÆW76öâÂw&FRÂF÷–4æÖRÂ²7W&W75f—7VÅöÆ–7”—77VW3¢†4W‡Æ–6—Ef—7VÄ6öçG&7BÒ’À¢vVöÖWG'”—77VW3¢f—7VÄvVöÖWG'”—77VW2†ÆW76öâ’À¢Ó°§Ğ ¦gVæ7F–öâ—5&W&WV—6—FT—77VR†—77VS¢²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÒ“¢&ööÆVâ°¢&WGW&âò…çÅÂâ—&W&WV—6—FW2ƒó¥Å·ÅÂâ’ö’çFW7B†—77VRçF‚’ÇÂ÷&W&WV—6—FRö’çFW7B†—77VRæÖW76vR“°§Ğ ¦gVæ7F–öâ—4–çFW&7F–öä—77VR†—77VS¢²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÒ“¢&ööÆVâ°¢&WGW&âöç7vW%÷G—WÆ6÷'&V7Eöç7vW'ÇVW7F–öç7Æ–çFW&7F–öçÆÖ7FW'’ö’çFW7B†—77VRçF‚’ÇÂö–çFW&7F–öçÆç7vW"G—WÆç7vW'ÆÖ7FW'’ö’çFW7B†—77VRæÖW76vR“°§Ğ ¦W‡÷'BgVæ7F–öâ7VÖÖ&—¦U7Fv–æufÆ–FF–öâ‡fÆ–FF–öã¢7Fv–æufÆ–FF–öâÂW‡G&vVöÖWG'”—77VW3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâÒµÒÂv&æ–æw3¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâÒµÒ“¢7Fv–æufÆ–FF–öå7VÖÖ'’°¢6öç7BvVöÖWG'”—77VW2Ò²ââçfÆ–FF–öâævVöÖWG'”—77VW2ÂââæW‡G&vVöÖWG'”—77VW5Ó°¢6öç7B&W&WV—6—FT—77VW2ÒfÆ–FF–öâæ6æöæ–6Ä—77VW2æf–ÇFW"†—5&W&WV—6—FT—77VR“°¢6öç7B–çFW&7F–öä—77VW2ÒfÆ–FF–öâæ6æöæ–6Ä—77VW2æf–ÇFW"†—4–çFW&7F–öä—77VR“°¢6öç7BF–væ÷7F–72Ò°¢ââçfÆ–FF–öâæ6æöæ–6Ä—77VW2À¢ââçfÆ–FF–öâçVFvöv–6Ä—77VW2À¢ââævVöÖWG'”—77VW2À¢ââçv&æ–æw2æÖ‚†—77VR’Óâ‡²Fƒ¢—77VRçF‚ÂÖW76vS¢fW'F—76VÖVçBFR&WgVR¢G¶—77VRæÖW76vWÖÒ’’À¢ÒæÖ‚†—77VR’ÓâG¶—77VRçF‡Ó¢G¶—77VRæÖW76vWÖ“°¢&WGW&â°¢6æöæ–6ÅfÆ–C¢fÆ–FF–öâæ6æöæ–6Ä—77VW2æÆVæwF‚ÓÓÒÀ¢VFvöv–6ÅfÆ–C¢fÆ–FF–öâçVFvöv–6Ä—77VW2æÆVæwF‚ÓÓÒÀ¢&W&WV—6—FUfÆ–C¢&W&WV—6—FT—77VW2æÆVæwF‚ÓÓÒÀ¢vVöÖWG'•fÆ–C¢vVöÖWG'”—77VW2æÆVæwF‚ÓÓÒÀ¢–çFW&7F–öåfÆ–C¢–çFW&7F–öä—77VW2æÆVæwF‚ÓÓÒÀ¢6æöæ–6Ä—77VW3¢fÆ–FF–öâæ6æöæ–6Ä—77VW2À¢VFvöv–6Ä—77VW3¢fÆ–FF–öâçVFvöv–6Ä—77VW2À¢VFvöv–6Åv&æ–æw3¢v&æ–æw2À¢VFvöv–6Å&Wf–Wu&WV—&VC¢v&æ–æw2æÆVæwF‚âÀ¢&W&WV—6—FT—77VW2À¢vVöÖWG'”—77VW2À¢–çFW&7F–öä—77VW2À¢F–væ÷7F–72À¢Ó°§Ğ ¦W‡÷'BgVæ7F–öâVÆ–g•7Fv–æuv&æ–æuF‚†ÆWfVÃ¢çVÖ&W"ÂÆö6ÅFƒ¢7G&–ær“¢7G&–ær°¢&WGW&âÆWfVÇ5²G´ÖF‚æÖ‚ƒÂÆWfVÂÒ—ÕÒæÆW76öââG¶Æö6ÅF‡Ö°§Ğ ¦W‡÷'BgVæ7F–öâ&WV—&VDvVöÖWG'”—77VW2†ÆW76öã¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂ&WV—&VD¶–æG3¢&VFöæÇ’7G&–æuµÒÒ²ââå5Dt”äuôÄÅôtTôÔUE%•ô´”äE5Ò“¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ°¢6öç7B6WVVæ6RÒ„'&’æ—4'&’†ÆW76öâæÆWfVÇ2’òÆW76öâæÆWfVÇ2¢µÒ’æfÆDÖ‚†ÆWfVÃ¢ç’’Óâ'&’æ—4'&’†ÆWfVÃòæÆW76öãòç6WVVæ6R’òÆWfVÂæÆW76öâç6WVVæ6R¢µÒ“°¢6öç7Bf—7VÇ2Ò6WVVæ6RæÖ‚†&Æö6³¢ç’’Óâ&Æö6³òçf—7VÂ’æf–ÇFW"„&ööÆVâ“°¢6öç7B†2Ò†¶–æC¢7G&–ær’Óâf—7VÇ2ç6öÖR‚‡f—7VÃ¢ç’’Óâf—7VÂæ¶–æBÓÓÒ¶–æBÇÂ†¶–æBÓÓÒwG&–ævÆRrbbf—7VÂæ¶–æBÓÓÒwöÇ–vöârbbf—7VÂæFFòç6†RÓÓÒwG&–ævÆRr’“°¢&WGW&â&WV—&VD¶–æG2æf–ÇFW"‚†¶–æB’Óâ†2†¶–æB’’æÖ‚†¶–æB’Óâ‡²Fƒ¢vÆWfVÇ2rÂÖW76vS¢tÖ—76–ær&WV—&VBG&v&ÆRf—7VÃ¢r²¶–æB²rârÒ’“°§Ğ ¦W‡÷'BgVæ7F–öâ&WV—&VDvVöÖWG'”¶–æG4—77VW2†ÆW76öã¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÂ&WV—&VD¶–æG3¢7G&–æuµÒÂÇFW&æF—fW3¢7G&–æuµÕµÒÒµÒ“¢'&“Ç²Fƒ¢7G&–æs²ÖW76vS¢7G&–ærÓâ°¢6öç7B6WVVæ6RÒ'&’æ—4'&’†ÆW76öâç6WVVæ6R’òÆW76öâç6WVVæ6R2'&“Å&V6÷&CÇ7G&–ærÂVæ¶æ÷vããâ¢µÓ°¢6öç7Bf—7VÇ2Ò6WVVæ6RæÖ‚†&Æö6²’Óâö&¦V7B†&Æö6²çf—7VÂ’’æf–ÇFW"„&ööÆVâ’2'&“Å&V6÷&CÇ7G&–ærÂVæ¶æ÷vããã°¢6öç7B—77VW2Ò&WV—&VD¶–æG2æf–ÇFW"‚†¶–æB’Óâf—7VÇ2ç6öÖR‚‡f—7VÂ’Óâf—7VÂæ¶–æBÓÓÒ¶–æBÇÂ†¶–æBÓÓÒwG&–ævÆRrbbf—7VÂæ¶–æBÓÓÒwöÇ–vöârbbö&¦V7B‡f—7VÂæFF“òç6†RÓÓÒwG&–ævÆRr’’¢æÖ‚†¶–æB’Óâ‡²Fƒ¢vÆW76öâç6WVVæ6RrÂÖW76vS¢tÖ—76–ær&WV—&VBG&v&ÆRf—7VÂf÷"F†—2ÆWfVÃ¢r²¶–æB²rârÒ’“°¢ÇFW&æF—fW2æf÷$V6‚‚†ÆÆ÷vVD¶–æG2’Óâ°¢–b‚f—7VÇ2ç6öÖR‚‡f—7VÂ’ÓâÆÆ÷vVD¶–æG2æ–æ6ÇVFW2…7G&–ær‡f—7VÂæ¶–æB’’’’°¢—77VW2çW6‚‡²Fƒ¢vÆW76öâç6WVVæ6RrÂÖW76vS¢tÖ—76–ær&WV—&VBG&v&ÆRf—7VÃ²W‡V7FVBöæRöc¢r²ÆÆ÷vVD¶–æG2æ¦ö–â‚wÂr’²rârÒ“°¢Ğ¢Ò“°¢&WGW&â—77VW3°§Ğ ¦W‡÷'BgVæ7F–öâ76VÖ&ÆU7Fv–ætÆW76öâ‡F÷–4æÖS¢7G&–ærÂÆWfVÇ3¢'&“Ç²ÖWFFF¢7Fv–ætÆWfVÄÖWFFF²ÆW76öã¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâÓâ“¢&V6÷&CÇ7G&–ærÂVæ¶æ÷vãâ°¢–b†ÆWfVÇ2æÆVæwF‚ÓÒ5Dt”äuôÄUdTÅô4õTåB’F‡&÷ræWrW'&÷"‚w7Fv–æuö76VÖ&Ç•öf–ÆVC¢W‡V7FVBBÆWfVÇ2Â&V6V—fVBr²ÆWfVÇ2æÆVæwF‚“°¢6öç7B÷&FW&VBÒ²ââæÆWfVÇ5Òç6÷'B‚†Â"’ÓâæÖWFFFæÆWfVÅöçVÖ&W"Ò"æÖWFFFæÆWfVÅöçVÖ&W"“°¢–b†÷&FW&VBç6öÖR‚†—FVÒÂ–æFW‚’Óâ—FVÒæÖWFFFæÆWfVÅöçVÖ&W"ÓÒ–æFW‚²’’F‡&÷ræWrW'&÷"‚w7Fv–æuö76VÖ&Ç•öf–ÆVC¢ÆWfVÇ2×W7B&RçVÖ&W&VBF‡&÷Vv‚Br“°¢&WGW&â²fW'6–öã¢s"ãrÂF÷–5övöÃ¢F÷–4æÖRÂÆWfVÇ3¢÷&FW&VBæÖ‚‡²ÖWFFFÂÆW76öâÒ’Óâ‡²ââæÖWFFFÂÆW76öâÒ’’Ó°§Ğ ¦W‡÷'BG—R7Fv–ætW'&÷$6Æ76–f–6F–öâÒ²7FGW3¢çVÖ&W#²6öFS¢7G&–æs²ÖW76vS¢7G&–æs²7FvSó¢7G&–ærÓ° ¢ò¢¢Ö¶æ÷vâ7Fv–ærövVæW&F–öâf–ÇW&RFò7G'V7GW&VB…EE÷WF6öÖRà¢¢C#"Ò÷WGWB&V¦V7FVB'’fÆ–FF–öã²S"Ò&÷f–FW"&÷Fö6öÂ&ö&ÆVÓ°¢¢SöæÇ’f÷"VæW‡V7FVB6W'fW"W†6WF–öç2â¢ğ¦W‡÷'BgVæ7F–öâ6Æ76–g”vVæW&F–öäf–ÇW&R†W'&÷#¢Væ¶æ÷vâÂ7Fv–æu7FvSó¢7G&–ær“¢7Fv–ætW'&÷$6Æ76–f–6F–öâ°¢6öç7BFWF–ÂÒW'&÷"–ç7Fæ6VöbW'&÷"òW'&÷"æÖW76vR¢7G&–ær†W'&÷"óòrr“°¢–b‚õVæWF†÷&—¦VGÄÖ—76–ærWF†÷&—¦F–öâö’çFW7B†FWF–Â’’&WGW&â²7FGW3¢CÂ6öFS¢wVæWF†÷&—¦VBrÂÖW76vS¢tWF†VçF–6F–öâ&WV—&VBârÓ°¢–b‚ôf÷&&–FFVçÇ&öÆR&WV—&VBö’çFW7B†FWF–Â’’&WGW&â²7FGW3¢C2Â6öFS¢vf÷&&–FFVârÂÖW76vS¢tFÖ–â÷"FV6†W"&öÆR&WV—&VBârÓ°¢–b‡7Fv–æu7FvRÓÓÒvÆWfVÅ÷fÆ–FF–öârÇÂW'&÷"–ç7Fæ6Vöb7Fv–ætÆWfVÄ6öçG&7DW'&÷"ÇÂõç7Fv–æuöÆWfVÅö6öçG&7Eöf–ÆVBòçFW7B†FWF–Â’’°¢&WGW&â²7FGW3¢C#"Â6öFS¢w7Fv–æuöÆWfVÅ÷fÆ–FF–öåöf–ÆVBrÂÖW76vS¢t7Fv–ærÆWfVÂf–ÆVB6æöæ–6ÂÂVFvöv–6ÂÂ÷"vVöÖWG'’fÆ–FF–öâârÂ7FvS¢vÆWfVÅ÷fÆ–FF–öârÓ°¢Ğ¢–b‚õç7Fv–æuö76VÖ&Ç•òòçFW7B†FWF–Â’’&WGW&â²7FGW3¢C#"Â6öFS¢w7Fv–æuö76VÖ&Ç•÷fÆ–FF–öåöf–ÆVBrÂÖW76vS¢uF†R76VÖ&ÆVB7Fv–ærÆW76öâf–ÆVBfÆ–FF–öâârÂ7FvS¢v76VÖ&Ç•÷fÆ–FF–öârÓ°¢–b‚÷7Fv–æuöÆWfVÅö§6öå÷'6Uöf–ÆVC¢G'Væ6FVGÇ&÷f–FW%ö÷WGWE÷G'Væ6FVGÆf–æ—6…÷&V6öãÖÆVæwF‚ö’çFW7B†FWF–Â’’&WGW&â²7FGW3¢S"Â6öFS¢w&÷f–FW%ö÷WGWE÷G'Væ6FVBrÂÖW76vS¢uF†R’&÷f–FW"÷WGWBv2G'Væ6FVBârÂ7FvS¢w&÷f–FW%÷'6RrÓ°¢–b‚÷7Fv–æuöÆWfVÅö§6öå÷'6Uöf–ÆVGÇ&÷f–FW"¥4ôçÆÖÆf÷&ÖVB¥4ôçÆÖÆf÷&ÖVEö§6öçÆÖ&–wV÷W5ö§6öçÆV×G’ö’çFW7B†FWF–Â’’&WGW&â²7FGW3¢S"Â6öFS¢w&÷f–FW%öÖÆf÷&ÖVEö§6öârÂÖW76vS¢uF†R’&÷f–FW"&WGW&æVBÖÆf÷&ÖVB÷"Ö&–wV÷W2¥4ôâârÂ7FvS¢w&÷f–FW%÷'6RrÓ°¢–b‚÷7Fv–æuöÆWfVÅ÷&÷f–FW%÷Væf–Æ&ÆRòçFW7B†FWF–Â’’&WGW&â²7FGW3¢S"Â6öFS¢w&÷f–FW%÷Væf–Æ&ÆRrÂÖW76vS¢uF†R’&÷f–FW"6÷VÆBæ÷B&R&V6†VBârÂ7FvS¢w&÷f–FW%ö6ÆÂrÓ°¢–b‚÷7Fv–æuöÆWfVÅ÷&÷f–FW%ö‡GG÷Ä’vVæW&F–öâf–ÆVGÇ&÷f–FW"ö’çFW7B†FWF–Â’’&WGW&â²7FGW3¢S"Â6öFS¢w&÷f–FW%öW'&÷"rÂÖW76vS¢uF†R’&÷f–FW"f–ÆVBFòvVæW&FR6öçFVçBârÂ7FvS¢w&÷f–FW%ö6ÆÂrÓ°¢–b‚÷F–ÖV÷WGÇF–ÖVB÷WBö’çFW7B†FWF–Â’’&WGW&â²7FGW3¢S"Â6öFS¢wF–ÖV÷WBrÂÖW76vS¢uF†R’&÷f–FW"F–ÖVB÷WBârÂ7FvS¢w&÷f–FW%ö6ÆÂrÓ°¢–b‚ö6æöæ–6ÂfÆ–FF–öçÆ6÷'&V7Eöç7vW'Æ6öçG&7Bö’çFW7B†FWF–Â’’&WGW&â²7FGW3¢C#"Â6öFS¢v6æöæ–6Å÷fÆ–FF–öåöf–ÆVBrÂÖW76vS¢uF†RvVæW&FVBÆW76öâFöW2æ÷BÖF6‚F†R6öçG&7BârÓ°¢–b‚÷VFvöv–6ÂVÆ—G—ÇVFvöv–6ÂfÆ–FF–öâö’çFW7B†FWF–Â’’&WGW&â²7FGW3¢C#"Â6öFS¢wVFvöv–6Å÷fÆ–FF–öåöf–ÆVBrÂÖW76vS¢uF†RvVæW&FVBÆW76öâf–ÆVBVFvöv–6ÂfÆ–FF–öâârÓ°¢&WGW&â²7FGW3¢SÂ6öFS¢wVæ¶æ÷vârÂÖW76vS¢uVæW‡V7FVB6W'fW"W'&÷"ârÓ°§Ğ
+import { STAGING_PROMPT_VERSION, STAGING_PROMPT_V22_CANDIDATE, type StagingPromptVersion } from '../../../shared/staging-prompt-version.ts';
+export { STAGING_PROMPT_VERSION, STAGING_PROMPT_V22_CANDIDATE } from '../../../shared/staging-prompt-version.ts';
+import { ANSWER_TYPE_VALUES, validateLessonV21 } from './lesson-v21-contract.ts';
+import { pedagogicalIssues, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
+import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
+import { parseProviderJsonSafely, type ProviderResponseDiagnostics } from './provider-json.ts';
+import { specificationPromptContext, type StagingSpecification } from './staging-specification.ts';
+
+export type StagingLevelMetadata = {
+  id: string;
+  level_number: number;
+  title: string;
+  purpose: string;
+  difficulty: string;
+  objective_ids: string[];
+  required_geometry_kinds: string[];
+  required_geometry_alternatives?: string[][];
+};
+
+export type StagingLevelProgress = {
+  level: number;
+  status: 'complete' | 'failed';
+  providerCalls: number;
+  retryCount?: number;
+  retryCategory?: string;
+  parseStage?: string;
+  tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number };
+  build?: string;
+  promptVersion?: string;
+  requestId?: string;
+  validation?: StagingValidationSummary;
+  diagnostics?: string[];
+};
+
+export type StagingDraftResponse = {
+  success: true;
+  ok: true;
+  requestId: string;
+  mode: 'staging_draft';
+  topic_id: string;
+  topicKind: StagingTopicKind;
+  lesson_content: Record<string, unknown>;
+  canonicalValid: boolean;
+  pedagogicalValid: boolean;
+  prerequisiteValid: boolean;
+  geometryValid: boolean;
+  interactionValid: boolean;
+  validation: StagingValidationSummary;
+  providerCalls: number;
+  retryCount?: number;
+  build: string;
+  promptVersion: string;
+  modelId: string;
+  progress: StagingLevelProgress[];
+  levelResults?: StagingLevelProgress[];
+};
+
+export type StagingValidation = {
+  canonicalIssues: Array<{ path: string; message: string }>;
+  pedagogicalIssues: Array<{ path: string; message: string }>;
+  geometryIssues: Array<{ path: string; message: string }>;
+};
+
+export type StagingValidationSummary = {
+  canonicalValid: boolean;
+  pedagogicalValid: boolean;
+  prerequisiteValid: boolean;
+  geometryValid: boolean;
+  interactionValid: boolean;
+  canonicalIssues: Array<{ path: string; message: string }>;
+  pedagogicalIssues: Array<{ path: string; message: string }>;
+  pedagogicalWarnings: Array<{ path: string; message: string }>;
+  pedagogicalReviewRequired: boolean;
+  prerequisiteIssues: Array<{ path: string; message: string }>;
+  geometryIssues: Array<{ path: string; message: string }>;
+  interactionIssues: Array<{ path: string; message: string }>;
+  diagnostics: string[];
+};
+
+export type StagingTopicKind = 'decimal' | 'time' | 'geometry' | 'general';
+
+export const SPATIAL_MOVEMENT_TOPIC_ID = '0dae3396-adbf-4464-8fa5-48726069977b';
+export const SPATIAL_MOVEMENT_TOPIC_NAME = "Le repÃ©rage et dÃ©placements dans l'espace";
+export const SPATIAL_MOVEMENT_RENDERER_LIMITATION = 'Le renderer actuel sait dessiner un diagramme de points reliÃ©s par des segments, avec des flÃ¨ches et annotations complÃ©mentaires; il ne sait pas dessiner une grille autonome de cases ni des obstacles. Nâ€™annonce donc jamais une grille ou un obstacle qui nâ€™est pas prÃ©sent dans les donnÃ©es dessinables.';
+
+function isSpatialMovementTopic(topicId: string, topicName: string): boolean {
+  return topicId === SPATIAL_MOVEMENT_TOPIC_ID
+    || topicName.trim().toLocaleLowerCase('fr') === SPATIAL_MOVEMENT_TOPIC_NAME.toLocaleLowerCase('fr');
+}
+
+export const STAGING_SEQUENCE_BLOCK_TYPES = ['concept', 'concept', 'guided_example', 'student_try', 'mastery_check'] as const;
+export const STAGING_COMPACT_BLOCK_KEYS = ['concept_1', 'concept_2', 'guided_example', 'student_try', 'mastery_check'] as const;
+export const STAGING_INTERACTIVE_TYPES = ['prediction', 'student_try', 'feedback_checkpoint'] as const;
+
+export class StagingLevelContractError extends Error {
+  constructor(public readonly issues: Array<{ path: string; message: string }>) {
+    super('staging_level_contract_failed: ' + issues.map((issue) => issue.path + ': ' + issue.message).join('; '));
+    this.name = 'StagingLevelContractError';
+  }
+}
+
+export class StagingLevelJsonParseError extends Error {
+  constructor(public readonly category: string, public readonly providerDiagnostics?: ProviderResponseDiagnostics) {
+    super('staging_level_json_parse_failed: ' + category);
+    this.name = 'StagingLevelJsonParseError';
+  }
+}
+
+/**
+ * The bounded parse retry must change the provider input so a deterministic
+ * model response is asked to correct its JSON syntax instead of being repeated.
+ */
+export function stagingJsonRetryPrompt(message: string, attempt: number): string {
+  if (attempt < 1) return message;
+  return message + '\n\nJSON SYNTAX RETRY: The previous response was not valid JSON. Regenerate the complete requested object from scratch; do not copy malformed JSON. Use double-quoted property names and correctly escape quotation marks inside strings. Return exactly one complete JSON object, with no trailing commas, comments, Markdown, or text outside the object. Preserve the requested lesson content and every required field.';
+}
+
+export async function runWithBoundedJsonRetry<T>(
+  call: (attempt: number) => Promise<T>,
+  onRetry?: (retryCount: number, error: StagingLevelJsonParseError) => void,
+): Promise<{ value: T; retryCount: number; retryCategory?: string }> {
+  let retryCount = 0;
+  let retryCategory: string | undefined;
+  while (true) {
+    try {
+      return { value: await call(retryCount), retryCount, ...(retryCategory ? { retryCategory } : {}) };
+    } catch (error) {
+      if (!(error instanceof StagingLevelJsonParseError) || retryCount >= 1) {
+        if (error instanceof StagingLevelJsonParseError) Object.assign(error, { retryCount, parseStage: error.category });
+        throw error;
+      }
+      retryCount += 1;
+      retryCategory = error.category;
+      onRetry?.(retryCount, error);
+    }
+  }
+}
+
+function validationCategory(issues: Array<{ path: string; message: string }>): string {
+  if (issues.some((issue) => /visual\.data|visual|geometry|clock|timeline|unit conversion/i.test(`${issue.path} ${issue.message}`))) return 'geometry';
+  if (issues.some((issue) => /prerequisite/i.test(`${issue.path} ${issue.message}`))) return 'prerequisite';
+  if (issues.some((issue) => /answer_type|correct_answer|interaction|mastery/i.test(`${issue.path} ${issue.message}`))) return 'interaction';
+  if (issues.some((issue) => /takeaway|key_points|content|pedagogical/i.test(`${issue.path} ${issue.message}`))) return 'pedagogical';
+  return 'canonical';
+}
+
+export function stagingValidationFailure(level: number, issues: Array<{ path: string; message: string }>, providerCalls: number) {
+  return {
+    code: 'staging_level_validation_failed',
+    level,
+    stage: 'level_validation',
+    validationCategory: validationCategory(issues),
+    technicalDetail: issues.map((issue) => issue.path + ': ' + issue.message).join('; '),
+    providerCalls,
+  };
+}
+
+const object = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+
+export const STAGING_LEVEL_COUNT = 4;
+export const STAGING_LEVEL_MAX_TOKENS = 4096;
+export const STAGING_JSON_NESTING_RULE = 'STRUCTURE JSON: construis chaque objet avec ses propriÃ©tÃ©s nommÃ©es et ses tableaux complets. Utilise les exemples JSON fournis comme modÃ¨les de structure; ne compte pas les accolades, ne force pas un ordre de fermeture et ne recopie jamais une suite de fermetures JSON. Chaque bloc doit Ãªtre autonome et correctement fermÃ© avant de passer au suivant.';
+const STAGING_V22_QUALITY_INSTRUCTIONS = [
+  'Aligne le but, chaque concept, les exemples, les exercices et la maÃ®trise sur les objectifs de la spÃ©cification approuvÃ©e. Reprends Ã  lâ€™identique ses critÃ¨res de rÃ©ussite lorsquâ€™ils sont fournis et vÃ©rifie chacun par une tÃ¢che observable.',
+  'Enseigne une idÃ©e Ã  la fois. Les deux concepts prÃ©parent lâ€™exemple guidÃ©; celui-ci doit rÃ©soudre un problÃ¨me complet avec des donnÃ©es, des Ã©tapes visibles, le calcul ou la reprÃ©sentation utile, les unitÃ©s et la rÃ©ponse. Dans chaque Ã©tape, indique lâ€™action et pourquoi elle est utile. Lâ€™essai de lâ€™Ã©lÃ¨ve doit ensuite proposer un problÃ¨me nouveau, proche mais pas identique, Ã  faire sans donner la rÃ©ponse. Les questions de maÃ®trise vÃ©rifient ensuite le mÃªme objectif avec une difficultÃ© lÃ©gÃ¨rement supÃ©rieure, sans ajouter une notion hors objectif.',
+  'Fais progresser la difficultÃ© sans surcharger. Donne un ou deux indices courts et progressifs qui aident Ã  commencer sans rÃ©vÃ©ler la rÃ©ponse. En cas dâ€™erreur, nomme une erreur probable en mots simples et propose une prochaine action prÃ©cise; le feedback de rÃ©ussite confirme la dÃ©marche ou le fait mathÃ©matique, pas seulement Â« bravo Â». VÃ©rifie que les rÃ©ponses, les calculs, les unitÃ©s et le feedback concordent.',
+  'LANGAGE ADAPTÃ‰ AU NIVEAU SCOLAIRE ET AU NIVEAU DE DIFFICULTÃ‰: applique la rÃ¨gle de langue dÃ©taillÃ©e plus bas Ã  tout ce que lâ€™Ã©lÃ¨ve voit: titres, explications, exemples, consignes, questions, choix de rÃ©ponse, indices, feedback, critÃ¨res et visuels. Utilise des phrases courtes, un vocabulaire courant et une seule idÃ©e par phrase. Tout mot mathÃ©matique indispensable est dÃ©fini simplement Ã  sa premiÃ¨re apparition; nâ€™ajoute pas de jargon, de tournure abstraite ou de texte adulte. Quand le niveau de difficultÃ© augmente, augmente la complexitÃ© du raisonnement ou le nombre dâ€™Ã©tapes, jamais la difficultÃ© inutile des mots. Relis le texte comme si tu lâ€™expliquais Ã  un Ã©lÃ¨ve de ce grade et remplace tout mot quâ€™il ne pourrait probablement pas comprendre sans aide.',
+  'Choisis un visuel seulement sâ€™il Ã©claire lâ€™idÃ©e ou si la spÃ©cification le demande. VÃ©rifie chaque quantitÃ©, valeur et Ã©tiquette du visuel.',
+  'Conserve exactement le contrat JSON V2.1 ci-dessous. Nâ€™ajoute aucun champ ni type de bloc.',
+].join('\n');
+
+/** A stable language ceiling with a gentle concept progression for each of the four lesson levels. */
+export function stagingLevelLanguageRule(metadata: StagingLevelMetadata, grade: string, language: string): string {
+  const progression = {
+    1: 'NIVEAU 1 â€” dÃ©couverte: pars dâ€™objets ou de situations familiÃ¨res; phrases trÃ¨s courtes; mots courants; enseigne une seule idÃ©e; explique tout terme nouveau avec un exemple concret.',
+    2: 'NIVEAU 2 â€” premiÃ¨re mÃ©thode: garde des mots simples; montre chaque action dans lâ€™ordre; nomme clairement les grandeurs, les unitÃ©s et les opÃ©rations; explique le vocabulaire mathÃ©matique avant de le rÃ©utiliser.',
+    3: 'NIVEAU 3 â€” stratÃ©gie: explique pourquoi la mÃ©thode fonctionne; prÃ©sente une Ã©tape Ã  la fois; si un terme nouveau est indispensable, dÃ©finis-le en mots courants avant usage.',
+    4: 'NIVEAU 4 â€” transfert: garde un langage simple mÃªme si le problÃ¨me comporte plusieurs Ã©tapes; dÃ©coupe le raisonnement; annonce les unitÃ©s; dÃ©finis tout terme nouveau; ne condense pas plusieurs opÃ©rations dans une phrase.',
+  }[metadata.level_number] ?? 'Adapte le vocabulaire Ã  lâ€™Ã¢ge et au grade indiquÃ©s, en dÃ©finissant chaque terme indispensable.';
+  return `LANGUE DE Lâ€™Ã‰LÃˆVE â€” langue demandÃ©e: ${language}; grade scolaire: ${grade}; palier de difficultÃ©: ${metadata.level_number}/4. ${progression} Chaque niveau est gÃ©nÃ©rÃ© sÃ©parÃ©ment: dÃ©finis au premier usage, dans CE niveau, tout terme qui nâ€™est pas courant, mÃªme sâ€™il a pu apparaÃ®tre dans un autre niveau. Si le grade ou lâ€™Ã¢ge prÃ©cis nâ€™est pas fourni, suppose que lâ€™Ã©lÃ¨ve suit le grade scolaire indiquÃ©; nâ€™infÃ¨re pas un Ã¢ge plus Ã©levÃ©. Ã‰cris pour comprendre Ã  la premiÃ¨re lecture: prÃ©fÃ¨re Â« prix dâ€™un cahier Â» Ã  Â« valeur unitaire Â», et explique toute expression technique avant de lâ€™utiliser dans une consigne ou une question.`;
+}
+
+export const STAGING_JSON_SYNTAX_RULE = 'SYNTAXE JSON STRICTE: un nombre JSON (expected_answer, correct_answer, radius, degrees, x, y, factorâ€¦) sâ€™Ã©crit TOUJOURS avec un point dÃ©cimal et sans espace: 0.5, 2.75, 12 â€” JAMAIS 0,5, 2,75, 1 000, .5 ni 05. La virgule dÃ©cimale franÃ§aise (Â« 2,75 Â») nâ€™est autorisÃ©e quâ€™Ã€ Lâ€™INTÃ‰RIEUR dâ€™une chaÃ®ne entre guillemets, par exemple "2,75". Si une rÃ©ponse dÃ©cimale doit sâ€™afficher avec une virgule, mets-la en chaÃ®ne: "expected_answer":"2,75" (et la mÃªme chaÃ®ne dans choices). Dans le texte, nâ€™Ã©cris jamais de guillemet droit " non Ã©chappÃ©: utilise Â« Â» ou \\". Nâ€™utilise aucune barre oblique inverse (pas de LaTeX comme \\frac ou \\times): Ã©cris Â« Ã— Â», Â« Ã· Â», Â« 3/4 Â». Aucune virgule finale avant } ou ], aucun commentaire, aucun NaN/Infinity. ' + STAGING_JSON_NESTING_RULE;
+export const STAGING_JSON_OUTPUT_RULE = 'JSON OUTPUT STRICT: retourne exactement UN objet JSON de premier niveau complet pour ce niveau; aucune fence Markdown (pas de ```json), aucun texte avant/aprÃ¨s, aucun second objet JSON, aucun tableau racine ni wrapper. Respecte exactement le schÃ©ma demandÃ© et arrÃªte-toi aprÃ¨s la derniÃ¨re accolade. ' + STAGING_JSON_SYNTAX_RULE;
+export const STAGING_CUSTOM_PROMPT = 'STAGING_DRAFT single-topic contract: this request is one of exactly four level calls (levels 1, 2, 3, and 4); every one of the four levels must return one complete level object before the draft can be saved. The student_try block MUST contain a non-null correct_answer. mastery_check.questions MUST contain 1â€“4 complete question objects, and EVERY question MUST contain these eight required properties: id, question, answer_type, correct_answer, skill, difficulty, success_feedback, error_feedback. The optional choices property is allowed in addition; it is REQUIRED with at least two strings when answer_type is multiple_choice or selection, and it may be omitted for numeric or text questions. correct_answer MUST be non-null. A valid JSON object missing any required field is rejected before pedagogical validation; do not repair, complete, infer, or fabricate values. Return only the one JSON object for the requested level.';
+
+const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+
+function requiredStagingField(value: Record<string, unknown>, path: string, field: string, issues: Array<{ path: string; message: string }>) {
+  if (!nonEmpty(value[field])) issues.push({ path: `${path}.${field}`, message: 'Required non-empty string' });
+}
+
+function requiredStagingAnswer(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
+  const answerType = String(value.answer_type ?? '');
+  const answer = value.correct_answer;
+  if (answer === undefined || answer === null) return;
+  const answerPath = `${path}.correct_answer`;
+  if (answerType === 'numeric' && !(
+    (typeof answer === 'number' && Number.isFinite(answer)) ||
+    (typeof answer === 'string' && /^[-+]?\d+(?:[.,]\d+)?$/.test(answer.trim()))
+  )) issues.push({ path: answerPath, message: 'Numeric answer requires a finite number or a decimal string.' });
+  if (answerType === 'time' && !nonEmpty(answer)) {
+    issues.push({ path: answerPath, message: 'Expected a non-empty time answer.' });
+  }
+  if (['short_text', 'text'].includes(answerType) && !nonEmpty(answer) &&
+    !(typeof answer === 'number' && Number.isFinite(answer))) {
+    issues.push({ path: answerPath, message: 'Expected a non-empty text answer or a finite number.' });
+  }
+  if (answerType === 'ordering' && (!Array.isArray(answer) || answer.length < 2 || answer.some((item) => !nonEmpty(item)))) {
+    issues.push({ path: answerPath, message: 'Ordering requires an array of at least two non-empty strings.' });
+  }
+  if (!['multiple_choice', 'selection'].includes(answerType)) return;
+  if (!Array.isArray(value.choices) || value.choices.length < 2 || value.choices.some((choice) => !nonEmpty(choice))) {
+    issues.push({ path: `${path}.choices`, message: 'Choice question requires at least two non-empty choices' });
+    return;
+  }
+  if (!value.choices.includes(answer)) {
+    issues.push({ path: `${path}.correct_answer`, message: 'Correct answer must exactly match one choice' });
+  }
+}
+
+function requiredStagingKeyPoints(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
+  if (!Array.isArray(value.key_points) || value.key_points.length < 2 || value.key_points.length > 3) {
+    issues.push({ path: `${path}.key_points`, message: 'Expected 2â€“3 concise factual key point objects' });
+    return;
+  }
+  value.key_points.forEach((point, index) => {
+    const pointPath = `${path}.key_points[${index}]`;
+    const item = object(point);
+    if (!item) {
+      issues.push({ path: pointPath, message: 'Expected object with label and text' });
+      return;
+    }
+    requiredStagingField(item, pointPath, 'label', issues);
+    requiredStagingField(item, pointPath, 'text', issues);
+  });
+}
+
+function requiredStagingMastery(value: Record<string, unknown>, issues: Array<{ path: string; message: string }>) {
+  const mastery = object(value.mastery);
+  if (!mastery) {
+    issues.push({ path: 'mastery', message: 'Expected object' });
+    return;
+  }
+  if (!Array.isArray(mastery.skills) || mastery.skills.some((skill) => !nonEmpty(skill))) {
+    issues.push({ path: 'mastery.skills', message: 'Expected array of non-empty strings' });
+  }
+  if (typeof mastery.threshold !== 'number' || !Number.isFinite(mastery.threshold) || mastery.threshold < 0 || mastery.threshold > 1) {
+    issues.push({ path: 'mastery.threshold', message: 'Expected number between 0 and 1' });
+  }
+}
+
+function requiredStagingMasteryQuestions(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
+  const mastery = object(value);
+  const questions = mastery?.questions;
+  if (!Array.isArray(questions)) return;
+  questions.forEach((raw, index) => {
+    const questionPath = `${path}.questions[${index}]`;
+    const question = object(raw);
+    if (!question) {
+      issues.push({ path: questionPath, message: 'Expected complete mastery question object' });
+      return;
+    }
+    for (const field of ['id', 'question', 'answer_type', 'skill', 'success_feedback', 'error_feedback']) {
+      if (!nonEmpty(question[field])) issues.push({ path: `${questionPath}.${field}`, message: 'Required non-empty value' });
+    }
+    if (typeof question.difficulty !== 'number' || !Number.isFinite(question.difficulty)) issues.push({ path: `${questionPath}.difficulty`, message: 'Required numeric difficulty' });
+    if (question.correct_answer === undefined || question.correct_answer === null) {
+      issues.push({ path: `${questionPath}.correct_answer`, message: 'Required non-null value for every mastery question' });
+    } else if (
+      (typeof question.correct_answer !== 'string' || question.correct_answer.trim().length === 0) &&
+      (typeof question.correct_answer !== 'number' || !Number.isFinite(question.correct_answer)) &&
+      (!Array.isArray(question.correct_answer) || question.correct_answer.length < 1 || question.correct_answer.some((item) => typeof item !== 'string' || item.trim().length === 0))
+    ) {
+      issues.push({ path: `${questionPath}.correct_answer`, message: 'Expected non-empty string, finite number, or non-empty string array' });
+    }
+    if (!ANSWER_TYPE_VALUES.includes(String(question.answer_type) as typeof ANSWER_TYPE_VALUES[number])) {
+      issues.push({ path: `${questionPath}.answer_type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });
+    }
+    requiredStagingAnswer(question, questionPath, issues);
+  });
+}
+
+function requiredStagingPrerequisites(value: Record<string, unknown>, issues: Array<{ path: string; message: string }>) {
+  if (!Array.isArray(value.prerequisites)) return;
+  value.prerequisites.forEach((raw, index) => {
+    const path = `prerequisites[${index}]`;
+    const prerequisite = object(raw);
+    if (!prerequisite) { issues.push({ path, message: 'Expected object' }); return; }
+    const type = prerequisite.type;
+    for (const field of ['id', 'description', 'prompt', 'remediation_hint']) {
+      if (!nonEmpty(prerequisite[field])) issues.push({ path: `${path}.${field}`, message: 'Required non-empty string' });
+    }
+    if (prerequisite.check_question !== undefined || prerequisite.answer_type !== undefined) {
+      issues.push({ path, message: 'Legacy prerequisite format rejected; use type, prompt, and expected_answer.' });
+    }
+    if (!ANSWER_TYPE_VALUES.includes(String(type) as typeof ANSWER_TYPE_VALUES[number])) {
+      issues.push({ path: `${path}.type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });
+    }
+    if (prerequisite.expected_answer === undefined) issues.push({ path: `${path}.expected_answer`, message: 'Required value' });
+    if (type === 'numeric' && (typeof prerequisite.expected_answer !== 'number' || !Number.isFinite(prerequisite.expected_answer))) {
+      issues.push({ path: `${path}.expected_answer`, message: 'Numeric prerequisite requires a numeric expected answer' });
+    }
+    if (['multiple_choice', 'selection'].includes(String(type))) {
+      if (!Array.isArray(prerequisite.choices) || prerequisite.choices.length < 2 || prerequisite.choices.some((choice) => !nonEmpty(choice))) {
+        issues.push({ path: `${path}.choices`, message: 'Choice prerequisite requires at least two non-empty choices' });
+      } else if (!prerequisite.choices.some((choice) => String(choice).trim() === String(prerequisite.expected_answer ?? '').trim())) {
+        issues.push({ path: `${path}.expected_answer`, message: 'Expected answer must exactly match one choice' });
+      }
+    }
+  });
+}
+
+/** The provider-facing level contract. It is intentionally stricter than the
+ * general V2.1 envelope: no block IDs/types/content may be compiler-filled. */
+export function stagingSequenceContractIssues(lesson: Record<string, unknown>, metadata: StagingLevelMetadata): Array<{ path: string; message: string }> {
+  const issues: Array<{ path: string; message: string }> = [];
+  const sequence = lesson.sequence;
+  if (!Array.isArray(sequence) || sequence.length !== STAGING_SEQUENCE_BLOCK_TYPES.length) {
+    issues.push({ path: 'sequence', message: `Expected exactly ${STAGING_SEQUENCE_BLOCK_TYPES.length} typed blocks.` });
+    return issues;
+  }
+  sequence.forEach((raw, index) => {
+    const path = `sequence[${index}]`;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      issues.push({ path, message: 'Expected object' });
+      return;
+    }
+    const block = raw as Record<string, unknown>;
+    requiredStagingField(block, path, 'id', issues);
+    requiredStagingField(block, path, 'type', issues);
+    requiredStagingField(block, path, 'content', issues);
+    const expectedType = STAGING_SEQUENCE_BLOCK_TYPES[index];
+    if (nonEmpty(block.type) && block.type !== expectedType) issues.push({ path: `${path}.type`, message: `Expected staged block type ${expectedType}.` });
+    if (block.type === 'concept') {
+      requiredStagingField(block, path, 'title', issues);
+      requiredStagingKeyPoints(block, path, issues);
+      requiredStagingField(block, path, 'takeaway', issues);
+      if (typeof block.content === 'string' && block.content.trim().split(/\s+/).length > PEDAGOGICAL_CONCEPT_MAX_WORDS) {
+        issues.push({ path: `${path}.content`, message: `Expected at most ${PEDAGOGICAL_CONCEPT_MAX_WORDS} words for a structured concept` });
+      }
+      if (typeof block.takeaway === 'string' && block.takeaway.trim().split(/\s+/).length > PEDAGOGICAL_TAKEAWAY_MAX_WORDS) {
+        issues.push({ path: `${path}.takeaway`, message: `Expected at most ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} words` });
+      }
+    }
+    if (block.type === 'guided_example') {
+      requiredStagingField(block, path, 'context', issues);
+      if (!Array.isArray(block.steps) || block.steps.length < 1) issues.push({ path: `${path}.steps`, message: 'Expected non-empty array' });
+    }
+    if (block.type === 'student_try') {
+      ['question', 'answer_type', 'success_feedback', 'error_feedback'].forEach((field) => requiredStagingField(block, path, field, issues));
+      if (block.correct_answer === undefined || block.correct_answer === null) issues.push({ path: `${path}.correct_answer`, message: 'Required non-null value' });
+      requiredStagingAnswer(block, path, issues);
+    }
+    if (block.type === 'mastery_check') {
+      if (!Array.isArray(block.questions) || block.questions.length < 1 || block.questions.length > 4) issues.push({ path: `${path}.questions`, message: 'Expected 1â€“4 questions' });
+      requiredStagingMasteryQuestions(block, path, issues);
+    }
+  });
+  const masteryIndex = sequence.findIndex((block) => block && typeof block === 'object' && !Array.isArray(block) && (block as Record<string, unknown>).type === 'mastery_check');
+  const interactionIndex = sequence.findIndex((block) => block && typeof block === 'object' && !Array.isArray(block) && STAGING_INTERACTIVE_TYPES.includes(String((block as Record<string, unknown>).type) as typeof STAGING_INTERACTIVE_TYPES[number]));
+  if (masteryIndex >= 0 && (interactionIndex < 0 || interactionIndex > masteryIndex)) issues.push({ path: 'sequence', message: 'Required interaction before mastery.' });
+  if (metadata.level_number === 1 && stagingPromptVisualKinds(metadata).length > 0 && (metadata.required_geometry_kinds.length > 0 || Boolean(metadata.required_geometry_alternatives?.length))) {
+    const conceptsWithVisual = sequence.filter((block) => block && typeof block === 'object' && !Array.isArray(block) && (block as Record<string, unknown>).type === 'concept' && (block as Record<string, unknown>).visual);
+    if (conceptsWithVisual.length < 2) issues.push({ path: 'sequence', message: 'Level 1 requires at least two visual concept blocks matching the explicit topic contract.' });
+  }
+  requiredStagingMastery(lesson, issues);
+  requiredStagingPrerequisites(lesson, issues);
+  return issues;
+}
+
+export function stagingTokenUsage(providerMetadata: { finishReason?: string; promptTokens?: number; completionTokens?: number; totalTokens?: number } | null): { promptTokens: number; completionTokens: number; totalTokens: number } {
+  if (providerMetadata?.finishReason === 'length') {
+    throw new Error('staging_level_provider_output_truncated: finish_reason=length; maxTokens=' + STAGING_LEVEL_MAX_TOKENS + '; completionTokens=' + Number(providerMetadata.completionTokens ?? 0));
+  }
+  return {
+    promptTokens: Number(providerMetadata?.promptTokens ?? 0),
+    completionTokens: Number(providerMetadata?.completionTokens ?? 0),
+    totalTokens: Number(providerMetadata?.totalTokens ?? 0),
+  };
+}
+
+function isDecimalTopic(topicName: string, objectiveText = ''): boolean {
+  return /nombre(?:s)?[\s-]+d[Ã©e]cimal(?:e|es)?|d[Ã©e]cimaux|decimal/i.test(`${topicName} ${objectiveText}`);
+}
+
+/** Server-selected visual contract returned with every successful staging run. */
+export function stagingTopicKind(topicName: string, objectiveText = ''): StagingTopicKind {
+  if (isDecimalTopic(topicName, objectiveText)) return 'decimal';
+  if (isTimeTopic(topicName, objectiveText)) return 'time';
+  if (/figure|gÃ©omÃ©tr|geometr|triangle|rectangle|cercle|angle|sym[Ã©e]tr|espace/i.test(`${topicName} ${objectiveText}`)) return 'geometry';
+  return 'general';
+}
+
+function isTimeTopic(topicName: string, objectiveText = ''): boolean {
+  return /dur[Ã©e]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[Ã©e]e|conversion|unit[Ã©e]s? de dur[Ã©e]e/i.test(`${topicName} ${objectiveText}`);
+}
+
+export function stagingLevelMetadata(topicId: string, topicName: string, objectiveIds: string[], objectiveText = ''): StagingLevelMetadata[] {
+  if (isSpatialMovementTopic(topicId, topicName)) {
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Se repÃ©rer par coordonnÃ©es', purpose: 'RepÃ©rer un point Ã  partir de deux coordonnÃ©es et lire une position dans lâ€™ordre indiquÃ©.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['diagram'] },
+      { id: topicId + '-level-2', level_number: 2, title: 'DÃ©crire et suivre un dÃ©placement', purpose: 'DÃ©crire un trajet avec une direction, un sens et un nombre de pas.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['diagram'] },
+      { id: topicId + '-level-3', level_number: 3, title: 'InterprÃ©ter un parcours', purpose: 'Lire un parcours et distinguer la distance parcourue du dÃ©placement net.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: ['diagram'] },
+      { id: topicId + '-level-4', level_number: 4, title: 'Programmer un parcours', purpose: 'Ã‰crire un parcours avec des changements de direction et calculer son dÃ©placement net.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: ['diagram'] },
+    ];
+  }
+  if (isDecimalTopic(topicName, objectiveText)) {
+    const decimalModel = [['number_line', 'rectangle']];
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Comprendre la valeur de position', purpose: 'Lire la valeur de chaque chiffre dans un nombre dÃ©cimal.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: decimalModel },
+      { id: topicId + '-level-2', level_number: 2, title: 'Comparer et placer des dÃ©cimaux', purpose: 'Comparer des nombres dÃ©cimaux et les placer sur une droite graduÃ©e.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: decimalModel },
+      { id: topicId + '-level-3', level_number: 3, title: 'Calculer avec des dÃ©cimaux', purpose: 'Effectuer un calcul dÃ©cimal en respectant la valeur de position.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: decimalModel },
+      { id: topicId + '-level-4', level_number: 4, title: 'RÃ©soudre avec des dÃ©cimaux', purpose: 'RÃ©soudre une situation en choisissant une reprÃ©sentation dÃ©cimale adaptÃ©e.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: decimalModel },
+    ];
+  }
+  if (isTimeTopic(topicName, objectiveText)) {
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Comprendre les unitÃ©s de durÃ©e', purpose: 'Comparer les unitÃ©s de temps et leur ordre.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['unit_conversion', 'timeline'] },
+      { id: topicId + '-level-2', level_number: 2, title: 'Lire lâ€™heure et calculer des durÃ©es', purpose: 'Lire une horloge et relier une heure Ã  une durÃ©e.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['clock', 'timeline'] },
+      { id: topicId + '-level-3', level_number: 3, title: 'Convertir des durÃ©es', purpose: 'Choisir une unitÃ© et effectuer une conversion.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: ['unit_conversion', 'timeline'] },
+      { id: topicId + '-level-4', level_number: 4, title: 'RÃ©soudre des problÃ¨mes de durÃ©e', purpose: 'RÃ©soudre une situation de durÃ©e en justifiant ses choix.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: ['clock', 'unit_conversion'] },
+    ];
+  }
+  if (stagingTopicKind(topicName, objectiveText) === 'general') {
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Comprendre la notion', purpose: 'Construire les premiers repÃ¨res de la notion.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: [] },
+      { id: topicId + '-level-2', level_number: 2, title: 'Appliquer la notion', purpose: 'Utiliser la notion dans des exemples guidÃ©s.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: [] },
+      { id: topicId + '-level-3', level_number: 3, title: 'Raisonner avec la notion', purpose: 'Choisir une mÃ©thode et justifier son raisonnement.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: [] },
+      { id: topicId + '-level-4', level_number: 4, title: 'RÃ©soudre une situation', purpose: 'Mobiliser la notion dans une situation nouvelle.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: [], required_geometry_alternatives: [] },
+    ];
+  }
+  return [
+    { id: topicId + '-level-1', level_number: 1, title: 'DÃ©couvrir les figures', purpose: 'ReconnaÃ®tre les Ã©lÃ©ments des figures planes.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['rectangle', 'triangle'] },
+    { id: topicId + '-level-2', level_number: 2, title: 'DÃ©crire cercle et angle', purpose: 'DÃ©crire un cercle et un angle avec leurs mesures.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['circle', 'angle'] },
+    { id: topicId + '-level-3', level_number: 3, title: 'Construire une symÃ©trie', purpose: 'Utiliser un axe et un quadrillage pour vÃ©rifier une symÃ©trie.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: ['symmetry'] },
+    { id: topicId + '-level-4', level_number: 4, title: 'Mobiliser les propriÃ©tÃ©s', purpose: 'RÃ©soudre une situation de ' + topicName.toLocaleLowerCase() + ' en justifiant ses choix.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: [] },
+  ];
+}
+
+type ConceptExample = Record<string, unknown> & { visual: { kind: string; purpose: string; alt_text: string; data: Record<string, unknown> } };
+
+/** Canonical drawable-visual concept examples. Each one must pass the real
+ * staging validators (see staging-prompt-consistency.test.ts); the prompt
+ * embeds them verbatim so the provider sees exactly the accepted shapes. */
+const RAW_STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion' | 'number_line' | 'diagram', ConceptExample> = {
+  rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatÃ¨re qui possÃ¨de quatre angles droits. Ses cÃ´tÃ©s opposÃ©s ont la mÃªme longueur.', key_points: [{ label: 'Forme', text: 'La figure possÃ¨de quatre cÃ´tÃ©s.' }, { label: 'Angles', text: 'Chaque coin forme un angle droit.' }], takeaway: 'Astuce : pense Ã  une porte.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les cÃ´tÃ©s.', alt_text: 'Rectangle ABCD dessinÃ© avec quatre sommets Ã©tiquetÃ©s.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
+  triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle est un polygone formÃ© de trois cÃ´tÃ©s et de trois sommets.', key_points: [{ label: 'CÃ´tÃ©s', text: 'Trois segments ferment cette figure.' }, { label: 'Sommets', text: 'Chaque jonction constitue un sommet.' }], takeaway: 'Astuce : un doigt par coin.', visual: { kind: 'polygon', purpose: 'Nommer les cÃ´tÃ©s du triangle.', alt_text: 'Triangle ABC dessinÃ© avec trois sommets Ã©tiquetÃ©s.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
+  circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points dâ€™un cercle sont Ã  la mÃªme distance du centre O. Le diamÃ¨tre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Un rayon rejoint le bord.' }, { label: 'DiamÃ¨tre', text: 'Un diamÃ¨tre traverse le milieu.' }], takeaway: 'Astuce : pense Ã  une roue de vÃ©lo.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamÃ¨tre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamÃ¨tre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
+  angle: { id: 'angle-concept', type: 'concept', title: 'Angle de sommet O', content: 'Un angle est formÃ© par deux demi-droites qui partent du mÃªme sommet O. On le mesure en degrÃ©s.', key_points: [{ label: 'Sommet', text: 'O dÃ©signe le sommet commun.' }, { label: 'Mesure', text: 'Le degrÃ© quantifie cette ouverture.' }], takeaway: 'Astuce : pense aux aiguilles dâ€™une horloge.', visual: { kind: 'angle', purpose: 'Montrer le sommet, les deux cÃ´tÃ©s et la mesure.', alt_text: 'Angle AOB de 45 degrÃ©s de sommet O.', data: { vertex: { x: 100, y: 150, label: 'O' }, rays: [{ x: 250, y: 150, label: 'A' }, { x: 206, y: 44, label: 'B' }], degrees: 45 } } },
+  symmetry: { id: 'symmetry-concept', type: 'concept', title: 'SymÃ©trie axiale', content: 'Une figure et son image symÃ©trique se correspondent de part et dâ€™autre dâ€™un axe vertical.', key_points: [{ label: 'RepÃ¨re', text: 'Lâ€™axe sÃ©pare les deux images.' }, { label: 'Correspondance', text: 'Les points correspondants restent Ã©quidistants.' }], takeaway: 'Astuce : pense aux ailes dâ€™un papillon.', visual: { kind: 'symmetry', purpose: 'Comparer une figure et sa symÃ©trique sur quadrillage.', alt_text: 'Triangle et son symÃ©trique par rapport Ã  un axe vertical sur un quadrillage de 10 sur 8.', data: { axis: { x: 5 }, grid: { width: 10, height: 8 }, figure: [{ x: 2, y: 2 }, { x: 4, y: 2 }, { x: 4, y: 5 }], symmetric_figure: [{ x: 8, y: 2 }, { x: 6, y: 2 }, { x: 6, y: 5 }] } } },
+  clock: { id: 'clock-concept', type: 'concept', title: 'Lire une horloge', content: 'Une horloge indique une heure grÃ¢ce Ã  ses aiguilles. La petite aiguille montre les heures et la grande les minutes.', key_points: [{ label: 'Heures', text: 'La petite aiguille indique les heures.' }, { label: 'Minutes', text: 'La grande aiguille indique les minutes.' }], takeaway: 'Astuce : observe le cadran avant dâ€™agir.', visual: { kind: 'clock', purpose: 'Lire une heure prÃ©cise sur un cadran.', alt_text: 'Horloge indiquant 3 heures et 15 minutes.', data: { hour: 3, minute: 15 } } },
+  timeline: { id: 'timeline-concept', type: 'concept', title: 'Ordre des unitÃ©s', content: 'Les unitÃ©s de durÃ©e se suivent de la seconde au jour. Une frise aide Ã  comparer leur ordre.', key_points: [{ label: 'Ordre', text: 'Une minute contient soixante secondes.' }, { label: 'RepÃ¨re', text: 'Une heure contient soixante minutes.' }], takeaway: 'Astuce : ordonne les cartes avant dâ€™agir.', visual: { kind: 'timeline', purpose: 'Comparer lâ€™ordre des unitÃ©s de durÃ©e.', alt_text: 'Frise des unitÃ©s seconde, minute et heure.', data: { units: ['seconde', 'minute', 'heure'] } } },
+  unit_conversion: { id: 'unit-conversion-concept', type: 'concept', title: 'Convertir une durÃ©e', content: 'Pour convertir une durÃ©e, on relie les unitÃ©s par leur facteur. Une minute correspond Ã  60 secondes.', key_points: [{ label: 'Facteur', text: 'Une minute vaut soixante secondes.' }, { label: 'Sens', text: 'Multiplier donne davantage de secondes.' }], takeaway: 'Astuce : choisis avant dâ€™agir.', visual: { kind: 'unit_conversion', purpose: 'Montrer le facteur entre minute et seconde.', alt_text: 'Conversion dâ€™une minute en secondes.', data: { from: 'minute', to: 'seconde', factor: 60 } } },
+  number_line: { id: 'number-line-concept', type: 'concept', title: 'Placer un nombre dÃ©cimal', content: 'Sur une droite graduÃ©e, chaque intervalle reprÃ©sente une mÃªme valeur. Un nombre dÃ©cimal se place entre deux repÃ¨res selon sa partie entiÃ¨re et sa partie dÃ©cimale.', key_points: [{ label: 'RepÃ¨res', text: 'Les graduations gardent un mÃªme Ã©cart.' }, { label: 'Position', text: 'La virgule indique la place du nombre.' }], takeaway: 'Astuce : avance graduation par graduation.', visual: { kind: 'number_line', purpose: 'Placer un nombre dÃ©cimal entre deux repÃ¨res.', alt_text: 'Droite graduÃ©e de zÃ©ro Ã  deux avec un repÃ¨re dÃ©cimal.', data: { min: 0, max: 2, step: 0.1, value: 1.4 } } },
+  diagram: { id: 'spatial-path-concept', type: 'concept', title: 'Lire un parcours', content: 'Un parcours se lit en suivant les points dans lâ€™ordre. Une flÃ¨che indique le sens du dÃ©placement entre deux positions.', key_points: [{ label: 'Ordre', text: 'Lis dÃ©part puis arrivÃ©e.' }, { label: 'Sens', text: 'Suis la flÃ¨che vers lâ€™arrivÃ©e.' }], takeaway: 'Astuce : imagine une carte.', visual: { kind: 'diagram', purpose: 'Montrer des positions et un trajet orientÃ©.', alt_text: 'Diagramme de points reliÃ©s par un trajet orientÃ©.', data: { points: [{ x: 45, y: 150, label: 'A' }, { x: 145, y: 150, label: 'B' }, { x: 245, y: 70, label: 'C' }], segments: [{ from: 'A', to: 'B' }, { from: 'B', to: 'C' }], arrows: [{ from: 'A', to: 'B' }, { from: 'B', to: 'C' }], annotations: [{ x: 35, y: 185, text: 'dÃ©part' }, { x: 220, y: 45, text: 'arrivÃ©e' }] } } },
+};
+
+/** Concept key order shown to the provider: the deeply nested visual comes
+ * right after content and the block ends with flat fields (key_points,
+ * takeaway). A visual written last forces a long run of closing brackets
+ * ("}]}}}") that DeepSeek repeatedly shortened by one brace, producing
+ * malformed JSON. Same data, same validators â€” only the key order changes. */
+export function orderConceptKeysVisualFirst<T extends Record<string, unknown>>(block: T): T {
+  if (!('visual' in block)) return block;
+  const { visual, key_points, takeaway, ...rest } = block as Record<string, unknown>;
+  const ordered: Record<string, unknown> = {};
+  for (const key of ['id', 'type', 'title', 'content']) if (key in rest) ordered[key] = rest[key];
+  ordered.visual = visual;
+  for (const [key, value] of Object.entries(rest)) if (!(key in ordered)) ordered[key] = value;
+  if (key_points !== undefined) ordered.key_points = key_points;
+  if (takeaway !== undefined) ordered.takeaway = takeaway;
+  return ordered as T;
+}
+
+export const STAGING_VISUAL_EXAMPLES = Object.fromEntries(
+  Object.entries(RAW_STAGING_VISUAL_EXAMPLES).map(([kind, block]) => [kind, orderConceptKeysVisualFirst(block)]),
+) as typeof RAW_STAGING_VISUAL_EXAMPLES;
+
+export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'angle', 'symmetry'] as const;
+
+/** Visual kinds the prompt demands for each level. Level 4 has no fixed kind
+ * but still must draw every concept, because pedagogical validation requires
+ * a figure for any geometric concept. */
+export function stagingPromptVisualKinds(metadata: StagingLevelMetadata): string[] {
+  if (metadata.required_geometry_kinds.length > 0) return metadata.required_geometry_kinds;
+  if (metadata.required_geometry_alternatives !== undefined) return [...new Set(metadata.required_geometry_alternatives.flat())];
+  return [...STAGING_ALL_GEOMETRY_KINDS];
+}
+
+/** Numeric prerequisite shown to the provider (validated in tests). */
+export const STAGING_NUMERIC_PREREQUISITE_EXAMPLE = { id: 'p-angle-droit', description: 'ConnaÃ®tre la mesure dâ€™un angle droit', type: 'numeric', prompt: 'Combien de degrÃ©s mesure un angle droit ?', expected_answer: 90, remediation_hint: 'Un angle droit correspond Ã  un quart de tour.' };
+
+export const STAGING_SHORT_TEXT_PREREQUISITE_EXAMPLE = { id: 'p1', description: 'Lire les longueurs', type: 'short_text', prompt: 'Quel segment mesure 6 cm ?', expected_answer: 'AB', remediation_hint: 'RepÃ¨re les lettres des extrÃ©mitÃ©s.' };
+
+export const STAGING_MISCONCEPTION_EXAMPLE = { id: 'm1', description: 'Confondre rayon et diamÃ¨tre', detect_if: 'Lâ€™Ã©lÃ¨ve appelle rayon un segment qui traverse le centre', feedback: 'Le rayon va du centre au cercle; le diamÃ¨tre traverse le centre.', remediation_strategy: 'Comparer les deux segments sur le dessin.' };
+
+/** Multiple-choice prerequisite shown to the provider (validated in tests). */
+export const STAGING_CHOICE_PREREQUISITE_EXAMPLE = { id: 'p-axe', description: 'ReconnaÃ®tre un axe de symÃ©trie', type: 'multiple_choice', prompt: 'Quelle ligne partage une figure en deux moitiÃ©s superposables ?', choices: ['Un axe de symÃ©trie', 'Une diagonale quelconque', 'Un rayon'], expected_answer: 'Un axe de symÃ©trie', remediation_hint: 'Pense au pliage : les deux moitiÃ©s se recouvrent.' };
+
+export const PREREQUISITE_ANSWER_RULE = 'expected_answer est OBLIGATOIRE dans CHAQUE prerequisite, quel que soit son type: ne lâ€™omets jamais, ne le remplace jamais par correct_answer ou answer (ces champs sont ignorÃ©s et la leÃ§on est rejetÃ©e), et ne lâ€™infÃ¨re pas dans le normalizer. Prerequisite numÃ©rique: type:"numeric", prompt et expected_answer numÃ©rique (ex. 12 ou 90). Prerequisite Ã  choix (type "multiple_choice" ou "selection"): choices = au moins 2 chaÃ®nes, et expected_answer = la COPIE EXACTE, caractÃ¨re pour caractÃ¨re, de lâ€™un des choices (jamais une lettre "A"/"B", un index, une reformulation ou une rÃ©ponse absente des choices). Question de reconnaissance (le prompt contient Â« reconnaÃ®tre Â», Â« identifier Â», Â« quelle forme Â» ou Â« aiguille Â»): type OBLIGATOIRE "multiple_choice" (ou "selection"/"short_text"), JAMAIS "numeric" ni "time"; ex. {"type":"multiple_choice","prompt":"Quelle forme a trois cÃ´tÃ©s ?","choices":["Le triangle","Le carrÃ©","Le cercle"],"expected_answer":"Le triangle"}. Une question numeric demande un nombre (Â« Combienâ€¦ ? Â») et nâ€™emploie aucun de ces mots: Ã©cris Â« Combien de sommets a un triangle ? Â», jamais Â« Comment reconnaÃ®tre un triangle : combien de sommets ? Â». Relis chaque prerequisite avant de rÃ©pondre: expected_answer prÃ©sent, pour un choix prÃ©sent mot pour mot dans choices, et aucun mot de reconnaissance dans un prompt numeric ou time.';
+
+export const TAKEAWAY_RULE = "Le takeaway est une action-mÃ©moire trÃ¨s courte pour lâ€™Ã©lÃ¨ve: 8 mots maximum, sous la forme Â« Astuce : pense Ã  â€¦ Â» avec une image ou un objet du quotidien (porte, roue, papillon, horloge, main). RÃˆGLE ZÃ‰RO RÃ‰PÃ‰TITION: il ne reformule ni le content ni les key_points et ne rÃ©utilise AUCUN mot important (4 lettres ou plus) du content, du title ou des key_points, mÃªme conjuguÃ© ou au pluriel. Interdit: les Ã©tapes de la mÃ©thode, les mots de la notion (figure, symÃ©trique, axe, plier, pliage, cÃ´tÃ©, sommet, angle, rayon, carreaux, compter, reporter, vÃ©rifier) et la copie dâ€™un exemple. Exemples REJETÃ‰S: Â« Je compte les carreaux jusquâ€™Ã  lâ€™axe puis je reporte de lâ€™autre cÃ´tÃ© Â», Â« Astuce : je compte et je reporte Â», Â« Si je plie la figure le long de lâ€™axe, les bords coÃ¯ncident : elle est symÃ©trique Â», Â« Pour reconnaÃ®tre un triangle, je compte ses trois sommets et ses trois cÃ´tÃ©s Â». Relis chaque concept avant de rÃ©pondre: si un mot du takeaway apparaÃ®t dans le content ou les key_points, remplace-le.";
+export const CONCEPT_LENGTH_RULE = 'Le content de chaque concept compte au plus 40 mots (limite stricte 55, au-delÃ  la leÃ§on est rejetÃ©e): 1 Ã  3 phrases courtes. Les dÃ©tails vont dans key_points, le visual ou un autre concept, jamais dans un long paragraphe.';
+export const KEY_POINT_RULE = 'Chaque concept contient exactement 2 ou 3 objets {label:string,text:string}. label nomme briÃ¨vement lâ€™idÃ©e; text est une phrase complÃ¨te, courte et porteuse de sens, jamais un mot isolÃ©, un tableau de mots ou un label rÃ©pÃ©tÃ©. Chaque phrase exprime un fait pertinent pour le content, sans copier une phrase entiÃ¨re de lâ€™explication. Garde au plus 5 mots importants par label + text; les unitÃ©s de temps et mots de liaison peuvent naturellement revenir. Les points apportent au moins deux idÃ©es rÃ©ellement diffÃ©rentes, pas deux formulations du mÃªme fait. Comparer les text aprÃ¨s normalisation (minuscules, accents et ponctuation retirÃ©s): aucune paire identique ou quasi identique, mÃªme avec des labels diffÃ©rents. REJETÃ‰: [{"label":"A","text":"multiplier"},{"label":"B","text":"Multiplier !"}]. Pour une conversion, distinguer par exemple le facteur entre unitÃ©s et le sens de conversion. Relis les phrases avant de retourner le JSON: phrases complÃ¨tes, lien avec le concept, faits distincts, aucun doublon normalisÃ©. Cette relecture fait partie de la rÃ©ponse initiale, sans appel supplÃ©mentaire.';
+export const CLOCK_VISUAL_RULE = 'Pour chaque visual de kind "clock", visual.data.hour doit Ãªtre un entier JavaScript compris entre 1 et 12 inclus, et visual.data.minute doit Ãªtre un entier JavaScript compris entre 0 et 59 inclus. Les dÃ©cimaux, chaÃ®nes, valeurs nulles, valeurs manquantes et valeurs hors limites sont interdits et rejetÃ©s: ne les arrondis, ne les bloques et ne les inventes jamais. Exemple valide: {"kind":"clock","data":{"hour":3,"minute":15}}.';
+export const MASTERY_QUESTION_RULE = 'mastery_check.questions contient 1 Ã  4 questions complÃ¨tes. CHAQUE question, y compris la derniÃ¨re, DOIT avoir id, question, answer_type, correct_answer, skill, difficulty, success_feedback et error_feedback. correct_answer est obligatoire et non null pour CHAQUE question: pour answer_type "numeric", utilise un nombre JSON; pour "multiple_choice" ou "selection", recopie exactement une chaÃ®ne de choices. VÃ©rifie toutes les questions avant de terminer la rÃ©ponse: aucune ne doit manquer de correct_answer.';
+
+/** Complete, valid example level used in the prompt (validated in tests). */
+export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<string, unknown> {
+  const kinds = stagingPromptVisualKinds(metadata);
+  const first = kinds[0] ? STAGING_VISUAL_EXAMPLES[kinds[0] as keyof typeof STAGING_VISUAL_EXAMPLES] : undefined;
+  const second = kinds[1]
+    ? STAGING_VISUAL_EXAMPLES[kinds[1] as keyof typeof STAGING_VISUAL_EXAMPLES]
+    : metadata.level_number === 1 && kinds[0]
+      ? STAGING_VISUAL_EXAMPLES[kinds[0] as keyof typeof STAGING_VISUAL_EXAMPLES]
+      : undefined;
+  const firstBlock = first
+    ? orderConceptKeysVisualFirst({ ...first, id: 'c1' })
+    : { id: 'c1', type: 'concept', title: 'RepÃ¨re essentiel', content: 'Cette notion se comprend en observant les informations utiles et leur relation.', key_points: [{ label: 'RepÃ¨re', text: 'Une information prÃ©cise guide le raisonnement.' }, { label: 'Lien', text: 'Les Ã©lÃ©ments se relient pour former une mÃ©thode.' }], takeaway: 'Astuce : pense Ã  une carte.' };
+  const secondBlock = second
+    ? orderConceptKeysVisualFirst({ ...second, id: 'c2' })
+    : { id: 'c2', type: 'concept', title: 'MÃ©thode', content: 'Une mÃ©thode ordonnÃ©e aide Ã  choisir une rÃ©ponse et Ã  vÃ©rifier le rÃ©sultat.', key_points: [{ label: 'Ordre', text: 'Chaque Ã©tape prÃ©pare la suivante.' }, { label: 'ContrÃ´le', text: 'Une vÃ©rification confirme le rÃ©sultat.' }], takeaway: 'Astuce : pense Ã  une recette.' };
+  return {
+    lesson_goal: 'ReconnaÃ®tre et dÃ©crire une figure plane.',
+    success_criteria: ['Je sais nommer les Ã©lÃ©ments de la figure.'],
+    prerequisites: metadata.level_number === 1 ? [] : [STAGING_NUMERIC_PREREQUISITE_EXAMPLE, STAGING_CHOICE_PREREQUISITE_EXAMPLE],
+    sequence: [
+      firstBlock,
+      secondBlock,
+      { id: 'g1', type: 'guided_example', content: 'Je lis les lettres de la figure puis je vÃ©rifie la propriÃ©tÃ© avec un instrument.', context: 'VÃ©rifier une propriÃ©tÃ© sur une figure.', steps: [{ instruction: 'Je repÃ¨re les Ã©lÃ©ments nommÃ©s.', reason: 'Les lettres dÃ©signent les sommets.' }] },
+      { id: 's1', type: 'student_try', content: 'Ã€ toi: compte les sommets.', question: 'Combien de sommets possÃ¨de un triangle ?', answer_type: 'numeric', correct_answer: 3, success_feedback: 'Oui, trois sommets.', error_feedback: 'Compte les points nommÃ©s par une lettre.' },
+      { id: 'm1', type: 'mastery_check', content: 'VÃ©rifie ta comprÃ©hension.', questions: [{ id: 'q1', question: 'Combien dâ€™angles droits possÃ¨de un rectangle ?', answer_type: 'numeric', correct_answer: 4, skill: 'figures_planes', difficulty: 1, success_feedback: 'Exact.', error_feedback: 'Compte les coins droits.' }] },
+    ],
+    misconceptions: [],
+    mastery: { skills: ['figures planes', 'propriÃ©tÃ©s'], threshold: 0.8 },
+  };
+}
+
+/** Provider-facing compact shape. The provider returns five named blocks;
+ * the application is the only place that constructs the ordered sequence. */
+export function stagingFullLevelCompactExample(metadata: StagingLevelMetadata): Record<string, unknown> {
+  const full = stagingFullLevelExample(metadata);
+  const { sequence, ...rest } = full as { sequence: Array<Record<string, unknown>> };
+  const blocks = sequence as Array<Record<string, unknown>>;
+  return {
+    ...rest,
+    concept_1: blocks[0],
+    concept_2: blocks[1],
+    guided_example: blocks[2],
+    student_try: blocks[3],
+    mastery_check: blocks[4],
+  };
+}
+
+export function assembleStagingSequenceFromCompact(value: Record<string, unknown>): Record<string, unknown> {
+  const present = STAGING_COMPACT_BLOCK_KEYS.filter((key) => Object.prototype.hasOwnProperty.call(value, key));
+  if (present.length === 0) return value;
+  const missing = STAGING_COMPACT_BLOCK_KEYS.filter((key) => !Object.prototype.hasOwnProperty.call(value, key));
+  if (missing.length > 0) {
+    throw new StagingLevelContractError(missing.map((key) => ({ path: key, message: 'Required compact staging block is missing.' })));
+  }
+  const blocks = STAGING_COMPACT_BLOCK_KEYS.map((key) => object(value[key]));
+  const invalid = blocks.flatMap((block, index) => block ? [] : [{ path: STAGING_COMPACT_BLOCK_KEYS[index], message: 'Expected an object for the compact staging block.' }]);
+  if (invalid.length > 0) throw new StagingLevelContractError(invalid);
+  const next = { ...value };
+  for (const key of STAGING_COMPACT_BLOCK_KEYS) delete next[key];
+  next.sequence = blocks;
+  return next;
+}
+
+const VISUAL_FIELD_RULES = [
+  'Champs exacts exigÃ©s par le validateur pour visual.data:',
+  '- diagram: kind "diagram", data.points = au moins 2 objets {x:number,y:number,label:string}; data.segments est obligatoire et contient au moins une relation {from,to} reliant des labels de points existants; data.arrows est facultatif et complÃ¨te les segments pour indiquer le sens du parcours; annotations peut fournir des repÃ¨res lisibles.',
+  '- rectangle: kind "rectangle", data.shape "rectangle", data.vertices = exactement 4 objets {x:number,y:number,label:string}, data.side_labels = 4 objets {from,to,label}.',
+  '- triangle: kind "polygon", data.shape "triangle", data.vertices = exactement 3 objets {x,y,label}, data.side_labels = 3 objets {from,to,label}.',
+  '- circle: kind "circle", data.center = {x:number,y:number,label}, data.radius = nombre > 0 ET data.diameter = nombre > 0 (diamÃ¨tre = 2 Ã— rayon).',
+  '- angle: kind "angle", data.vertex = {x:number,y:number,label}, data.rays = tableau de EXACTEMENT 2 points {x:number,y:number,label} (jamais ray1/ray2, jamais des objets sans x/y), data.degrees = nombre entre 1 et 360 (ou data.rightAngle = true).',
+  '- symmetry: kind "symmetry", data.axis = {x:number} pour un axe vertical ou {y:number} pour un axe horizontal (jamais {x1,y1,x2,y2}), data.grid = {width:number,height:number}, data.figure = tableau d\'AU MOINS 2 points {x,y} (jamais un seul point), data.symmetric_figure = tableau d\'AU MOINS 2 points {x,y} (images exactes par la symÃ©trie). MÃŠME si la leÃ§on parle du symÃ©trique d\'UN point, dessine un segment ou un triangle (2 Ã  3 points) : un tableau d\'un seul point est INTERDIT et rejetÃ©. Interdit : "figure":[{"x":2,"y":3}]. Correct : "figure":[{"x":2,"y":3},{"x":3,"y":5}], "symmetric_figure":[{"x":8,"y":3},{"x":7,"y":5}] avec axis {x:5}. Compte les points de figure et symmetric_figure avant de rÃ©pondre (â‰¥ 2 chacun, mÃªme nombre).',
+  'Nâ€™ajoute width/height Ã  une figure que si leurs proportions sont cohÃ©rentes avec les coordonnÃ©es.',
+].join('\n');
+
+export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string, specification?: StagingSpecification, promptVersion: StagingPromptVersion = STAGING_PROMPT_VERSION): string {
+  const specificationLevel = specification?.levels.find((level) => level.levelNumber === metadata.level_number);
+  const kinds = specificationLevel ? specificationLevel.visualKinds : stagingPromptVisualKinds(metadata);
+  const allowedKinds = kinds.map((kind) => `kind "${kind}"`).join(' ou ');
+  const required = specificationLevel
+    ? (specificationLevel.visualsRequired
+      ? 'Visuel obligatoire selon la spÃ©cification approuvÃ©e: utilise exactement ' + (allowedKinds || 'aucun kind dÃ©clarÃ©') + ' et fournis toutes les donnÃ©es dessinables requises.'
+      : 'Aucun visuel nâ€™est obligatoire selon la spÃ©cification approuvÃ©e; nâ€™en fabrique pas un dÃ©coratif.')
+    : metadata.required_geometry_alternatives?.length
+    ? 'Visuel obligatoire pour ce niveau: chaque concept doit utiliser une reprÃ©sentation conforme au contrat explicite, avec ' + allowedKinds + '. Les donnÃ©es doivent Ãªtre complÃ¨tes et rÃ©ellement dessinables; un visuel dâ€™un autre domaine ne remplace pas ce contrat.'
+    : metadata.required_geometry_kinds.length > 0
+    ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '. Chaque bloc concept DOIT contenir un visual dessinable complet.'
+    : metadata.required_geometry_alternatives !== undefined
+    ? 'Aucun visual gÃ©omÃ©trique nâ€™est obligatoire pour ce sujet; ne fabrique pas de figure si elle nâ€™aide pas la notion.'
+    : 'Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: ' + kinds.join(', ') + '. Un concept sans figure est refusÃ©.';
+  const examples = kinds.map((kind) => 'Exemple de bloc conceptuel ' + kind + ' valide: ' + JSON.stringify(STAGING_VISUAL_EXAMPLES[kind as keyof typeof STAGING_VISUAL_EXAMPLES]));
+  const levelOneGeometryCoverage = metadata.level_number === 1
+    && metadata.required_geometry_kinds.includes('rectangle')
+    && metadata.required_geometry_kinds.includes('triangle')
+    ? 'NIVEAU 1 GÃ‰OMÃ‰TRIE â€” couverture obligatoire, pas un choix entre figures: sequence[0] est un concept avec visual.kind="rectangle" et quatre sommets Ã©tiquetÃ©s; sequence[1] est un AUTRE concept avec visual.kind="polygon", visual.data.shape="triangle", exactement trois sommets {x:number,y:number,label:string} et trois side_labels {from,to,label}. Les deux figures sont exigÃ©es dans CE niveau. Deux rectangles, un carrÃ© ou la simple mention du triangle dans le texte, une question ou alt_text ne remplacent pas le dessin du triangle. Utilise le bloc triangle complet de lâ€™exemple ci-dessous comme contrat de structure, avec des donnÃ©es cohÃ©rentes avec ton explication. Avant de terminer la rÃ©ponse initiale, vÃ©rifie que les deux visual.data sont complets et que le triangle porte bien data.shape="triangle"; aucun dessin manquant ne sera ajoutÃ© aprÃ¨s la rÃ©ponse, aucun autre niveau ne compense cette omission.'
+    : '';
+  const spatialContract = isSpatialMovementTopic(metadata.id.replace(/-level-[1-4]$/, ''), topicName)
+    ? `CONTRAT SPATIAL AUTORITAIRE â€” ${SPATIAL_MOVEMENT_RENDERER_LIMITATION} Pour CM2, explique une coordonnÃ©e simplement comme deux nombres lus dans lâ€™ordre : dâ€™abord la position horizontale, puis la position verticale. Utilise uniquement kind "diagram" avec data.points (coordonnÃ©es numÃ©riques et labels), data.segments obligatoires reliant les labels de points existants, data.arrows facultatifs en complÃ©ment des segments, et des annotations explicites. Nâ€™introduis ni axes formels, ni vecteurs, ni repÃ¨re de collÃ¨ge. La progression est : repÃ©rer une position; dÃ©crire et suivre un dÃ©placement; interprÃ©ter un parcours; programmer un parcours avec changements de direction. Distingue toujours distance parcourue (somme des segments) et dÃ©placement net (du dÃ©part Ã  lâ€™arrivÃ©e).`
+    : '';
+  return [
+    'LESSON GENERATOR V2.1 â€” STAGING LEVEL ' + metadata.level_number + '/4 â€” PROMPT ' + promptVersion,
+    ...(promptVersion === STAGING_PROMPT_V22_CANDIDATE ? [STAGING_V22_QUALITY_INSTRUCTIONS] : []),
+    ...(promptVersion === STAGING_PROMPT_V22_CANDIDATE ? [stagingLevelLanguageRule(metadata, grade, language)] : []),
+    'Sujet: ' + topicName + '; niveau scolaire: ' + grade + '; langue: ' + language + '.',
+    'But de ce niveau: ' + metadata.purpose,
+    'Objectifs autorisÃ©s: ' + (objectiveText || 'aucun objectif prÃ©cisÃ©'),
+    specification ? specificationPromptContext(specification, metadata.level_number) : spatialContract,
+    required,
+    levelOneGeometryCoverage,
+    STAGING_JSON_OUTPUT_RULE + ' Le mode response_format={"type":"json_object"} est actif.',
+    'Le JSON doit contenir lesson_goal, success_criteria, prerequisites, misconceptions, mastery et exactement ces cinq propriÃ©tÃ©s obligatoires: concept_1, concept_2, guided_example, student_try, mastery_check.',
+    'Chaque propriÃ©tÃ© nommÃ©e contient son bloc complet. Le code construit ensuite sequence dans cet ordre exact: concept_1, concept_2, guided_example, student_try, mastery_check. Ne retourne pas de propriÃ©tÃ© sequence provider-facing et ne laisse aucun bloc manquant.',
+    'Chaque bloc doit contenir son propre id non vide, type canonique et content: une chaÃ®ne destinÃ©e Ã  lâ€™Ã©lÃ¨ve, non vide aprÃ¨s trim. Aucun bloc ne peut contenir uniquement des mÃ©tadonnÃ©es, une question ou des rÃ©ponses sans content. Ne laisse jamais le compilateur inventer un id, un type ou du contenu.',
+    CONCEPT_LENGTH_RULE,
+    KEY_POINT_RULE,
+    TAKEAWAY_RULE,
+    PREREQUISITE_ANSWER_RULE,
+    MASTERY_QUESTION_RULE,
+    CLOCK_VISUAL_RULE,
+    `Le content du concept explique progressivement le concept mathÃ©matique en 1 Ã  3 phrases courtes et en ${PEDAGOGICAL_CONCEPT_MAX_WORDS} mots maximum (limite exacte du validateur pour un concept structurÃ©); key_points contient 2 ou 3 rappels factuels courts, sous forme de phrases complÃ¨tes, pertinentes et distinctes (jamais des mots isolÃ©s); takeaway donne une mÃ©thode pratique, une vÃ©rification ou une action Ã  faire par lâ€™Ã©lÃ¨ve en ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum. Le takeaway ne doit jamais reformuler le content ou les key_points: emploie une formulation diffÃ©rente et centre-toi sur ce que lâ€™Ã©lÃ¨ve doit faire. Le content de guided_example explique un exemple rÃ©solu de faÃ§on concise mais complÃ¨te; celui de student_try demande une action Ã  lâ€™Ã©lÃ¨ve avec une consigne et un feedback concis; celui de mastery_check vÃ©rifie sa comprÃ©hension avec des questions complÃ¨tes et concises. Tous les cinq blocs doivent avoir un content rÃ©aliste en franÃ§ais.`,
+    `Les concepts exigent title, key_points (exactement 2 ou 3 objets {label, text}, rappels factuels courts et distincts, pas une phrase copiÃ©e du content), takeaway actionnable de ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum et visual. Tous les blocs interactifs (student_try et les questions de mastery_check) doivent utiliser exactement lâ€™un de ces answer_type: ${ANSWER_TYPE_VALUES.join(', ')}; ne convertis jamais une valeur inconnue. guided_example exige context et steps concis mais complets. student_try exige question, answer_type autorisÃ©, correct_answer non nul, success_feedback et error_feedback concis, plus 1 ou 2 hints progressifs et brefs qui ne donnent pas la rÃ©ponse. mastery_check.questions exige 1 Ã  4 objets complets; CHAQUE objet exige id, question, answer_type autorisÃ©, correct_answer non nul, skill, difficulty numÃ©rique, success_feedback et error_feedback. Un JSON valide auquel il manque un de ces champs est structurellement rejetÃ© avant toute validation pÃ©dagogique: ne complÃ¨te, ne rÃ©Ã©cris et nâ€™invente jamais la valeur manquante.`,
+    'mastery doit Ãªtre exactement {"skills":["Ã©tiquette courte 1","Ã©tiquette courte 2"],"threshold":0.8}: skills est un tableau de chaÃ®nes non vides, jamais un tableau dâ€™objets, un objet ou un paragraphe.',
+    'prerequisites et misconceptions doivent Ãªtre des tableaux dâ€™objets complets, jamais des tableaux de chaÃ®nes.',
+    'Chaque prerequisite numÃ©rique doit utiliser exactement type:"numeric", prompt et expected_answer numÃ©rique; nâ€™omets jamais expected_answer et ne le remplace jamais par une chaÃ®ne. Exemple niveau 2 construit par JSON.stringify: ' + JSON.stringify(STAGING_NUMERIC_PREREQUISITE_EXAMPLE),
+    'Exemple prerequisite Ã  rÃ©ponse courte canonique construit par JSON.stringify: ' + JSON.stringify(STAGING_SHORT_TEXT_PREREQUISITE_EXAMPLE),
+    'Exemple misconception valide construit par JSON.stringify: ' + JSON.stringify(STAGING_MISCONCEPTION_EXAMPLE),
+    metadata.level_number === 3
+      ? 'Exemples interactifs valides construits par JSON.stringify pour la symÃ©trie: student_try ' + JSON.stringify({ question: 'Quel point est Ã  la mÃªme distance de lâ€™axe ?', answer_type: 'multiple_choice', choices: ['A', 'B'], correct_answer: 'B', success_feedback: 'Oui.', error_feedback: 'Compare les carreaux.' }) + '; mastery_check question ' + JSON.stringify({ id: 'q-sym', question: 'Explique comment reporter un point.', answer_type: 'short_text', correct_answer: 'MÃªme nombre de carreaux de lâ€™autre cÃ´tÃ©', skill: 'symÃ©trie', difficulty: 1, success_feedback: 'Exact.', error_feedback: 'Compte les carreaux.' }) + '.'
+      : '',
+    `answer_type autorisÃ©s: ${ANSWER_TYPE_VALUES.join(', ')}.`,
+    VISUAL_FIELD_RULES,
+    ...examples,
+    'Exemple complet des cinq blocs (format compact) et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelCompactExample(metadata)),
+    'Le code assemble sequence avec deux explications concises illustrÃ©es, un exemple guidÃ©, une question interactive avant mastery_check et un contrÃ´le de comprÃ©hension.',
+    levelOneGeometryCoverage,
+    'Ne dis jamais Â«voir la figureÂ».'
+  ].join('\n');
+}
+
+export function parseStagingLevelResponse(raw: unknown, metadata?: StagingLevelMetadata): { value: Record<string, unknown>; attemptedRepair: boolean } {
+  const parsed = parseProviderJsonSafely(raw);
+  if (parsed.ok === false) throw new StagingLevelJsonParseError(parsed.category);
+  const value = object(parsed.value);
+  if (!value) throw new Error('staging_level_json_parse_failed: response must be an object');
+  const level = assembleStagingSequenceFromCompact(object(value.lesson) ?? value);
+  if (metadata) {
+    const contractIssues = stagingSequenceContractIssues(level, metadata);
+    if (contractIssues.length > 0) throw new StagingLevelContractError(contractIssues);
+  }
+  return { value: level, attemptedRepair: parsed.attemptedRepair };
+}
+
+function visualGeometryIssues(lesson: Record<string, unknown>): Array<{ path: string; message: string }> {
+  const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
+  return sequence.flatMap((block, index) => {
+    const visual = object(block?.visual);
+    if (!visual) return [];
+    const kind = String(visual.kind ?? '');
+    const data = object(visual.data);
+    const errors = geometryVisualDataErrors(kind, visual.data, 'sequence[' + index + '].visual.data', true)
+      .map((error) => ({ path: error.path, message: error.message }));
+    if (data && (kind === 'rectangle' || (kind === 'polygon' && data.shape === 'rectangle'))) {
+      const hasSides = (Array.isArray(data.side_labels) && data.side_labels.length >= 4) || (Number.isFinite(Number(data.width)) && Number.isFinite(Number(data.height)));
+      if (!hasSides) errors.push({ path: 'sequence[' + index + '].visual.data.side_labels', message: 'Rectangle requires four side labels or numeric width and height.' });
+    }
+    if (data && (kind === 'triangle' || (kind === 'polygon' && data.shape === 'triangle'))) {
+      const hasSides = (Array.isArray(data.side_labels) && data.side_labels.length >= 3) || (Array.isArray(data.side_lengths) && data.side_lengths.length >= 3);
+      if (!hasSides) errors.push({ path: 'sequence[' + index + '].visual.data.side_labels', message: 'Triangle requires three side labels or side lengths.' });
+    }
+    if (data && kind === 'circle') {
+      const hasDiameter = (Number.isFinite(Number(data.diameter)) && Number(data.diameter) > 0)
+        || object(data.diameterEnd) !== null
+        || data.diameter === true;
+      if (!hasDiameter) errors.push({ path: 'sequence[' + index + '].visual.data.diameter', message: 'Circle requires explicit diameter data.' });
+    }
+    if (data && (kind === 'rectangle' || (kind === 'polygon' && data.shape === 'rectangle') || (kind === 'triangle' || (kind === 'polygon' && data.shape === 'triangle')))) {
+      const expectedVertices = kind === 'rectangle' || data.shape === 'rectangle' ? 4 : 3;
+      const vertices = Array.isArray(data.vertices) ? data.vertices : Array.isArray(data.points) ? data.points : [];
+      if (vertices.length !== expectedVertices || vertices.some((point) => !object(point) || !Number.isFinite(Number(point.x)) || !Number.isFinite(Number(point.y)) || !nonEmpty(point.label))) {
+        errors.push({ path: 'sequence[' + index + '].visual.data.vertices', message: `Figure requires exactly ${expectedVertices} labelled vertices with numeric coordinates.` });
+      }
+      const sides = Array.isArray(data.side_labels) ? data.side_labels : Array.isArray(data.segments) ? data.segments : [];
+      if (sides.length < expectedVertices || sides.some((side) => !object(side) || !nonEmpty(side.from) || !nonEmpty(side.to) || !nonEmpty(side.label))) {
+        errors.push({ path: 'sequence[' + index + '].visual.data.side_labels', message: `Figure requires ${expectedVertices} drawable labelled sides or segments.` });
+      }
+      if (data.width !== undefined || data.height !== undefined) {
+        const width = Number(data.width); const height = Number(data.height);
+        const xs = vertices.map((point) => Number((point as Record<string, unknown>).x));
+        const ys = vertices.map((point) => Number((point as Record<string, unknown>).y));
+        const coordinateRatio = (Math.max(...xs) - Math.min(...xs)) / (Math.max(...ys) - Math.min(...ys));
+        if (!(Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) || !Number.isFinite(coordinateRatio) || Math.abs((width / height) - coordinateRatio) > 0.05) {
+          errors.push({ path: 'sequence[' + index + '].visual.data.width', message: 'Figure dimensions must be positive and proportionally consistent with numeric coordinates.' });
+        }
+      }
+    }
+    return errors;
+  });
+}
+
+export function validateStagingLevel(lesson: Record<string, unknown>, metadata: StagingLevelMetadata, topicName: string, grade: string): StagingValidation {
+  const candidate = { version: '2.1', topic_goal: topicName, levels: [{ ...metadata, lesson }] };
+  const canonical = validateLessonV21(candidate, { prerequisiteFormat: 'staging' });
+  const localPath = (path: string) => path.replace(/^levels\[0\]\.lesson\.?/, '');
+  const hasExplicitVisualContract = metadata.required_geometry_kinds.length > 0
+    || (metadata.required_geometry_alternatives ?? []).some((alternative) => alternative.length > 0);
+  return {
+    canonicalIssues: [...(canonical.success === false ? canonical.issues.map((issue) => ({ path: localPath(issue.path), message: issue.message })) : []), ...stagingSequenceContractIssues(lesson, metadata)],
+    // The staging metadata owns the visual contract. The generic pedagogical
+    // policy is still used for drawable-data and clock consistency checks, but
+    // its lexical required/incompatible-kind messages must not override the
+    // explicit topic/objective contract validated below by requiredGeometryKindsIssues.
+    pedagogicalIssues: pedagogicalIssues(lesson, grade, topicName, { suppressVisualPolicyIssues: hasExplicitVisualContract }),
+    geometryIssues: visualGeometryIssues(lesson),
+  };
+}
+
+function isPrerequisiteIssue(issue: { path: string; message: string }): boolean {
+  return /(^|\.)prerequisites(?:\[|\.)/i.test(issue.path) || /prerequisite/i.test(issue.message);
+}
+
+function isInteractionIssue(issue: { path: string; message: string }): boolean {
+  return /answer_type|correct_answer|questions|interaction|mastery/i.test(issue.path) || /interaction|answer type|answer|mastery/i.test(issue.message);
+}
+
+export function summarizeStagingValidation(validation: StagingValidation, extraGeometryIssues: Array<{ path: string; message: string }> = [], warnings: Array<{ path: string; message: string }> = []): StagingValidationSummary {
+  const geometryIssues = [...validation.geometryIssues, ...extraGeometryIssues];
+  const prerequisiteIssues = validation.canonicalIssues.filter(isPrerequisiteIssue);
+  const interactionIssues = validation.canonicalIssues.filter(isInteractionIssue);
+  const diagnostics = [
+    ...validation.canonicalIssues,
+    ...validation.pedagogicalIssues,
+    ...geometryIssues,
+    ...warnings.map((issue) => ({ path: issue.path, message: `Avertissement de revue : ${issue.message}` })),
+  ].map((issue) => `${issue.path}: ${issue.message}`);
+  return {
+    canonicalValid: validation.canonicalIssues.length === 0,
+    pedagogicalValid: validation.pedagogicalIssues.length === 0,
+    prerequisiteValid: prerequisiteIssues.length === 0,
+    geometryValid: geometryIssues.length === 0,
+    interactionValid: interactionIssues.length === 0,
+    canonicalIssues: validation.canonicalIssues,
+    pedagogicalIssues: validation.pedagogicalIssues,
+    pedagogicalWarnings: warnings,
+    pedagogicalReviewRequired: warnings.length > 0,
+    prerequisiteIssues,
+    geometryIssues,
+    interactionIssues,
+    diagnostics,
+  };
+}
+
+export function qualifyStagingWarningPath(level: number, localPath: string): string {
+  return `levels[${Math.max(0, level - 1)}].lesson.${localPath}`;
+}
+
+export function requiredGeometryIssues(lesson: Record<string, unknown>, requiredKinds: readonly string[] = [...STAGING_ALL_GEOMETRY_KINDS]): Array<{ path: string; message: string }> {
+  const sequence = (Array.isArray(lesson.levels) ? lesson.levels : []).flatMap((level: any) => Array.isArray(level?.lesson?.sequence) ? level.lesson.sequence : []);
+  const visuals = sequence.map((block: any) => block?.visual).filter(Boolean);
+  const has = (kind: string) => visuals.some((visual: any) => visual.kind === kind || (kind === 'triangle' && visual.kind === 'polygon' && visual.data?.shape === 'triangle'));
+  return requiredKinds.filter((kind) => !has(kind)).map((kind) => ({ path: 'levels', message: 'Missing required drawable visual: ' + kind + '.' }));
+}
+
+export function requiredGeometryKindsIssues(lesson: Record<string, unknown>, requiredKinds: string[], alternatives: string[][] = []): Array<{ path: string; message: string }> {
+  const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
+  const visuals = sequence.map((block) => object(block.visual)).filter(Boolean) as Array<Record<string, unknown>>;
+  const issues = requiredKinds.filter((kind) => !visuals.some((visual) => visual.kind === kind || (kind === 'triangle' && visual.kind === 'polygon' && object(visual.data)?.shape === 'triangle')))
+    .map((kind) => ({ path: 'lesson.sequence', message: 'Missing required drawable visual for this level: ' + kind + '.' }));
+  alternatives.forEach((allowedKinds) => {
+    if (!visuals.some((visual) => allowedKinds.includes(String(visual.kind)))) {
+      issues.push({ path: 'lesson.sequence', message: 'Missing required drawable visual; expected one of: ' + allowedKinds.join('|') + '.' });
+    }
+  });
+  return issues;
+}
+
+export function assembleStagingLesson(topicName: string, levels: Array<{ metadata: StagingLevelMetadata; lesson: Record<string, unknown> }>): Record<string, unknown> {
+  if (levels.length !== STAGING_LEVEL_COUNT) throw new Error('staging_assembly_failed: expected 4 levels, received ' + levels.length);
+  const ordered = [...levels].sort((a, b) => a.metadata.level_number - b.metadata.level_number);
+  if (ordered.some((item, index) => item.metadata.level_number !== index + 1)) throw new Error('staging_assembly_failed: levels must be numbered 1 through 4');
+  return { version: '2.1', topic_goal: topicName, levels: ordered.map(({ metadata, lesson }) => ({ ...metadata, lesson })) };
+}
+
+export type StagingErrorClassification = { status: number; code: string; message: string; stage?: string };
+
+/** Map a known staging/generation failure to a structured HTTP outcome.
+ * 422 = output rejected by validation; 502 = provider protocol problem;
+ * 500 only for unexpected server exceptions. */
+export function classifyGenerationFailure(error: unknown, stagingStage?: string): StagingErrorClassification {
+  const detail = error instanceof Error ? error.message : String(error ?? '');
+  if (/Unauthorized|Missing authorization/i.test(detail)) return { status: 401, code: 'unauthorized', message: 'Authentication required.' };
+  if (/Forbidden|role required/i.test(detail)) return { status: 403, code: 'forbidden', message: 'Admin or teacher role required.' };
+  if (stagingStage === 'level_validation' || error instanceof StagingLevelContractError || /^staging_level_contract_failed/.test(detail)) {
+    return { status: 422, code: 'staging_level_validation_failed', message: 'A staging level failed canonical, pedagogical, or geometry validation.', stage: 'level_validation' };
+  }
+  if (/^staging_assembly_/.test(detail)) return { status: 422, code: 'staging_assembly_validation_failed', message: 'The assembled staging lesson failed validation.', stage: 'assembly_validation' };
+  if (/staging_level_json_parse_failed: truncated|provider_output_truncated|finish_reason=length/i.test(detail)) return { status: 502, code: 'provider_output_truncated', message: 'The AI provider output was truncated.', stage: 'provider_parse' };
+  if (/staging_level_json_parse_failed|provider JSON|malformed JSON|malformed_json|ambiguous_json|empty/i.test(detail)) return { status: 502, code: 'provider_malformed_json', message: 'The AI provider returned malformed or ambiguous JSON.', stage: 'provider_parse' };
+  if (/staging_level_provider_unavailable/.test(detail)) return { status: 502, code: 'provider_unavailable', message: 'The AI provider could not be reached.', stage: 'provider_call' };
+  if (/staging_level_provider_http_|AI generation failed|provider/i.test(detail)) return { status: 502, code: 'provider_error', message: 'The AI provider failed to generate content.', stage: 'provider_call' };
+  if (/timeout|timed out/i.test(detail)) return { status: 502, code: 'timeout', message: 'The AI provider timed out.', stage: 'provider_call' };
+  if (/canonical validation|correct_answer|contract/i.test(detail)) return { status: 422, code: 'canonical_validation_failed', message: 'The generated lesson does not match the contract.' };
+  if (/pedagogical quality|pedagogical validation/i.test(detail)) return { status: 422, code: 'pedagogical_validation_failed', message: 'The generated lesson failed pedagogical validation.' };
+  return { status: 500, code: 'unknown', message: 'Unexpected server error.' };
+}
