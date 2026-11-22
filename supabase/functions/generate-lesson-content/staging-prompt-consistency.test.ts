@@ -17,6 +17,7 @@ import {
   stagingLevelMetadata,
   stagingLevelPrompt,
   stagingPromptVisualKinds,
+  stagingLevelLanguageRule,
   validateStagingLevel,
 } from './staging-level-workflow.ts';
 
@@ -31,10 +32,25 @@ describe('staging prompt ↔ validator consistency (providerCalls=0)', () => {
     expect(active).toContain(STAGING_PROMPT_VERSION);
     expect(active).not.toContain(STAGING_PROMPT_V22_CANDIDATE);
     expect(candidate).toContain(STAGING_PROMPT_V22_CANDIDATE);
-    expect(candidate).toContain('l’application autonome');
+    expect(candidate).toContain('un problème nouveau, proche mais pas identique');
     expect(candidate).toContain('critères de réussite');
     expect(candidate.split('Sujet: ')[1]).toBe(active.split('Sujet: ')[1]);
     expect(validateStagingLevel(stagingFullLevelExample(level), level, topicName, 'CM2').canonicalIssues).toEqual([]);
+  });
+
+  it('adapts candidate language to each difficulty level while retaining simple words at every level', () => {
+    const levels = stagingLevelMetadata('topic-1', topicName, ['objective-1']);
+    const prompts = levels.map((level) => stagingLevelPrompt(topicName, 'CM2', 'fr', level, 'objective-1', undefined, STAGING_PROMPT_V22_CANDIDATE));
+    expect(prompts.every((prompt) => prompt.includes('LANGAGE ADAPTÉ AU NIVEAU SCOLAIRE ET AU NIVEAU DE DIFFICULTÉ'))).toBe(true);
+    expect(prompts[0]).toContain('NIVEAU 1 — découverte');
+    expect(prompts[1]).toContain('NIVEAU 2 — première méthode');
+    expect(prompts[2]).toContain('NIVEAU 3 — stratégie');
+    expect(prompts[3]).toContain('NIVEAU 4 — transfert');
+    expect(prompts.every((prompt) => prompt.includes('grade scolaire: CM2') && prompt.includes('phrases courtes'))).toBe(true);
+    expect(prompts[1]).toContain('préfère « prix d’un cahier » à « valeur unitaire »');
+    const legacy = stagingLevelPrompt(topicName, 'CM2', 'fr', levels[1], 'objective-1');
+    expect(legacy).not.toContain('NIVEAU 2 — première méthode');
+    expect(stagingLevelLanguageRule(levels[3], '6e', 'fr')).toContain('grade scolaire: 6e');
   });
 
   it('rejects a non-numeric mastery answer and a choice with no exact match', () => {
