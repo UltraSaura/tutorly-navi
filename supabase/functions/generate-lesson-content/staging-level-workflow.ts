@@ -50,6 +50,7 @@ export type StagingDraftResponse = {
   retryCount?: number;
   build: string;
   promptVersion: string;
+  modelId: string;
   progress: StagingLevelProgress[];
   levelResults?: StagingLevelProgress[];
 };

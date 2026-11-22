@@ -61,6 +61,17 @@ describe('bulk staging lesson workflow', () => {
     expect(save).toHaveBeenCalledTimes(1);
   });
 
+  it('records the model returned by Edge in the saved draft review metadata', async () => {
+    const save = vi.fn(async () => ({ id: 'version-gpt5' } as any));
+    const results = await runBulkStagingGeneration([{ id: 'topic-model', name: 'Fractions' }], undefined, {
+      generate: async (id) => ({ ...generated(id), modelId: 'gpt-5' }),
+      validate: valid,
+      save,
+    });
+    expect(results[0].status).toBe('saved');
+    expect(save).toHaveBeenCalledWith('topic-model', geometryDraftLesson, 'topic-model', expect.any(String), { modelId: 'gpt-5' });
+  });
+
   it.each([
     [5, [2, 1, 1, 1]],
     [6, [2, 2, 1, 1]],

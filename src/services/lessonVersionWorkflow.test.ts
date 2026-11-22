@@ -69,6 +69,19 @@ describe('lesson version workflow', () => {
     expect(from).not.toHaveBeenCalled();
   });
 
+  it('sends the selected staging model and rejects a response from another model', async () => {
+    const topicId = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
+    invoke.mockResolvedValue({ data: {
+      success: true, providerCalls: 4, lesson_content: geometryDraftLesson,
+      topic_id: topicId, promptVersion: STAGING_PROMPT_VERSION, modelId: 'deepseek-chat',
+    }, error: null, response: null });
+    await expect(generateStagingDraft(topicId, 'gpt-5', null))
+      .rejects.toThrow('staging_model_mismatch');
+    expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({
+      body: expect.objectContaining({ mode: 'staging_draft', modelId: 'gpt-5' }),
+    }));
+  });
+
   it('round-trips Edge review warnings through draft save, reread, and preview metadata', async () => {
     const warning = { path: 'sequence[1].takeaway', message: 'Similarité lexicale à revoir. overlap=2, ratio=0.50.' };
     const metadata = { pedagogicalWarnings: [warning], pedagogicalReviewRequired: true, promptVersion: STAGING_PROMPT_V22_CANDIDATE };
@@ -99,6 +112,11 @@ describe('lesson version workflow', () => {
     expect(getStoredStagingMetadata(reread)).toEqual(metadata);
     expect(previewReviewWarnings(reread)).toEqual([warning]);
     expect((reread as Record<string, unknown>).levels).toEqual((geometryDraftLesson as Record<string, unknown>).levels);
+  });
+
+  it('round-trips the model identifier through staging metadata', () => {
+    const stored = withStagingMetadata(geometryDraftLesson, { modelId: 'gpt-5' });
+    expect(getStoredStagingMetadata(stored)).toMatchObject({ modelId: 'gpt-5' });
   });
 
   it('surfaces the RLS rejection returned for a non-admin authenticated user', async () => {

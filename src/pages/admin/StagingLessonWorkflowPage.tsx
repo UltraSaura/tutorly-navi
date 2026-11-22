@@ -77,6 +77,7 @@ export function StagingLessonWorkflowPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [promptVersion, setPromptVersion] = useState<StagingPromptVersion>(STAGING_PROMPT_VERSION);
+  const [modelId, setModelId] = useState<'gpt-5' | 'deepseek-chat'>('gpt-5');
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   const [progress, setProgress] = useState<BulkStagingProgress | null>(null);
   const [results, setResults] = useState<BulkStagingResult[]>([]);
@@ -115,6 +116,7 @@ export function StagingLessonWorkflowPage() {
         dryRun,
         dryRunContent: providerFreeFourLevelLesson,
         promptVersion: showPromptSelector && promptVersion !== STAGING_PROMPT_VERSION ? promptVersion : undefined,
+        modelId,
       });
       setResults(output);
     } catch (runError) {
@@ -148,6 +150,13 @@ export function StagingLessonWorkflowPage() {
           <option value={STAGING_PROMPT_V22_CANDIDATE}>V2.2 candidate</option>
         </select>
       </label>}
+      <label className="flex flex-wrap items-center gap-2 text-sm">
+        Model
+        <select className="rounded border bg-background p-2" value={modelId} onChange={(event) => setModelId(event.target.value as 'gpt-5' | 'deepseek-chat')}>
+          <option value="gpt-5">GPT‑5 (curated draft)</option>
+          <option value="deepseek-chat">DeepSeek Chat (comparison)</option>
+        </select>
+      </label>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button onClick={run} disabled={loading || progress?.status === 'generating' || progress?.status === 'validating'}>{dryRun ? 'Run provider-free dry-run' : mode === 'single' ? 'Generate one draft' : 'Generate selected drafts'}</Button>
       <Button variant="outline" onClick={checkFunction} disabled={healthcheckLoading} data-testid="staging-healthcheck">{healthcheckLoading ? 'Vérification…' : 'Vérifier la fonction'}</Button>
@@ -205,6 +214,7 @@ export function StagingLessonDraftPreviewPage() {
     <Card><CardHeader><CardTitle>Validation and visual inventory</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
       <p><strong>{review.status}</strong> · {review.reason}</p>
       {reviewMetadata?.promptVersion && <p>Prompt version {reviewMetadata.promptVersion}</p>}
+      {reviewMetadata?.modelId && <p>Generation model {reviewMetadata.modelId}</p>}
       {review.issues.length > 0 && <ul className="list-disc space-y-1 pl-5" data-testid="staging-review-warnings">
         {review.issues.map((issue) => <li key={`${issue.path}:${issue.message}`}>{reviewLocation(issue.path)} · {issue.message}</li>)}
       </ul>}

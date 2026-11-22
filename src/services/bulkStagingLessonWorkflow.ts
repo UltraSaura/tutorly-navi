@@ -98,6 +98,7 @@ export type BulkStagingDependencies = {
   dryRunContent?: unknown;
   language?: 'fr' | 'en';
   promptVersion?: StagingPromptVersion;
+  modelId?: string;
   signal?: AbortSignal;
 };
 
@@ -154,7 +155,7 @@ export async function runBulkStagingGeneration(
   validateBulkTopicIds(topics);
   const generate = dependencies.dryRun
     ? async (topicId: string) => dryRunGeneration(topicId, dependencies.dryRunContent)
-    : (dependencies.generate ?? ((topicId) => generateStagingDraft(topicId, undefined, null, dependencies.language ?? 'fr', dependencies.promptVersion)));
+    : (dependencies.generate ?? ((topicId) => generateStagingDraft(topicId, dependencies.modelId, null, dependencies.language ?? 'fr', dependencies.promptVersion)));
   const save = dependencies.dryRun ? async () => ({ id: `dry-run-${Date.now()}` } as LessonVersion) : (dependencies.save ?? ((topicId, content, returnedTopicId, topicKind, stagingMetadata) => saveDraftVersion(topicId, content, returnedTopicId, null, topicKind, stagingMetadata)));
   const validate = dependencies.validate ?? ((content, topicKind) => validateLessonVersion(content, { topicKind }));
   const results: BulkStagingResult[] = [];
@@ -192,7 +193,7 @@ export async function runBulkStagingGeneration(
       if (!validation.canonicalValid || !validation.pedagogicalValid || validation.prerequisiteValid === false || !validation.geometryValid || validation.interactionValid === false) {
         throw new Error(JSON.stringify({ code: 'staging_validation_failed', validation }));
       }
-      const version = await save(topicId, generated.lesson_content, generated.topic_id, topicKind, generated.validation as StagingReviewMetadata | undefined);
+      const version = await save(topicId, generated.lesson_content, generated.topic_id, topicKind, { ...(generated.validation as StagingReviewMetadata | undefined), modelId: generated.modelId ?? dependencies.modelId });
       emitProgress({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, confirmed: true, status: 'saved', validation: { canonicalValid: validation.canonicalValid, pedagogicalValid: validation.pedagogicalValid, prerequisiteValid: validation.prerequisiteValid, geometryValid: validation.geometryValid, interactionValid: validation.interactionValid }, requestId: generated.requestId, promptVersion: generated.promptVersion, build: generated.build });
       results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation, levelResults: generated.levelResults ?? generated.progress, build: generated.build, promptVersion: generated.promptVersion });
     } catch (error) {

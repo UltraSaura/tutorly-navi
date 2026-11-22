@@ -465,8 +465,11 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   if (promptVersion && data.promptVersion !== promptVersion) {
     throw new Error(`staging_prompt_version_mismatch: requested ${promptVersion}, received ${String(data.promptVersion)}.`);
   }
+  if (modelId && data.modelId !== modelId) {
+    throw new Error(`staging_model_mismatch: requested ${modelId}, received ${String(data.modelId)}.`);
+  }
   validateStagingGenerationEnvelope(data);
-  return { ...data, clientDurationMs } as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; clientDurationMs?: number; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
+  return { ...data, clientDurationMs } as { lesson_content: unknown; topic_id: string; topicKind?: StagingTopicKind; providerCalls: number; retryCount?: number; requestId?: string; build?: string; promptVersion?: string; modelId?: string; clientDurationMs?: number; canonicalValid: true; pedagogicalValid: true; prerequisiteValid?: true; geometryValid: true; interactionValid?: true; validation?: unknown; levelResults?: Array<Record<string, unknown>>; progress?: Array<{ level: number; status: string; providerCalls: number; retryCount?: number; parseStage?: string; tokenUsage?: unknown; build?: string; promptVersion?: string; requestId?: string; validation?: Record<string, unknown>; diagnostics?: string[] }> };
 }
 
 export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = null, topicKind?: StagingTopicKind, stagingMetadata?: StagingReviewMetadata): Promise<LessonVersion> {

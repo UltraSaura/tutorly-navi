@@ -1,5 +1,6 @@
 export type StagingReviewMetadata = {
   promptVersion?: string;
+  modelId?: string;
   pedagogicalWarnings: Array<{ path: string; message: string }>;
   pedagogicalReviewRequired: boolean;
 };
@@ -12,13 +13,15 @@ function readMetadata(value: unknown): StagingReviewMetadata | undefined {
   const metadata = object(value);
   if (!metadata) return undefined;
   const promptVersion = typeof metadata.promptVersion === 'string' ? metadata.promptVersion : undefined;
+  const modelId = typeof metadata.modelId === 'string' ? metadata.modelId : undefined;
   const warnings = Array.isArray(metadata.pedagogicalWarnings) ? metadata.pedagogicalWarnings : [];
-  if (!promptVersion && (!Array.isArray(metadata.pedagogicalWarnings) || typeof metadata.pedagogicalReviewRequired !== 'boolean')) return undefined;
+  if (!promptVersion && !modelId && (!Array.isArray(metadata.pedagogicalWarnings) || typeof metadata.pedagogicalReviewRequired !== 'boolean')) return undefined;
   return {
     pedagogicalWarnings: warnings.filter((issue): issue is { path: string; message: string } =>
       Boolean(object(issue)) && typeof issue.path === 'string' && typeof issue.message === 'string'),
     pedagogicalReviewRequired: metadata.pedagogicalReviewRequired === true,
     ...(promptVersion ? { promptVersion } : {}),
+    ...(modelId ? { modelId } : {}),
   };
 }
 

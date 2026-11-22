@@ -631,7 +631,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         method: 'POST',
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: stagingJsonRetryPrompt(message, attempt), modelId, history: [], language, maxTokens,
+          message, modelId, history: [], language, maxTokens,
           // Use ai-chat's explicit prompt path, bypass exercise formatting and
           // OpenAI's automatic replacement of math system instructions.
           customPrompt: 'You generate structured lesson JSON for the application. Follow the exact schema and task in the user message. Return one complete JSON object only, without Markdown or a tutoring-chat envelope.',
@@ -1115,6 +1115,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         retryCount: totalRetryCount,
         build: GENERATOR_BUILD,
         promptVersion: stagingPromptVersion,
+        modelId,
         progress: stagingProgress,
         levelResults: stagingProgress,
       };
