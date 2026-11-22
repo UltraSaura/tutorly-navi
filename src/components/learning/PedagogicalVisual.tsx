@@ -317,6 +317,17 @@ function comparisonItems(value: unknown): string[] {
   const single = record.value ?? record.text ?? record.content ?? record.description;
   return single === undefined || single === null || String(single).trim() === '' ? [] : [String(single)];
 }
+function FractionComparisonBar({ label, numerator, denominator }: { label: string; numerator: number; denominator: number }) {
+  const safeDenominator = Math.min(denominator, 20);
+  const safeNumerator = Math.min(Math.max(numerator, 0), safeDenominator);
+  return <div className="rounded-lg border border-[#D8E1F0] bg-white p-3" role="img" aria-label={`${label}: ${safeNumerator} sur ${safeDenominator}`}>
+    <p className="mb-2 text-sm font-bold text-[#3448A5]">{label}</p>
+    <div className="flex gap-1" aria-hidden="true">
+      {Array.from({ length: safeDenominator }, (_, index) => <span key={index} className={`h-7 flex-1 border border-[#0F766E] ${index < safeNumerator ? 'bg-[#14B8A6]' : 'bg-[#D1FAE5]'}`} />)}
+    </div>
+  </div>;
+}
+
 function Comparison({ d }: { d: Data }) {
   const left = comparisonItems(d.left);
   const right = comparisonItems(d.right);
@@ -343,6 +354,7 @@ function Comparison({ d }: { d: Data }) {
           : <p className="text-sm text-[#667085]">Données de cette situation indisponibles.</p>}
       </article>)}
     </div>
+    {Number.isInteger(leftRecord.numerator)&&Number.isInteger(leftRecord.denominator)&&Number.isInteger(rightRecord.numerator)&&Number.isInteger(rightRecord.denominator)&&Number(leftRecord.denominator)>0&&Number(rightRecord.denominator)>0&&<div className="grid gap-3 sm:grid-cols-2"><FractionComparisonBar label={s(leftRecord.label,'Première fraction')} numerator={Number(leftRecord.numerator)} denominator={Number(leftRecord.denominator)}/><FractionComparisonBar label={s(rightRecord.label,'Deuxième fraction')} numerator={Number(rightRecord.numerator)} denominator={Number(rightRecord.denominator)}/></div>}
     {result.length > 0 && <div className="space-y-2">
       <p className="text-center text-sm font-bold text-[#4F6FD8]" aria-hidden="true">↓</p>
       <article className="mx-auto w-full min-w-0 rounded-lg border border-[#B8C8F0] bg-white p-3 sm:max-w-md">

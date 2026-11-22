@@ -45,6 +45,16 @@ describe('PedagogicalVisual comparison data', () => {
     expect(html).toContain('12 euros');
   });
 
+  it('renders fraction comparisons as paired visual bars', () => {
+    const html = render({
+      left: { label: '3/8', numerator: 3, denominator: 8 },
+      right: { label: '5/8', numerator: 5, denominator: 8 },
+    });
+    expect(html).toContain('aria-label="3/8: 3 sur 8"');
+    expect(html).toContain('aria-label="5/8: 5 sur 8"');
+    expect((html.match(/h-7 flex-1 border/g) ?? [])).toHaveLength(16);
+  });
+
   it('keeps flat legacy comparison items visible', () => {
     const html = render({ items: ['Premier cas', 'Deuxième cas'] });
     expect(html).toContain('Premier cas');
