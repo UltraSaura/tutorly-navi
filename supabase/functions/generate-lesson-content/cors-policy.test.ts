@@ -2,9 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_ALLOWED_ORIGINS, corsHeadersFor, isAllowedOrigin } from './cors-policy.ts';
 
 const allowedOrigin = 'https://stuwy-practice-staging.grittydace256.chatgpt.site';
+const branchPreviewOrigin = 'https://stuwy-git-feature-guided-practice-lessons-stuwy.vercel.app';
 const allowedOrigins = new Set([allowedOrigin]);
 
 describe('generate-lesson-content CORS policy', () => {
+  it('allows only the named staging branch preview origin', () => {
+    const configured = new Set(DEFAULT_ALLOWED_ORIGINS);
+    expect(isAllowedOrigin(branchPreviewOrigin, configured)).toBe(true);
+    expect(corsHeadersFor(branchPreviewOrigin, configured)['Access-Control-Allow-Origin']).toBe(branchPreviewOrigin);
+    expect(isAllowedOrigin('https://another-preview.vercel.app', configured)).toBe(false);
+  });
   it.each(['http://127.0.0.1:8080', 'http://localhost:8080', 'http://127.0.0.1:8081', 'http://localhost:8081'])(
     'accepts the local staging app origin %s without widening the allowlist', (origin) => {
       const configured = new Set(DEFAULT_ALLOWED_ORIGINS);
