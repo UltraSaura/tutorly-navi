@@ -50,6 +50,7 @@ const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPag
 const PracticeTopicsPage = lazy(() => import("./pages/practice/PracticeTopicsPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
 const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
+const TeacherDraftReviewPage = lazy(() => import("./pages/TeacherDraftReviewPage"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -261,6 +262,8 @@ const App = () => {
                   <Route index element={<CurriculumBrowser />} />
                 </Route>
                         
+                        <Route path="/teacher-review/drafts" element={<TeacherDraftReviewPage />} />
+
                         {/* Management Dashboard (dev-only until a proper admin guard is added) */}
                         {isDev && (
                           <Route path="/management" element={<ManagementDashboard />} />
