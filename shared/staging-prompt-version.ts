@@ -1,5 +1,5 @@
 export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v4-visual-first';
-export const STAGING_PROMPT_V22_CANDIDATE = 'staging-v22-curriculum-quality-rc3-concrete-contexts';
+export const STAGING_PROMPT_V22_CANDIDATE = 'staging-v22-curriculum-quality-rc4-varied-contexts';
 
 export const STAGING_PROMPT_VERSIONS = [STAGING_PROMPT_VERSION, STAGING_PROMPT_V22_CANDIDATE] as const;
 export type StagingPromptVersion = typeof STAGING_PROMPT_VERSIONS[number];

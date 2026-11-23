@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { validateLessonV21 } from './lesson-v21-contract.ts';
 import { describe, expect, it } from 'vitest';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
@@ -37,8 +38,21 @@ describe('staging prompt ↔ validator consistency (providerCalls=0)', () => {
     expect(candidate).toContain('EXPLICATIONS À LIRE À VOIX HAUTE');
     expect(candidate).toContain('SITUATION ET VISUEL DOIVENT CORRESPONDRE');
     expect(candidate).toContain('n’illustre jamais une pizza par une barre');
+    expect(candidate).toContain('VARIÉTÉ DES EXEMPLES');
+    expect(candidate).toContain('aucun aliment, objet ou décor n’est l’exemple par défaut');
+    expect(candidate).toContain('longueurs mesurées ainsi qu’une droite graduée');
+    expect(candidate).toContain('privilégie la pizza ou un gâteau au niveau de découverte partie/tout');
+    expect(candidate).toContain('bandes de même longueur ou des récipients gradués pour comparer');
+    expect(candidate).toContain('longueurs mesurées ainsi qu’une droite graduée');
     expect(candidate.split('Sujet: ')[1]).toBe(active.split('Sujet: ')[1]);
     expect(validateStagingLevel(stagingFullLevelExample(level), level, topicName, 'CM2').canonicalIssues).toEqual([]);
+  });
+
+  it('keeps the legacy generator aligned with the varied-context and level-specific example policy', () => {
+    const source = readFileSync(new URL('./handler.ts', import.meta.url), 'utf8');
+    expect(source).toContain('VARIÉTÉ: choisis un contexte réellement utile à la notion');
+    expect(source).toContain('bandes de même longueur ou récipients gradués pour comparer');
+    expect(source).toContain('longueurs mesurées avec une droite graduée pour les fractions supérieures à 1');
   });
 
   it('adapts candidate language to each difficulty level while retaining simple words at every level', () => {

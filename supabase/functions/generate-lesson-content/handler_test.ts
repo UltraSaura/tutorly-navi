@@ -179,7 +179,7 @@ test('passes the selected candidate to all four mocked calls and reports the act
   const { status, body, calls } = await run(valid, 'candidate-fixture', TOPIC, undefined, STAGING_PROMPT_V22_CANDIDATE);
   assertEquals(status, 200);
   assertEquals(calls.prompts.length, 4);
-  assert(calls.prompts.every((prompt) => prompt.includes(STAGING_PROMPT_V22_CANDIDATE) && prompt.includes('un problème nouveau, proche mais pas identique')));
+  assert(calls.prompts.every((prompt) => prompt.includes(STAGING_PROMPT_V22_CANDIDATE) && prompt.includes('un problème nouveau, proche mais pas identique') && prompt.includes('VARIÉTÉ DES EXEMPLES')));
   assertEquals(body.promptVersion, STAGING_PROMPT_V22_CANDIDATE);
   assertEquals(body.validation.promptVersion, STAGING_PROMPT_V22_CANDIDATE);
   assert(body.levelResults.every((level: { promptVersion: string }) => level.promptVersion === STAGING_PROMPT_V22_CANDIDATE));
