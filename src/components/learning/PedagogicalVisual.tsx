@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 12263)
+Total output lines: 417
+
 import type { ReactNode } from 'react';
 import { numberLineTickValues } from '../../../shared/pedagogical-number-line';
 import { solidVisualDataErrors, type SolidVisualData } from '../../../shared/solid-visual-contract';
@@ -152,7 +155,29 @@ function NumberLine({ d }: { d: Data }) {
     <circle cx={x(value)} cy="50" r="8" fill="#f59e0b"/>
   </svg>;
 }
-function Fraction({ d, circle=false }: { d: Data; circle?: boolean }) { const den=Math.max(1,Math.min(16,Math.round(n(d.denominator,4)))),num=Math.max(0,Math.min(den,Math.round(n(d.numerator,1)))); if(circle)return <svg viewBox="0 0 220 180" className="mx-auto w-full max-w-sm" role="img" aria-label="Disque fractionné"><circle cx="110" cy="80" r="60" fill="#d1fae5" stroke="#0f766e" strokeWidth="3"/>{Array.from({length:num},(_,i)=>{const a=i*2*Math.PI/den-Math.PI/2,b=(i+1)*2*Math.PI/den-Math.PI/2;const p=(q:number)=>`${110+60*Math.cos(q)},${80+60*Math.sin(q)}`;return <path key={i} d={`M110 80 L${p(a)} A60 60 0 0 1 ${p(b)} Z`} fill="#14b8a6"/>})}<text x="110" y="165" textAnchor="middle">{num} / {den}</text></svg>; return <svg viewBox="0 0 360 100" className="w-full" role="img" aria-label="Barre de fraction"><g transform="translate(15 25)">{Array.from({length:den},(_,i)=><rect key={i} x={i*330/den} width={330/den-2} height="38" fill={i<num?'#14b8a6':'#d1fae5'} stroke="#0f766e"/>)}</g><text x="180" y="88" textAnchor="middle">{num} / {den}</text></svg>; }
+function Fraction({ d, circle=false }: { d: Data; circle?: boolean }) {
+  const den=Math.max(1,Math.min(16,Math.round(n(d.denominator,4))));
+  const num=Math.max(0,Math.min(den,Math.round(n(d.numerator,1))));
+  if(circle) {
+    const pizza=d.object==='pizza';
+    const radius=pizza?56:60;
+    const point=(angle:number,r=radius)=>`${110+r*Math.cos(angle)},${80+r*Math.sin(angle)}`;
+    const wedges=Array.from({length:den},(_,i)=>{
+      const a=i*2*Math.PI/den-Math.PI/2,b=(i+1)*2*Math.PI/den-Math.PI/2;
+      return <path key={`wedge-${i}`} d={`M110 80 L${point(a)} A${radius} ${radius} 0 0 1 ${point(b)} Z`} fill={pizza?(i<num?'#f97316':'#f8d77a'):(i<num?'#14b8a6':'#d1fae5')} stroke={pizza?'#b45309':'none'} strokeWidth={pizza?1:0}/>;
+    });
+    const toppings=[[92,64],[126,62],[104,91],[132,96],[84,98],[111,52],[116,112]] as const;
+    return <svg viewBox="0 0 220 180" className="mx-auto w-full max-w-sm" role="img" aria-label={pizza?`Pizza partagée en ${den} parts égales, ${num} parts prises : ${num}/${den}`:'Disque fractionné'}>
+      {pizza&&<circle cx="110" cy="80" r="64" fill="#c87935"/>}
+      <circle cx="110" cy="80" r={radius} fill={pizza?'#f8d77a':'#d1fae5'} stroke={pizza?'#9a4f20':'#0f766e'} strokeWidth={pizza?3:3}/>
+      {wedges}
+      {pizza&&toppings.slice(0,Math.min(den+2,7)).map(([x,y],i)=><circle key={`topping-${i}`} cx={x} cy={y} r="3.5" fill="#b91c1c" stroke="#7f1d1d" strokeWidth=".7"/>)}
+      {pizza&&<circle cx="110" cy="80" r="2.5" fill="#9a4f20"/>}
+      <text x="110" y="165" textAnchor="middle">{num} / {den}</text>
+    </svg>;
+  }
+  return <svg viewBox="0 0 360 100" className="w-full" role="img" aria-label="Barre de fraction"><g transform="translate(15 25)">{Array.from({length:den},(_,i)=><rect key={i} x={i*330/den} width={330/den-2} height="38" fill={i<num?'#14b8a6':'#d1fae5'} stroke="#0f766e"/>)}</g><text x="180" y="88" textAnchor="middle">{num} / {den}</text></svg>;
+}
 type Point = { x: number; y: number; label?: string };
 const point = (value: unknown): Point | null => { if (Array.isArray(value) && typeof value[0] === 'number' && typeof value[1] === 'number') return { x: value[0], y: value[1] }; const p = data(value); return typeof p.x === 'number' && Number.isFinite(p.x) && typeof p.y === 'number' && Number.isFinite(p.y) ? { x: p.x, y: p.y, label: s(p.label ?? p.name ?? p.id) || undefined } : null; };
 const points = (value: unknown): Point[] => Array.isArray(value) ? value.map(point).filter((p): p is Point => Boolean(p)) : [];
@@ -204,13 +229,7 @@ function Polygon({ d, kind }: { d: Data; kind: string }) {
   const dimensions = Array.isArray(d.side_labels ?? d.dimensions) ? ((d.side_labels ?? d.dimensions) as unknown[]) : [];
   const annotations = Array.isArray(d.annotations) ? d.annotations : [];
   return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label={`${s(d.shape, kind)} géométrique`}>
-    <polygon points={value} fill="#CCFBF1" stroke="#0F766E" strokeWidth="3"/>
-    {ps.map((p, i) => <g key={`vertex-${i}`}><circle cx={p.x} cy={p.y} r="4" fill="#F59E0B"/><text x={p.x + 7} y={p.y - 7} fontSize="12" fontWeight="700">{labelFor(p, i)}</text></g>)}
-    {dimensions.map((raw, i) => { const item = data(raw); const from = pointByLabel(item.from ?? item.start); const to = pointByLabel(item.to ?? item.end); const label = s(item.label ?? item.value ?? raw); if (!label) return null; const x = from && to ? (from.x + to.x) / 2 : 18; const y = from && to ? (from.y + to.y) / 2 - 6 : 18 + i * 14; return <text key={`dimension-${i}`} x={x} y={y} fontSize="11" fontWeight="700" fill="#3448A5" textAnchor="middle">{label}</text>; })}
-    {annotations.map((raw, i) => { const item = data(raw); const label = typeof raw === 'string' ? raw : s(item.text ?? item.label); if (!label) return null; return <text key={`annotation-${i}`} x={n(item.x, 15)} y={n(item.y, 190 - i * 14)} fontSize="11" fill="#667085">{label}</text>; })}
-  </svg>;
-}
-function GridSymmetry({ d }: { d: Data }) {
+    <polyg…263 tokens truncated…ry({ d }: { d: Data }) {
   const grid = data(d.grid); const axisData = data(d.axis);
   const W = Number(grid.width), H = Number(grid.height);
   const pts = (v: unknown) => Array.isArray(v) ? v.filter((p): p is { x: number; y: number } => !!p && typeof (p as any).x === 'number' && typeof (p as any).y === 'number') : [];
@@ -303,6 +322,13 @@ function UnitConversion({ d }: { d: Data }) {
   </div>;
 }
 type ComparisonPanel = { label: string; items: string[] };
+function FractionComparisonBar({ numerator, denominator, label }: { numerator: number; denominator: number; label: string }) {
+  if (!Number.isInteger(numerator) || !Number.isInteger(denominator) || denominator < 1 || denominator > 16 || numerator < 0 || numerator > denominator) return null;
+  return <svg viewBox="0 0 360 76" className="mt-3 w-full" role="img" aria-label={`${label} : ${numerator} parts coloriées sur ${denominator}`}>
+    <g transform="translate(15 10)">{Array.from({ length: denominator }, (_, index) => <rect key={index} x={index * 330 / denominator} width={330 / denominator - 2} height="38" fill={index < numerator ? '#14b8a6' : '#d1fae5'} stroke="#0f766e" />)}</g>
+    <text x="180" y="70" textAnchor="middle" fontSize="16" fontWeight="700">{numerator}/{denominator}</text>
+  </svg>;
+}
 function comparisonItemText(value: unknown): string {
   if (typeof value === 'string' || typeof value === 'number') return String(value);
   const item = data(value);
@@ -317,17 +343,6 @@ function comparisonItems(value: unknown): string[] {
   const single = record.value ?? record.text ?? record.content ?? record.description;
   return single === undefined || single === null || String(single).trim() === '' ? [] : [String(single)];
 }
-function FractionComparisonBar({ label, numerator, denominator }: { label: string; numerator: number; denominator: number }) {
-  const safeDenominator = Math.min(denominator, 20);
-  const safeNumerator = Math.min(Math.max(numerator, 0), safeDenominator);
-  return <div className="rounded-lg border border-[#D8E1F0] bg-white p-3" role="img" aria-label={`${label}: ${safeNumerator} sur ${safeDenominator}`}>
-    <p className="mb-2 text-sm font-bold text-[#3448A5]">{label}</p>
-    <div className="flex gap-1" aria-hidden="true">
-      {Array.from({ length: safeDenominator }, (_, index) => <span key={index} className={`h-7 flex-1 border border-[#0F766E] ${index < safeNumerator ? 'bg-[#14B8A6]' : 'bg-[#D1FAE5]'}`} />)}
-    </div>
-  </div>;
-}
-
 function Comparison({ d }: { d: Data }) {
   const left = comparisonItems(d.left);
   const right = comparisonItems(d.right);
@@ -339,6 +354,12 @@ function Comparison({ d }: { d: Data }) {
     { label: s(leftRecord.label ?? leftRecord.title ?? d.left_label ?? d.leftLabel, 'Situation 1'), items: left },
     { label: s(rightRecord.label ?? rightRecord.title ?? d.right_label ?? d.rightLabel, 'Situation 2'), items: right },
   ];
+  const fractionBars = [leftRecord, rightRecord].map((record, index) => {
+    const numerator = Number(record.numerator);
+    const denominator = Number(record.denominator);
+    if (!Number.isInteger(numerator) || !Number.isInteger(denominator)) return null;
+    return <FractionComparisonBar key={index} numerator={numerator} denominator={denominator} label={panels[index].label} />;
+  });
   if (left.length === 0 && right.length === 0 && result.length === 0) {
     if (Array.isArray(d.items) || Array.isArray(d.nodes) || Array.isArray(d.labels)) {
       return <div data-testid="comparison-visual"><Generic d={d}/></div>;
@@ -352,9 +373,9 @@ function Comparison({ d }: { d: Data }) {
         {panel.items.length > 0
           ? <ul className="space-y-2">{panel.items.map((item, itemIndex) => <li key={itemIndex} className="break-words rounded-md bg-[#F8FAFC] px-3 py-2 text-sm font-semibold leading-5 text-[#111827]">{item}</li>)}</ul>
           : <p className="text-sm text-[#667085]">Données de cette situation indisponibles.</p>}
+        {fractionBars[index]}
       </article>)}
     </div>
-    {Number.isInteger(leftRecord.numerator)&&Number.isInteger(leftRecord.denominator)&&Number.isInteger(rightRecord.numerator)&&Number.isInteger(rightRecord.denominator)&&Number(leftRecord.denominator)>0&&Number(rightRecord.denominator)>0&&<div className="grid gap-3 sm:grid-cols-2"><FractionComparisonBar label={s(leftRecord.label,'Première fraction')} numerator={Number(leftRecord.numerator)} denominator={Number(leftRecord.denominator)}/><FractionComparisonBar label={s(rightRecord.label,'Deuxième fraction')} numerator={Number(rightRecord.numerator)} denominator={Number(rightRecord.denominator)}/></div>}
     {result.length > 0 && <div className="space-y-2">
       <p className="text-center text-sm font-bold text-[#4F6FD8]" aria-hidden="true">↓</p>
       <article className="mx-auto w-full min-w-0 rounded-lg border border-[#B8C8F0] bg-white p-3 sm:max-w-md">
