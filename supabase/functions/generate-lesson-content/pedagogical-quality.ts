@@ -2,7 +2,7 @@ type PedagogyIssue = { path: string; message: string };
 import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 
-export const PEDAGOGICAL_CONCEPT_MAX_WORDS = 55;
+export const PEDAGOGICAL_CONCEPT_MAX_WORDS = 90;
 export const PEDAGOGICAL_TAKEAWAY_MAX_WORDS = 24;
 
 const PEDAGOGY_STOP_WORDS = new Set('le la les un une des de du et en avec pour sur dans une est sont là ce cette ces que qui comme avec au aux par chaque il elle on se'.split(/\s+/));

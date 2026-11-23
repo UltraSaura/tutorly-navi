@@ -62,7 +62,8 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
       if (!finite(denominator) || !Number.isInteger(denominator) || denominator < 1 || denominator > 16) {
         return [issue(`${basePath}.denominator`, 'invalid_fraction_denominator', 'This visual can display between 1 and 16 equal parts.')];
       }
-      return finite(numerator) && Number.isInteger(numerator) && numerator >= 0 && numerator <= denominator
+      const maxNumerator = kind === 'fraction_circle' && d.object === 'pizza' ? denominator * 2 : denominator;
+      return finite(numerator) && Number.isInteger(numerator) && numerator >= 0 && numerator <= maxNumerator
         ? []
         : [issue(`${basePath}.numerator`, 'invalid_fraction_numerator', 'The number of shaded parts must be an integer between zero and the total parts.')];
     }

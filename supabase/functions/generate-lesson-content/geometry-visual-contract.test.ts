@@ -25,6 +25,8 @@ describe('canonical geometry visual contract', () => {
       .toEqual(['visual.data.value', 'visual.data.step']);
     expect(stagingVisualIssues('fraction_bar', { numerator: 3, denominator: 4 })).toEqual([]);
     expect(stagingVisualIssues('fraction_circle', { numerator: 5, denominator: 4 })[0]?.path).toBe('visual.data.numerator');
+    expect(stagingVisualIssues('fraction_circle', { object: 'pizza', numerator: 7, denominator: 4 })).toEqual([]);
+    expect(stagingVisualIssues('fraction_circle', { object: 'pizza', numerator: 9, denominator: 4 })[0]?.path).toBe('visual.data.numerator');
     expect(stagingVisualIssues('angle', { ...complete.angle, degrees: 60 })[0]?.code).toBe('inconsistent_right_angle');
   });
   it.each([

@@ -154,9 +154,28 @@ function NumberLine({ d }: { d: Data }) {
 }
 function Fraction({ d, circle=false }: { d: Data; circle?: boolean }) {
   const den=Math.max(1,Math.min(16,Math.round(n(d.denominator,4))));
-  const num=Math.max(0,Math.min(den,Math.round(n(d.numerator,1))));
+  const num=Math.max(0,Math.min(d.object==='pizza'?den*2:den,Math.round(n(d.numerator,1))));
   if(circle) {
     const pizza=d.object==='pizza';
+    if(pizza && num>den) {
+      const remainder=num-den;
+      const centers=[86,214];
+      const radius=39;
+      const pies=centers.map((cx,index)=>{
+        const shaded=index===0?den:remainder;
+        const point=(angle:number)=>`${cx+radius*Math.cos(angle)},${84+radius*Math.sin(angle)}`;
+        return <g key={`pie-${index}`}>
+          <circle cx={cx} cy="84" r="45" fill="#c87935"/>
+          {Array.from({length:den},(_,i)=>{const a=i*2*Math.PI/den-Math.PI/2,b=(i+1)*2*Math.PI/den-Math.PI/2;return <path key={i} d={`M${cx} 84 L${point(a)} A${radius} ${radius} 0 0 1 ${point(b)} Z`} fill={i<shaded?'#f97316':'#f8d77a'} stroke="#9a4f20" strokeWidth="1.5"/>;})}
+          {index===0&&<text x={cx} y="145" textAnchor="middle" fontSize="12">entière</text>}
+          {index===1&&<text x={cx} y="145" textAnchor="middle" fontSize="12">{remainder}/{den}</text>}
+        </g>;
+      });
+      return <svg viewBox="0 0 300 180" className="mx-auto w-full max-w-sm" role="img" aria-label={`${num}/${den} de pizza : une pizza entière et ${remainder}/${den} d’une autre`}>
+        {pies}
+        <text x="150" y="172" textAnchor="middle">{num} / {den}</text>
+      </svg>;
+    }
     const radius=pizza?56:60;
     const point=(angle:number,r=radius)=>`${110+r*Math.cos(angle)},${80+r*Math.sin(angle)}`;
     const wedges=Array.from({length:den},(_,i)=>{
@@ -357,6 +376,9 @@ function Comparison({ d }: { d: Data }) {
   const leftRecord = data(d.left);
   const rightRecord = data(d.right);
   const resultRecord = data(d.result);
+  const pizzaFractions = d.object === 'pizza' && [leftRecord, rightRecord].every((fraction) =>
+    Number.isInteger(fraction.numerator) && Number.isInteger(fraction.denominator) && Number(fraction.denominator) >= 2,
+  );
   const panels: ComparisonPanel[] = [
     { label: s(leftRecord.label ?? leftRecord.title ?? d.left_label ?? d.leftLabel, 'Situation 1'), items: left },
     { label: s(rightRecord.label ?? rightRecord.title ?? d.right_label ?? d.rightLabel, 'Situation 2'), items: right },
@@ -367,6 +389,15 @@ function Comparison({ d }: { d: Data }) {
     }
     return <div data-testid="comparison-visual" role="status" className="rounded-lg border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-3 text-sm text-[#475569]">Données de comparaison indisponibles.</div>;
   }
+  if (pizzaFractions) return <div data-testid="comparison-visual" className="space-y-3" role="group" aria-label="Comparer deux parts de pizza">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {[leftRecord, rightRecord].map((fraction, index) => <div key={index} className="rounded-xl border-2 border-[#D8E1F0] bg-white p-3 text-center">
+        <p className="mb-2 text-sm font-bold text-[#3448A5]">{s(fraction.label, `Fraction ${index + 1}`)}</p>
+        <Fraction d={{ object: 'pizza', numerator: fraction.numerator, denominator: fraction.denominator }} circle />
+      </div>)}
+    </div>
+    {result.length > 0 && <p className="rounded-lg bg-white p-3 text-center font-bold text-[#3448A5]">{result.join(' · ')}</p>}
+  </div>;
   return <div data-testid="comparison-visual" role="group" aria-label="Comparaison de situations" className="w-full min-w-0 space-y-3">
     <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
       {panels.map((panel, index) => <article key={index} className="min-w-0 rounded-lg border border-[#D8E1F0] bg-white p-3">

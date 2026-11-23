@@ -34,6 +34,9 @@ describe('staging prompt ↔ validator consistency (providerCalls=0)', () => {
     expect(candidate).toContain(STAGING_PROMPT_V22_CANDIDATE);
     expect(candidate).toContain('un problème nouveau, proche mais pas identique');
     expect(candidate).toContain('critères de réussite');
+    expect(candidate).toContain('EXPLICATIONS À LIRE À VOIX HAUTE');
+    expect(candidate).toContain('SITUATION ET VISUEL DOIVENT CORRESPONDRE');
+    expect(candidate).toContain('n’illustre jamais une pizza par une barre');
     expect(candidate.split('Sujet: ')[1]).toBe(active.split('Sujet: ')[1]);
     expect(validateStagingLevel(stagingFullLevelExample(level), level, topicName, 'CM2').canonicalIssues).toEqual([]);
   });
@@ -215,7 +218,8 @@ describe('staging takeaway rule', () => {
 
 describe('staging concept length rule', () => {
   it('states a limit below the 55-word validator ceiling', () => {
-    expect(CONCEPT_LENGTH_RULE).toContain('40 mots');
+    expect(CONCEPT_LENGTH_RULE).toContain('45 à 80 mots');
+    expect(CONCEPT_LENGTH_RULE).toContain('limite stricte 90');
   });
   it.each(Object.entries(SVE))('%s example content stays within 40 words', (_k, ex) => {
     expect(String((ex as unknown as { content: string }).content).split(/\s+/).length).toBeLessThanOrEqual(40);

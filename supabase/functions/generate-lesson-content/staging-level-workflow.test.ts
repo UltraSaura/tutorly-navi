@@ -404,7 +404,7 @@ describe('staging level workflow', () => {
     ]);
   });
 
-  it('accepts a structured concept at the pedagogical maximum of 55 words', () => {
+  it('accepts a structured concept at the pedagogical maximum of 90 words', () => {
     const candidate = structuredClone(validLevel1) as any;
     candidate.sequence[0].content = maxLengthConcept(STAGING_VISUAL_EXAMPLES.rectangle.content as string);
     expect(candidate.sequence[0].content.trim().split(/\s+/)).toHaveLength(PEDAGOGICAL_CONCEPT_MAX_WORDS);
@@ -414,12 +414,12 @@ describe('staging level workflow', () => {
     ]));
   });
 
-  it('rejects a structured concept above the exact 55-word limit', () => {
+  it('rejects a structured concept above the exact 90-word limit', () => {
     const candidate = structuredClone(validLevel1) as any;
     candidate.sequence[0].content = `${maxLengthConcept(STAGING_VISUAL_EXAMPLES.rectangle.content as string)} supplémentaire`;
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
-    expect(result.pedagogicalIssues).toContainEqual(expect.objectContaining({ path: 'sequence[0].content', message: 'Concept structuré trop long (56 mots); garder une introduction de 1 à 3 phrases.' }));
-    expect(stagingSequenceContractIssues(candidate, metadata[0])).toContainEqual({ path: 'sequence[0].content', message: 'Expected at most 55 words for a structured concept' });
+    expect(result.pedagogicalIssues).toContainEqual(expect.objectContaining({ path: 'sequence[0].content', message: 'Concept structuré trop long (91 mots); garder une introduction de 1 à 3 phrases.' }));
+    expect(stagingSequenceContractIssues(candidate, metadata[0])).toContainEqual({ path: 'sequence[0].content', message: 'Expected at most 90 words for a structured concept' });
   });
 
   it('accepts a concise actionable takeaway within the exact 24-word limit', () => {
@@ -446,7 +446,7 @@ describe('staging level workflow', () => {
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
     expect(result.pedagogicalIssues).toEqual(expect.arrayContaining([
       { path: 'sequence[0].takeaway', message: 'Le takeaway doit rester concis.' },
-      { path: 'sequence[1].content', message: 'Concept structuré trop long (73 mots); garder une introduction de 1 à 3 phrases.' },
+      { path: 'sequence[1].content', message: 'Concept structuré trop long (108 mots); garder une introduction de 1 à 3 phrases.' },
       { path: 'sequence[1].takeaway', message: 'Le takeaway doit rester concis.' },
     ]));
   });
