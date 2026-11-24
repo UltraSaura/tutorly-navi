@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addRationals, clampGrid, equivalentNumerator, expectedFractionSteps, graphToPixel, pixelToGraph, rational } from './math';
+import { addRationals, clampGrid, equivalentNumerator, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph, rational } from './math';
 import { InteractiveActivitySchema } from './activityContract';
 describe('exact fraction arithmetic', () => {
   it('normalizes and rejects zero denominator', () => {
@@ -20,6 +20,16 @@ describe('coordinate transform', () => {
     expect(graphToPixel(2, 3)).toEqual({ x: 230, y: 105 });
     expect(pixelToGraph(230, 105)).toEqual({ x: 2, y: 3 });
     expect(clampGrid(9, -5, 5)).toBe(5);
+    expect(isPointCorrect(2, 3, { x: 2, y: 3 })).toBe(true);
+    expect(isPointCorrect(2, -3, { x: 2, y: 3 })).toBe(false);
+  });
+});
+describe('strict answer grading', () => {
+  it('rejects partial numeric matches and grades only whole numbers', () => {
+    expect(gradePartCount('2', 2)).toBe('correct');
+    expect(gradePartCount('3', 2)).toBe('incorrect');
+    expect(gradePartCount('2/4', 2)).toBe('invalid');
+    expect(gradePartCount('answer 2', 2)).toBe('invalid');
   });
 });
 describe('activity contract', () => {
