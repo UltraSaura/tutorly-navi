@@ -91,7 +91,7 @@ const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail
 const isDev = import.meta.env.DEV;
 // Read-only math activity demo is accessible on isolated Vercel preview deployments,
 // never on the canonical production hostname. The demo uses simulated data only.
-const isExplanationPreview = isDev || (typeof window !== 'undefined' && /^[-a-z0-9]+-stuwy\\.vercel\\.app$/i.test(window.location.hostname));
+const isExplanationPreview = isDev || (typeof window !== 'undefined' && window.location.hostname.toLowerCase().endsWith('-stuwy.vercel.app'));
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
 const isLocalSupabase = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(supabaseUrl);
 const isStagingSupabase = supabaseUrl === 'https://sibprjxhbxahouejygeu.supabase.co';
