@@ -38,3 +38,13 @@ export function graphToPixel(x: number, y: number, origin = 180, scale = 25) {
 export function pixelToGraph(px: number, py: number, origin = 180, scale = 25) {
   return { x: (px - origin) / scale, y: (origin - py) / scale };
 }
+
+/** Explicit answer grading: never accept a matching numeric substring. */
+export function gradePartCount(raw: string, expected: number): 'correct' | 'incorrect' | 'invalid' {
+  const normalized = raw.trim();
+  if (!/^\\d+$/.test(normalized)) return 'invalid';
+  return Number(normalized) === expected ? 'correct' : 'incorrect';
+}
+export function isPointCorrect(x: number, y: number, target: { x: number; y: number }): boolean {
+  return Number.isInteger(x) && Number.isInteger(y) && x === target.x && y === target.y;
+}
