@@ -4,6 +4,11 @@ import { initialActivityProgress, type ActivityProgress, type InteractiveActivit
 
 const activities: InteractiveActivitySpec[] = [
   {
+    schemaVersion: 1, id: 'cm2-select-quarters-001', kind: 'fraction-select', schoolLevel: 'CM2',
+    title: 'Construire la fraction 3/4', prompt: 'Sélectionne trois des quatre parts égales.',
+    target: { n: 3, d: 4 },
+  },
+  {
     schemaVersion: 1, id: 'cm2-fractions-001', kind: 'fraction-bar', schoolLevel: 'CM2',
     title: 'Additionner des fractions', prompt: 'Observe 3/4 et 1/2. Transforme les moitiés en quarts, puis trouve le total.',
     left: { n: 3, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4,
@@ -28,7 +33,7 @@ export default function ExplanationV2MathLab() {
     <div className="flex flex-wrap gap-2">
       {activities.map((activity, index) => <button type="button" key={activity.id} onClick={() => setSelected(index)}
         className={'min-h-11 rounded-xl px-4 py-2 font-semibold ' + (selected === index ? 'bg-teal-600 text-white' : 'border border-slate-300 bg-white text-slate-800')}>
-        {index === 0 ? 'CM2 · Fractions' : '4e · Coordonnées'}
+        {activity.kind === 'fraction-select' ? 'CM2 · Sélectionner 3/4' : activity.kind === 'fraction-bar' ? 'CM2 · Additionner' : '4e · Coordonnées'}
       </button>)}
       <button type="button" onClick={() => { setProgress((current) => ({ ...current, [spec.id]: initialActivityProgress() })); setResults((current) => ({ ...current, [spec.id]: '' })); }} className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold">Recommencer</button>
     </div>
