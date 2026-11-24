@@ -4,6 +4,9 @@ import { InteractiveActivitySchema, initialActivityProgress, type ActivityProgre
 import { clampGrid, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph } from './math';
 import { coordinateGuidedQuestion, fractionGuidedQuestion, namedParts } from './pedagogicalQuestions';
 import { FractionSelectActivity } from './FractionSelectActivity';
+import { AlgebraTilesActivity } from './AlgebraTilesActivity';
+import { LinearFunctionActivity } from './LinearFunctionActivity';
+import { LineFitActivity } from './LineFitActivity';
 
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
 type Props = {
@@ -179,6 +182,12 @@ export function InteractiveActivityHost(props: Props) {
       ? <FractionActivity {...props} spec={spec} />
       : spec.kind === 'fraction-select'
         ? <FractionSelectActivity {...props} spec={spec} />
-        : <CoordinateActivity {...props} spec={spec} />}
+        : spec.kind === 'coordinate-plane'
+          ? <CoordinateActivity {...props} spec={spec} />
+          : spec.kind === 'algebra-tiles'
+            ? <AlgebraTilesActivity {...props} spec={spec} />
+            : spec.kind === 'linear-function'
+              ? <LinearFunctionActivity {...props} spec={spec} />
+              : <LineFitActivity {...props} spec={spec} />}
   </section>;
 }
