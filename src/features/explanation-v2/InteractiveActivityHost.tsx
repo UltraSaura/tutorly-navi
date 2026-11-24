@@ -46,7 +46,7 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
       return;
     }
     if (p.phase === 0) {
-      update({ phase: 1, input: '', attempts, correct: null, feedback: 'Exact ! ' + spec.right.n + '/' + spec.right.d + ' = ' + steps.rightParts + '/' + spec.targetDenominator + '.' });
+      update({ phase: 1, phaseHints: 0, input: '', attempts, correct: null, feedback: 'Exact ! ' + spec.right.n + '/' + spec.right.d + ' = ' + steps.rightParts + '/' + spec.targetDenominator + '.' });
     } else {
       update({ attempts, completed: true, correct: true, feedback: 'Bravo ! Le total est ' + steps.totalParts + '/' + spec.targetDenominator + '.' });
       onComplete({ independent: p.hintsUsed === 0 && attempts === 2, attempts, hintsUsed: p.hintsUsed });
@@ -56,8 +56,8 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
     ? ['Pour additionner, on choisit des parts de même taille.', 'Partage chaque moitié en ' + (spec.targetDenominator / spec.right.d) + ' parts égales.', 'La fraction équivalente est ' + steps.rightParts + '/' + spec.targetDenominator + '.']
     : ['Les dénominateurs sont maintenant identiques.', 'Additionne ' + steps.leftParts + ' et ' + steps.rightParts + '.', 'Le total contient ' + steps.totalParts + ' quarts ou parts égales.'];
   const hint = () => {
-    const next = Math.min(3, p.hintsUsed + 1);
-    update({ hintsUsed: next, feedback: hints[next - 1] });
+    const next = Math.min(3, p.phaseHints + 1);
+    update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: hints[next - 1] });
   };
   return <div className="space-y-4" data-testid="fraction-bar-activity">
     <p className="text-base leading-7 text-slate-800">{spec.prompt}</p>
@@ -73,7 +73,7 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
       <div className="flex flex-wrap gap-2">
         <input id={'fraction-answer-' + spec.id} className="min-h-11 w-28 rounded-xl border border-slate-300 px-3 text-lg" inputMode="numeric" pattern="[0-9]*" value={p.input} onChange={e => update({ input: e.target.value, correct: null })} onKeyDown={e => { if (e.key === 'Enter') check(); }} />
         <button type="button" className={action} onClick={check}>Valider</button>
-        <button type="button" className={control} onClick={hint} disabled={p.hintsUsed >= 3}>Indice {p.hintsUsed}/3</button>
+        <button type="button" className={control} onClick={hint} disabled={p.phaseHints >= 3}>Indice {p.phaseHints}/3</button>
       </div>
     </div>}
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
@@ -109,9 +109,9 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
     }
   };
   const hint = () => {
-    const count = Math.min(3, p.hintsUsed + 1);
+    const count = Math.min(3, p.phaseHints + 1);
     const messages = ['Lis d’abord l’abscisse sur l’axe horizontal.', 'L’ordonnée se lit sur l’axe vertical.', 'Le point attendu est (' + spec.target.x + ' ; ' + spec.target.y + ').'];
-    update({ hintsUsed: count, feedback: messages[count - 1] });
+    update({ phaseHints: count, hintsUsed: p.hintsUsed + 1, feedback: messages[count - 1] });
   };
   const dot = graphToPixel(p.x, p.y);
   return <div className="space-y-3" data-testid="coordinate-plane-activity">
@@ -143,7 +143,7 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
     </div>
     {!p.completed && <div className="flex flex-wrap justify-center gap-2">
       <button type="button" className={action} onClick={check}>Valider la position</button>
-      <button type="button" className={control} onClick={hint} disabled={p.hintsUsed >= 3}>Indice {p.hintsUsed}/3</button>
+      <button type="button" className={control} onClick={hint} disabled={p.phaseHints >= 3}>Indice {p.phaseHints}/3</button>
     </div>}
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
   </div>;
