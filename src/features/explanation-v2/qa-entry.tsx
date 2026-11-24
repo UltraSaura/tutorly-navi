@@ -6,6 +6,8 @@ import { initialActivityProgress, type ActivityProgress, type InteractiveActivit
 import '../../index.css';
 
 const specs: InteractiveActivitySpec[] = [
+  { schemaVersion: 1, id: 'qa-fraction-select', kind: 'fraction-select', schoolLevel: 'CM2',
+    title: 'Construire 3/4', prompt: 'Sélectionne trois quarts.', target: { n: 3, d: 4 } },
   { schemaVersion: 1, id: 'qa-fraction', kind: 'fraction-bar', schoolLevel: 'CM2', title: 'Additionner les fractions',
     prompt: 'Convertis 1/2 en quarts puis additionne 3/4 et 1/2.',
     left: { n: 3, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4 },
@@ -13,15 +15,16 @@ const specs: InteractiveActivitySpec[] = [
     prompt: 'Place le point A(2 ; 3) sur le repère.', target: { x: 2, y: 3 } },
 ];
 function App() {
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(1);
   const [states, setStates] = useState<Record<string, ActivityProgress>>({});
   const [results, setResults] = useState<Record<string, string>>({});
   const spec = specs[active];
   return <main className="mx-auto max-w-xl space-y-4 p-3 sm:p-6">
     <h1 className="text-xl font-bold">Explanation V2 — isolated QA</h1>
     <div className="flex flex-wrap gap-2">
-      <button className="rounded border p-3" type="button" data-testid="tab-fraction" onClick={() => setActive(0)}>Fractions</button>
-      <button className="rounded border p-3" type="button" data-testid="tab-coordinate" onClick={() => setActive(1)}>Coordonnées</button>
+      <button className="rounded border p-3" type="button" data-testid="tab-fraction-select" onClick={() => setActive(0)}>Sélectionner 3/4</button>
+      <button className="rounded border p-3" type="button" data-testid="tab-fraction" onClick={() => setActive(1)}>Fractions</button>
+      <button className="rounded border p-3" type="button" data-testid="tab-coordinate" onClick={() => setActive(2)}>Coordonnées</button>
       <button className="rounded border p-3" type="button" data-testid="reset" onClick={() => {
         setStates(prev => ({ ...prev, [spec.id]: initialActivityProgress() }));
         setResults(prev => ({ ...prev, [spec.id]: '' }));
