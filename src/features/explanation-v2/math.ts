@@ -42,7 +42,7 @@ export function pixelToGraph(px: number, py: number, origin = 180, scale = 25) {
 /** Explicit answer grading: never accept a matching numeric substring. */
 export function gradePartCount(raw: string, expected: number): 'correct' | 'incorrect' | 'invalid' {
   const normalized = raw.trim();
-  if (!/^\\d+$/.test(normalized)) return 'invalid';
+  if (!/^\d+$/.test(normalized)) return 'invalid';
   return Number(normalized) === expected ? 'correct' : 'incorrect';
 }
 export function isPointCorrect(x: number, y: number, target: { x: number; y: number }): boolean {
