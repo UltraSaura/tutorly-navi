@@ -146,6 +146,70 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
     });
     await page.screenshot({ path: dir + '/fraction-select-' + width + '.png', fullPage: true });
+    await page.getByTestId('tab-algebra').click();
+    await run('algebra tiles explain unknown and units, show wrong-answer feedback', async () => {
+      await page.getByTestId('algebra-tiles-activity').waitFor();
+      await page.getByRole('button', { name: 'Ajouter une tuile x' }).click();
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /nombre devant x/i);
+      await page.getByRole('button', { name: /Indice/ }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /grande tuile/i);
+    });
+    await run('algebra tiles allow tapping, removing and exact completion', async () => {
+      await page.getByRole('button', { name: 'Ajouter une tuile x' }).click();
+      for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Ajouter une unité' }).click();
+      await page.getByRole('button', { name: 'Retirer une unité' }).first().click();
+      assert.match(await page.getByTestId('algebra-workspace').innerText(), /2x \+ 3/);
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    });
+    await page.screenshot({ path: dir + '/algebra-' + width + '.png', fullPage: true });
+    await page.getByTestId('tab-linear').click();
+    await run('function graph updates equation and diagnoses incorrect intercept', async () => {
+      await page.getByTestId('linear-function-activity').waitFor();
+      await page.getByRole('button', { name: 'Valider la droite' }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /axe vertical/i);
+      await page.getByRole('button', { name: 'Augmenter Départ b' }).click();
+      await page.getByRole('button', { name: 'Valider la droite' }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /pente/i);
+    });
+    await run('function graph changes slope and completes', async () => {
+      await page.getByRole('button', { name: 'Augmenter Pente m' }).click();
+      await page.getByRole('button', { name: 'Augmenter Pente m' }).click();
+      assert.match(await page.getByTestId('live-equation').innerText(), /y = 2x \+ 1/);
+      await page.getByRole('button', { name: 'Valider la droite' }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+    });
+    await page.screenshot({ path: dir + '/linear-' + width + '.png', fullPage: true });
+    await page.getByTestId('tab-fit').click();
+    await run('fitting data exposes five plotted points and changing error', async () => {
+      await page.getByTestId('line-fit-activity').waitFor();
+      assert.equal(await page.locator('[data-testid^="data-point-"]').count(), 5);
+      const before = await page.getByTestId('fit-error').innerText();
+      await page.getByRole('button', { name: 'Valider l’ajustement' }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /pente|haut ou le bas/i);
+      const slope = page.getByRole('slider', { name: 'Pente m' });
+      await slope.focus();
+      await page.keyboard.press('End');
+      for (let i = 0; i < 13; i++) await page.keyboard.press('ArrowLeft');
+      const intercept = page.getByRole('slider', { name: 'Départ b' });
+      await intercept.focus();
+      await page.keyboard.press('End');
+      for (let i = 0; i < 16; i++) await page.keyboard.press('ArrowLeft');
+      assert.match(await page.getByTestId('fit-equation').innerText(), /1\.7x \+ 1\.4/);
+      assert.notEqual(await page.getByTestId('fit-error').innerText(), before);
+      await page.getByRole('button', { name: 'Valider l’ajustement' }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    });
+    await page.screenshot({ path: dir + '/line-fit-' + width + '.png', fullPage: true });
+    await run('new animation state retained across tabs', async () => {
+      await page.getByTestId('tab-algebra').click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      await page.getByTestId('tab-fit').click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+    });
     await run('no runtime errors', async () => assert.deepEqual(jsErrors, []));
   } catch (e) {
     failures++; log('page startup or unhandled failure', 'FAIL', String(e));
