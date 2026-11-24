@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addRationals, clampGrid, equivalentNumerator, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph, rational } from './math';
+import { addRationals, clampGrid, equivalentNumerator, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph, rational, linearRegression, sumSquaredError } from './math';
 import { InteractiveActivitySchema } from './activityContract';
 describe('exact fraction arithmetic', () => {
   it('normalizes and rejects zero denominator', () => {
@@ -48,5 +48,28 @@ describe('selectable fraction-bar contract', () => {
     expect(InteractiveActivitySchema.safeParse({ ...base, target: { n: 5, d: 4 } }).success).toBe(false);
     expect(InteractiveActivitySchema.safeParse({ ...base, target: { n: 3, d: 0 } }).success).toBe(false);
     expect(InteractiveActivitySchema.safeParse({ ...base, target: { n: 1.5, d: 4 } }).success).toBe(false);
+  });
+});
+
+describe('interactive algebra, functions and line fitting', () => {
+  const base = { schemaVersion: 1, id: 'test', title: 'Test', prompt: 'Essaye', schoolLevel: '4e' };
+  it('validates bounded algebra tiles and rejects impossible targets', () => {
+    expect(InteractiveActivitySchema.safeParse({ ...base, kind: 'algebra-tiles', target: { x: 2, units: 3 } }).success).toBe(true);
+    expect(InteractiveActivitySchema.safeParse({ ...base, kind: 'algebra-tiles', target: { x: -1, units: 3 } }).success).toBe(false);
+    expect(InteractiveActivitySchema.safeParse({ ...base, kind: 'algebra-tiles', target: { x: 0, units: 0 } }).success).toBe(false);
+  });
+  it('validates graph handle positions', () => {
+    expect(InteractiveActivitySchema.safeParse({ ...base, kind: 'linear-function', target: { m: 2, b: 1 } }).success).toBe(true);
+    expect(InteractiveActivitySchema.safeParse({ ...base, kind: 'linear-function', target: { m: 3, b: 3 } }).success).toBe(false);
+  });
+  it('computes least-squares optimum and detects worse fits', () => {
+    const points = [{ x: -2, y: -2 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }];
+    const fit = linearRegression(points);
+    expect(fit.slope).toBeCloseTo(1.7);
+    expect(fit.intercept).toBeCloseTo(1.4);
+    expect(sumSquaredError(points, 1.7, 1.4)).toBeCloseTo(0.3);
+    expect(sumSquaredError(points, 1, 1)).toBeGreaterThan(sumSquaredError(points, fit.slope, fit.intercept));
+    expect(InteractiveActivitySchema.safeParse({ ...base, kind: 'line-fit', points }).success).toBe(true);
+    expect(InteractiveActivitySchema.safeParse({ ...base, kind: 'line-fit', points: [{ x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: 3 }] }).success).toBe(false);
   });
 });
