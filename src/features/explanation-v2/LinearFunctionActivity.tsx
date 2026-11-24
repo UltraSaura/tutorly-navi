@@ -29,7 +29,7 @@ export function functionDemonstrationSteps(target: { m: number; b: number }): Ma
     },
     {
       title: 'Le nombre m fait pencher la droite',
-      explanation: 'Depuis le point vert, avance d’une case vers la droite. Avec m = ' + m + ', la droite ' + signedWord(m) + (m === 0 ? '.' : '.') + ' Observe les pointillés : orange = 1 case à droite, violet = changement de hauteur.',
+      explanation: 'Depuis le point vert, avance d’une case vers la droite. Avec m = ' + m + ', la droite ' + signedWord(m) + '.' + ' Observe les pointillés : orange = 1 case à droite, violet = changement de hauteur.',
       equation: 'y = ' + m + 'x ' + signed(b),
       takeaway: 'Le point violet est en (1 ; ' + (m + b) + '). Les deux points déterminent la droite.',
       visual: { kind: 'graph', slope: m, intercept: b },
