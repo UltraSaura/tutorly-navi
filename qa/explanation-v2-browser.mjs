@@ -42,6 +42,20 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: /Indice/ }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /même taille/i);
     });
+    await run('fraction demonstration explains equivalent parts without changing answer state', async () => {
+      await page.getByRole('button', { name: 'Voir la démonstration pas à pas' }).click();
+      await page.getByTestId('math-demonstration').waitFor();
+      assert.match(await page.getByTestId('demo-progress').innerText(), /1 sur 4/);
+      await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
+      assert.match(await page.getByTestId('demo-equation').innerText(), /1\/2 = 2\/4/);
+      await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
+      assert.match(await page.getByTestId('demo-equation').innerText(), /5\/4/);
+      await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
+      assert.match(await page.getByTestId('demo-equation').innerText(), /1 \+ 1\/4/);
+      await page.getByRole('button', { name: 'Revenir à l’exercice' }).first().click();
+      assert.equal(await page.locator('#fraction-answer-qa-fraction').inputValue(), '3');
+      assert.equal(await page.getByTestId('completion').count(), 0);
+    });
     await run('fraction exact completion 2 then 5', async () => {
       const input = page.locator('#fraction-answer-qa-fraction');
       await input.fill('2');
@@ -166,6 +180,22 @@ async function runAtWidth(width) {
     });
     await page.screenshot({ path: dir + '/algebra-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-linear').click();
+    await run('function demonstration teaches starting point, slope and exploration before assessment', async () => {
+      await page.getByTestId('math-demonstration').waitFor();
+      assert.match(await page.getByTestId('demo-step-title').innerText(), /horizontale/i);
+      await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
+      assert.match(await page.getByTestId('demo-equation').innerText(), /y = 1/);
+      await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
+      assert.match(await page.getByTestId('demo-equation').innerText(), /y = 2x \+ 1/);
+      await page.getByRole('button', { name: 'Précédent' }).click();
+      assert.match(await page.getByTestId('demo-equation').innerText(), /y = 1/);
+      await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
+      await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
+      await page.getByRole('button', { name: 'Manipuler la droite' }).click();
+      assert.match(await page.getByText('Exploration libre — sans note').innerText(), /sans note/);
+      await page.getByRole('button', { name: 'Passer au défi' }).click();
+      assert.equal(await page.getByRole('button', { name: 'Valider la droite' }).isVisible(), true);
+    });
     await run('function graph updates equation and diagnoses incorrect intercept', async () => {
       await page.getByTestId('linear-function-activity').waitFor();
       await page.getByRole('button', { name: 'Valider la droite' }).click();
