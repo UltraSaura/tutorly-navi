@@ -2,6 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useRef } from 'react';
 import { InteractiveActivitySchema, initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { clampGrid, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph } from './math';
+import { coordinateGuidedQuestion, fractionGuidedQuestion, namedParts } from './pedagogicalQuestions';
 
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
 type Props = {
@@ -29,6 +30,7 @@ function Tiles({ denominator, filled, label }: { denominator: number; filled: nu
 function FractionActivity({ spec, progress, onProgressChange, onComplete }: Props & { spec: Extract<InteractiveActivitySpec, { kind: 'fraction-bar' }> }) {
   const p = progress ?? initialActivityProgress();
   const steps = expectedFractionSteps(spec.left, spec.right, spec.targetDenominator);
+  const guidance = fractionGuidedQuestion(spec, p.phase);
   const update = (patch: Partial<ActivityProgress>) => onProgressChange({ ...p, ...patch });
   const check = () => {
     if (p.completed) return;
@@ -41,8 +43,8 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
     const attempts = p.attempts + 1;
     if (gradePartCount(answer, expected) !== 'correct') {
       update({ attempts, correct: false, feedback: p.phase === 0
-        ? 'Les parts doivent être de même taille. Une moitié représente combien de ' + spec.targetDenominator + 'ièmes ?'
-        : 'Additionne les parts de même taille, sans additionner les dénominateurs.' });
+        ? 'Pour additionner, les parts doivent être de même taille. Regarde la barre du bas : combien de ' + namedParts(spec.targetDenominator) + ' seront coloriés après le partage ?'
+        : 'Les dénominateurs sont identiques : additionne seulement les parts coloriées des deux barres.' });
       return;
     }
     if (p.phase === 0) {
@@ -60,18 +62,22 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
     update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: hints[next - 1] });
   };
   return <div className="space-y-4" data-testid="fraction-bar-activity">
-    <p className="text-base leading-7 text-slate-800">{spec.prompt}</p>
+    <div className="space-y-2 rounded-xl bg-teal-50 p-3" data-testid="fraction-step-instructions">
+      <p className="text-sm font-bold text-teal-800">{guidance.step}</p>
+      <p className="text-base leading-7 text-slate-800">{guidance.context}</p>
+    </div>
     <div className="rounded-xl bg-slate-50 p-3 space-y-4">
-      <Tiles denominator={spec.left.d} filled={spec.left.n} label={spec.left.n + '/' + spec.left.d} />
-      <Tiles denominator={p.phase === 0 ? spec.right.d : spec.targetDenominator} filled={p.phase === 0 ? spec.right.n : steps.rightParts} label={p.phase === 0 ? spec.right.n + '/' + spec.right.d : steps.rightParts + '/' + spec.targetDenominator} />
+      <Tiles denominator={spec.left.d} filled={spec.left.n} label={'Barre du haut : ' + spec.left.n + '/' + spec.left.d} />
+      <Tiles denominator={p.phase === 0 ? spec.right.d : spec.targetDenominator} filled={p.phase === 0 ? spec.right.n : steps.rightParts} label={'Barre du bas : ' + (p.phase === 0 ? spec.right.n + '/' + spec.right.d : steps.rightParts + '/' + spec.targetDenominator)} />
       {p.completed && <Tiles denominator={spec.targetDenominator} filled={steps.totalParts} label={'Total : ' + steps.totalParts + '/' + spec.targetDenominator} />}
     </div>
     {!p.completed && <div className="space-y-2">
       <label htmlFor={'fraction-answer-' + spec.id} className="block font-semibold">
-        {p.phase === 0 ? 'Combien de parts de ' + spec.targetDenominator + 'ièmes représentent ' + spec.right.n + '/' + spec.right.d + ' ?' : 'Combien de parts de ' + spec.targetDenominator + 'ièmes en tout ?'}
+        {guidance.question}
       </label>
+      <p id={'fraction-help-' + spec.id} className="text-sm text-slate-600">{guidance.answerHelp}</p>
       <div className="flex flex-wrap gap-2">
-        <input id={'fraction-answer-' + spec.id} className="min-h-11 w-28 rounded-xl border border-slate-300 px-3 text-lg" inputMode="numeric" pattern="[0-9]*" value={p.input} onChange={e => update({ input: e.target.value, correct: null })} onKeyDown={e => { if (e.key === 'Enter') check(); }} />
+        <input aria-describedby={'fraction-help-' + spec.id} id={'fraction-answer-' + spec.id} className="min-h-11 w-28 rounded-xl border border-slate-300 px-3 text-lg" inputMode="numeric" pattern="[0-9]*" value={p.input} onChange={e => update({ input: e.target.value, correct: null })} onKeyDown={e => { if (e.key === 'Enter') check(); }} />
         <button type="button" className={action} onClick={check}>Valider</button>
         <button type="button" className={control} onClick={hint} disabled={p.phaseHints >= 3}>Indice {p.phaseHints}/3</button>
       </div>
@@ -82,6 +88,7 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
 }
 function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Props & { spec: Extract<InteractiveActivitySpec, { kind: 'coordinate-plane' }> }) {
   const p = progress ?? initialActivityProgress();
+  const guidance = coordinateGuidedQuestion(spec);
   const svgRef = useRef<SVGSVGElement>(null);
   const update = (patch: Partial<ActivityProgress>) => onProgressChange({ ...p, ...patch });
   const moveTo = (x: number, y: number) => {
@@ -115,7 +122,11 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
   };
   const dot = graphToPixel(p.x, p.y);
   return <div className="space-y-3" data-testid="coordinate-plane-activity">
-    <p className="text-base leading-7 text-slate-800">{spec.prompt}</p>
+    <div className="space-y-2 rounded-xl bg-teal-50 p-3" data-testid="coordinate-instructions">
+      <p className="text-sm font-bold text-teal-800">{guidance.step}</p>
+      <p className="text-base leading-7 text-slate-800">{guidance.context}</p>
+      <p className="text-base font-bold leading-7 text-slate-900">{guidance.question}</p>
+    </div>
     <svg ref={svgRef} viewBox="0 0 360 360" className="mx-auto block aspect-square w-full max-w-[360px] rounded-xl bg-white" style={{ touchAction: 'none' }} role="img" aria-label={'Repère cartésien de -5 à 5. Point actuellement en (' + p.x + ' ; ' + p.y + ').'} onPointerDown={e => { if (!p.completed) { e.currentTarget.setPointerCapture(e.pointerId); movePointer(e); } }} onPointerMove={e => { if (e.buttons === 1 && !p.completed) movePointer(e); }}>
       {Array.from({ length: 11 }, (_, i) => {
         const pos = 55 + i * 25;
@@ -134,7 +145,7 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
       <text x={Math.min(298, dot.x + 13)} y={Math.max(24, dot.y - 15)} fontSize="13" fontWeight="bold" fill="#0f766e">A</text>
     </svg>
     <p className="text-center text-sm font-semibold">A = ({p.x} ; {p.y})</p>
-    <p className="text-sm text-slate-600">Déplace le point au doigt ou avec la souris. Les boutons permettent aussi de le déplacer au clavier.</p>
+    <p className="text-sm text-slate-600">{guidance.answerHelp}</p>
     <div className="flex flex-wrap justify-center gap-2" aria-label="Déplacer le point">
       <button type="button" className={control} disabled={p.completed} onClick={() => moveTo(p.x - 1, p.y)} aria-label="Déplacer à gauche">←</button>
       <button type="button" className={control} disabled={p.completed} onClick={() => moveTo(p.x, p.y + 1)} aria-label="Déplacer vers le haut">↑</button>
