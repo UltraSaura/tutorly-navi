@@ -32,6 +32,8 @@ for (const width of [375, 447, 1280]) {
       await page.locator('#fraction-answer-qa-fraction-player').fill('5');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 1);
+      assert.equal(await page.getByText('À toi de jouer', { exact: true }).count(), 1);
+      assert.equal(await page.getByText('Bonne réponse.', { exact: true }).count(), 0);
     });
     await page.screenshot({ path: dir + '/player-fraction-' + width + '.png', fullPage: true });
     await check('coordinate stage gated and lesson completion', async () => {
