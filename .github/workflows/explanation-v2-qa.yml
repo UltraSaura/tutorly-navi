@@ -1,0 +1,74 @@
+name: Explanation V2 isolated QA
+
+on:
+  push:
+    branches:
+      - feature/explanation-v2-interactive-math
+  pull_request:
+    branches:
+      - parent
+    paths:
+      - 'src/features/explanation-v2/**'
+      - 'src/components/learning/LessonV2Player.tsx'
+      - 'src/types/lesson-generator.ts'
+      - 'src/pages/dev/ExplanationV2MathLab.tsx'
+      - 'qa/**'
+      - '.github/workflows/explanation-v2-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  unit-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Exact math and lesson parser tests
+        run: npx vitest run src/features/explanation-v2/math.test.ts src/features/explanation-v2/lessonIntegration.test.ts
+      - name: TypeScript check
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: npx eslint src/features/explanation-v2 src/pages/dev/ExplanationV2MathLab.tsx
+      - name: Production build
+        run: npm run build
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Install browser test runner (non-persistent)
+        run: |
+          npm install --no-save --ignore-scripts playwright
+          npx playwright install --with-deps chromium
+      - name: Test desktop and mobile interactions
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/explanation-v2-vite.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/qa/explanation-v2.html > /dev/null; then break; fi
+            sleep 2
+          done
+          node qa/explanation-v2-browser.mjs
+      - name: Upload screenshots and QA report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: explanation-v2-qa-screenshots
+          path: qa/screenshots/
+          if-no-files-found: warn
+          retention-days: 14
