@@ -11,12 +11,15 @@ try {
   const response = await page.goto(base + '/demo.html', { waitUntil: 'networkidle', timeout: 60000 });
   assert.equal(response?.status(), 200, 'standalone demo must return HTTP 200');
   await page.getByRole('heading', { name: 'Mathématiques interactives' }).waitFor();
-  await page.getByTestId('fraction-bar-activity').waitFor();
-  console.log('PASS production-built /demo.html opens fraction activity');
+  await page.getByTestId('fraction-select-activity').waitFor();
+  for (const i of [0, 1, 2]) await page.getByTestId('fraction-part-' + i).click();
+  await page.getByRole('button', { name: 'Valider', exact: true }).click();
+  await page.getByText('Réussi sans aide').waitFor();
+  console.log('PASS production-built /demo.html opens and completes selectable 3/4 fraction');
   await page.getByRole('button', { name: '4e · Coordonnées' }).click();
   await page.getByTestId('coordinate-plane-activity').waitFor();
   console.log('PASS production-built demo switches to coordinate plane');
-  await page.getByRole('button', { name: 'CM2 · Fractions' }).click();
+  await page.getByRole('button', { name: 'CM2 · Additionner' }).click();
   await page.locator('#fraction-answer-cm2-fractions-001').fill('2');
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
   await page.locator('#fraction-answer-cm2-fractions-001').fill('5');
