@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/dev/explanation-v2-math",
+      "destination": "/index.html"
+    }
+  ]
+}
