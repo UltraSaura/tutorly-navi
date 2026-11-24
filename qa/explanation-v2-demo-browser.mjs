@@ -25,6 +25,26 @@ try {
   await page.locator('#fraction-answer-cm2-fractions-001').fill('5');
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
   await page.getByText('Réussi sans aide').waitFor();
+  await page.getByRole('button', { name: 'Parcours complet CM2 · 5 étapes' }).click();
+  await page.getByTestId('cm2-lesson-preview').waitFor();
+  await page.getByRole('heading', { name: 'Un quart, c’est une part sur quatre' }).waitFor();
+  await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+  await page.getByTestId('fraction-select-activity').waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
+  for (const i of [0, 1, 2]) await page.getByTestId('fraction-part-' + i).click();
+  await page.getByRole('button', { name: 'Valider', exact: true }).click();
+  await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+  await page.getByRole('heading', { name: 'Comment transformer une moitié en quarts ?' }).waitFor();
+  await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+  await page.getByTestId('fraction-bar-activity').waitFor();
+  await page.locator('#fraction-answer-cm2-lesson-add-quarters').fill('2');
+  await page.getByRole('button', { name: 'Valider', exact: true }).click();
+  await page.locator('#fraction-answer-cm2-lesson-add-quarters').fill('5');
+  await page.getByRole('button', { name: 'Valider', exact: true }).click();
+  await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+  await page.getByRole('heading', { name: 'Bravo ! Tu sais additionner des quarts' }).waitFor();
+  await page.getByText('Leçon terminée !').waitFor();
+  console.log('PASS five-step CM2 lesson preview enforces interactive completion');
   assert.deepEqual(errors, []);
   console.log('PASS standalone demo is interactive and has no page errors');
 } catch (e) {
