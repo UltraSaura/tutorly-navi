@@ -6,10 +6,10 @@ import { initialActivityProgress, type ActivityProgress, type InteractiveActivit
 import '../../index.css';
 
 const specs: InteractiveActivitySpec[] = [
-  { schemaVersion: 1, id: 'qa-fraction', kind: 'fraction-bar', title: 'Additionner les fractions',
+  { schemaVersion: 1, id: 'qa-fraction', kind: 'fraction-bar', schoolLevel: 'CM2', title: 'Additionner les fractions',
     prompt: 'Convertis 1/2 en quarts puis additionne 3/4 et 1/2.',
     left: { n: 3, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4 },
-  { schemaVersion: 1, id: 'qa-coordinate', kind: 'coordinate-plane', title: 'Placer A(2 ; 3)',
+  { schemaVersion: 1, id: 'qa-coordinate', kind: 'coordinate-plane', schoolLevel: '4e', title: 'Placer A(2 ; 3)',
     prompt: 'Place le point A(2 ; 3) sur le repère.', target: { x: 2, y: 3 } },
 ];
 function App() {
