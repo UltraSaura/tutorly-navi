@@ -7,6 +7,8 @@ import type { LessonBlock, LessonV2 } from '@/types/lesson-generator';
 import { PedagogicalVisual } from './PedagogicalVisual';
 import { QuestionCard } from './QuestionCard';
 import type { Question } from '@/types/quiz-bank';
+import { InteractiveActivityHost } from '@/features/explanation-v2/InteractiveActivityHost';
+import type { ActivityProgress } from '@/features/explanation-v2/activityContract';
 
 type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void };
 
@@ -161,9 +163,11 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   const [timeParts, setTimeParts] = useState({ hours: '', minutes: '', seconds: '' });
   const [prerequisiteResult, setPrerequisiteResult] = useState<boolean | null>(null);
   const [prerequisitesPassed, setPrerequisitesPassed] = useState(false);
+  const [activityProgressById, setActivityProgressById] = useState<Record<string, ActivityProgress>>({});
   const block = lesson.sequence[index];
   useEffect(() => { onSequencePosition?.(index); }, [index, onSequencePosition]);
-  const required = block?.type === 'student_try' || block?.type === 'feedback_checkpoint' || block?.type === 'mastery_check' || block?.type === 'prediction';
+  const required = block?.type === 'student_try' || block?.type === 'feedback_checkpoint' || block?.type === 'mastery_check' || block?.type === 'prediction' || block?.type === 'interactive_activity';
+  const activityDone = block?.type === 'interactive_activity' && activityProgressById[block.id]?.completed === true;
   const question = block && (block.type === 'student_try' || block.type === 'feedback_checkpoint' ? block : block.type === 'prediction' ? block : null);
   const questionData = question && 'correct_answer' in question ? question : null;
   const practiceQuestionData = questionData ? practiceQuestion(questionData) : null;
@@ -334,6 +338,16 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
           <span className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase text-teal-800">{block.type.replace('_', ' ')}</span>
           {'title' in block && <h2 className="text-xl font-bold">{block.title}</h2>}
           {block.type === 'visual' && <PedagogicalVisual block={block} />}
+          {block.type === 'interactive_activity' && <InteractiveActivityHost
+            spec={block.activity}
+            progress={activityProgressById[block.id]}
+            onProgressChange={(progress) => setActivityProgressById((current) => ({ ...current, [block.id]: progress }))}
+            onComplete={(result) => {
+              setSubmitted(true);
+              setCorrect(true);
+              record('quiz_completed', { activityId: block.activity.id, attempts: result.attempts, hintsUsed: result.hintsUsed, independent: result.independent });
+            }}
+          />}
           {block.type === 'concept' && <ConceptPresentation block={block} />}
           {block.type === 'hook' || block.type === 'rule' ? <p className="whitespace-pre-wrap rounded-xl bg-card p-4 leading-7">{block.content}</p> : null}
           {block.type === 'contrast' && <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-muted p-4">{block.left}</div><div className="rounded-xl bg-muted p-4">{block.right}</div><p className="sm:col-span-2">{block.explanation}</p></div>}
@@ -367,7 +381,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
       {/* Pinned bottom action bar */}
       <div className="flex-shrink-0 border-t border-[#EAECEF] bg-white p-3 pb-[max(env(safe-area-inset-bottom),12px)] shadow-[0_-2px_10px_rgba(15,23,42,0.05)]">
         <div className="mx-auto w-full max-w-[680px] space-y-2">
-          {required && !submitted && !practiceQuestionData && !allMasteryPractice && (
+          {required && block.type !== 'interactive_activity' && !submitted && !practiceQuestionData && !allMasteryPractice && (
             <button
               onClick={questionData ? submit : submitMastery}
               disabled={questionData ? !answer : Object.keys(masteryAnswers).length < masteryQuestions.length}
@@ -384,7 +398,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
               Indice
             </button>
           )}
-          {(!required || (submitted && correct)) && (
+          {(!required || (submitted && correct) || activityDone) && (
             <button
               onClick={next}
               className="w-full rounded-xl bg-[#12C6A0] p-3.5 text-sm font-bold text-[#0F172A]"
