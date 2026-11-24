@@ -37,7 +37,6 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
       update({ feedback: 'Écris un nombre entier de parts.', correct: false });
       return;
     }
-    const value = Number(answer);
     const expected = p.phase === 0 ? steps.rightParts : steps.totalParts;
     const attempts = p.attempts + 1;
     if (gradePartCount(answer, expected) !== 'correct') {
