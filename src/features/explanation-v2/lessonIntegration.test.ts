@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseLessonContent } from '@/types/lesson-generator';
+import { cm2FractionLesson } from './cm2FractionLesson';
 
 const sample = {
   version: '2.0',
@@ -21,6 +22,16 @@ const sample = {
   mastery: { skills: ['fractions'], threshold: 0.8 },
 };
 describe('Explanation V2 lesson integration', () => {
+  it('keeps the full CM2 lesson coherent and includes two gated activities', () => {
+    const parsed = parseLessonContent(cm2FractionLesson);
+    expect(parsed).not.toBeNull();
+    expect(parsed?.sequence.map(block => block.type)).toEqual([
+      'concept', 'interactive_activity', 'guided_example', 'interactive_activity', 'concept',
+    ]);
+    expect(parsed?.sequence.filter(block => block.type === 'interactive_activity').map(block => block.activity.kind)).toEqual(['fraction-select', 'fraction-bar']);
+    expect(parsed?.sequence.filter(block => block.type === 'interactive_activity').every(block => block.activity.schoolLevel === 'CM2')).toBe(true);
+    expect(new Set(parsed?.sequence.map(block => block.id)).size).toBe(parsed?.sequence.length);
+  });
   it('parses an explicitly typed interactive activity', () => {
     const parsed = parseLessonContent(sample);
     expect(parsed?.sequence[0].type).toBe('interactive_activity');
