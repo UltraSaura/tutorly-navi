@@ -1,5 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { InteractiveActivitySchema, initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { clampGrid, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph } from './math';
 import { coordinateGuidedQuestion, fractionGuidedQuestion, namedParts } from './pedagogicalQuestions';
@@ -7,6 +7,7 @@ import { FractionSelectActivity } from './FractionSelectActivity';
 import { AlgebraTilesActivity } from './AlgebraTilesActivity';
 import { LinearFunctionActivity } from './LinearFunctionActivity';
 import { LineFitActivity } from './LineFitActivity';
+import { MathDemonstration, fractionDemonstrationSteps } from './MathDemonstration';
 
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
 type Props = {
@@ -32,6 +33,7 @@ function Tiles({ denominator, filled, label }: { denominator: number; filled: nu
   </div>;
 }
 function FractionActivity({ spec, progress, onProgressChange, onComplete }: Props & { spec: Extract<InteractiveActivitySpec, { kind: 'fraction-bar' }> }) {
+  const [showDemo, setShowDemo] = useState(false);
   const p = progress ?? initialActivityProgress();
   const steps = expectedFractionSteps(spec.left, spec.right, spec.targetDenominator);
   const guidance = fractionGuidedQuestion(spec, p.phase);
@@ -74,6 +76,14 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
     update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: hints[next - 1] });
   };
   return <div className="space-y-4" data-testid="fraction-bar-activity">
+    <button type="button" className={control} onClick={() => setShowDemo(value => !value)}>
+      {showDemo ? 'Revenir à l’exercice' : 'Voir la démonstration pas à pas'}
+    </button>
+    {showDemo ? <MathDemonstration
+      title="Comprendre l’addition de fractions"
+      steps={fractionDemonstrationSteps(spec)}
+      onPractice={() => setShowDemo(false)}
+      practiceLabel="Revenir à l’exercice" /> : <>
     <div className="space-y-2 rounded-xl bg-teal-50 p-3" data-testid="fraction-step-instructions">
       <p className="text-sm font-bold text-teal-800">{guidance.step}</p>
       <p className="text-base leading-7 text-slate-800">{guidance.context}</p>
@@ -96,6 +106,7 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
     </div>}
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
     {p.completed && <p className="font-semibold text-teal-800">Activité réussie. Tu peux continuer la leçon.</p>}
+    </>}
   </div>;
 }
 function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Props & { spec: Extract<InteractiveActivitySpec, { kind: 'coordinate-plane' }> }) {
