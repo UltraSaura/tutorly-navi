@@ -40,3 +40,13 @@ describe('activity contract', () => {
     expect(InteractiveActivitySchema.safeParse({ ...base, kind: 'coordinate-plane', target: { x: 8, y: 2 } }).success).toBe(false);
   });
 });
+
+describe('selectable fraction-bar contract', () => {
+  const base = { schemaVersion: 1, id: 'select-3-quarters', title: 'Construire 3/4', prompt: 'Colorie les cases', schoolLevel: 'CM2', kind: 'fraction-select' };
+  it('accepts 3/4 and rejects impossible selections', () => {
+    expect(InteractiveActivitySchema.safeParse({ ...base, target: { n: 3, d: 4 } }).success).toBe(true);
+    expect(InteractiveActivitySchema.safeParse({ ...base, target: { n: 5, d: 4 } }).success).toBe(false);
+    expect(InteractiveActivitySchema.safeParse({ ...base, target: { n: 3, d: 0 } }).success).toBe(false);
+    expect(InteractiveActivitySchema.safeParse({ ...base, target: { n: 1.5, d: 4 } }).success).toBe(false);
+  });
+});
