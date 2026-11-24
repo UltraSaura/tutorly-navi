@@ -31,12 +31,14 @@ describe('Explanation V2 lesson integration', () => {
     expect(parseLessonContent(broken)).toBeNull();
   });
   it('parses a fraction-select activity for use inside LessonV2Player', () => {
-    const selectable = structuredClone(sample);
-    selectable.sequence[0].activity = {
-      schemaVersion: 1, id: 'select-3-quarters', kind: 'fraction-select',
-      title: 'Construire 3/4', prompt: 'Sélectionne les cases', schoolLevel: 'CM2',
-      target: { n: 3, d: 4 },
-    };
+    const selectable = { ...sample, sequence: [{
+      id: 'activity-select', type: 'interactive_activity',
+      activity: {
+        schemaVersion: 1, id: 'select-3-quarters', kind: 'fraction-select',
+        title: 'Construire 3/4', prompt: 'Sélectionne les cases', schoolLevel: 'CM2',
+        target: { n: 3, d: 4 },
+      },
+    }] };
     expect(parseLessonContent(selectable)?.sequence[0].type).toBe('interactive_activity');
   });
   it('rejects an unknown activity kind', () => {
