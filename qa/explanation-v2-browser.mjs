@@ -113,6 +113,39 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
     });
     await page.screenshot({ path: dir + '/coordinate-' + width + '.png', fullPage: true });
+    await page.getByTestId('tab-fraction-select').click();
+    await run('fraction selection is a clear tappable CM2 question', async () => {
+      assert.match(await page.getByTestId('fraction-select-question').innerText(), /Sélectionne 3 quarts sur les 4 parts/i);
+      assert.equal(await page.getByTestId('fraction-selected-count').innerText(), 'Parts sélectionnées : 0 sur 4');
+      assert.equal(await page.locator('[data-testid^="fraction-part-"]').count(), 4);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    });
+    await run('select two quarters, get targeted feedback, then correct by tapping', async () => {
+      await page.getByTestId('fraction-part-0').click();
+      await page.getByTestId('fraction-part-1').click();
+      assert.equal(await page.getByTestId('fraction-part-1').getAttribute('aria-pressed'), 'true');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /sélectionné 2 quarts/i);
+      assert.equal(await page.getByTestId('completion').count(), 0);
+      await page.getByRole('button', { name: /Indice/ }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /nombre du bas/i);
+      await page.getByTestId('fraction-part-2').click();
+      assert.equal(await page.getByTestId('fraction-selected-count').innerText(), 'Parts sélectionnées : 3 sur 4');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      assert.equal(await page.getByTestId('fraction-part-0').isDisabled(), true);
+    });
+    await run('fraction selection resets, toggles off and completes independently', async () => {
+      await page.getByTestId('reset').click();
+      const first = page.getByTestId('fraction-part-0');
+      await first.click();
+      await first.click();
+      assert.equal(await first.getAttribute('aria-pressed'), 'false');
+      for (const i of [0, 1, 3]) await page.getByTestId('fraction-part-' + i).click();
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+    });
+    await page.screenshot({ path: dir + '/fraction-select-' + width + '.png', fullPage: true });
     await run('no runtime errors', async () => assert.deepEqual(jsErrors, []));
   } catch (e) {
     failures++; log('page startup or unhandled failure', 'FAIL', String(e));
