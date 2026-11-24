@@ -32,6 +32,7 @@ function isYoung(level: string | undefined, defaultYoung: boolean): boolean {
 export function fractionGuidedQuestion(spec: FractionSpec, phase: number): GuidedQuestion {
   const steps = expectedFractionSteps(spec.left, spec.right, spec.targetDenominator);
   const unit = namedParts(spec.targetDenominator);
+  const colored = spec.targetDenominator === 2 ? 'coloriées' : 'coloriés';
   const young = isYoung(spec.schoolLevel, true);
   if (phase === 0) {
     return {
@@ -39,7 +40,7 @@ export function fractionGuidedQuestion(spec: FractionSpec, phase: number): Guide
       context: young
         ? 'Regarde les deux barres : elles ont la même taille. En haut, ' + spec.left.n + '/' + spec.left.d + ' est colorié. En bas, ' + spec.right.n + '/' + spec.right.d + ' est colorié. Pour les additionner, on doit compter des morceaux de même taille.'
         : 'Pour additionner ' + spec.left.n + '/' + spec.left.d + ' et ' + spec.right.n + '/' + spec.right.d + ', exprime les deux fractions avec le même dénominateur : ' + spec.targetDenominator + '.',
-      question: 'Si tu partages la barre du bas en ' + spec.targetDenominator + ' parts égales, combien de ' + unit + ' seront coloriés ?',
+      question: 'Si tu partages la barre du bas en ' + spec.targetDenominator + ' parts égales, combien de ' + unit + ' seront ' + colored + ' ?',
       answerHelp: 'Écris seulement le nombre de ' + unit + ', sans écrire de fraction.',
     };
   }
@@ -48,7 +49,7 @@ export function fractionGuidedQuestion(spec: FractionSpec, phase: number): Guide
     context: young
       ? 'Maintenant, les deux barres sont partagées en ' + unit + '. La barre du haut montre ' + steps.leftParts + ' ' + countedParts(spec.targetDenominator, steps.leftParts) + '. Celle du bas en montre ' + steps.rightParts + '.'
       : 'Les deux fractions ont le même dénominateur (' + spec.targetDenominator + '). Additionne leurs numérateurs : ' + steps.leftParts + ' et ' + steps.rightParts + '.',
-    question: 'Combien de ' + unit + ' coloriés y a-t-il en tout dans les deux barres ?',
+    question: 'Combien de ' + unit + ' ' + colored + ' y a-t-il en tout dans les deux barres ?',
     answerHelp: 'Écris seulement le nombre total de ' + unit + ', sans écrire de fraction.',
   };
 }
