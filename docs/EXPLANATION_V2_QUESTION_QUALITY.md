@@ -37,3 +37,24 @@ These are **authoring guidelines**, not proof of curriculum alignment for every 
 - Teacher reviews examples at each supported grade, especially before generated content is published.
 
 **Scope:** this PR establishes the reusable pattern and validates the two existing activity types. A full audit of all Tutorly-generated lessons is a separate task; do not claim it is complete.
+
+## Reusable interaction: fraction-select (24 Nov 2026)
+A validated `interactive_activity` with `kind: 'fraction-select'` can be placed in the same `LessonV2Player` sequence as other activities. Example:
+
+```json
+{
+  "id": "build-three-quarters",
+  "type": "interactive_activity",
+  "activity": {
+    "schemaVersion": 1,
+    "id": "cm2-build-3-quarters",
+    "kind": "fraction-select",
+    "schoolLevel": "CM2",
+    "title": "Construire 3/4",
+    "prompt": "Sélectionne trois parts parmi quatre.",
+    "target": { "n": 3, "d": 4 }
+  }
+}
+```
+
+The student selects any three of four equal tiles by touch, mouse, or keyboard; each tile can be toggled. The selected count updates live, and validation checks exactly three selected tiles. Incorrect attempts provide a targeted explanation; three hints are available. Completion and independent/assisted status reuse the existing Explanation V2 host and progress contract. The activity is demonstrated in the local Math Lab before the addition and coordinate examples. The `prompt` is retained for schema compatibility; the displayed question is generated from exact mathematical data. No production lessons or database records were changed.
