@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { InteractiveActivitySchema, initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { clampGrid, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph } from './math';
 import { coordinateGuidedQuestion, fractionGuidedQuestion, namedParts } from './pedagogicalQuestions';
+import { FractionSelectActivity } from './FractionSelectActivity';
 
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
 type Props = {
@@ -176,6 +177,8 @@ export function InteractiveActivityHost(props: Props) {
     {spec.schoolLevel && <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-teal-800">Niveau {spec.schoolLevel}</p>}
     {spec.kind === 'fraction-bar'
       ? <FractionActivity {...props} spec={spec} />
-      : <CoordinateActivity {...props} spec={spec} />}
+      : spec.kind === 'fraction-select'
+        ? <FractionSelectActivity {...props} spec={spec} />
+        : <CoordinateActivity {...props} spec={spec} />}
   </section>;
 }
