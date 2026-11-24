@@ -61,3 +61,9 @@ The practice build is published for testers at:
 `https://stuwy-practice-staging.grittydace256.chatgpt.site`
 
 The password recovery route is `/auth`.
+
+## Interactive Learning Intelligence (Explanation V2 preview)
+
+The living catalogue of **six new interactive math activities**, their source files, grade/skill guidance, and whether they are connected to **Lessons, Practice or Homework Explanations** is maintained at [docs/TUTORLY_INTERACTIVE_INTELLIGENCE.md](docs/TUTORLY_INTERACTIVE_INTELLIGENCE.md). This is a draft-PR feature, not a production release.
+
+[Open the isolated interactive math preview](https://stuwy-git-feature-explanation-v2-interactive-math-stuwy.vercel.app/demo.html) (Vercel authentication may be required).
