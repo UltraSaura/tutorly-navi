@@ -19,33 +19,48 @@ for (const width of [375, 447, 1280]) {
   };
   try {
     await page.goto(base + '/qa/explanation-v2-player.html', { waitUntil: 'networkidle', timeout: 60000 });
-    await check('prerequisite unlock', async () => {
-      await page.getByRole('textbox', { name: 'Réponse au prérequis' }).fill('oui');
+    await check('CM2 prerequisite uses a meaningful fractions question', async () => {
+      assert.match(await page.getByText(/Combien de quarts faut-il pour reconstituer la barre entière/).innerText(), /Combien de quarts/i);
+      await page.getByRole('textbox', { name: 'Réponse au prérequis' }).fill('4');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
-      await page.getByTestId('fraction-bar-activity').waitFor({ timeout: 10000 });
+      await page.getByRole('heading', { name: 'Un quart, c’est une part sur quatre' }).waitFor({ timeout: 10000 });
     });
-    await check('continue gated until fraction completion', async () => {
+    await check('explanation comes before interactive selection', async () => {
+      assert.match(await page.getByText(/Imagine une tablette de chocolat/).innerText(), /quatre morceaux/);
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await page.getByTestId('fraction-select-activity').waitFor();
       assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
-      await page.locator('#fraction-answer-qa-fraction-player').fill('2');
+    });
+    await check('selecting too few parts gives feedback and blocks progress', async () => {
+      await page.getByTestId('fraction-part-0').click();
+      await page.getByTestId('fraction-part-1').click();
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('fraction-selected-count').innerText(), /2 sur 4/);
       assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
-      await page.locator('#fraction-answer-qa-fraction-player').fill('5');
+      await page.getByTestId('fraction-part-2').click();
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 1);
       assert.equal(await page.getByText('À toi de jouer', { exact: true }).count(), 1);
-      assert.equal(await page.getByText('Bonne réponse.', { exact: true }).count(), 0);
     });
-    await page.screenshot({ path: dir + '/player-fraction-' + width + '.png', fullPage: true });
-    await check('coordinate stage gated and lesson completion', async () => {
+    await page.screenshot({ path: dir + '/player-select-' + width + '.png', fullPage: true });
+    await check('guided example explains 1/2 equals 2/4', async () => {
       await page.getByRole('button', { name: 'Continuer', exact: true }).click();
-      await page.getByTestId('coordinate-plane-activity').waitFor();
-      assert.equal(await page.getByRole('button', { name: 'Terminer', exact: true }).count(), 0);
-      const right = page.getByRole('button', { name: 'Déplacer à droite' });
-      const up = page.getByRole('button', { name: 'Déplacer vers le haut' });
-      for (let i = 0; i < 2; i++) await right.click();
-      for (let i = 0; i < 3; i++) await up.click();
-      await page.getByRole('button', { name: 'Valider la position' }).click();
-      assert.equal(await page.getByRole('button', { name: 'Terminer', exact: true }).count(), 1);
+      await page.getByText(/une moitié représente deux quarts/).waitFor();
+      assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 1);
+    });
+    await check('addition requires both answers and ends with a clear conclusion', async () => {
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await page.getByTestId('fraction-bar-activity').waitFor();
+      assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
+      await page.locator('#fraction-answer-cm2-lesson-add-quarters').fill('2');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
+      await page.locator('#fraction-answer-cm2-lesson-add-quarters').fill('5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 1);
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await page.getByRole('heading', { name: 'Bravo ! Tu sais additionner des quarts' }).waitFor();
+      await page.getByText(/Trois quarts et deux quarts font cinq quarts/).waitFor();
       await page.getByRole('button', { name: 'Terminer', exact: true }).click();
       await page.getByRole('heading', { name: 'Leçon terminée' }).waitFor();
     });
