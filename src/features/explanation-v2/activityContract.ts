@@ -34,10 +34,11 @@ export type ActivityProgress = {
   y: number;
   attempts: number;
   hintsUsed: number;
+  phaseHints: number;
   completed: boolean;
   feedback: string;
   correct: boolean | null;
 };
 export const initialActivityProgress = (): ActivityProgress => ({
-  phase: 0, input: '', x: 0, y: 0, attempts: 0, hintsUsed: 0, completed: false, feedback: '', correct: null,
+  phase: 0, input: '', x: 0, y: 0, attempts: 0, hintsUsed: 0, phaseHints: 0, completed: false, feedback: '', correct: null,
 });
