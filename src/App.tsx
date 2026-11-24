@@ -33,6 +33,7 @@ const SupportPage = lazy(() => import("./pages/SupportPage"));
 const TokensPreview = lazy(() => import("./pages/TokensPreview"));
 const GamePreview = lazy(() => import("./pages/GamePreview"));
 const DnbSvgPreview = lazy(() => import("./pages/DnbSvgPreview"));
+const ExplanationV2MathLab = lazy(() => import("./pages/dev/ExplanationV2MathLab"));
 const ExerciseHistoryPage = lazy(() => import("./pages/ExerciseHistoryPage"));
 const GeneralChatPage = lazy(() => import("./pages/GeneralChatPage"));
 const LearningPage = lazy(() => import("./pages/learning/LearningPage"));
@@ -218,6 +219,7 @@ const App = () => {
                             <Route index element={<DnbSvgPreview />} />
                           </Route>
                         )}
+                        {isDev && <Route path="/dev/explanation-v2-math" element={<ExplanationV2MathLab />} />}
                         <Route path="/exercise-history" element={<MainLayout />}>
                           <Route index element={<ExerciseHistoryPage />} />
                         </Route>
