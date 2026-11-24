@@ -35,12 +35,43 @@ const coordinate = z.object({
   kind: z.literal('coordinate-plane'),
   target: z.object({ x: z.number().int().min(-5).max(5), y: z.number().int().min(-5).max(5) }),
 });
-export const InteractiveActivitySchema = z.union([fraction, coordinate, fractionSelect]);
+const algebraTiles = z.object({
+  ...common,
+  kind: z.literal('algebra-tiles'),
+  target: z.object({ x: z.number().int().min(0).max(4), units: z.number().int().min(0).max(6) })
+    .refine(v => v.x + v.units > 0, 'Expression cannot be empty'),
+});
+const linearFunction = z.object({
+  ...common,
+  kind: z.literal('linear-function'),
+  target: z.object({ m: z.number().int().min(-3).max(3), b: z.number().int().min(-3).max(3) })
+    .refine(v => Math.abs(v.m + v.b) <= 5, 'Second handle must fit on graph'),
+});
+const lineFit = z.object({
+  ...common,
+  kind: z.literal('line-fit'),
+  points: z.array(z.object({
+    x: z.number().int().min(-4).max(4),
+    y: z.number().min(-5).max(5),
+  })).min(3).max(8).refine(points => new Set(points.map(p => p.x)).size === points.length,
+    'Data points must have distinct x values'),
+}).refine(v => {
+  const meanX = v.points.reduce((a, p) => a + p.x, 0) / v.points.length;
+  const meanY = v.points.reduce((a, p) => a + p.y, 0) / v.points.length;
+  const denominator = v.points.reduce((a, p) => a + (p.x - meanX) ** 2, 0);
+  const m = v.points.reduce((a, p) => a + (p.x - meanX) * (p.y - meanY), 0) / denominator;
+  const b = meanY - m * meanX;
+  return Number.isFinite(m) && Number.isFinite(b) && m >= -3 && m <= 3 && b >= -3 && b <= 3;
+}, 'Best-fit line must be within interactive controls');
+export const InteractiveActivitySchema = z.union([fraction, coordinate, fractionSelect, algebraTiles, linearFunction, lineFit]);
 export type InteractiveActivitySpec = z.infer<typeof InteractiveActivitySchema>;
 export type ActivityProgress = {
   phase: number;
   input: string;
   selectedParts?: number[];
+  tileCounts?: { x: number; units: number };
+  slope?: number;
+  intercept?: number;
   x: number;
   y: number;
   attempts: number;
