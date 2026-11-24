@@ -164,7 +164,8 @@ export function InteractiveActivityHost(props: Props) {
   if (!parsed.success) return <p role="alert">Cette activité interactive est indisponible : données mathématiques invalides.</p>;
   const spec = parsed.data;
   return <section className="rounded-2xl border border-teal-200 bg-white p-3 sm:p-5" aria-label={spec.title}>
-    <h3 className="mb-3 text-lg font-bold text-slate-900">{spec.title}</h3>
+    <h3 className="mb-1 text-lg font-bold text-slate-900">{spec.title}</h3>
+    {spec.schoolLevel && <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-teal-800">Niveau {spec.schoolLevel}</p>}
     {spec.kind === 'fraction-bar'
       ? <FractionActivity {...props} spec={spec} />
       : <CoordinateActivity {...props} spec={spec} />}
