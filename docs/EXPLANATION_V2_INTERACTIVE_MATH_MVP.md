@@ -1,5 +1,8 @@
 # Explanation V2 — Interactive math MVP / QA runbook
 
+> **Historical snapshot.** This document describes the original MVP before later implementation and CI validation. For the current six-activity inventory, actual Lesson/Practice/Explanation placement and verified QA status, use [TUTORLY_INTERACTIVE_INTELLIGENCE.md](./TUTORLY_INTERACTIVE_INTELLIGENCE.md).
+
+
 **Implementation branch:** `feature/explanation-v2-interactive-math`
 **Base:** `parent` at `55f30eccc725a832463373dc85f0ce78cb0b229f`.
 **Excluded:** all commits after that base on `feature/v2-universal-tutor`; no merge or cherry-pick from that branch.
