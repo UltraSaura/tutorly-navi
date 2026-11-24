@@ -4,12 +4,12 @@ import { initialActivityProgress, type ActivityProgress, type InteractiveActivit
 
 const activities: InteractiveActivitySpec[] = [
   {
-    schemaVersion: 1, id: 'cm2-fractions-001', kind: 'fraction-bar',
+    schemaVersion: 1, id: 'cm2-fractions-001', kind: 'fraction-bar', schoolLevel: 'CM2',
     title: 'Additionner des fractions', prompt: 'Observe 3/4 et 1/2. Transforme les moitiés en quarts, puis trouve le total.',
     left: { n: 3, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4,
   },
   {
-    schemaVersion: 1, id: '4e-coordinates-001', kind: 'coordinate-plane',
+    schemaVersion: 1, id: '4e-coordinates-001', kind: 'coordinate-plane', schoolLevel: '4e',
     title: 'Placer un point dans un repère', prompt: 'Place le point A(2 ; 3). Commence par l’abscisse, puis l’ordonnée.',
     target: { x: 2, y: 3 },
   },
