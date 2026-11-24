@@ -89,6 +89,9 @@ const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDe
 const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
 
 const isDev = import.meta.env.DEV;
+// Read-only math activity demo is accessible on isolated Vercel preview deployments,
+// never on the canonical production hostname. The demo uses simulated data only.
+const isExplanationPreview = isDev || (typeof window !== 'undefined' && /^[-a-z0-9]+-stuwy\\.vercel\\.app$/i.test(window.location.hostname));
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
 const isLocalSupabase = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(supabaseUrl);
 const isStagingSupabase = supabaseUrl === 'https://sibprjxhbxahouejygeu.supabase.co';
@@ -219,7 +222,7 @@ const App = () => {
                             <Route index element={<DnbSvgPreview />} />
                           </Route>
                         )}
-                        {isDev && <Route path="/dev/explanation-v2-math" element={<ExplanationV2MathLab />} />}
+                        {isExplanationPreview && <Route path="/dev/explanation-v2-math" element={<ExplanationV2MathLab />} />}
                         <Route path="/exercise-history" element={<MainLayout />}>
                           <Route index element={<ExerciseHistoryPage />} />
                         </Route>
