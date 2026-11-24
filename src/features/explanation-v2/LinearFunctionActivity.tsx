@@ -8,7 +8,7 @@ type Props = { spec: Spec; progress?: ActivityProgress; onProgressChange: (p: Ac
 type Mode = 'demonstration' | 'exploration' | 'challenge';
 const control = 'min-h-11 min-w-11 rounded-xl border border-slate-300 bg-white px-3 font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 disabled:opacity-50';
 const signed = (n: number) => n < 0 ? '− ' + Math.abs(n) : '+ ' + n;
-const signedWord = (n: number) => n < 0 ? 'descend de ' + Math.abs(n) : n === 0 ? 'reste à la même hauteur' : 'monte de ' + n;
+const signedWord = (n: number) => n === 0 ? 'reste à la même hauteur' : (n < 0 ? 'descend de ' : 'monte de ') + Math.abs(n) + ' case' + (Math.abs(n) > 1 ? 's' : '');
 
 export function functionDemonstrationSteps(target: { m: number; b: number }): MathDemonstrationStep[] {
   const { m, b } = target;
@@ -29,7 +29,7 @@ export function functionDemonstrationSteps(target: { m: number; b: number }): Ma
     },
     {
       title: 'Le nombre m fait pencher la droite',
-      explanation: 'Depuis le point vert, avance d’une case vers la droite. Avec m = ' + m + ', la droite ' + signedWord(m) + (m === 0 ? '.' : ' case(s).') + ' Observe les pointillés : orange = 1 case à droite, violet = changement de hauteur.',
+      explanation: 'Depuis le point vert, avance d’une case vers la droite. Avec m = ' + m + ', la droite ' + signedWord(m) + (m === 0 ? '.' : '.') + ' Observe les pointillés : orange = 1 case à droite, violet = changement de hauteur.',
       equation: 'y = ' + m + 'x ' + signed(b),
       takeaway: 'Le point violet est en (1 ; ' + (m + b) + '). Les deux points déterminent la droite.',
       visual: { kind: 'graph', slope: m, intercept: b },
