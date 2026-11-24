@@ -55,8 +55,16 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
     }
   };
   const hints = p.phase === 0
-    ? ['Pour additionner, on choisit des parts de même taille.', 'Partage chaque moitié en ' + (spec.targetDenominator / spec.right.d) + ' parts égales.', 'La fraction équivalente est ' + steps.rightParts + '/' + spec.targetDenominator + '.']
-    : ['Les dénominateurs sont maintenant identiques.', 'Additionne ' + steps.leftParts + ' et ' + steps.rightParts + '.', 'Le total contient ' + steps.totalParts + ' quarts ou parts égales.'];
+    ? [
+        'Pour additionner, on choisit des parts de même taille.',
+        'Dans la barre du bas, chaque morceau est partagé en ' + (spec.targetDenominator / spec.right.d) + ' morceaux égaux.',
+        'Regarde les morceaux coloriés : ' + spec.right.n + '/' + spec.right.d + ' représente ' + steps.rightParts + '/' + spec.targetDenominator + '.',
+      ]
+    : [
+        'Les parts ont maintenant la même taille : les dénominateurs sont identiques.',
+        'Compte ' + steps.leftParts + ' ' + namedParts(spec.targetDenominator) + ' en haut et ' + steps.rightParts + ' en bas.',
+        'Additionne les deux nombres de morceaux : ' + steps.leftParts + ' + ' + steps.rightParts + '.',
+      ];
   const hint = () => {
     const next = Math.min(3, p.phaseHints + 1);
     update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: hints[next - 1] });
