@@ -1,7 +1,7 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useRef } from 'react';
 import { InteractiveActivitySchema, initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
-import { clampGrid, expectedFractionSteps, graphToPixel, pixelToGraph } from './math';
+import { clampGrid, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph } from './math';
 
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
 type Props = {
@@ -33,14 +33,14 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
   const check = () => {
     if (p.completed) return;
     const answer = p.input.trim();
-    if (!/^\d+$/.test(answer)) {
+    if (gradePartCount(answer, p.phase === 0 ? steps.rightParts : steps.totalParts) === 'invalid') {
       update({ feedback: 'Écris un nombre entier de parts.', correct: false });
       return;
     }
     const value = Number(answer);
     const expected = p.phase === 0 ? steps.rightParts : steps.totalParts;
     const attempts = p.attempts + 1;
-    if (value !== expected) {
+    if (gradePartCount(answer, expected) !== 'correct') {
       update({ attempts, correct: false, feedback: p.phase === 0
         ? 'Les parts doivent être de même taille. Une moitié représente combien de ' + spec.targetDenominator + 'ièmes ?'
         : 'Additionne les parts de même taille, sans additionner les dénominateurs.' });
@@ -99,7 +99,7 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
   const check = () => {
     if (p.completed) return;
     const attempts = p.attempts + 1;
-    if (p.x === spec.target.x && p.y === spec.target.y) {
+    if (isPointCorrect(p.x, p.y, spec.target)) {
       update({ completed: true, correct: true, attempts, feedback: 'Bravo ! Le point est bien placé en (' + p.x + ' ; ' + p.y + ').' });
       onComplete({ independent: p.hintsUsed === 0 && attempts === 1, attempts, hintsUsed: p.hintsUsed });
     } else {
@@ -130,6 +130,7 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
         return <g key={v}>{v !== 0 && <><text x={pos} y="197" fontSize="10" textAnchor="middle" fill="#475569">{v}</text><text x="168" y={180 - v * 25 + 4} fontSize="10" textAnchor="end" fill="#475569">{v}</text></>}</g>;
       })}
       <text x="320" y="174" fontSize="13" fontWeight="bold">x</text><text x="189" y="45" fontSize="13" fontWeight="bold">y</text>
+      <rect x="55" y="55" width="250" height="250" fill="transparent" pointerEvents="all" />
       <circle cx={dot.x} cy={dot.y} r="12" fill="#14b8a6" stroke="#0f766e" strokeWidth="3" className="motion-safe:transition-all motion-safe:duration-100" />
       <text x={Math.min(298, dot.x + 13)} y={Math.max(24, dot.y - 15)} fontSize="13" fontWeight="bold" fill="#0f766e">A</text>
     </svg>
