@@ -48,3 +48,18 @@ export function gradePartCount(raw: string, expected: number): 'correct' | 'inco
 export function isPointCorrect(x: number, y: number, target: { x: number; y: number }): boolean {
   return Number.isInteger(x) && Number.isInteger(y) && x === target.x && y === target.y;
 }
+
+/** Least-squares linear regression, deterministic and independent of UI. */
+export function linearRegression(points: ReadonlyArray<{ x: number; y: number }>) {
+  if (points.length < 2 || points.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) throw new Error('Invalid points');
+  const meanX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+  const meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+  const variance = points.reduce((sum, p) => sum + (p.x - meanX) ** 2, 0);
+  if (variance === 0) throw new Error('Cannot fit a vertical line');
+  const slope = points.reduce((sum, p) => sum + (p.x - meanX) * (p.y - meanY), 0) / variance;
+  return { slope, intercept: meanY - slope * meanX };
+}
+export function sumSquaredError(points: ReadonlyArray<{ x: number; y: number }>, slope: number, intercept: number) {
+  if (!Number.isFinite(slope) || !Number.isFinite(intercept)) throw new Error('Invalid line');
+  return points.reduce((sum, p) => sum + (p.y - (slope * p.x + intercept)) ** 2, 0);
+}
