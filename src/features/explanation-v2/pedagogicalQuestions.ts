@@ -19,6 +19,11 @@ const partNames: Record<number, string> = {
 export function namedParts(denominator: number): string {
   return partNames[denominator] ?? 'parts sur ' + denominator;
 }
+function countedParts(denominator: number, count: number): string {
+  if (count !== 1) return namedParts(denominator);
+  const singular: Record<number, string> = { 2: 'moitié', 3: 'tiers', 4: 'quart', 5: 'cinquième', 6: 'sixième', 8: 'huitième', 10: 'dixième', 12: 'douzième' };
+  return singular[denominator] ?? 'part sur ' + denominator;
+}
 function isYoung(level: string | undefined, defaultYoung: boolean): boolean {
   return level ? elementary.has(level) : defaultYoung;
 }
@@ -41,7 +46,7 @@ export function fractionGuidedQuestion(spec: FractionSpec, phase: number): Guide
   return {
     step: 'Étape 2 sur 2 · Compter toutes les parts',
     context: young
-      ? 'Maintenant, les deux barres sont partagées en ' + unit + '. La barre du haut montre ' + steps.leftParts + ' ' + unit + ' coloriés et celle du bas en montre ' + steps.rightParts + '.'
+      ? 'Maintenant, les deux barres sont partagées en ' + unit + '. La barre du haut montre ' + steps.leftParts + ' ' + countedParts(spec.targetDenominator, steps.leftParts) + ' coloriés et celle du bas en montre ' + steps.rightParts + '.'
       : 'Les deux fractions ont le même dénominateur (' + spec.targetDenominator + '). Additionne leurs numérateurs : ' + steps.leftParts + ' et ' + steps.rightParts + '.',
     question: 'Combien de ' + unit + ' coloriés y a-t-il en tout dans les deux barres ?',
     answerHelp: 'Écris seulement le nombre total de ' + unit + ', sans écrire de fraction.',
