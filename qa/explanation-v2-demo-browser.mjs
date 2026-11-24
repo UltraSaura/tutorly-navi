@@ -25,6 +25,13 @@ try {
   await page.locator('#fraction-answer-cm2-fractions-001').fill('5');
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
   await page.getByText('Réussi sans aide').waitFor();
+  await page.getByRole('button', { name: '5e · Tuiles' }).click();
+  await page.getByTestId('algebra-tiles-activity').waitFor();
+  await page.getByRole('button', { name: '4e · Fonctions' }).click();
+  await page.getByTestId('linear-function-activity').waitFor();
+  await page.getByRole('button', { name: '2nde · Ajustement' }).click();
+  await page.getByTestId('line-fit-activity').waitFor();
+  console.log('PASS production-built demo includes algebra tiles, function graphs and data fitting');
   await page.getByRole('button', { name: 'Parcours complet CM2 · 5 étapes' }).click();
   await page.getByTestId('cm2-lesson-preview').waitFor();
   await page.getByRole('heading', { name: 'Un quart, c’est une part sur quatre' }).waitFor();
