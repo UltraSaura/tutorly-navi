@@ -26,6 +26,11 @@ async function runAtWidth(width) {
   try {
     await page.goto(base + '/qa/explanation-v2.html', { waitUntil: 'networkidle', timeout: 60000 });
     await page.getByTestId('fraction-bar-activity').waitFor();
+    await run('CM2 question states one concrete task and answer format', async () => {
+      assert.match(await page.getByTestId('fraction-step-instructions').innerText(), /Étape 1 sur 2/);
+      assert.match(await page.locator('label[for=fraction-answer-qa-fraction]').innerText(), /combien de quarts/i);
+      assert.match(await page.locator('#fraction-help-qa-fraction').innerText(), /sans écrire de fraction/i);
+    });
     await run('no horizontal overflow', async () => {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
     });
@@ -41,6 +46,7 @@ async function runAtWidth(width) {
       const input = page.locator('#fraction-answer-qa-fraction');
       await input.fill('2');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('fraction-step-instructions').innerText(), /Étape 2 sur 2/);
       assert.match(await page.locator('label[for=fraction-answer-qa-fraction]').innerText(), /en tout/i);
       await input.fill('5');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
@@ -67,6 +73,12 @@ async function runAtWidth(width) {
     });
     await page.screenshot({ path: dir + '/fraction-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-coordinate').click();
+    await run('4e question explains axes and what to do', async () => {
+      const instructions = await page.getByTestId('coordinate-instructions').innerText();
+      assert.match(instructions, /abscisse/i);
+      assert.match(instructions, /ordonnée/i);
+      assert.match(instructions, /Peux-tu placer le point A/i);
+    });
     await run('coordinate incorrect feedback', async () => {
       await page.getByRole('button', { name: 'Valider la position' }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /abscisse/i);
