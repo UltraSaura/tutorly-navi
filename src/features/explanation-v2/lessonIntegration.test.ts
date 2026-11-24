@@ -22,6 +22,17 @@ const sample = {
   mastery: { skills: ['fractions'], threshold: 0.8 },
 };
 describe('Explanation V2 lesson integration', () => {
+  it('accepts all three additional interactive animation kinds in the lesson contract', () => {
+    const activities = [
+      { schemaVersion: 1, id: 'tiles', kind: 'algebra-tiles', title: 'Tuiles', prompt: 'Construis 2x + 3', schoolLevel: '5e', target: { x: 2, units: 3 } },
+      { schemaVersion: 1, id: 'function', kind: 'linear-function', title: 'Fonction', prompt: 'Construis y = 2x + 1', schoolLevel: '4e', target: { m: 2, b: 1 } },
+      { schemaVersion: 1, id: 'fitting', kind: 'line-fit', title: 'Ajustement', prompt: 'Ajuste la droite', schoolLevel: '2nde', points: [{ x: -2, y: -2 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }] },
+    ];
+    for (const activity of activities) {
+      const lesson = { ...sample, sequence: [{ id: activity.id, type: 'interactive_activity', activity }] };
+      expect(parseLessonContent(lesson)?.sequence[0].type).toBe('interactive_activity');
+    }
+  });
   it('keeps the full CM2 lesson coherent and includes two gated activities', () => {
     const parsed = parseLessonContent(cm2FractionLesson);
     expect(parsed).not.toBeNull();
