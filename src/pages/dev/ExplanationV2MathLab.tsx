@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Cm2LessonPreview } from '@/features/explanation-v2/Cm2LessonPreview';
 import { InteractiveActivityHost } from '@/features/explanation-v2/InteractiveActivityHost';
 import { initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from '@/features/explanation-v2/activityContract';
 
@@ -21,6 +22,7 @@ const activities: InteractiveActivitySpec[] = [
 ];
 export default function ExplanationV2MathLab() {
   const [selected, setSelected] = useState(0);
+  const [showLesson, setShowLesson] = useState(false);
   const [progress, setProgress] = useState<Record<string, ActivityProgress>>({});
   const [results, setResults] = useState<Record<string, string>>({});
   const spec = activities[selected];
@@ -30,6 +32,10 @@ export default function ExplanationV2MathLab() {
       <h1 className="text-2xl font-extrabold text-slate-900">Mathématiques interactives</h1>
       <p className="text-sm text-slate-600">Données simulées. Aucun accès à Supabase, aucune note enregistrée.</p>
     </header>
+    <div className="flex flex-wrap gap-2">
+      <button type="button" onClick={() => setShowLesson(true)} className="min-h-11 rounded-xl bg-slate-900 px-5 py-2 font-bold text-white">Parcours complet CM2 · 5 étapes</button>
+    </div>
+    {showLesson ? <Cm2LessonPreview onExit={() => setShowLesson(false)} /> : <>
     <div className="flex flex-wrap gap-2">
       {activities.map((activity, index) => <button type="button" key={activity.id} onClick={() => setSelected(index)}
         className={'min-h-11 rounded-xl px-4 py-2 font-semibold ' + (selected === index ? 'bg-teal-600 text-white' : 'border border-slate-300 bg-white text-slate-800')}>
@@ -42,5 +48,6 @@ export default function ExplanationV2MathLab() {
       onComplete={(result) => setResults((current) => ({ ...current, [spec.id]: result.independent ? 'Réussi sans aide' : 'Réussi avec entraînement ou indice' }))} />
     {results[spec.id] && <p role="status" className="rounded-xl bg-teal-50 p-3 font-semibold text-teal-900">{results[spec.id]}</p>}
     <p className="text-xs text-slate-500">Parcours de démonstration uniquement. La validation des leçons réelles reste contrôlée par LessonV2Player.</p>
+    </>}
   </main>;
 }
