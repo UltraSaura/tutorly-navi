@@ -31,7 +31,7 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Exact math and lesson parser tests
-        run: npx vitest run src/features/explanation-v2/math.test.ts src/features/explanation-v2/lessonIntegration.test.ts src/features/explanation-v2/previewAccess.test.ts src/features/explanation-v2/pedagogicalQuestions.test.ts
+        run: npx vitest run src/features/explanation-v2/math.test.ts src/features/explanation-v2/lessonIntegration.test.ts src/features/explanation-v2/previewAccess.test.ts src/features/explanation-v2/pedagogicalQuestions.test.ts src/features/explanation-v2/MathDemonstration.test.ts
       - name: TypeScript check
         run: npx tsc --noEmit
       - name: Focused lint
