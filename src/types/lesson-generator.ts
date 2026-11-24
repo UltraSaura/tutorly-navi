@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { InteractiveActivitySchema } from '@/features/explanation-v2/activityContract';
 import { validateLessonV21 } from './lesson-v21-contract';
 
 const base = { id: z.string().min(1) };
@@ -22,6 +23,7 @@ export const PrerequisiteSchema = z.object({
 export type LessonPrerequisite = z.infer<typeof PrerequisiteSchema>;
 
 export const LessonBlockSchema = z.discriminatedUnion('type', [
+  z.object({ ...base, type: z.literal('interactive_activity'), activity: InteractiveActivitySchema }),
   z.object({ ...base, type: z.literal('hook'), title: z.string(), content: z.string() }),
   z.object({ ...base, type: z.literal('concept'), title: z.string(), content: z.string(), key_points: z.array(ConceptKeyPointSchema).min(1).max(6).optional(), takeaway: z.string().min(1).optional(), visual: VisualSchema.optional(), representation: z.string().optional() }),
   z.object({ ...base, type: z.literal('visual'), title: z.string(), content: z.string(), visual: VisualSchema }),
@@ -92,7 +94,7 @@ export function parseLessonContent(value: unknown): LessonV2 | null {
       };
       const retry = LessonV2Schema.safeParse(normalized);
       if (retry.success) return retry.data;
-      const supportedTypes = new Set(['hook','concept','visual','prediction','guided_example','student_try','feedback_checkpoint','contrast','rule','worked_example','reflection','mastery_check']);
+      const supportedTypes = new Set(['hook','concept','visual','prediction','guided_example','student_try','feedback_checkpoint','contrast','rule','worked_example','reflection','mastery_check','interactive_activity']);
       if (sequence.every((block) => {
         const item = block as Record<string, unknown>;
         return typeof item.type === 'string' && supportedTypes.has(item.type) && typeof item.id === 'string';
