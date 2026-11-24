@@ -19,6 +19,21 @@ const activities: InteractiveActivitySpec[] = [
     title: 'Placer un point dans un repère', prompt: 'Place le point A(2 ; 3). Commence par l’abscisse, puis l’ordonnée.',
     target: { x: 2, y: 3 },
   },
+  {
+    schemaVersion: 1, id: '5e-algebra-tiles-001', kind: 'algebra-tiles', schoolLevel: '5e',
+    title: 'Construire une expression', prompt: 'Représente 2x + 3 avec des tuiles.',
+    target: { x: 2, units: 3 },
+  },
+  {
+    schemaVersion: 1, id: '4e-function-001', kind: 'linear-function', schoolLevel: '4e',
+    title: 'Déplacer une fonction affine', prompt: 'Fais passer la droite par (0 ; 1) et (1 ; 3).',
+    target: { m: 2, b: 1 },
+  },
+  {
+    schemaVersion: 1, id: '2nde-line-fit-001', kind: 'line-fit', schoolLevel: '2nde',
+    title: 'Ajuster une droite à des données', prompt: 'Ajuste la pente et le départ pour réduire les écarts.',
+    points: [{ x: -2, y: -2 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }],
+  },
 ];
 export default function ExplanationV2MathLab() {
   const [selected, setSelected] = useState(0);
@@ -39,7 +54,7 @@ export default function ExplanationV2MathLab() {
     <div className="flex flex-wrap gap-2">
       {activities.map((activity, index) => <button type="button" key={activity.id} onClick={() => setSelected(index)}
         className={'min-h-11 rounded-xl px-4 py-2 font-semibold ' + (selected === index ? 'bg-teal-600 text-white' : 'border border-slate-300 bg-white text-slate-800')}>
-        {activity.kind === 'fraction-select' ? 'CM2 · Sélectionner 3/4' : activity.kind === 'fraction-bar' ? 'CM2 · Additionner' : '4e · Coordonnées'}
+        {activity.kind === 'fraction-select' ? 'CM2 · Sélectionner 3/4' : activity.kind === 'fraction-bar' ? 'CM2 · Additionner' : activity.kind === 'coordinate-plane' ? '4e · Coordonnées' : activity.kind === 'algebra-tiles' ? '5e · Tuiles' : activity.kind === 'linear-function' ? '4e · Fonctions' : '2nde · Ajustement'}
       </button>)}
       <button type="button" onClick={() => { setProgress((current) => ({ ...current, [spec.id]: initialActivityProgress() })); setResults((current) => ({ ...current, [spec.id]: '' })); }} className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold">Recommencer</button>
     </div>
