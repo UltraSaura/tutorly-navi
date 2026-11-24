@@ -94,7 +94,7 @@ export function parseLessonContent(value: unknown): LessonV2 | null {
       };
       const retry = LessonV2Schema.safeParse(normalized);
       if (retry.success) return retry.data;
-      const supportedTypes = new Set(['hook','concept','visual','prediction','guided_example','student_try','feedback_checkpoint','contrast','rule','worked_example','reflection','mastery_check','interactive_activity']);
+      const supportedTypes = new Set(['hook','concept','visual','prediction','guided_example','student_try','feedback_checkpoint','contrast','rule','worked_example','reflection','mastery_check']);
       if (sequence.every((block) => {
         const item = block as Record<string, unknown>;
         return typeof item.type === 'string' && supportedTypes.has(item.type) && typeof item.id === 'string';
