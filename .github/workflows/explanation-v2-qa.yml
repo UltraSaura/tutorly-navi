@@ -38,6 +38,8 @@ jobs:
         run: npx eslint src/features/explanation-v2 src/pages/dev/ExplanationV2MathLab.tsx
       - name: Production build
         run: npm run build
+      - name: Verify standalone demo artifact
+        run: test -s dist/demo.html
 
   browser:
     runs-on: ubuntu-latest
@@ -65,6 +67,17 @@ jobs:
           done
           node qa/explanation-v2-browser.mjs
           node qa/explanation-v2-player-browser.mjs
+      - name: Verify standalone demo in production preview server
+        run: |
+          npm run build
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/explanation-v2-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/demo.html > /dev/null; then break; fi
+            sleep 2
+          done
+          node qa/explanation-v2-demo-browser.mjs
       - name: Upload screenshots and QA report
         if: always()
         uses: actions/upload-artifact@v4
