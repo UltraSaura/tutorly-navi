@@ -701,7 +701,12 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
                 <SelectItem value="slider">{ui("Slider")}</SelectItem>
                 <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
                 <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
-                {(['calculation-race', 'number-flashcards', 'analogue-clock', 'graduated-number-line'] as const).map(type => <SelectItem key={type} value={type} disabled={!canAuthorExerciseType(type, coordinateContext)}>{{'calculation-race':'Course de calcul · difficulté selon le niveau', 'number-flashcards':'Cartes de calcul · difficulté selon le niveau', 'analogue-clock':'Horloge · CE1–CE2', 'graduated-number-line':'Droite graduée · CM1–6ème'}[type]}</SelectItem>)}
+                {(['calculation-race', 'number-flashcards', 'analogue-clock', 'graduated-number-line'] as const).map(type => <SelectItem key={type} value={type} disabled={!canAuthorExerciseType(type, coordinateContext)}>{{
+                  'calculation-race': ui('Calculation race · difficulty follows school level'),
+                  'number-flashcards': ui('Number flashcards · difficulty follows school level'),
+                  'analogue-clock': ui('Analogue clock · CE1–CE2'),
+                  'graduated-number-line': ui('Graduated number line · CM1–6ème'),
+                }[type]}</SelectItem>)}
                 <SelectItem value="coordinate-plane" disabled={!coordinateAllowed}>Coordonnées dans le plan · France · 5ème</SelectItem>
                 <SelectItem value="guided-word-problem" disabled={!canAuthorExerciseType('guided-word-problem', coordinateContext)}>Problème guidé — choisir puis calculer</SelectItem>
                 <SelectItem value="equal-groups" disabled={!canAuthorExerciseType('equal-groups', coordinateContext)}>Groupes égaux — multiplication</SelectItem>
@@ -711,6 +716,12 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position, co
                 <SelectItem value="subtraction-with-dots" disabled={!canAuthorExerciseType('subtraction-with-dots', coordinateContext)}>Subtraction · countable objects</SelectItem>
               </SelectContent>
             </Select>
+            {(!canAuthorExerciseType('calculation-race', coordinateContext)
+              || !canAuthorExerciseType('number-flashcards', coordinateContext)) && (
+              <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+                {ui('Calculation race and Number flashcards are available for every supported school level. If disabled, check that this bank is linked to a French Maths topic with a school level.')}
+              </p>
+            )}
           </div>
 
           <div>

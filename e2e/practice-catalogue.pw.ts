@@ -56,8 +56,8 @@ test('admin authoring exposes CP colour grid and disables 5ème-only coordinate 
   const options = page.getByRole('option');
   await expect(options.filter({ hasText: 'Compter dans une grille de couleurs · CP uniquement' })).toBeEnabled();
   await expect(options.filter({ hasText: 'Coordonnées dans le plan · France · 5ème' })).toHaveAttribute('aria-disabled', 'true');
-  await expect(options.filter({ hasText: 'Course de calcul · difficulté selon le niveau' })).toBeEnabled();
-  await expect(options.filter({ hasText: 'Cartes de calcul · difficulté selon le niveau' })).toBeEnabled();
+  await expect(options.filter({ hasText: 'Calculation race · difficulty follows school level' })).toBeEnabled();
+  await expect(options.filter({ hasText: 'Number flashcards · difficulty follows school level' })).toBeEnabled();
 });
 
 test('admin authoring exposes coordinate plane at 5ème and disables CP-only colour grid', async ({ page }) => {
@@ -69,11 +69,20 @@ test('admin authoring exposes coordinate plane at 5ème and disables CP-only col
   await expect(options.filter({ hasText: 'Coordonnées dans le plan · France · 5ème' })).toBeEnabled();
 });
 
+test('admin explains why calculation formats are disabled when the bank topic has no French curriculum match', async ({ page }) => {
+  await coordinateLearner(page, 'cp', 'us', true);
+  const dialog = await openQuestionEditor(page);
+  await expect(dialog.getByText('Calculation race and Number flashcards are available for every supported school level. If disabled, check that this bank is linked to a French Maths topic with a school level.')).toBeVisible();
+  await dialog.getByRole('combobox', { name: 'Question Type', exact: true }).click();
+  await expect(page.getByRole('option', { name: 'Calculation race · difficulty follows school level', exact: true })).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByRole('option', { name: 'Number flashcards · difficulty follows school level', exact: true })).toHaveAttribute('aria-disabled', 'true');
+});
+
 test('arithmetic editor exposes level-bounded digit ranges and operations', async ({ page }) => {
   await coordinateLearner(page, 'cp', 'fr', true);
   const cpDialog = await openQuestionEditor(page);
   await cpDialog.getByRole('combobox', { name: 'Question Type', exact: true }).click();
-  await page.getByRole('option', { name: 'Course de calcul · difficulté selon le niveau', exact: true }).click();
+  await page.getByRole('option', { name: 'Calculation race · difficulty follows school level', exact: true }).click();
   await expect(cpDialog.getByLabel('Chiffres maximum — premier nombre')).toHaveAttribute('max', '2');
   await expect(cpDialog.getByLabel('Chiffres maximum — second nombre')).toHaveAttribute('max', '2');
   await expect(cpDialog.getByLabel('Multiplication', { exact: true })).toHaveCount(0);
@@ -83,7 +92,7 @@ test('arithmetic editor exposes level-bounded digit ranges and operations', asyn
   await coordinateLearner(page, '5eme', 'fr', true);
   const upperDialog = await openQuestionEditor(page);
   await upperDialog.getByRole('combobox', { name: 'Question Type', exact: true }).click();
-  await page.getByRole('option', { name: 'Cartes de calcul · difficulté selon le niveau', exact: true }).click();
+  await page.getByRole('option', { name: 'Number flashcards · difficulty follows school level', exact: true }).click();
   await expect(upperDialog.getByLabel('Chiffres maximum — premier nombre')).toHaveAttribute('max', '7');
   await expect(upperDialog.getByLabel('Multiplication', { exact: true })).toBeVisible();
   await expect(upperDialog.getByLabel('Division', { exact: true })).toBeVisible();
