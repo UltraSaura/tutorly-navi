@@ -21,6 +21,25 @@
 
 The URL is a **Vercel preview** and may require Vercel authentication/share access; it is not the production app. Preview hostname is not a permanent release URL. The lab is standalone (`demo.html`), uses simulated in-memory progress, and does **not** save student data. In local development, run `npm ci && npm run dev` and visit `http://localhost:8080/dev/explanation-v2-math` (confirm the Vite port).
 
+## New teaching module — guided math demonstrations (IM-D01)
+
+**Status:** Implemented in the feature branch; CI and new Vercel deployment verification pending as of 2026-11-25. **This is a reusable teaching component, not a seventh graded activity kind.**
+
+- **Where:** `src/features/explanation-v2/MathDemonstration.tsx` (generic step player, formula text, visual state, previous/next/replay, practice handoff); `src/features/explanation-v2/LinearFunctionActivity.tsx` (script generator and three learning modes); `src/features/explanation-v2/LineGraph.tsx` (animated rise/run visual guides); `src/features/explanation-v2/InteractiveActivityHost.tsx` (optional fraction demo).
+- **Purpose:** Give an understandable, original **step-by-step visual mathematical explanation**, with the learner controlling the pace. Inspired by the broad pedagogy of worked solutions (e.g. Photomath), **without copying proprietary content, UI, animation assets or code**.
+- **Function graphs:** **Comprendre** (four-stage demonstration: horizontal line → y-intercept → slope → recap) → **Explorer** (free manipulation without scoring) → **M’entraîner** (independent interactive challenge). The function activity starts in **Comprendre**; students who already know the concept may skip to the challenge.
+- **Fraction addition:** **Voir la démonstration pas à pas** optionally shows four derived steps: identify fractions → rewrite in equal-sized parts → add colored parts → interpret the result. Returning to the exercise does not change attempts, hints, selected answer or completion.
+- **Visual animations:** Graph transitions and dashed rise/run guides, stepwise fraction-bar transformations. Navigation is manually paced; no autoplay, sound, narration, or video yet. Respect reduced-motion settings.
+- **Lesson:** YES, displayed as part of the `linear-function` and `fraction-bar` V2.0 activity UI; no change to lesson block sequence schema.
+- **Practice:** CANDIDATE, not integrated.
+- **Homework explanation:** CANDIDATE, not integrated with Universal Tutor.
+- **Teacher/Admin:** CANDIDATE, no editor or generator mapping yet.
+- **Demo:** YES in the two existing activity tabs once a preview deployment includes the changes.
+- **QA:** `MathDemonstration.test.ts`, `qa/explanation-v2-browser.mjs` on three viewports; latest results must be verified after CI completes.
+- **Limitations:** This is not a general computer-algebra system or an automatic solution generator; demonstration scripts currently cover **affine functions and the restricted fraction addition case only**. They derive mathematical quantities from validated structured specs, not arbitrary user-entered equations. No learning outcome or mastery score is recorded by viewing a demonstration.
+
+**Agent rule:** New demonstration scripts must use validated mathematical data, explicitly show each transformation, include grade-appropriate explanations and a clear handoff to unassisted work. Add a script registry and approval checks before automatic lesson generation. Never count a demonstration view as a solved question.
+
 ## 2. Terminology and deployment status
 
 - **Implemented:** Component, mathematical grading, validated activity schema and demo exist in this branch.
@@ -119,7 +138,8 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 | `src/features/explanation-v2/FractionSelectActivity.tsx` | Selectable fraction parts |
 | `src/features/explanation-v2/AlgebraTilesActivity.tsx` | Drag/tap algebra manipulatives |
 | `src/features/explanation-v2/LineGraph.tsx` | Shared SVG graph, draggable slope and intercept handles, plotted points |
-| `src/features/explanation-v2/LinearFunctionActivity.tsx` | Affine function task, live equation, +/- controls |
+| `src/features/explanation-v2/MathDemonstration.tsx` | Reusable step-by-step explanation and visual demonstrations, derived fraction script |
+| `src/features/explanation-v2/LinearFunctionActivity.tsx` | Affine function demonstration / exploration / challenge modes, live equation, +/- controls |
 | `src/features/explanation-v2/LineFitActivity.tsx` | Data-fitting task, sliders, live squared-error and regression comparison |
 | `src/features/explanation-v2/math.ts` | Exact rational math, coordinate transforms, strict grading, linear regression and squared error |
 | `src/features/explanation-v2/pedagogicalQuestions.ts` | Structured, level-conscious question wording for fraction/coordinate tasks |
