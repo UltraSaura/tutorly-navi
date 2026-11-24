@@ -1,3 +1,4 @@
+import { isExplanationDemoHost } from '@/features/explanation-v2/previewAccess';
 import { FamilyProfileProvider } from './context/FamilyProfileContext';
 import { FamilyRouteBoundary } from './features/family/FamilyRouteBoundary';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
@@ -91,7 +92,7 @@ const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail
 const isDev = import.meta.env.DEV;
 // Read-only math activity demo is accessible on isolated Vercel preview deployments,
 // never on the canonical production hostname. The demo uses simulated data only.
-const isExplanationPreview = isDev || (typeof window !== 'undefined' && window.location.hostname.toLowerCase().endsWith('-stuwy.vercel.app'));
+const isExplanationPreview = isExplanationDemoHost(typeof window === 'undefined' ? '' : window.location.hostname, isDev);
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
 const isLocalSupabase = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(supabaseUrl);
 const isStagingSupabase = supabaseUrl === 'https://sibprjxhbxahouejygeu.supabase.co';
