@@ -54,7 +54,7 @@ export function MathDemonstration({ title, steps, onPractice, practiceLabel = '�
       <p className="leading-7 text-slate-800">{current.explanation}</p>
       <p data-testid="demo-equation" className="rounded-xl bg-slate-100 p-3 text-center text-xl font-bold text-slate-900">{current.equation}</p>
       {current.visual.kind === 'graph'
-        ? <LineGraph slope={current.visual.slope} intercept={current.visual.intercept} onChange={() => {}} disabled />
+        ? <LineGraph slope={current.visual.slope} intercept={current.visual.intercept} onChange={() => {}} disabled showSteps={current.visual.slope !== 0} />
         : <div data-testid="demo-fractions" className="space-y-3 rounded-xl bg-slate-50 p-3">
           <FractionStrip n={current.visual.top.n} d={current.visual.top.d} label="Première quantité" />
           <FractionStrip n={current.visual.bottom.n} d={current.visual.bottom.d} label="Deuxième quantité" />
