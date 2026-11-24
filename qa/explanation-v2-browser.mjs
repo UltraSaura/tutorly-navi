@@ -46,6 +46,25 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
     });
+    await run('fraction hint ladder resets for the second step', async () => {
+      await page.getByTestId('reset').click();
+      const hintButton = page.getByRole('button', { name: /Indice/ });
+      for (let i = 0; i < 3; i++) await hintButton.click();
+      assert.equal(await hintButton.isDisabled(), true);
+      const input = page.locator('#fraction-answer-qa-fraction');
+      await input.fill('2');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await hintButton.innerText(), /0\/3/);
+      assert.equal(await hintButton.isEnabled(), true);
+      await input.fill('4');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /dénominateurs/i);
+      await hintButton.click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /identiques/i);
+      await input.fill('5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+    });
     await page.screenshot({ path: dir + '/fraction-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-coordinate').click();
     await run('coordinate incorrect feedback', async () => {
