@@ -21,16 +21,26 @@ const fraction = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'MVP requires left denominator = target and divisible right denominator' });
   }
 });
+/** A student constructs a fraction by selecting the required number of equal parts. */
+const fractionSelect = z.object({
+  ...common,
+  kind: z.literal('fraction-select'),
+  target: z.object({
+    n: z.number().int().min(0).max(12),
+    d: z.number().int().min(2).max(12),
+  }).refine(v => v.n <= v.d, 'Selected numerator cannot exceed denominator'),
+});
 const coordinate = z.object({
   ...common,
   kind: z.literal('coordinate-plane'),
   target: z.object({ x: z.number().int().min(-5).max(5), y: z.number().int().min(-5).max(5) }),
 });
-export const InteractiveActivitySchema = z.union([fraction, coordinate]);
+export const InteractiveActivitySchema = z.union([fraction, coordinate, fractionSelect]);
 export type InteractiveActivitySpec = z.infer<typeof InteractiveActivitySchema>;
 export type ActivityProgress = {
   phase: number;
   input: string;
+  selectedParts?: number[];
   x: number;
   y: number;
   attempts: number;
@@ -41,5 +51,5 @@ export type ActivityProgress = {
   correct: boolean | null;
 };
 export const initialActivityProgress = (): ActivityProgress => ({
-  phase: 0, input: '', x: 0, y: 0, attempts: 0, hintsUsed: 0, phaseHints: 0, completed: false, feedback: '', correct: null,
+  phase: 0, input: '', selectedParts: [], x: 0, y: 0, attempts: 0, hintsUsed: 0, phaseHints: 0, completed: false, feedback: '', correct: null,
 });
