@@ -16,12 +16,12 @@ const lesson = LessonV2Schema.parse({
   }],
   sequence: [
     { id: 'qa-fraction-block', type: 'interactive_activity', activity: {
-      schemaVersion: 1, id: 'qa-fraction-player', kind: 'fraction-bar', title: 'Additionner les fractions',
+      schemaVersion: 1, id: 'qa-fraction-player', kind: 'fraction-bar', schoolLevel: 'CM2', title: 'Additionner les fractions',
       prompt: 'Transforme 1/2 en quarts puis additionne.', left: { n: 3, d: 4 },
       right: { n: 1, d: 2 }, targetDenominator: 4,
     }},
     { id: 'qa-coordinate-block', type: 'interactive_activity', activity: {
-      schemaVersion: 1, id: 'qa-coordinate-player', kind: 'coordinate-plane', title: 'Placer A(2 ; 3)',
+      schemaVersion: 1, id: 'qa-coordinate-player', kind: 'coordinate-plane', schoolLevel: '4e', title: 'Placer A(2 ; 3)',
       prompt: 'Place le point A(2 ; 3).', target: { x: 2, y: 3 },
     }},
   ],
