@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { LineGraph } from './LineGraph';
+import { expectedFractionSteps } from './math';
+import type { InteractiveActivitySpec } from './activityContract';
 
 /**
  * Original, reusable, manually paced mathematical demonstration.
@@ -75,4 +77,47 @@ export function MathDemonstration({ title, steps, onPractice, practiceLabel = '�
     </div>
     <p className="text-xs text-slate-600">Tu avances à ton rythme. Cette démonstration ne donne pas de note et ne valide pas l’exercice.</p>
   </section>;
+}
+
+/** Derive every displayed quantity from the validated exercise, never from generated prose. */
+export function fractionDemonstrationSteps(spec: Extract<InteractiveActivitySpec, { kind: 'fraction-bar' }>): MathDemonstrationStep[] {
+  const { left, right, targetDenominator: d } = spec;
+  const { leftParts, rightParts, totalParts } = expectedFractionSteps(left, right, d);
+  const quotient = Math.floor(totalParts / d);
+  const remainder = totalParts % d;
+  const mixed = quotient === 0 ? totalParts + '/' + d
+    : remainder === 0 ? String(quotient)
+      : quotient + ' + ' + remainder + '/' + d;
+  return [
+    {
+      title: 'Observe les deux fractions',
+      explanation: 'La première barre est partagée en ' + left.d + ' parts égales, la seconde en ' + right.d + '. On ne peut pas additionner directement des parts de tailles différentes.',
+      equation: left.n + '/' + left.d + ' + ' + right.n + '/' + right.d,
+      takeaway: 'Avant d’additionner, les deux barres doivent montrer des parts de même taille.',
+      visual: { kind: 'fractions', top: left, bottom: right },
+    },
+    {
+      title: 'Partage les barres en parts de même taille',
+      explanation: 'On conserve la même quantité coloriée, mais on partage la deuxième barre en ' + d + ' parts égales. Elle contient maintenant ' + rightParts + ' parts coloriées.',
+      equation: right.n + '/' + right.d + ' = ' + rightParts + '/' + d,
+      takeaway: 'On change la façon de découper la barre, pas la quantité.',
+      visual: { kind: 'fractions', top: { n: leftParts, d }, bottom: { n: rightParts, d } },
+    },
+    {
+      title: 'Additionne les parts coloriées',
+      explanation: 'Maintenant les parts ont la même taille. Compte les ' + leftParts + ' parts de la première barre et les ' + rightParts + ' de la seconde.',
+      equation: leftParts + '/' + d + ' + ' + rightParts + '/' + d + ' = ' + totalParts + '/' + d,
+      takeaway: 'On additionne les numérateurs : ' + leftParts + ' + ' + rightParts + ' = ' + totalParts + '. Le dénominateur reste ' + d + '.',
+      visual: { kind: 'fractions', top: { n: leftParts, d }, bottom: { n: rightParts, d }, total: { n: totalParts, d } },
+    },
+    {
+      title: 'Lis le résultat',
+      explanation: totalParts >= d
+        ? 'Une barre complète contient ' + d + ' parts. Avec ' + totalParts + ' parts, on peut aussi écrire le résultat comme un nombre entier et une fraction.'
+        : 'Il reste moins d’une barre entière. Le résultat est donc une fraction de la barre.',
+      equation: totalParts + '/' + d + ' = ' + mixed,
+      takeaway: 'Tu sais pourquoi la réponse vaut ' + totalParts + '/' + d + '. À toi d’essayer sans regarder la solution !',
+      visual: { kind: 'fractions', top: { n: leftParts, d }, bottom: { n: rightParts, d }, total: { n: totalParts, d } },
+    },
+  ];
 }
