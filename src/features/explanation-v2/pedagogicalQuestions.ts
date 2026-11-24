@@ -46,7 +46,7 @@ export function fractionGuidedQuestion(spec: FractionSpec, phase: number): Guide
   return {
     step: 'Étape 2 sur 2 · Compter toutes les parts',
     context: young
-      ? 'Maintenant, les deux barres sont partagées en ' + unit + '. La barre du haut montre ' + steps.leftParts + ' ' + countedParts(spec.targetDenominator, steps.leftParts) + ' coloriés et celle du bas en montre ' + steps.rightParts + '.'
+      ? 'Maintenant, les deux barres sont partagées en ' + unit + '. La barre du haut montre ' + steps.leftParts + ' ' + countedParts(spec.targetDenominator, steps.leftParts) + '. Celle du bas en montre ' + steps.rightParts + '.'
       : 'Les deux fractions ont le même dénominateur (' + spec.targetDenominator + '). Additionne leurs numérateurs : ' + steps.leftParts + ' et ' + steps.rightParts + '.',
     question: 'Combien de ' + unit + ' coloriés y a-t-il en tout dans les deux barres ?',
     answerHelp: 'Écris seulement le nombre total de ' + unit + ', sans écrire de fraction.',
