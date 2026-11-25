@@ -315,6 +315,9 @@ async function runAtWidth(width) {
       await page.screenshot({ path: dir + '/equation-verification-focused-' + width + '.png', fullPage: true });
     });
     await run('equation term animation respects reduced motion', async () => {
+      // The simplified result intentionally hides the animation layer; return to the term stage.
+      await page.getByRole('button', { name: 'Précédent' }).click();
+      assert.equal(await page.getByTestId('equation-term-animation').count(), 1);
       await page.emulateMedia({ reducedMotion: 'reduce' });
       const animation = await page.getByTestId('equation-term-animation').evaluate(el => getComputedStyle(el).animationName);
       assert.equal(animation, 'none');
