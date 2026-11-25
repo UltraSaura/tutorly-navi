@@ -14,7 +14,8 @@
 }
 
 /* IM-D02.1: show actual equation terms, not only a final answer card.
-   Struck-through terms are exact additive inverses, or coefficient/divisor pairs.
+   Marked terms are exact additive inverses, or coefficient/divisor pairs.
+   A corner cancellation marker preserves the legibility of + and − signs.
    Blue terms are combined or evaluated; remaining terms stay in place.
    At narrow widths the groups wrap independently without overflowing. */
 .equation-term { position: relative; max-width: 100%; overflow-wrap: anywhere; }
@@ -23,20 +24,22 @@
 .equation-term--keep { border-color: #cbd5e1; background: #f8fafc; color: #334155; }
 .equation-term--substitute { border-color: #5eead4; background: #f0fdfa; color: #115e59; }
 .equation-term--cancel::after {
-  content: ''; position: absolute; top: 50%; left: 4px; right: 4px;
-  height: 2px; background: #b45309; transform: rotate(-8deg);
-  transform-origin: left center;
+  content: '×'; position: absolute; top: -9px; right: -6px;
+  display: grid; place-items: center;
+  width: 17px; height: 17px; border: 1px solid #b45309;
+  border-radius: 50%; background: #fff7ed; color: #92400e;
+  font-size: 14px; font-weight: 800; line-height: 1;
 }
 @media (prefers-reduced-motion: no-preference) {
   .equation-term-panel { animation: equation-operation-enter 360ms ease-out both; }
   .equation-term--cancel { animation: equation-cancel-fade 700ms ease-in-out both; }
-  .equation-term--cancel::after { animation: equation-cancel-line 550ms ease-out both; }
+  .equation-term--cancel::after { animation: equation-cancel-marker 550ms ease-out both; }
   .equation-term--combine { animation: equation-combine-slide 650ms ease-out both; }
   .equation-term--substitute { animation: equation-result-enter 450ms ease-out both; }
 }
-@keyframes equation-cancel-line {
-  from { transform: rotate(-8deg) scaleX(0); }
-  to { transform: rotate(-8deg) scaleX(1); }
+@keyframes equation-cancel-marker {
+  from { opacity: 0; transform: scale(.5); }
+  to { opacity: 1; transform: scale(1); }
 }
 @keyframes equation-cancel-fade {
   0%, 40% { opacity: 1; }
