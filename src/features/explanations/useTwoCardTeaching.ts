@@ -1,6 +1,7 @@
 import { assertDifferentTeachingExample, teachingRepeatsOriginal } from "./exampleSafety";
 import { learnerOperation } from '@/features/family/profileRuntime';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { getLocalArithmeticExample } from './stepperExpression';
 import { generateQuickExplanation, isSupportedDivision, validateQuickExplanation, type QuickExplanation } from "./quickExplanation";
 import React from "react";
@@ -495,6 +496,7 @@ export function useTwoCardTeaching() {
   const requestIdRef = React.useRef(0);
 
   const { selectedModelId } = useAdmin();
+  const { activeLevel, isPreviewing } = useActiveSchoolLevel();
 
   const resetFeedbackState = React.useCallback(() => {
     setCacheEntryId(null);
@@ -535,7 +537,9 @@ export function useTwoCardTeaching() {
       const promptSubject = String(subject).toLowerCase() === "math" ? "Math" : subject;
       const rawLang = profile?.response_language || "English";
       const response_language = /^fr/i.test(rawLang) ? "French" : "English";
-      const grade_level = profile?.grade_level ?? "High School";
+      // Admin preview must use the same level as TwoCards when choosing the
+      // explanation and animation. For other callers keep their learner level.
+      const grade_level = (isPreviewing ? activeLevel : null) || profile?.grade_level || activeLevel || "High School";
       const learning_style = normalizeLearningStyle(profile?.learning_style);
 
       const location = typeof window !== "undefined" ? window.location.pathname : "";
