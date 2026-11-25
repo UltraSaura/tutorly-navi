@@ -1,6 +1,6 @@
 import { arithmeticDifficulty, canAuthorExercise, canAuthorExerciseType } from '@/features/practice/exerciseCurriculum';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ interface TopicQuizGeneratorProps {
 }
 
 type Step = 'topics' | 'settings' | 'generating' | 'review' | 'preview' | 'try' | 'save' | 'assign';
+type CurriculumEdition = { id: string; bo_reference: string; published_at: string | null; cycle: string; status: string };
 
 // One future quiz bank in batch mode (per topic, or per progressif level).
 interface BatchUnit {
@@ -129,6 +130,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string>('');
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
+  const [curriculumEditionFilter, setCurriculumEditionFilter] = useState<'current' | 'all' | string>('current');
   const [searchQuery, setSearchQuery] = useState('');
   const [onlyWithoutQuiz, setOnlyWithoutQuiz] = useState(false);
 
@@ -247,7 +249,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
-        .select('id, name, description, category_id, curriculum_country_code, curriculum_level_code, curriculum_subject_id, curriculum_subject_id_uuid')
+        .select('id, name, description, category_id, curriculum_country_code, curriculum_level_code, curriculum_subject_id, curriculum_subject_id_uuid, curriculum_domain_id_uuid')
         .eq('is_active', true)
         .order('order_index');
       if (error) throw error;
@@ -276,10 +278,43 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     );
   }, [countryScopedTopics, selectedSchoolLevel]);
 
-  const resolveTopicSubjectId = (topic: (typeof topics)[number]) =>
+  // Topics are linked to curriculum domains; domains carry the edition ID.
+  // This lets the picker separate current and legacy curriculum records without
+  // changing or deactivating any curriculum data.
+  const curriculumDomainIds = useMemo(
+    () => Array.from(new Set(levelScopedTopics.map((topic) => topic.curriculum_domain_id_uuid).filter((id): id is string => Boolean(id)))).sort(),
+    [levelScopedTopics],
+  );
+  const { data: curriculumDomainEditions = [] } = useQuery({
+    queryKey: ['topic-quiz-generator-curriculum-editions', curriculumDomainIds.join(',')],
+    queryFn: async () => {
+      if (curriculumDomainIds.length === 0) return [] as Array<{ domainId: string; edition: CurriculumEdition | null }>;
+      const { data: domains, error: domainsError } = await supabase
+        .from('domains')
+        .select('id, edition_id')
+        .in('id', curriculumDomainIds);
+      if (domainsError) throw domainsError;
+      const editionIds = Array.from(new Set((domains || []).map((domain) => domain.edition_id).filter((id): id is string => Boolean(id))));
+      const { data: editions, error: editionsError } = editionIds.length
+        ? await supabase.from('curriculum_edition').select('id, bo_reference, published_at, cycle, status').in('id', editionIds)
+        : { data: [], error: null };
+      if (editionsError) throw editionsError;
+      const editionById = new Map((editions || []).map((edition) => [edition.id, edition as CurriculumEdition]));
+      return (domains || []).map((domain) => ({ domainId: domain.id, edition: domain.edition_id ? editionById.get(domain.edition_id) ?? null : null }));
+    },
+    enabled: curriculumDomainIds.length > 0,
+  });
+
+  const editionByDomainId = useMemo(
+    () => new Map(curriculumDomainEditions.map(({ domainId, edition }) => [domainId, edition])),
+    [curriculumDomainEditions],
+  );
+
+  const resolveTopicSubjectId = useCallback((topic: (typeof topics)[number]) =>
     topic.curriculum_subject_id_uuid ||
     topic.curriculum_subject_id ||
-    (topic.category_id ? categorySubjectMap.get(topic.category_id) : null);
+    (topic.category_id ? categorySubjectMap.get(topic.category_id) : null),
+  [categorySubjectMap]);
 
   const visibleSubjects = useMemo(() => {
     const subjectIds = new Set(
@@ -288,28 +323,47 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         .filter(Boolean)
     );
     return subjects.filter((subject) => subjectIds.has(subject.id));
-  }, [subjects, levelScopedTopics]);
+  }, [subjects, levelScopedTopics, resolveTopicSubjectId]);
 
-  const matchingTopics = useMemo(() => {
-    const subjectFiltered = selectedSubjectId
+  const subjectTopics = useMemo(() => selectedSubjectId
       ? levelScopedTopics.filter((topic) => {
           const subjectId = resolveTopicSubjectId(topic);
           return subjectId === selectedSubjectId;
         })
-      : [];
-    const dedupedTopics = Array.from(
-      subjectFiltered.reduce((map, topic) => {
-        const key = normalizeTopicDisplayKey(topic.name);
-        if (!map.has(key)) {
-          map.set(key, topic);
-        }
-        return map;
-      }, new Map<string, (typeof subjectFiltered)[number]>()).values()
-    );
-    if (!searchQuery.trim()) return dedupedTopics;
+      : [],
+  [levelScopedTopics, selectedSubjectId, resolveTopicSubjectId]);
+
+  const searchFilteredTopics = useMemo(() => {
+    if (!searchQuery.trim()) return subjectTopics;
     const q = searchQuery.toLowerCase();
-    return dedupedTopics.filter(t => t.name.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
-  }, [levelScopedTopics, searchQuery, selectedSubjectId]);
+    return subjectTopics.filter(t => t.name.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
+  }, [subjectTopics, searchQuery]);
+
+  const availableCurriculumEditions = useMemo(() => {
+    const editions = new Map<string, CurriculumEdition>();
+    for (const topic of subjectTopics) {
+      const edition = topic.curriculum_domain_id_uuid ? editionByDomainId.get(topic.curriculum_domain_id_uuid) : null;
+      if (edition) editions.set(edition.id, edition);
+    }
+    return [...editions.values()].sort((a, b) => (b.published_at || '').localeCompare(a.published_at || '') || a.bo_reference.localeCompare(b.bo_reference));
+  }, [subjectTopics, editionByDomainId]);
+
+  const currentCurriculumEditionId = availableCurriculumEditions[0]?.id ?? null;
+  const matchingTopics = useMemo(() => {
+    const selectedEditionId = curriculumEditionFilter === 'current' ? currentCurriculumEditionId : curriculumEditionFilter;
+    const editionFiltered = curriculumEditionFilter === 'all' || !selectedEditionId
+      ? searchFilteredTopics
+      : searchFilteredTopics.filter((topic) => {
+          const edition = topic.curriculum_domain_id_uuid ? editionByDomainId.get(topic.curriculum_domain_id_uuid) : null;
+          return edition?.id === selectedEditionId;
+        });
+    // Keep repeated topic titles from appearing twice in one curriculum edition.
+    return Array.from(editionFiltered.reduce((map, topic) => {
+      const key = normalizeTopicDisplayKey(topic.name);
+      if (!map.has(key)) map.set(key, topic);
+      return map;
+    }, new Map<string, (typeof editionFiltered)[number]>()).values());
+  }, [searchFilteredTopics, curriculumEditionFilter, currentCurriculumEditionId, editionByDomainId]);
 
   const { data: topicAssignmentRows = [] } = useQuery({
     queryKey: ['topic-quiz-generator-assignments', matchingTopics.map((topic) => topic.id).sort().join(',')],
@@ -1011,6 +1065,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               <Select value={selectedSubjectId} onValueChange={(value) => {
                 setSelectedSubjectId(value);
                 setSelectedTopicIds([]);
+                setCurriculumEditionFilter('current');
               }} disabled={!selectedCountryCode || !selectedSchoolLevel}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder={ui("Select subject")} />
@@ -1029,6 +1084,37 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 disabled={!selectedCountryCode || !selectedSchoolLevel || !selectedSubjectId}
               />
             </div>
+
+            {selectedSubjectId && availableCurriculumEditions.length > 0 && (
+              <div className="mb-4 grid gap-1.5 sm:max-w-xl">
+                <Label htmlFor="curriculum-edition-filter">{ui('Curriculum edition')}</Label>
+                <Select
+                  value={curriculumEditionFilter}
+                  onValueChange={(value) => {
+                    setCurriculumEditionFilter(value);
+                    setSelectedTopicIds([]);
+                  }}
+                >
+                  <SelectTrigger id="curriculum-edition-filter" aria-label="Curriculum edition">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="current">
+                      {ui('Latest published')} · {availableCurriculumEditions[0]?.bo_reference}
+                    </SelectItem>
+                    {availableCurriculumEditions.slice(1).map((edition) => (
+                      <SelectItem key={edition.id} value={edition.id}>
+                        {ui('Previous edition')} · {edition.bo_reference}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="all">{ui('Show all editions')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {ui('The latest published curriculum is selected by default. Choose “Show all editions” to compare older topics.')}
+                </p>
+              </div>
+            )}
 
             {selectedSubjectId && (
               <div className="mb-3 flex items-center justify-between gap-3 text-sm">
