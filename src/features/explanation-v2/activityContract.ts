@@ -63,7 +63,17 @@ const lineFit = z.object({
   const b = meanY - m * meanX;
   return Number.isFinite(m) && Number.isFinite(b) && m >= -3 && m <= 3 && b >= -3 && b <= 3;
 }, 'Best-fit line must be within interactive controls');
-export const InteractiveActivitySchema = z.union([fraction, coordinate, fractionSelect, algebraTiles, linearFunction, lineFit]);
+/** Unique-solution bounded linear equations, including negative coefficients and rational answers. */
+const equationDecomposition = z.object({
+  ...common,
+  kind: z.literal('equation-decomposition'),
+  a: z.number().int().min(-8).max(8),
+  b: z.number().int().min(-20).max(20),
+  c: z.number().int().min(-20).max(20),
+  d: z.number().int().min(-8).max(8).optional(),
+}).refine(v => v.a !== (v.d ?? 0), 'Equation must have a unique solution');
+
+export const InteractiveActivitySchema = z.union([fraction, coordinate, fractionSelect, algebraTiles, linearFunction, lineFit, equationDecomposition]);
 export type InteractiveActivitySpec = z.infer<typeof InteractiveActivitySchema>;
 export type ActivityProgress = {
   phase: number;
@@ -80,6 +90,8 @@ export type ActivityProgress = {
   completed: boolean;
   feedback: string;
   correct: boolean | null;
+  /** Has the learner used guided or worked-solution assistance? */
+  assisted?: boolean;
 };
 export const initialActivityProgress = (): ActivityProgress => ({
   phase: 0, input: '', selectedParts: [], x: 0, y: 0, attempts: 0, hintsUsed: 0, phaseHints: 0, completed: false, feedback: '', correct: null,
