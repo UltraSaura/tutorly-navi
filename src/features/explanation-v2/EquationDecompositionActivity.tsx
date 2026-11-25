@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { equationSteps, parseRational, rationalText, satisfiesEquation, solutionOf, type EquationTransformation } from './equationSolver';
 import { equationTermVisual, type EquationTermToken } from './equationTermVisual';
+import { equationStepInstruction } from './equationStepInstruction';
 import './equationAnimations.css';
 
 type Spec = Extract<InteractiveActivitySpec, { kind: 'equation-decomposition' }>;
@@ -67,6 +68,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   const solution = solutionOf(coefficients);
   const update = (patch: Partial<ActivityProgress>) => onProgressChange({ ...p, ...patch });
   const demoStep = steps[demoIndex];
+  const instruction = equationStepInstruction(demoStep, demoStage);
   const guidedIndex = Math.min(p.phase, steps.length - 1);
   const guidedStep = steps[guidedIndex];
   const chooseMode = (next: Mode) => {
@@ -155,9 +157,11 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       <div className="h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Progression de la démonstration" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={demoIndex + 1}>
         <div className="h-full rounded-full bg-teal-600 transition-[width] duration-200" style={{ width: ((demoIndex + 1) / steps.length * 100) + '%' }} />
       </div>
+      <div data-testid="equation-step-instruction" role="note" className="rounded-xl bg-teal-50 px-3 py-3 text-left text-sm leading-6 text-slate-900 sm:px-4">
+        <span data-testid="equation-step-instruction-label" className="mr-2 font-bold text-teal-900">{instruction.label} :</span>
+        <span data-testid="equation-step-instruction-text">{instruction.text}</span>
+      </div>
       <TransformationVisual key={demoIndex} step={demoStep} stage={demoStage} />
-      {demoStage === 0 && <p className="text-center text-sm text-slate-700">{demoStep.id === 'verify' ? 'Remplaçons x par la valeur trouvée pour vérifier.' : 'Observe l’équation, puis découvre l’opération.'}</p>}
-      {demoStage === 2 && <p className="text-center text-sm font-medium leading-6 text-teal-900">{demoStep.rule}</p>}
       <details className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
         <summary className="min-h-7 cursor-pointer font-semibold text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700">Pourquoi cette étape ?</summary>
         <p className="mt-2 leading-6">{demoStep.explanation}</p>
