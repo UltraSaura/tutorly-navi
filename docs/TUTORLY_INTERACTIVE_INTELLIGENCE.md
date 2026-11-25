@@ -26,7 +26,7 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 
 ## New teaching module — guided math demonstrations (IM-D01)
 
-**Status:** Implemented in the feature branch; CI and new Vercel deployment verification pending as of 2026-11-25. **This is a reusable teaching component, not a seventh graded activity kind.**
+**Status:** Implemented in the feature branch; latest full IM-D02 regression CI PASS on 2026-11-25 ([run #45714358708](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708)). **This is a reusable teaching component, not a seventh graded activity kind.**
 
 - **Where:** `src/features/explanation-v2/MathDemonstration.tsx` (generic step player, formula text, visual state, previous/next/replay, practice handoff); `src/features/explanation-v2/LinearFunctionActivity.tsx` (script generator and three learning modes); `src/features/explanation-v2/LineGraph.tsx` (animated rise/run visual guides); `src/features/explanation-v2/InteractiveActivityHost.tsx` (optional fraction demo).
 - **Purpose:** Give an understandable, original **step-by-step visual mathematical explanation**, with the learner controlling the pace. Inspired by the broad pedagogy of worked solutions (e.g. Photomath), **without copying proprietary content, UI, animation assets or code**.
@@ -45,7 +45,7 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 
 ## New teaching module — animated mathematical decomposition (IM-D02)
 
-**Status:** Implemented on the feature branch; **GitHub CI and final Vercel preview verification pending** at this documentation update. **IM-07** is the associated seventh validated activity kind (`equation-decomposition`).
+**Status:** Implemented and validated on the feature branch; **GitHub CI PASS** ([run #45714358708](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708)), with a READY Vercel preview at the same source commit. **IM-07** is the associated seventh validated activity kind (`equation-decomposition`).
 
 - **Goal:** Original Photomath-style mathematical decomposition with explicit, validated steps and age-appropriate French reasoning, followed by learner participation. No competitor artwork, code, or proprietary animation is used.
 - **Mathematics:** `equationSolver.ts` supports bounded integer-coefficient equations **ax + b = dx + c** with a unique rational solution, including negative coefficients, variables on both sides, and fractions as answers. It normalizes fractions exactly and checks every integer-coefficient transformation for algebraic equivalence. Verification substitutes the rational answer in both original members without rounding.
@@ -57,7 +57,7 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 - **Homework explanation:** **CANDIDATE**, no Universal Tutor integration.
 - **Teacher/Admin:** **CANDIDATE**, no picker or approval workflow.
 - **Standalone demo:** **YES in source** (three equation tabs); deployed URL may lag or require authentication.
-- **Tests:** `equationSolver.test.ts` exercises thousands of bounded cases, exact rational arithmetic, negative and both-sided equations; browser QA includes animations, wrong answers, hints, mobile widths and standalone preview smoke. **Do not claim PASS until the latest run completes.**
+- **Tests:** `equationSolver.test.ts` exercises thousands of bounded cases, exact rational arithmetic, negative and both-sided equations; browser QA includes animations, wrong answers, hints, mobile widths and standalone preview smoke. **PASS:** 84 isolated checks (375px/447px/1280px), 18 real-player checks, standalone demo smoke, unit, lint, typecheck and build in [run #45714358708](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708).
 - **Limits:** Not a camera scanner, OCR pipeline, general CAS, arbitrary expression parser, quadratic solver, or universal Photomath replacement. Only the specified linear template is supported. No student data persistence, automated generator mapping, voice, or analytics integration.
 
 **Next iteration:** Validate on real student/teacher sessions; improve term-level animated cancellation and accessible mathematical notation; add structured authoring and safe objective mapping before expanding the solver to other equation families.
@@ -217,8 +217,8 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 
 ## 7. Tests, release evidence and current limitations
 
-- **Latest verified CI at time of this snapshot:** [GitHub Actions #45456200780](https://github.com/UltraSaura/tutorly-navi/actions/runs/45456200780) — **PASS**.
-- **60** isolated activity browser checks across **375px, 447px and 1280px**; **18** real lesson-player browser checks; standalone demo smoke, unit/build/typecheck in the same workflow.
+- **Latest verified CI at time of this snapshot:** [GitHub Actions #45714358708](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708) — **PASS** for IM-D02 source commit `ad399dd4f`.
+- **84** isolated activity browser checks across **375px, 447px and 1280px**; **18** real lesson-player browser checks; standalone demo smoke, unit/build/typecheck in the same workflow.
 - Tests: `src/features/explanation-v2/math.test.ts`, `lessonIntegration.test.ts`, `pedagogicalQuestions.test.ts`, `previewAccess.test.ts`; browser QA: `qa/explanation-v2-browser.mjs`, `qa/explanation-v2-player-browser.mjs`, `qa/explanation-v2-demo-browser.mjs`.
 - CI success proves tested scenarios, **not** broad curriculum approval, production rollout or automatic lesson generation.
 - No cross-session activity persistence; no new database tables, migrations or writes.
@@ -229,7 +229,7 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 
 ## 8. Safe integration roadmap — after the animation library is approved
 
-**Phase A — animation catalogue (current priority):** IM-D02 is now implemented in source with CI pending. Finish and review each new interaction in the isolated lab, including its `kind` contract, correct math, feedback, mobile interaction and tests. Possible later entries: interactive number line, geometric transformations, angles, equation balancing, area/perimeter, graph transformations. These are **ideas, not implemented features**.
+**Phase A — animation catalogue (current priority):** IM-D02 is now implemented and passed isolated CI. Finish and review each new interaction in the isolated lab, including its `kind` contract, correct math, feedback, mobile interaction and tests. Possible later entries: interactive number line, geometric transformations, angles, equation balancing, area/perimeter, graph transformations. These are **ideas, not implemented features**.
 
 **Phase B — lesson authoring:** Extend the appropriate V2.1 schema and authoring pipeline, add a teacher/admin picker and preview, map activities to validated objectives and grade levels, generate activity specs from safe templates, and publish only after review. Keep the existing lesson sequence until separately approved.
 
@@ -260,6 +260,6 @@ When adding or changing an animation or learning module:
 - [Explanation V2 question-quality rules](./EXPLANATION_V2_QUESTION_QUALITY.md) — age-appropriate prompts, answer formats, hints and examples.
 - [Practice experience and exam-training architecture](./practice-experience.md) — existing Practice behavior and persistence boundaries.
 - [Draft PR #56](https://github.com/UltraSaura/tutorly-navi/pull/56) — actual changes and ongoing review.
-- [Latest CI evidence at snapshot](https://github.com/UltraSaura/tutorly-navi/actions/runs/45456200780) — automated verification.
+- [Latest CI evidence at snapshot](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708) — automated verification.
 
 **Owner decision:** Complete the animation library **before** restructuring lessons. Keep this file as the single entry point for the **new interactive animation catalogue**, and expand it to other app modules only after source-level verification.
