@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Clock3, Lightbulb } from 'lucide-react';
+import { Check, Clock3, Lightbulb, X } from 'lucide-react';
 import { PracticeFeedback } from './PracticeFeedback';
 import {
   arithmeticProblemAnswer, arithmeticQuizPrompt, asMentalCalculation, evaluateArithmeticQuiz,
@@ -106,18 +106,37 @@ function ArithmeticQuizSession({ exercise, initialState, language = 'fr', disabl
     <h3 className="text-xl font-bold">{fr ? 'Série terminée' : 'Deck complete'}</h3>
     <p>{fr ? `${evaluation.correctCount} réponses correctes sur ${evaluation.total}.` : `${evaluation.correctCount} correct answers out of ${evaluation.total}.`}</p>
     <p className="flex items-center gap-2 text-sm text-slate-600"><Clock3 aria-hidden="true" className="h-4 w-4" />{fr ? 'Temps écoulé' : 'Elapsed time'} : {elapsedLabel(elapsedSeconds)}</p>
-    {evaluation.results.filter(result => !result.correct).length === 0 ? <p className="rounded-xl bg-emerald-50 p-4 text-emerald-900">{fr ? 'Tous les calculs de cette série sont réussis.' : 'Every calculation in this deck is correct.'}</p> : <div className="space-y-3"><h4 className="font-bold">{fr ? 'Revoir les calculs manqués' : 'Review missed calculations'}</h4>{evaluation.results.filter(result => !result.correct).map(result => {
-      const missed = exercise.problems.find(item => item.id === result.id)!;
-      const link = missed.lessonHref ?? lessonLinks?.[missed.operation];
-      const facts = getRelatedMultiplicationFacts(asMentalCalculation(missed));
-      return <article key={result.id} className="space-y-3 rounded-xl border bg-white p-4">
-        <p className="font-mono text-lg font-bold">{formatMentalCalculation(asMentalCalculation(missed))}</p>
-        <p className="text-sm text-slate-600">{fr ? 'Ta réponse' : 'Your answer'} : {result.selected}</p>
-        <button type="button" disabled={disabled} className={`${button} border-slate-300 bg-white`} aria-expanded={reviewOpen.includes(result.id)} onClick={() => { setReviewOpen(current => current.includes(result.id) ? current.filter(id => id !== result.id) : [...current, result.id]); }}>{fr ? 'Voir la méthode' : 'Show method'}</button>
-        {reviewOpen.includes(result.id) && <div className="space-y-2 rounded-lg bg-blue-50 p-3"><p className="text-sm leading-relaxed">{explanation(missed, language)}</p>{facts.length > 0 && <details><summary className="min-h-11 cursor-pointer py-3 font-semibold">{fr ? 'Table de multiplication associée' : 'Related multiplication table'}</summary><ul className="grid grid-cols-2 gap-2 text-sm">{facts.map(fact => <li key={fact.multiplier}>{missed.right} × {fact.multiplier} = {fact.product}</li>)}</ul></details>}</div>}
-        {isArithmeticLessonHref(link) && <a href={link} className="inline-flex min-h-11 items-center font-bold text-violet-800 underline">{fr ? 'Ouvrir la leçon associée' : 'Open related lesson'}</a>}
-      </article>;
-    })}</div>}
+    {evaluation.results.every(result => result.correct) && <p className="rounded-xl bg-emerald-50 p-4 text-emerald-900">{fr ? 'Tous les calculs de cette série sont réussis.' : 'Every calculation in this deck is correct.'}</p>}
+    <div className="space-y-3">
+      <h4 className="font-bold">{fr ? 'Résultats des calculs' : 'Calculation results'}</h4>
+      {evaluation.results.map((result, index) => {
+        const calculation = exercise.problems.find(item => item.id === result.id)!;
+        const link = calculation.lessonHref ?? lessonLinks?.[calculation.operation];
+        const facts = getRelatedMultiplicationFacts(asMentalCalculation(calculation));
+        return <article
+          key={result.id}
+          data-testid={`arithmetic-result-${result.id}`}
+          data-result={result.correct ? 'correct' : 'incorrect'}
+          aria-label={`${fr ? 'Calcul' : 'Calculation'} ${index + 1}: ${result.correct ? (fr ? 'Correct' : 'Correct') : (fr ? 'Incorrect' : 'Incorrect')}`}
+          className={`space-y-3 rounded-xl border-2 p-4 ${result.correct ? 'border-emerald-300 bg-emerald-50' : 'border-rose-300 bg-rose-50'}`}
+        >
+          <div className={`flex items-center gap-2 font-bold ${result.correct ? 'text-emerald-800' : 'text-rose-800'}`}>
+            <span aria-hidden="true" className={`flex h-7 w-7 items-center justify-center rounded-full ${result.correct ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+              {result.correct ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            </span>
+            {result.correct ? (fr ? 'Correct' : 'Correct') : (fr ? 'Incorrect' : 'Incorrect')}
+          </div>
+          <p className="font-mono text-lg font-bold">{formatMentalCalculation(asMentalCalculation(calculation))}</p>
+          <p className="text-sm text-slate-700">{fr ? 'Ta réponse' : 'Your answer'} : {result.selected}</p>
+          {!result.correct && <p className="text-sm font-semibold text-emerald-800">{fr ? 'Réponse correcte' : 'Correct answer'} : {arithmeticProblemAnswer(calculation)}</p>}
+          {!result.correct && <>
+            <button type="button" disabled={disabled} className={`${button} border-slate-300 bg-white`} aria-expanded={reviewOpen.includes(result.id)} onClick={() => { setReviewOpen(current => current.includes(result.id) ? current.filter(id => id !== result.id) : [...current, result.id]); }}>{fr ? 'Voir la méthode' : 'Show method'}</button>
+            {reviewOpen.includes(result.id) && <div className="space-y-2 rounded-lg bg-white/80 p-3"><p className="text-sm leading-relaxed">{explanation(calculation, language)}</p>{facts.length > 0 && <details><summary className="min-h-11 cursor-pointer py-3 font-semibold">{fr ? 'Table de multiplication associée' : 'Related multiplication table'}</summary><ul className="grid grid-cols-2 gap-2 text-sm">{facts.map(fact => <li key={fact.multiplier}>{calculation.right} × {fact.multiplier} = {fact.product}</li>)}</ul></details>}</div>}
+            {isArithmeticLessonHref(link) && <a href={link} className="inline-flex min-h-11 items-center font-bold text-violet-800 underline">{fr ? 'Ouvrir la leçon associée' : 'Open related lesson'}</a>}
+          </>}
+        </article>;
+      })}
+    </div>
   </section>;
 
   return <section className="space-y-4" data-testid={`arithmetic-quiz-${exercise.kind}`}>

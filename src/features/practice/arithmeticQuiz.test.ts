@@ -119,4 +119,17 @@ describe('arithmetic learner display', () => {
     expect(html).toContain('Vérifier');
     expect(html).not.toContain('2 + 5 = 7');
   });
+
+  it('shows every completed calculation and distinguishes correct from incorrect answers', () => {
+    const completed = result({ add: 7, subtract: 5, multiply: 12, divide: 4 });
+    const html = renderToStaticMarkup(React.createElement(ArithmeticQuizActivity, { exercise: deck(), initialState: completed }));
+
+    for (const problem of deck().problems) {
+      expect(html).toContain(`data-testid="arithmetic-result-${problem.id}"`);
+    }
+    expect(html.match(/data-result="correct"/g)).toHaveLength(2);
+    expect(html.match(/data-result="incorrect"/g)).toHaveLength(2);
+    expect(html).toContain('Réponse correcte');
+    expect(html).toContain('Résultats des calculs');
+  });
 });
