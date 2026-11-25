@@ -40,6 +40,13 @@ describe('IM-D02.1 term-by-term cancellation storyboard', () => {
     expect(variableVisual.right.filter(t => t.role === 'cancel').map(t => t.text)).toEqual(['−x', '+ x']);
   });
 
+  it('does not invent a zero-x term when the left member is a constant', () => {
+    const [step] = equationSteps({ a: 0, b: 5, d: 2, c: 9 });
+    const visual = equationTermVisual(step);
+    expect(visual.left.map(t => t.text)).toEqual(['5', '− 2x']);
+    expect(visual.left.some(t => t.text === '0x')).toBe(false);
+  });
+
   it('displays exact substitution on both sides for a fractional answer', () => {
     const steps = equationSteps({ a: -2, b: 3, c: 8 });
     const verification = equationTermVisual(steps[steps.length - 1]);
