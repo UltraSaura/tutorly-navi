@@ -26,6 +26,7 @@ import { motion } from 'framer-motion';
 import { PracticeFeedback } from '@/components/practice/PracticeFeedback';
 import { localGrade, type LocalGradeResult } from '@/services/localMathGrader';
 import { formatFraction, parseFractions, parseRationalValues, type FractionValue } from '@/utils/fractionBounds';
+import { chatCalculationExplanationSource } from '@/features/explanations/quickExplanation';
 
 interface AIResponseProps {
   messages: Message[];
@@ -778,7 +779,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
     setSimpleExplanationSourceId(sourceId);
     setSimpleExplanationTitle(title || question);
     teaching.openFor(
-      { prompt: question, userAnswer: answer, subject: 'math' },
+      { prompt: chatCalculationExplanationSource(question), userAnswer: answer, subject: 'math' },
       {
         response_language: language === 'fr' ? 'French' : 'English',
         grade_level: userContext?.student_level || 'High School',

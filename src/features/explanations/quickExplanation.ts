@@ -5,6 +5,14 @@ import { isExplicitDivisionTask } from '@/utils/mathTaskIntent';
 export type DivisionSkill = 'exact_integer_division' | 'integer_division_with_remainder' | 'decimal_division' | 'fraction_division' | 'unknown';
 export type VisualPhase = 'show_total' | 'introduce_group_size' | 'form_groups' | 'count_groups' | 'show_remainder' | 'verify';
 export type Division = { dividend: number; divisor: number };
+
+/** In chat, a standalone slash expression is a calculation entered by the learner.
+ * Fraction instructions and compound expressions remain untouched. */
+export function chatCalculationExplanationSource(source: string): string {
+  return /^\s*\d+\s*\/\s*[1-9]\d*\s*(?:=\s*(?:\?|\d+(?:[.,]\d+)?)\s*)?$/.test(source)
+    ? `Calcule ${source.trim()}`
+    : source;
+}
 export interface QuickExplanation {
   sourceSkill: DivisionSkill;
   canonicalSkill: CanonicalSkill;

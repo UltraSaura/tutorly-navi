@@ -3,6 +3,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   buildRestoredDivisionSteps,
+  chatCalculationExplanationSource,
   classifyDivision,
   divisionExplanation,
   isSupportedDivision,
@@ -14,8 +15,24 @@ import { quickFlowTransition } from './QuickExplanationFlow';
 import { QuickExplanationFlow, visibleGroupsForPhase } from './QuickExplanationFlow';
 import { canonicalLessonRoute, resolveCanonicalSkill } from './canonicalSkill';
 import { AnimatedStepCard } from '@/components/kids/AnimatedStepCard';
+import { getStepperExpression } from './stepperExpression';
 
 describe('validated quick division explanation', () => {
+  it('routes standalone chat slash calculations to the division example while preserving fraction tasks', () => {
+    const source = chatCalculationExplanationSource('77/9');
+    expect(isSupportedDivision(source)).toBe(true);
+    expect(parseSourceDivision(source)).toEqual({ dividend: 77, divisor: 9 });
+    expect(classifyDivision(source)).toBe('integer_division_with_remainder');
+    const lesson = safeDivisionExplanation(source, 'fr');
+    expect(validateQuickExplanation(source, lesson, 'fr')).toEqual([]);
+    expect(lesson.workedExample).not.toEqual({ dividend: 77, divisor: 9 });
+    const worked = `${lesson.workedExample.dividend} ÷ ${lesson.workedExample.divisor}`;
+    expect(getStepperExpression(source, worked)).toBe(worked);
+    for (const task of ['Encadrer la fraction 7/3', 'Comparer les fractions 3/4 et 5/8', '1/2 + 1/4']) {
+      expect(chatCalculationExplanationSource(task)).toBe(task);
+      expect(isSupportedDivision(chatCalculationExplanationSource(task))).toBe(false);
+    }
+  });
   it('does not route fraction bounds, comparison, simplification, or bare slash notation to division', () => {
     for (const source of [
       'Encadrer la fraction 7/3',
