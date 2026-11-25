@@ -542,6 +542,90 @@ export function generateFallbackExample(operationType: OperationType): string {
   return generateFallbackExampleWithDigits(operationType, 2);
 }
 
+/** Canonicalize arithmetic spelling before checking the no-original-example rule. */
+function normalizeTeachingMath(text: string): string {
+  return text.normalize('NFKC')
+    .replace(/\\(?:times|cdot)/g, '*').replace(/\\div/g, '/')
+    .replace(/\\(?:d?frac)\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '$1/$2')
+    .replace(/[×·]/g, '*').replace(/[÷:]/g, '/')
+    .replace(/[−–]/g, '-').replace(/(\d)\s*[xX]\s*(?=\d)/g, '$1*')
+    .replace(/[()]/g, '').replace(/,/g, '.');
+}
+
+function teachingCalculations(text: string): Array<{ a: number; b: number; op: string }> {
+  const normalized = normalizeTeachingMath(text);
+  const number = String.raw`[+-]?\d+(?:\.\d+)?`;
+  const operand = `${number}(?:\\s*%|/\\s*${number})?`;
+  const pattern = new RegExp(`(${operand})\\s*([+*/-])\\s*(${operand})`, 'g');
+  const value = (token: string): number => {
+    const clean = token.replace(/\s/g, '');
+    if (clean.endsWith('%')) return Number(clean.slice(0, -1)) / 100;
+    const parts = clean.split('/');
+    return parts.length === 2 ? Number(parts[0]) / Number(parts[1]) : Number(clean);
+  };
+  return [...normalized.matchAll(pattern)].map(match => ({ a: value(match[1]), b: value(match[3]), op: match[2] }));
+}
+
+/** Also reject swapped addition/multiplication and alternate decimal/fraction spelling. */
+export function containsOriginalExercise(source: string, teachingText: string): boolean {
+  const originals = teachingCalculations(source.split('=')[0]);
+  const examples = teachingCalculations(teachingText);
+  if (originals.some(original => examples.some(example => original.op === example.op && (
+    (original.a === example.a && original.b === example.b) ||
+    (['+', '*'].includes(original.op) && original.a === example.b && original.b === example.a)
+  )))) return true;
+  if (originals.length > 0) return false;
+  // Cover non-arithmetic prompts as well, without treating individual shared words as copies.
+  const canonical = (text: string) => normalizeTeachingMath(text).toLowerCase().replace(/[^\p{L}\p{N}+*/%-]/gu, '');
+  const original = canonical(source.split('=')[0]);
+  return original.length > 0 && canonical(teachingText).includes(original);
+}
+
+/** A fixed template can itself be the student's input. Never return that collision. */
+export function generateDifferentExample(source: string): string {
+  const profile = analyzeExerciseProfile(source);
+  const fallback = generateProfileMatchedExample(profile);
+  if (!containsOriginalExercise(source, fallback)) return fallback;
+
+  const match = normalizeTeachingMath(fallback).match(/^\s*(\d+(?:\.\d+)?)\s*([+*/-])\s*(\d+(?:\.\d+)?)/);
+  if (match && ['integer', 'decimal'].includes(profile.numberKind)) {
+    const places = profile.numberKind === 'decimal' ? profile.decimalPlaces : 0;
+    const scale = 10 ** places;
+    const left = Math.round(Number(match[1]) * scale);
+    const right = Math.round(Number(match[3]) * scale);
+    const unitA = places ? 1 : 10 ** profile.operand1TrailingZeros;
+    const unitB = places ? 1 : 10 ** profile.operand2TrailingZeros;
+    const format = (n: number) => (n / scale).toFixed(places).replace('.', profile.decimalSeparator);
+    for (let offsetA = -20; offsetA <= 20; offsetA++) {
+      for (let offsetB = -20; offsetB <= 20; offsetB++) {
+        const a = left + offsetA * unitA;
+        const b = right + offsetB * unitB;
+        if (a <= 0 || b <= 0 || !Number.isSafeInteger(a) || !Number.isSafeInteger(b)) continue;
+        const expression = `${format(a)} ${profile.operator} ${format(b)}`;
+        if (containsOriginalExercise(source, expression)) continue;
+        const candidate = analyzeExerciseProfile(expression);
+        const keys: Array<keyof ExerciseProfile> = ['operationType', 'numberKind', 'operand1Digits', 'operand2Digits', 'decimalPlaces'];
+        if (profile.operationType === 'multiplication') keys.push('operand1TrailingZeros', 'operand2TrailingZeros');
+        if (profile.operationType === 'addition') keys.push('requiresCarry');
+        if (profile.operationType === 'subtraction') keys.push('requiresBorrow');
+        if (profile.operationType === 'division') keys.push('divisionKind');
+        if (keys.some(key => profile[key] !== candidate[key])) continue;
+        const av = a / scale;
+        const bv = b / scale;
+        const result = match[2] === '+' ? av + bv : match[2] === '-' ? av - bv : match[2] === '*' ? av * bv : av / bv;
+        if (result < 0) continue;
+        if (profile.divisionKind === 'remainder') {
+          return `${expression} = ${Math.floor(av / bv)} reste ${av % bv}`;
+        }
+        // Avoid binary floating-point artifacts in the written answer.
+        return `${expression} = ${Number(result.toFixed(Math.min(12, Math.max(places * 2, 6))))}`.replace(/\./g, profile.decimalSeparator);
+      }
+    }
+  }
+  // Failing closed is preferable to ever walking through the student's exercise.
+  throw new Error('No different comparable example available. Please use the curriculum lesson.');
+}
+
 /**
  * Validate that an AI-generated example matches the student's operation type
  * @param studentExercise - The student's original exercise
@@ -585,10 +669,12 @@ export function validateExampleOperationType(
     studentProfile.operationType !== 'subtraction' ||
     studentProfile.requiresBorrow === exampleProfile.requiresBorrow;
 
-  const overallValid = isValidOperation && digitCountValid && zeroStructureValid && numberKindValid && decimalPlacesValid && divisionKindValid && carryPatternValid && borrowPatternValid;
+  const repeatsOriginal = containsOriginalExercise(studentExercise, aiExample);
+  const overallValid = !repeatsOriginal && isValidOperation && digitCountValid && zeroStructureValid && numberKindValid && decimalPlacesValid && divisionKindValid && carryPatternValid && borrowPatternValid;
 
   let reason = '';
-  if (!isValidOperation) reason = 'Different operation type';
+  if (repeatsOriginal) reason = 'Example repeats the original exercise';
+  else if (!isValidOperation) reason = 'Different operation type';
   else if (!numberKindValid) reason = `Different number kind (${exampleProfile.numberKind} vs ${studentProfile.numberKind})`;
   else if (!divisionKindValid) reason = `Different division kind (${exampleProfile.divisionKind} vs ${studentProfile.divisionKind})`;
   else if (!carryPatternValid) reason = `Different carry pattern (${exampleProfile.requiresCarry} vs ${studentProfile.requiresCarry})`;
@@ -602,7 +688,7 @@ export function validateExampleOperationType(
     studentOperation: studentProfile.operationType,
     exampleOperation: exampleProfile.operationType,
     suggestedFix: !overallValid
-      ? generateProfileMatchedExample(studentProfile)
+      ? generateDifferentExample(studentExercise)
       : undefined,
     reason
   };

@@ -368,8 +368,10 @@ export function TwoCards({
   }, [orderedSteps, s.exercise, subjectSlug, topicId, userContext?.learning_style]);
 
   const exampleExpression = React.useMemo(() => {
-    return getStepperExpression(s.exercise || '', stepTextForExpression);
-  }, [s.exercise, stepTextForExpression]);
+    const worked = s.quickExplanation?.workedExample;
+    const example = worked ? `${worked.dividend} ÷ ${worked.divisor}` : stepTextForExpression;
+    return getStepperExpression(s.exercise || '', example);
+  }, [s.exercise, s.quickExplanation, stepTextForExpression]);
   
   // Show interactive stepper only for pure arithmetic problems for young students
   const shouldShowInteractiveStepper = !isGuardian && activeLevel &&
@@ -391,7 +393,7 @@ export function TwoCards({
     setGuidedView(shouldShowInteractiveStepper ? 'interactive' : 'lesson');
   }, [shouldShowInteractiveStepper, s.exercise]);
 
-  if (isSupportedDivision(s.exercise)) {
+  if (isSupportedDivision(s.exercise) && exampleExpression) {
     return (
       <div className="flex min-h-0 flex-col gap-3 pb-2">
         <div className="shrink-0 rounded-xl border bg-muted p-4">

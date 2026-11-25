@@ -1,3 +1,4 @@
+import { assertDifferentTeachingExample, teachingRepeatsOriginal } from "./exampleSafety";
 import { learnerOperation } from '@/features/family/profileRuntime';
 import { generateQuickExplanation, isSupportedDivision, validateQuickExplanation, type QuickExplanation } from "./quickExplanation";
 import React from "react";
@@ -13,12 +14,12 @@ import {
   countOperandDigits,
   detectOperationType as detectOperationTypeFromExpression,
   generateFallbackExampleWithDigits,
-  generateProfileMatchedExample,
+  generateDifferentExample,
   type OperationType,
   validateExampleOperationType,
 } from "@/utils/operationTypeDetector";
 
-const ADAPTIVE_EXPLANATION_CACHE_VERSION = 7;
+const ADAPTIVE_EXPLANATION_CACHE_VERSION = 8;
 
 const ADAPTIVE_TWOCARD_PROMPT = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
@@ -26,6 +27,7 @@ Learning Mode: {{learning_mode}} (If 'kid', use simpler language, more encourage
 
 Guidelines:
 - NEVER use the numbers or data from the student's exercise.
+- This is a hard rule for EVERY step and field: never repeat, solve, or walk through the original exercise, even with different notation or swapped operands. Only use a different worked example. Output is rejected if this rule is violated.
 - NEVER compute or state the final result of the student's exercise.
 - Always start with the universal concept explanation. The learning style changes the support method and practice format, not the academic goal.
 - If {{learning_mode}} is 'kid', use very simple words, shorter sentences, and a playful tone. Avoid technical jargon.
@@ -166,12 +168,9 @@ function getTargetExampleDigits(exerciseContent: string): number {
 }
 
 function normalizeExampleForExercise(exerciseContent: string, example: string): string {
-  const profile = analyzeExerciseProfile(exerciseContent);
   const validation = validateExampleOperationType(exerciseContent, example);
-  const fallback = generateProfileMatchedExample(profile);
-
   if (!validation.isValid) {
-    return fallback;
+    return generateDifferentExample(exerciseContent);
   }
 
   return example;
@@ -179,8 +178,6 @@ function normalizeExampleForExercise(exerciseContent: string, example: string): 
 
 function normalizeStepsForExercise(exerciseContent: string, steps?: Step[] | null): Step[] | undefined {
   if (!Array.isArray(steps) || steps.length === 0) return steps ?? undefined;
-
-  const expectedExample = generateProfileMatchedExample(analyzeExerciseProfile(exerciseContent));
 
   return steps.map((step) => {
     if ((step.kind !== "example" && step.kind !== "strategy") || !step.body?.trim()) {
@@ -192,7 +189,7 @@ function normalizeStepsForExercise(exerciseContent: string, steps?: Step[] | nul
     if (!expressionMatch) return step;
 
     const currentExpression = expressionMatch[1];
-    const safeExample = normalizeExampleForExercise(exerciseContent, currentExpression) || expectedExample;
+    const safeExample = normalizeExampleForExercise(exerciseContent, currentExpression);
     if (!safeExample || safeExample === currentExpression) return step;
 
     const labeledBody = /\b(exemple|example)\b/i.test(body)
@@ -307,15 +304,6 @@ async function saveExplanationToCache(
     console.error("[TwoCardTeaching] Error saving explanation:", err);
     return null;
   }
-}
-
-function parseOpAndOperands(text: string): { symbol: string; a: string; b: string } | null {
-  const cleaned = text.replace(/\s+/g, " ").trim();
-  const m = cleaned.match(/(-?\d+(?:[.,]\d+)?)(?:\s*)([×*÷\/+\-])(?:\s*)(-?\d+(?:[.,]\d+)?)/);
-  if (m) {
-    return { a: m[1], symbol: m[2], b: m[3] };
-  }
-  return null;
 }
 
 const VALID_STEP_ICONS = new Set(["lightbulb", "magnifier", "divide", "checklist", "warning", "target"]);
@@ -517,6 +505,7 @@ export function useTwoCardTeaching() {
     console.log("[useTwoCardTeaching] Current sections state before update:", sections);
     console.log("[useTwoCardTeaching] New sections type:", typeof newSections);
     console.log("[useTwoCardTeaching] New sections keys:", newSections ? Object.keys(newSections) : "null");
+    if (newSections) assertDifferentTeachingExample(newSections.exercise, newSections);
     setSections(newSections);
     setTimeout(() => {
       console.log("[useTwoCardTeaching] Sections state after update:", sections);
@@ -616,9 +605,10 @@ export function useTwoCardTeaching() {
         setLoading(false);
         return;
       }
-      if (cachedResult) {
+      if (cachedResult && !teachingRepeatsOriginal(exercise_content, cachedResult.sections)) {
         const normalizedCachedSections = {
           ...cachedResult.sections,
+          exercise: exercise_content,
           example: normalizeExampleForExercise(exercise_content, cachedResult.sections.example || ""),
           steps: normalizeStepsForExercise(exercise_content, cachedResult.sections.steps),
         };
@@ -643,7 +633,8 @@ export function useTwoCardTeaching() {
             console.error("[TwoCardTeaching] Similar cache lookup failed:", similarError);
           } else {
             const reusableCandidate = (similarExplanations ?? []).find(
-              (candidate) => candidate.exercise_content !== exercise_content && hasMatchingReuseMeta(candidate, reuseMeta),
+              (candidate) => candidate.exercise_content !== exercise_content && hasMatchingReuseMeta(candidate, reuseMeta) &&
+                !teachingRepeatsOriginal(exercise_content, candidate.explanation_data),
             );
 
             if (reusableCandidate?.explanation_data && typeof reusableCandidate.explanation_data === "object") {
@@ -742,6 +733,7 @@ export function useTwoCardTeaching() {
       }
 
       const sections = result.sections || {};
+      assertDifferentTeachingExample(exercise_content, { ...sections, steps: normalizeSteps(result.steps || sections.steps) });
       sections.steps = normalizeStepsForExercise(exercise_content, normalizeSteps(result.steps || sections.steps));
       const steps = sections.steps
         || synthesizeAdaptiveStepsFromLegacySections(sections, learning_style, response_language);
@@ -754,13 +746,6 @@ export function useTwoCardTeaching() {
       if (studentOp.type !== "unknown" && exampleOp.type !== studentOp.type) {
         console.warn(`⚠️ Operation mismatch - Expected: ${studentOp.type}, Got: ${exampleOp.type}`);
         console.warn("Database prompt may need refinement");
-      }
-
-      const exerciseParts = parseOpAndOperands(exercise_content);
-      const exampleParts = parseOpAndOperands(sections.example || "");
-
-      if (exerciseParts && exampleParts && exerciseParts.a === exampleParts.a && exerciseParts.b === exampleParts.b) {
-        console.warn("⚠️ Example uses same numbers as exercise - prompt needs refinement");
       }
 
       const explanationSections: TeachingSections = {
