@@ -49,7 +49,7 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 
 - **Goal:** Original Photomath-style mathematical decomposition with explicit, validated steps and age-appropriate French reasoning, followed by learner participation. No competitor artwork, code, or proprietary animation is used.
 - **Mathematics:** `equationSolver.ts` supports bounded integer-coefficient equations **ax + b = dx + c** with a unique rational solution, including negative coefficients, variables on both sides, and fractions as answers. It normalizes fractions exactly and checks every integer-coefficient transformation for algebraic equivalence. Verification substitutes the rational answer in both original members without rounding.
-- **Animation:** `EquationDecompositionActivity.tsx` + `equationAnimations.css` show the original left/right members, an identical operation on each, then the transformed equation with a motion-safe reveal. This is **not** yet animated individual term cancellation or a full symbolic expression morph.
+- **Animation (IM-D02.1):** `EquationDecompositionActivity.tsx` + `equationTermVisual.ts` + `equationAnimations.css` show the original left/right members, the same operation on both, **individually highlighted and animated cancellation pairs**, the remaining terms that must combine, then the transformed equation. A negative coefficient is explicitly canceled by dividing both members by that coefficient; exact substitution is shown separately. CSS motion is disabled for `prefers-reduced-motion: reduce`. This is **not** yet full spatial token morphing with measured start/end positions, drag-to-cancel, or arbitrary-expression algebra.
 - **Modes:** **Comprendre** (manual operation → result → explanation, previous/replay); **Résoudre ensemble** (choose the valid next operation, targeted feedback); **M’entraîner seul** (strict integer/fraction input, sign-error feedback, three hints). Viewing a worked step or using guidance marks the activity as assisted; independent success requires a first-attempt solo answer without help.
 - **Curriculum:** Samples at 5e, 4e, 3e are illustrative and **not teacher-approved curriculum mappings**. Content intended for students around age 11+; no automatic age assignment.
 - **Lesson V2.0:** **YES**, through the existing validated `interactive_activity` block and host; no published lessons updated.
@@ -57,10 +57,10 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 - **Homework explanation:** **CANDIDATE**, no Universal Tutor integration.
 - **Teacher/Admin:** **CANDIDATE**, no picker or approval workflow.
 - **Standalone demo:** **YES in source** (three equation tabs); deployed URL may lag or require authentication.
-- **Tests:** `equationSolver.test.ts` exercises thousands of bounded cases, exact rational arithmetic, negative and both-sided equations; browser QA includes animations, wrong answers, hints, mobile widths and standalone preview smoke. **PASS:** 84 isolated checks (375px/447px/1280px), 18 real-player checks, standalone demo smoke, unit, lint, typecheck and build in [run #45714358708](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708).
+- **Tests:** `equationSolver.test.ts` exercises thousands of bounded cases, exact rational arithmetic, negative and both-sided equations; `equationTermVisual.test.ts` checks inverse-term pairs and exact substitutions across a bounded grid; browser QA now asserts individual canceled terms, grouping, fractional substitution and reduced-motion behavior at 375/447/1280px. **Previous stable baseline:** 84 isolated checks, 18 real-player checks and standalone demo smoke passed in [run #45714358708](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708). **IM-D02.1 new changes require their own CI pass before they can be marked verified.**
 - **Limits:** Not a camera scanner, OCR pipeline, general CAS, arbitrary expression parser, quadratic solver, or universal Photomath replacement. Only the specified linear template is supported. No student data persistence, automated generator mapping, voice, or analytics integration.
 
-**Next iteration:** Validate on real student/teacher sessions; improve term-level animated cancellation and accessible mathematical notation; add structured authoring and safe objective mapping before expanding the solver to other equation families.
+**Next iteration:** Validate IM-D02.1 with teachers and students, then evaluate true position-to-position token morphing and accessible mathematical notation; add structured authoring and safe objective mapping before expanding to other equation families.
 
 ## 2. Terminology and deployment status
 
@@ -166,8 +166,9 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 | `src/features/explanation-v2/LinearFunctionActivity.tsx` | Affine function demonstration / exploration / challenge modes, live equation, +/- controls |
 | `src/features/explanation-v2/LineFitActivity.tsx` | Data-fitting task, sliders, live squared-error and regression comparison |
 | `src/features/explanation-v2/equationSolver.ts` | Exact linear-equation decomposition, rational normalization, equivalence and substitution checks |
+| `src/features/explanation-v2/equationTermVisual.ts` | Derived left/right cancellation token storyboard with explicit inverse pairs, grouping and substitution |
 | `src/features/explanation-v2/EquationDecompositionActivity.tsx` | Three-mode worked equation animation and guided/solo response UI |
-| `src/features/explanation-v2/equationAnimations.css` | Original transformation reveal with reduced-motion support |
+| `src/features/explanation-v2/equationAnimations.css` | Original transformation reveal, term-level cancellation/combination, reduced-motion support |
 | `src/features/explanation-v2/math.ts` | Exact rational math, coordinate transforms, strict grading, linear regression and squared error |
 | `src/features/explanation-v2/pedagogicalQuestions.ts` | Structured, level-conscious question wording for fraction/coordinate tasks |
 | `src/features/explanation-v2/cm2FractionLesson.ts` | Self-contained sample V2.0 lesson (not published) |
