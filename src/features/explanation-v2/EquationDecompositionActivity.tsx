@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { equationSteps, parseRational, rationalText, satisfiesEquation, solutionOf, type EquationTransformation } from './equationSolver';
+import { equationTermVisual, type EquationTermToken } from './equationTermVisual';
 import './equationAnimations.css';
 
 type Spec = Extract<InteractiveActivitySpec, { kind: 'equation-decomposition' }>;
@@ -14,8 +15,20 @@ type Mode = 'understand' | 'together' | 'solo';
 const control = 'min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 disabled:opacity-50';
 const action = 'min-h-11 rounded-xl bg-teal-600 px-5 py-2 font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-900 disabled:opacity-50';
 
+function TermTokens({ tokens, side }: { tokens: EquationTermToken[]; side: 'left' | 'right' }) {
+  return <div data-testid={'equation-terms-' + side} className="flex min-h-12 flex-wrap items-center justify-center gap-1.5">
+    {tokens.map(item => <span key={item.key}
+      data-testid={item.role === 'cancel' ? 'equation-cancel-token' : item.role === 'combine' ? 'equation-combine-token' : undefined}
+      aria-label={item.role === 'cancel' ? 'Terme annulé : ' + item.text : item.role === 'combine' ? 'Terme à regrouper : ' + item.text : undefined}
+      className={'equation-term equation-term--' + item.role + ' inline-flex min-h-10 items-center rounded-md border px-2 py-1 text-base font-bold sm:text-lg'}>
+      {item.text}
+    </span>)}
+  </div>;
+}
+
 function TransformationVisual({ step, stage }: { step: EquationTransformation; stage: 0 | 1 | 2 }) {
   const [left, right] = step.before.split(' = ');
+  const visual = equationTermVisual(step);
   return <div data-testid="equation-transform" className="space-y-3 rounded-xl bg-slate-50 p-3 sm:p-4">
     <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Équation avant l’opération</p>
     <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-center">
@@ -34,6 +47,16 @@ function TransformationVisual({ step, stage }: { step: EquationTransformation; s
       <span aria-hidden="true" className="text-teal-800">↔</span>
       <div className="rounded-lg border border-amber-300 bg-amber-100 px-2 py-3 font-bold text-amber-950">{step.rightOperation}</div>
       <p className="col-span-3 text-xs font-semibold text-amber-900">{step.id === 'verify' ? 'On remplace x par sa valeur partout où il apparaît.' : 'La même opération est appliquée aux deux membres.'}</p>
+    </div>}
+    {stage >= 1 && <div data-testid="equation-term-animation" className="equation-term-panel space-y-2 rounded-xl border border-amber-200 bg-white p-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-amber-950">{step.id === 'verify' ? 'Remplacer x dans chaque membre' : 'Observer les termes qui s’annulent ou se regroupent'}</p>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+        <TermTokens tokens={visual.left} side="left" />
+        <span aria-hidden="true" className="text-center text-xl font-black text-teal-800">=</span>
+        <TermTokens tokens={visual.right} side="right" />
+      </div>
+      <p data-testid="equation-cancellation-explanation" className="text-sm leading-6 text-slate-800">{visual.caption}</p>
+      {visual.cancellationSide !== 'none' && <p className="text-xs font-semibold text-amber-900">Les termes barrés s’annulent. Les termes bleus se regroupent ou se calculent.</p>}
     </div>}
     {stage === 2 && <div data-testid="equation-after" className="equation-after space-y-2 rounded-xl border border-teal-200 bg-teal-50 p-4 text-center">
       <p className="text-xs font-bold uppercase text-teal-900">Résultat de cette étape</p>
