@@ -106,6 +106,11 @@ function ArithmeticQuizSession({ exercise, initialState, language = 'fr', disabl
     <h3 className="text-xl font-bold">{fr ? 'Série terminée' : 'Deck complete'}</h3>
     <p>{fr ? `${evaluation.correctCount} réponses correctes sur ${evaluation.total}.` : `${evaluation.correctCount} correct answers out of ${evaluation.total}.`}</p>
     <p className="flex items-center gap-2 text-sm text-slate-600"><Clock3 aria-hidden="true" className="h-4 w-4" />{fr ? 'Temps écoulé' : 'Elapsed time'} : {elapsedLabel(elapsedSeconds)}</p>
+    {evaluation.correctCount < evaluation.total && <p className="rounded-xl bg-blue-50 p-4 text-sm leading-relaxed text-blue-950">
+      {evaluation.total - evaluation.correctCount === 1
+        ? (fr ? 'Tu as manqué un calcul. Ouvre sa méthode et entraîne-toi encore pour progresser.' : 'You missed one calculation. Open its method and practise it again to improve.')
+        : (fr ? `Tu as manqué ${evaluation.total - evaluation.correctCount} calculs. Revois leurs méthodes et étudie les leçons associées si elles sont disponibles, puis entraîne-toi à nouveau.` : `You missed ${evaluation.total - evaluation.correctCount} calculations. Review their methods and study any available related lessons, then practise again.`)}
+    </p>}
     {evaluation.results.every(result => result.correct) && <p className="rounded-xl bg-emerald-50 p-4 text-emerald-900">{fr ? 'Tous les calculs de cette série sont réussis.' : 'Every calculation in this deck is correct.'}</p>}
     <div className="space-y-3">
       <h4 className="font-bold">{fr ? 'Résultats des calculs' : 'Calculation results'}</h4>
@@ -128,7 +133,6 @@ function ArithmeticQuizSession({ exercise, initialState, language = 'fr', disabl
           </div>
           <p className="font-mono text-lg font-bold">{formatMentalCalculation(asMentalCalculation(calculation))}</p>
           <p className="text-sm text-slate-700">{fr ? 'Ta réponse' : 'Your answer'} : {result.selected}</p>
-          {!result.correct && <p className="text-sm font-semibold text-emerald-800">{fr ? 'Réponse correcte' : 'Correct answer'} : {arithmeticProblemAnswer(calculation)}</p>}
           {!result.correct && <>
             <button type="button" disabled={disabled} className={`${button} border-slate-300 bg-white`} aria-expanded={reviewOpen.includes(result.id)} onClick={() => { setReviewOpen(current => current.includes(result.id) ? current.filter(id => id !== result.id) : [...current, result.id]); }}>{fr ? 'Voir la méthode' : 'Show method'}</button>
             {reviewOpen.includes(result.id) && <div className="space-y-2 rounded-lg bg-white/80 p-3"><p className="text-sm leading-relaxed">{explanation(calculation, language)}</p>{facts.length > 0 && <details><summary className="min-h-11 cursor-pointer py-3 font-semibold">{fr ? 'Table de multiplication associée' : 'Related multiplication table'}</summary><ul className="grid grid-cols-2 gap-2 text-sm">{facts.map(fact => <li key={fact.multiplier}>{calculation.right} × {fact.multiplier} = {fact.product}</li>)}</ul></details>}</div>}

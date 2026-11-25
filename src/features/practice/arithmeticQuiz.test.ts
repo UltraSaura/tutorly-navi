@@ -129,7 +129,9 @@ describe('arithmetic learner display', () => {
     }
     expect(html.match(/data-result="correct"/g)).toHaveLength(2);
     expect(html.match(/data-result="incorrect"/g)).toHaveLength(2);
-    expect(html).toContain('Réponse correcte');
+    expect(html).not.toContain('Réponse correcte');
+    expect(html).not.toContain('9 − 3 = 6');
+    expect(html).toContain('Tu as manqué 2 calculs');
     expect(html).toContain('Résultats des calculs');
   });
 });
