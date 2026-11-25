@@ -20,3 +20,9 @@ export function getStepperExpression(exerciseText: string, exampleText?: string)
     return '';
   }
 }
+
+/** Local worked example for straightforward arithmetic, independent of the provider. */
+export function getLocalArithmeticExample(source: string): string {
+  if (!/^\s*\d+\s*[+\-×*]\s*\d+\s*(?:=\s*\??\s*)?$/.test(source)) return '';
+  return getStepperExpression(source);
+}

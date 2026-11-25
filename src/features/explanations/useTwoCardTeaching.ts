@@ -1,5 +1,7 @@
 import { assertDifferentTeachingExample, teachingRepeatsOriginal } from "./exampleSafety";
 import { learnerOperation } from '@/features/family/profileRuntime';
+import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
+import { getLocalArithmeticExample } from './stepperExpression';
 import { generateQuickExplanation, isSupportedDivision, validateQuickExplanation, type QuickExplanation } from "./quickExplanation";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -575,6 +577,24 @@ export function useTwoCardTeaching() {
         const deterministic = buildFractionBoundsExplanation(exercise_content, student_answer, response_language);
         if (!isCurrentRequest()) return;
         debugSetSections(deterministic);
+        setLoading(false);
+        return;
+      }
+
+      // For younger learners, use the existing digit-matched example templates
+      // directly. The stepper checks that the chosen example differs from the
+      // original, including swapped multiplication operands.
+      const localExample = isUnder11YearsOld(grade_level) ? getLocalArithmeticExample(exercise_content) : '';
+      if (localExample) {
+        const french = /^fr/i.test(response_language);
+        const localSections: TeachingSections = {
+          exercise: exercise_content, concept: '', example: localExample, method: '', currentExercise: '',
+          pitfall: '', check: '', practice: '', parentHelpHint: '',
+          steps: [{ title: french ? 'Un autre exemple' : 'A different example', body: localExample, kind: 'example', icon: 'magnifier' }],
+        };
+        assertDifferentTeachingExample(exercise_content, localSections);
+        if (!isCurrentRequest()) return;
+        setSections(localSections);
         setLoading(false);
         return;
       }
