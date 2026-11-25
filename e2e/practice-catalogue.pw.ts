@@ -121,13 +121,13 @@ test('AI topic quiz generation exposes focused mental-calculation activities and
   const settings = dialog.getByTestId('mental-calculation-settings');
   await expect(settings).toBeVisible();
   await expect(dialog.getByText('Calculations in the set', { exact: true })).toBeVisible();
-  await settings.getByText('Specify operations or tables', { exact: true }).click();
+  await settings.getByText('Choose operations or tables', { exact: true }).click();
   await settings.getByLabel('Multiplication', { exact: true }).check();
-  await settings.getByRole('combobox').nth(0).click();
-  await page.getByRole('option', { name: '2 digits', exact: true }).click();
   await expect(settings.getByText('Optional multiplication/division tables', { exact: true })).toBeVisible();
   await expect(settings.getByRole('checkbox', { name: '10' })).toBeEnabled();
   await expect(settings.getByRole('checkbox', { name: '11' })).toHaveCount(0);
+  await settings.getByRole('checkbox', { name: '10' }).check();
+  await expect(settings.getByRole('combobox').nth(0)).toContainText('2 digits');
 });
 
 test('a 5ème learner cannot open a CP-only bank even through a direct topic quiz URL', async ({ page }) => {

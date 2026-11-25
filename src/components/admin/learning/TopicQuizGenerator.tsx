@@ -77,8 +77,8 @@ const QUESTION_TYPES = [
 ];
 
 const QUESTION_TYPE_GROUPS = [
-  { id: 'core', label: 'Core question formats', description: 'Common ways to answer curriculum questions.' },
   { id: 'mental', label: 'Mental calculation', description: 'Create a focused set of calculations using the chosen topic and school level.' },
+  { id: 'core', label: 'Core question formats', description: 'Common ways to answer curriculum questions.' },
   { id: 'guided', label: 'Guided number exercises', description: 'Structured models for counting and mental strategies.' },
   { id: 'visual', label: 'Visual and interactive formats', description: 'Use diagrams, matching, sliders, or expression tools.' },
 ] as const;
@@ -400,18 +400,33 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
   const arithmeticBands = selectedTopicIds.flatMap((topicId) => {
     const topic = topics.find((item) => item.id === topicId);
-    return topic?.curriculum_level_code ? [arithmeticDifficulty(topic.curriculum_level_code)] : [];
+    const levelCode = topic?.curriculum_level_code || selectedSchoolLevel;
+    return levelCode ? [arithmeticDifficulty(levelCode)] : [];
   });
   const arithmeticMaxDigits = arithmeticBands.length
     ? Math.min(...arithmeticBands.map((band) => band.maxDigits))
     : 1;
-  const arithmeticMaxTable = normalizeSchoolLevel(selectedTopicLevel) === 'ce1' ? 10 : 12;
+  const arithmeticMaxTable = normalizeSchoolLevel(selectedTopicLevel ?? selectedSchoolLevel) === 'ce1' ? 10 : 12;
   const allowedArithmeticOperations = MENTAL_OPERATIONS.filter((operation) =>
     arithmeticBands.length > 0 && arithmeticBands.every((band) => band.operations.includes(operation))
   );
   const selectedArithmeticType = questionTypes.find((type) => type === 'calculation-race' || type === 'number-flashcards');
 
-  const coordinateContext = { schoolLevels: selectedTopicLevel ? [selectedTopicLevel] : [], topics: selectedTopicIds.map(id => { const topic = topics.find(topic => topic.id === id); const category = categories.find(category => category.id === topic?.category_id); return { countryCode: topic?.curriculum_country_code, levelCode: topic?.curriculum_level_code, category: category?.name, subject: subjects.find(subject => subject.id === category?.subject_id)?.name }; }) };
+  const selectedSubjectName = subjects.find((subject) => subject.id === selectedSubjectId)?.name ?? null;
+  const coordinateContext = {
+    schoolLevels: selectedTopicLevel ? [selectedTopicLevel] : [],
+    subject: selectedSubjectName,
+    topics: selectedTopicIds.map((id) => {
+      const topic = topics.find((item) => item.id === id);
+      const category = categories.find((item) => item.id === topic?.category_id);
+      return {
+        countryCode: topic?.curriculum_country_code || selectedCountryCode,
+        levelCode: topic?.curriculum_level_code || selectedSchoolLevel,
+        category: category?.name,
+        subject: subjects.find((subject) => subject.id === category?.subject_id)?.name ?? selectedSubjectName,
+      };
+    }),
+  };
   const arithmeticEligible = ['calculation-race', 'number-flashcards'].some((type) => canAuthorExerciseType(type, coordinateContext));
   useEffect(() => {
     if (selectedArithmeticType && selectedTopicIds.length > 0 && !arithmeticEligible) {
@@ -1277,6 +1292,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
                 <div className={`space-y-3 ${mixMode ? 'opacity-40 pointer-events-none' : ''}`}>
                   {QUESTION_TYPE_GROUPS.map((group) => (
+                    (selectedArithmeticType && group.id !== 'mental') ? null :
                     <section key={group.id} className="space-y-1.5">
                       <div className="border-b pb-1">
                         <h3 className="text-xs font-bold">{ui(group.label)}</h3>
@@ -1325,13 +1341,13 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 {selectedArithmeticType && <section className="mt-3 space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3" data-testid="mental-calculation-settings">
                   <div><h3 className="text-sm font-bold">{ui('Calculation set settings')}</h3><p className="text-xs text-muted-foreground">{ui('The selected topic and its curriculum objectives guide which facts the AI generates. Each generated bank question is one saved activity with the selected number of calculations.')}</p></div>
                   <fieldset className="space-y-2"><legend className="text-xs font-semibold">{ui('Calculation scope')}</legend>
-                    <label className="flex items-start gap-2 rounded-lg border bg-white p-2.5 text-xs"><input type="radio" name="arithmetic-source" checked={arithmeticSource === 'curriculum'} onChange={() => setArithmeticSource('curriculum')} /><span><strong>{ui('Follow selected topic and curriculum')}</strong><span className="block text-muted-foreground">{ui('Let the AI use the selected topic, objectives, and school level to choose operations and table facts.')}</span></span></label>
-                    <label className="flex items-start gap-2 rounded-lg border bg-white p-2.5 text-xs"><input type="radio" name="arithmetic-source" checked={arithmeticSource === 'custom'} onChange={() => { setArithmeticSource('custom'); if (arithmeticOperations.length === 0) setArithmeticOperations(allowedArithmeticOperations); }} /><span><strong>{ui('Specify operations or tables')}</strong><span className="block text-muted-foreground">{ui('Use this when you want to practise a particular operation or multiplication/division table.')}</span></span></label>
+                    <label className="flex items-start gap-2 rounded-lg border bg-white p-2.5 text-xs"><input type="radio" name="arithmetic-source" checked={arithmeticSource === 'curriculum'} onChange={() => setArithmeticSource('curriculum')} /><span><strong>{ui('Follow selected topic and curriculum')}</strong><span className="block text-muted-foreground">{ui('Let the AI use the selected topic, objectives, and school level to choose operations and table facts.')}</span><span className="mt-1 block font-medium text-emerald-800">{ui('Curriculum operations')}: {allowedArithmeticOperations.map((operation) => ui(({ addition: 'Addition', subtraction: 'Subtraction', multiplication: 'Multiplication', division: 'Division' } as Record<MentalOperation, string>)[operation])).join(', ') || ui('No operations are available for this topic level.')}</span></span></label>
+                    <label className="flex items-start gap-2 rounded-lg border bg-white p-2.5 text-xs"><input type="radio" name="arithmetic-source" checked={arithmeticSource === 'custom'} onChange={() => { setArithmeticSource('custom'); if (arithmeticOperations.length === 0) setArithmeticOperations(allowedArithmeticOperations); }} /><span><strong>{ui('Choose operations or tables')}</strong><span className="block text-muted-foreground">{ui('Choose specific operations or multiplication/division tables for this activity.')}</span></span></label>
                   </fieldset>
                   <div className="grid grid-cols-2 gap-2"><div><Label className="text-xs">{ui('Maximum digits · first number')}</Label><Select value={String(Math.min(arithmeticLeftDigits, arithmeticMaxDigits))} onValueChange={(value) => updateArithmeticDigitLimit('left', Number(value))}><SelectTrigger className="h-9 bg-white"><SelectValue /></SelectTrigger><SelectContent>{Array.from({ length: arithmeticMaxDigits }, (_, index) => index + 1).map((digits) => <SelectItem key={digits} value={String(digits)}>{digits} {digits === 1 ? ui('digit') : ui('digits')}</SelectItem>)}</SelectContent></Select></div><div><Label className="text-xs">{ui('Maximum digits · second number')}</Label><Select value={String(Math.min(arithmeticRightDigits, arithmeticMaxDigits))} onValueChange={(value) => updateArithmeticDigitLimit('right', Number(value))}><SelectTrigger className="h-9 bg-white"><SelectValue /></SelectTrigger><SelectContent>{Array.from({ length: arithmeticMaxDigits }, (_, index) => index + 1).map((digits) => <SelectItem key={digits} value={String(digits)}>{digits} {digits === 1 ? ui('digit') : ui('digits')}</SelectItem>)}</SelectContent></Select></div></div>
                   {arithmeticSource === 'custom' && <div className="space-y-2 rounded-lg border bg-white p-2.5">
                     <fieldset><legend className="mb-1 text-xs font-semibold">{ui('Operations allowed at this level')}</legend><div className="grid grid-cols-2 gap-1.5">{MENTAL_OPERATIONS.map((operation) => <label key={operation} className={`flex min-h-9 items-center gap-2 rounded-md border px-2 text-xs ${allowedArithmeticOperations.includes(operation) ? '' : 'cursor-not-allowed opacity-40'}`}><Checkbox checked={arithmeticOperations.includes(operation)} disabled={!allowedArithmeticOperations.includes(operation)} onCheckedChange={(checked) => setArithmeticOperations((current) => checked ? [...new Set([...current, operation])] : current.filter((item) => item !== operation))} />{ui(({ addition: 'Addition', subtraction: 'Subtraction', multiplication: 'Multiplication', division: 'Division' } as Record<MentalOperation, string>)[operation])}</label>)}</div></fieldset>
-                    {(arithmeticOperations.includes('multiplication') || arithmeticOperations.includes('division')) && <fieldset><legend className="mb-1 text-xs font-semibold">{ui('Optional multiplication/division tables')}</legend><p className="mb-1.5 text-[11px] text-muted-foreground">{ui('If none are selected, the AI follows the chosen topic and objectives.')}</p><div className="flex flex-wrap gap-1.5">{Array.from({ length: arithmeticMaxTable - 1 }, (_, index) => index + 2).map((table) => { const maxOperand = Math.max(10 ** Math.min(arithmeticLeftDigits, arithmeticMaxDigits) - 1, 10 ** Math.min(arithmeticRightDigits, arithmeticMaxDigits) - 1); return <label key={table} className={`flex min-h-9 items-center gap-1 rounded-md border px-2 text-xs ${table > maxOperand ? 'opacity-40' : ''}`}><Checkbox checked={arithmeticTables.includes(table)} disabled={table > maxOperand} onCheckedChange={(checked) => setArithmeticTables((current) => checked ? [...new Set([...current, table])] : current.filter((value) => value !== table))} />{table}</label>; })}</div></fieldset>}
+                    {(arithmeticOperations.includes('multiplication') || arithmeticOperations.includes('division')) && <fieldset><legend className="mb-1 text-xs font-semibold">{ui('Optional multiplication/division tables')}</legend><p className="mb-1.5 text-[11px] text-muted-foreground">{ui('If none are selected, the AI follows the chosen topic and objectives.')}</p><div className="flex flex-wrap gap-1.5">{Array.from({ length: arithmeticMaxTable - 1 }, (_, index) => index + 2).map((table) => { const tableFitsLevel = String(table).length <= arithmeticMaxDigits; return <label key={table} className={`flex min-h-9 items-center gap-1 rounded-md border px-2 text-xs ${!tableFitsLevel ? 'opacity-40' : ''}`}><Checkbox checked={arithmeticTables.includes(table)} disabled={!tableFitsLevel} onCheckedChange={(checked) => { setArithmeticSource('custom'); setArithmeticTables((current) => checked ? [...new Set([...current, table])] : current.filter((value) => value !== table)); if (checked) { const digits = String(table).length; setArithmeticLeftDigits((current) => Math.max(current, digits)); setArithmeticRightDigits((current) => Math.max(current, digits)); if (!arithmeticOperations.includes('multiplication') && allowedArithmeticOperations.includes('multiplication')) setArithmeticOperations((current) => [...new Set([...current, 'multiplication' as const])]); } }} />{table}</label>; })}</div></fieldset>}
                   </div>}
                   {arithmeticSource === 'custom' && arithmeticOperations.length === 0 && <p role="alert" className="text-xs font-medium text-red-700">{ui('Choose at least one operation to generate this set.')}</p>}
                 </section>}
