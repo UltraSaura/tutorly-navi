@@ -12,3 +12,38 @@
   from { opacity: 0; transform: translateY(-12px) scale(.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* IM-D02.1: show actual equation terms, not only a final answer card.
+   Struck-through terms are exact additive inverses, or coefficient/divisor pairs.
+   Blue terms are combined or evaluated; remaining terms stay in place.
+   At narrow widths the groups wrap independently without overflowing. */
+.equation-term { position: relative; max-width: 100%; overflow-wrap: anywhere; }
+.equation-term--cancel { border-color: #f59e0b; background: #fef3c7; color: #78350f; }
+.equation-term--combine { border-color: #67e8f9; background: #ecfeff; color: #164e63; }
+.equation-term--keep { border-color: #cbd5e1; background: #f8fafc; color: #334155; }
+.equation-term--substitute { border-color: #5eead4; background: #f0fdfa; color: #115e59; }
+.equation-term--cancel::after {
+  content: ''; position: absolute; top: 50%; left: 4px; right: 4px;
+  height: 2px; background: #b45309; transform: rotate(-8deg);
+  transform-origin: left center;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .equation-term-panel { animation: equation-operation-enter 360ms ease-out both; }
+  .equation-term--cancel { animation: equation-cancel-fade 700ms ease-in-out both; }
+  .equation-term--cancel::after { animation: equation-cancel-line 550ms ease-out both; }
+  .equation-term--combine { animation: equation-combine-slide 650ms ease-out both; }
+  .equation-term--substitute { animation: equation-result-enter 450ms ease-out both; }
+}
+@keyframes equation-cancel-line {
+  from { transform: rotate(-8deg) scaleX(0); }
+  to { transform: rotate(-8deg) scaleX(1); }
+}
+@keyframes equation-cancel-fade {
+  0%, 40% { opacity: 1; }
+  100% { opacity: .55; }
+}
+@keyframes equation-combine-slide {
+  0% { transform: translateX(0); }
+  55% { transform: translateX(7px); }
+  100% { transform: translateX(0); }
+}
