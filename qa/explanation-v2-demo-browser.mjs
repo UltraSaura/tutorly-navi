@@ -29,6 +29,16 @@ try {
   await page.getByTestId('algebra-tiles-activity').waitFor();
   await page.getByRole('button', { name: '4e · Fonctions' }).click();
   await page.getByTestId('linear-function-activity').waitFor();
+  await page.getByRole('button', { name: '5e · Équations (simple)' }).click();
+  await page.getByTestId('equation-decomposition-activity').waitFor();
+  await page.getByRole('button', { name: 'Animer l’opération' }).click();
+  await page.getByRole('button', { name: 'Voir le résultat' }).click();
+  assert.match(await page.getByTestId('equation-after').innerText(), /3x = 15/);
+  await page.getByRole('button', { name: '4e · Équations (deux côtés)' }).click();
+  await page.getByTestId('equation-decomposition-activity').waitFor();
+  await page.getByRole('button', { name: '3e · Équations (fraction)' }).click();
+  await page.getByTestId('equation-decomposition-activity').waitFor();
+  console.log('PASS production-built demo includes IM-D02 equation decomposition examples');
   await page.getByRole('button', { name: '2nde · Ajustement' }).click();
   await page.getByTestId('line-fit-activity').waitFor();
   console.log('PASS production-built demo includes algebra tiles, function graphs and data fitting');
