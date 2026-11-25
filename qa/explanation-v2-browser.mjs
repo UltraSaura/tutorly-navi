@@ -220,6 +220,9 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('equation-demo-progress').innerText(), /1 sur 3/);
       assert.match(await page.getByTestId('equation-transform').innerText(), /3x \+ 5/);
       assert.equal(await page.getByTestId('equation-after').count(), 0);
+      assert.equal(await page.getByTestId('equation-transform').getByText('Membre gauche').count(), 0);
+      assert.equal(await page.getByTestId('equation-transform').getByText('Membre droit').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Comprendre' }).getAttribute('aria-pressed'), 'true');
       await page.getByRole('button', { name: 'Animer l’opération' }).click();
       const operations = await page.getByTestId('equation-operation').locator('div').allInnerTexts();
       assert.equal(operations[0], operations[1]);
@@ -229,6 +232,8 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('equation-cancellation-explanation').innerText(), /font 0 à gauche/);
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /3x = 15/);
+      assert.equal(await page.getByTestId('equation-operation').count(), 0);
+      assert.equal(await page.getByTestId('equation-term-animation').count(), 0);
       await page.getByRole('button', { name: 'Précédent' }).click();
       assert.equal(await page.getByTestId('equation-after').count(), 0);
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
@@ -237,6 +242,11 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Animer l’opération' }).click();
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /x = 5/);
+      await page.screenshot({ path: dir + '/equation-focused-' + width + '.png', fullPage: true });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+      await page.getByText('Pourquoi cette étape ?').click();
+      assert.equal(await page.locator('details').filter({ hasText: 'Pourquoi cette étape ?' }).getAttribute('open'), '');
+      await page.getByText('Pourquoi cette étape ?').click();
     });
     await run('equation guided mode diagnoses wrong operation and preserves help status', async () => {
       await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
