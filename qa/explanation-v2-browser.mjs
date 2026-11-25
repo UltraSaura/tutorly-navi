@@ -224,6 +224,9 @@ async function runAtWidth(width) {
       const operations = await page.getByTestId('equation-operation').locator('div').allInnerTexts();
       assert.equal(operations[0], operations[1]);
       assert.equal(await page.getByTestId('equation-after').count(), 0);
+      assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['+ 5', '− 5']);
+      assert.deepEqual(await page.getByTestId('equation-combine-token').allInnerTexts(), ['20', '− 5']);
+      assert.match(await page.getByTestId('equation-cancellation-explanation').innerText(), /font 0 à gauche/);
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /3x = 15/);
       await page.getByRole('button', { name: 'Précédent' }).click();
@@ -262,6 +265,8 @@ async function runAtWidth(width) {
     await page.getByTestId('tab-equation-both').click();
     await run('equation with variables on both sides displays exact cancellation and guided result', async () => {
       await page.getByRole('button', { name: 'Animer l’opération' }).click();
+      assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['2x', '− 2x']);
+      assert.deepEqual(await page.getByTestId('equation-combine-token').allInnerTexts(), ['5x', '− 2x']);
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /3x − 4 = 8/);
       await page.getByRole('button', { name: 'M’entraîner seul' }).click();
@@ -280,6 +285,30 @@ async function runAtWidth(width) {
       assert.match(await page.getByText(/Solution vérifiée/).innerText(), /-5\/2/);
     });
     await page.screenshot({ path: dir + '/equation-rational-' + width + '.png', fullPage: true });
+    await run('fractional equation shows term cancellation, coefficient division and exact substitution', async () => {
+      await page.getByRole('button', { name: 'Comprendre' }).click();
+      await page.getByRole('button', { name: 'Animer l’opération' }).click();
+      assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['+ 3', '− 3']);
+      await page.getByRole('button', { name: 'Voir le résultat' }).click();
+      await page.getByRole('button', { name: 'Étape suivante' }).click();
+      await page.getByRole('button', { name: 'Animer l’opération' }).click();
+      assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['-2', '÷ (-2)']);
+      await page.getByRole('button', { name: 'Voir le résultat' }).click();
+      assert.match(await page.getByTestId('equation-after').innerText(), /x = -5\/2/);
+      await page.getByRole('button', { name: 'Étape suivante' }).click();
+      await page.getByRole('button', { name: 'Animer l’opération' }).click();
+      assert.equal(await page.getByTestId('equation-cancel-token').count(), 0);
+      assert.match(await page.getByTestId('equation-terms-left').innerText(), /-2 × \(-5\/2\)/);
+      await page.getByRole('button', { name: 'Voir le résultat' }).click();
+      assert.match(await page.getByTestId('equation-after').innerText(), /8 = 8/);
+    });
+    await run('equation term animation respects reduced motion', async () => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      const animation = await page.getByTestId('equation-term-animation').evaluate(el => getComputedStyle(el).animationName);
+      assert.equal(animation, 'none');
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+    });
+
     await run('equation independent grading requires no worked solution or hints', async () => {
       await page.getByTestId('tab-equation').click();
       await page.getByTestId('reset').click();
