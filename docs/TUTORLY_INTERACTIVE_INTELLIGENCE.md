@@ -68,6 +68,8 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 - **Responsive:** 44px minimum mode/navigation targets, bounded math canvas, wrapping terms, reduced-motion behavior retained. Tests assert no separate left/right cards, only one active equation stage, explanation disclosure and no horizontal overflow at 375/447/1280px.
 - **Status:** implementation and QA PASS in feature branch: [GitHub Actions #45718920651](https://github.com/UltraSaura/tutorly-navi/actions/runs/45718920651), code commit `46a6283c0` — 90/90 isolated browser checks (375px, 447px, 1280px), 18/18 lesson-player checks, standalone production-built demo smoke, unit, TypeScript, lint and build. No changes to solver, grading, published lessons or production.
 - **Design rule:** show **one mathematical idea per stage**; never hide the actual operation or verification behind a vague animation. Additional explanations are on demand, not repeated on every stage.
+- **Preview limitation (26 Nov 2026):** the available READY Vercel preview for this layout is at commit `23b7b66b8` (core compact workspace). Newer commits include the smaller lab reset and additional QA assertions, but a fresh Vercel deployment was blocked by the account's free-tier daily API deployment limit (100/day). GitHub CI built and tested the newer code successfully; no production deployment was attempted.
+
 
 **Next iteration:** Validate IM-D02.1 with teachers and students, then evaluate true position-to-position token morphing and accessible mathematical notation; add structured authoring and safe objective mapping before expanding to other equation families.
 
