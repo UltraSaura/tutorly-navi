@@ -27,40 +27,31 @@ function TermTokens({ tokens, side }: { tokens: EquationTermToken[]; side: 'left
 }
 
 function TransformationVisual({ step, stage }: { step: EquationTransformation; stage: 0 | 1 | 2 }) {
-  const [left, right] = step.before.split(' = ');
   const visual = equationTermVisual(step);
-  return <div data-testid="equation-transform" className="space-y-3 rounded-xl bg-slate-50 p-3 sm:p-4">
-    <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Équation avant l’opération</p>
-    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-center">
-      <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-4">
-        <p className="mb-2 text-xs font-semibold text-slate-600">Membre gauche</p>
-        <p className="break-words text-lg font-bold text-slate-900 sm:text-xl">{left}</p>
-      </div>
-      <span className="text-xl font-black text-teal-800">=</span>
-      <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-4">
-        <p className="mb-2 text-xs font-semibold text-slate-600">Membre droit</p>
-        <p className="break-words text-lg font-bold text-slate-900 sm:text-xl">{right}</p>
-      </div>
-    </div>
-    {stage >= 1 && <div data-testid="equation-operation" className="equation-operation grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-center">
-      <div className="rounded-lg border border-amber-300 bg-amber-100 px-2 py-3 font-bold text-amber-950">{step.leftOperation}</div>
-      <span aria-hidden="true" className="text-teal-800">↔</span>
-      <div className="rounded-lg border border-amber-300 bg-amber-100 px-2 py-3 font-bold text-amber-950">{step.rightOperation}</div>
-      <p className="col-span-3 text-xs font-semibold text-amber-900">{step.id === 'verify' ? 'On remplace x par sa valeur partout où il apparaît.' : 'La même opération est appliquée aux deux membres.'}</p>
+  return <div data-testid="equation-transform" aria-live="polite"
+    className="flex min-h-[240px] flex-col justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-5 text-center sm:min-h-[230px] sm:px-6">
+    {stage === 0 && <div className="equation-focus space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Équation à transformer</p>
+      <p className="break-words text-2xl font-extrabold leading-relaxed tracking-tight text-slate-900 sm:text-3xl">{step.before}</p>
     </div>}
-    {stage >= 1 && <div data-testid="equation-term-animation" className="equation-term-panel space-y-2 rounded-xl border border-amber-200 bg-white p-3">
-      <p className="text-xs font-bold uppercase tracking-wide text-amber-950">{step.id === 'verify' ? 'Remplacer x dans chaque membre' : 'Observer les termes qui s’annulent ou se regroupent'}</p>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-        <TermTokens tokens={visual.left} side="left" />
-        <span aria-hidden="true" className="text-center text-xl font-black text-teal-800">=</span>
-        <TermTokens tokens={visual.right} side="right" />
+    {stage === 1 && <>
+      <div data-testid="equation-operation" className="equation-operation mx-auto flex flex-wrap items-center justify-center gap-2 text-sm">
+        <div className="rounded-full bg-amber-100 px-3 py-1.5 font-bold text-amber-950">{step.leftOperation}</div>
+        <span className="text-xs font-medium text-slate-600">{step.id === 'verify' ? 'dans chaque membre' : 'des deux côtés'}</span>
+        <div className="rounded-full bg-amber-100 px-3 py-1.5 font-bold text-amber-950">{step.rightOperation}</div>
       </div>
-      <p data-testid="equation-cancellation-explanation" className="text-sm leading-6 text-slate-800">{visual.caption}</p>
-      {visual.cancellationSide !== 'none' && <p className="text-xs font-semibold text-amber-900">Les termes barrés s’annulent. Les termes bleus se regroupent ou se calculent.</p>}
-    </div>}
-    {stage === 2 && <div data-testid="equation-after" className="equation-after space-y-2 rounded-xl border border-teal-200 bg-teal-50 p-4 text-center">
-      <p className="text-xs font-bold uppercase text-teal-900">Résultat de cette étape</p>
-      <p className="break-words text-xl font-extrabold text-teal-950 sm:text-2xl">{step.after}</p>
+      <div data-testid="equation-term-animation" className="equation-term-panel w-full space-y-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+          <TermTokens tokens={visual.left} side="left" />
+          <span aria-hidden="true" className="text-xl font-black text-teal-800">=</span>
+          <TermTokens tokens={visual.right} side="right" />
+        </div>
+        <p data-testid="equation-cancellation-explanation" className="mx-auto max-w-2xl text-sm leading-6 text-slate-700">{visual.caption}</p>
+      </div>
+    </>}
+    {stage === 2 && <div data-testid="equation-after" className="equation-after space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-teal-800">{step.id === 'verify' ? 'Égalité vérifiée' : 'Équation simplifiée'}</p>
+      <p className="break-words text-2xl font-extrabold leading-relaxed tracking-tight text-teal-900 sm:text-3xl">{step.after}</p>
     </div>}
   </div>;
 }
@@ -143,31 +134,47 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   // Rotate the correct choice by step so the learner cannot pass by always tapping the same position.
   const offset = (guidedIndex + 2) % options.length;
   const choices = [...options.slice(offset), ...options.slice(0, offset)];
-  return <div data-testid="equation-decomposition-activity" className="space-y-4">
-    <div className="flex flex-wrap gap-2" aria-label="Mode d’apprentissage">
-      <button type="button" className={control + (mode === 'understand' ? ' border-teal-700 bg-teal-50' : '')} aria-pressed={mode === 'understand'} onClick={() => chooseMode('understand')}>Comprendre</button>
-      <button type="button" className={control + (mode === 'together' ? ' border-teal-700 bg-teal-50' : '')} aria-pressed={mode === 'together'} onClick={() => chooseMode('together')}>Résoudre ensemble</button>
-      <button type="button" className={control + (mode === 'solo' ? ' border-teal-700 bg-teal-50' : '')} aria-pressed={mode === 'solo'} onClick={() => chooseMode('solo')}>M’entraîner seul</button>
+  return <div data-testid="equation-decomposition-activity" className="mx-auto max-w-3xl space-y-4">
+    <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1" aria-label="Mode d’apprentissage">
+      <button type="button" className={'min-h-11 rounded-lg px-1 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 ' + (mode === 'understand' ? 'bg-white text-teal-900 shadow-sm' : 'text-slate-600')} aria-label="Comprendre" aria-pressed={mode === 'understand'} onClick={() => chooseMode('understand')}>Comprendre</button>
+      <button type="button" className={'min-h-11 rounded-lg px-1 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 ' + (mode === 'together' ? 'bg-white text-teal-900 shadow-sm' : 'text-slate-600')} aria-label="Résoudre ensemble" aria-pressed={mode === 'together'} onClick={() => chooseMode('together')}>Ensemble</button>
+      <button type="button" className={'min-h-11 rounded-lg px-1 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 ' + (mode === 'solo' ? 'bg-white text-teal-900 shadow-sm' : 'text-slate-600')} aria-label="M’entraîner seul" aria-pressed={mode === 'solo'} onClick={() => chooseMode('solo')}>À toi</button>
     </div>
-    <p className="rounded-xl bg-teal-50 p-3 text-base leading-7 text-slate-900">{spec.prompt}</p>
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+      <span className="font-medium text-slate-700">Objectif : trouver la valeur de x</span>
+      <details className="text-slate-600">
+        <summary className="cursor-pointer rounded-md px-2 py-1 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700">Consigne complète</summary>
+        <p className="mt-2 max-w-md rounded-lg bg-slate-50 p-3 leading-6 text-slate-800">{spec.prompt}</p>
+      </details>
+    </div>
     {mode === 'understand' && <section className="space-y-3" aria-label="Démonstration de l’équation">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="font-bold text-teal-900">{demoStep.title}</h4>
-        <span data-testid="equation-demo-progress" className="text-sm font-semibold text-teal-800">Étape {demoIndex + 1} sur {steps.length}</span>
+        <h4 className="text-base font-bold text-teal-900 sm:text-lg">{demoStep.title}</h4>
+        <span data-testid="equation-demo-progress" className="shrink-0 text-sm font-semibold text-slate-600">Étape {demoIndex + 1} sur {steps.length}</span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Progression de la démonstration" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={demoIndex + 1}>
+        <div className="h-full rounded-full bg-teal-600 transition-[width] duration-200" style={{ width: ((demoIndex + 1) / steps.length * 100) + '%' }} />
       </div>
       <TransformationVisual key={demoIndex} step={demoStep} stage={demoStage} />
-      <p className="leading-7 text-slate-800">{demoStep.explanation}</p>
-      {demoStage === 2 && <p className="rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-950">{demoStep.rule}</p>}
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className={control} disabled={demoIndex === 0 && demoStage === 0} onClick={() => {
+      {demoStage === 0 && <p className="text-center text-sm text-slate-700">{demoStep.id === 'verify' ? 'Remplaçons x par la valeur trouvée pour vérifier.' : 'Observe l’équation, puis découvre l’opération.'}</p>}
+      {demoStage === 2 && <p className="text-center text-sm font-medium leading-6 text-teal-900">{demoStep.rule}</p>}
+      <details className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+        <summary className="min-h-7 cursor-pointer font-semibold text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700">Pourquoi cette étape ?</summary>
+        <p className="mt-2 leading-6">{demoStep.explanation}</p>
+        <p className="mt-2 leading-6">{demoStep.rule}</p>
+      </details>
+      <div className="flex items-center gap-2 pt-1">
+        <button type="button" className={control + ' shrink-0 px-3 sm:px-4'} disabled={demoIndex === 0 && demoStage === 0} onClick={() => {
           update({ assisted: true });
           if (demoStage > 0) setDemoStage((demoStage - 1) as 0 | 1 | 2);
           else { setDemoIndex(i => i - 1); setDemoStage(2); }
         }}>Précédent</button>
-        <button type="button" className={action} onClick={demoForward}>{demoStage === 0 ? 'Animer l’opération' : demoStage === 1 ? 'Voir le résultat' : demoIndex < steps.length - 1 ? 'Étape suivante' : 'Résoudre ensemble'}</button>
-        <button type="button" className={control} onClick={() => { update({ assisted: true }); setDemoIndex(0); setDemoStage(0); }}>Recommencer</button>
+        <button type="button" className={action + ' min-w-0 flex-1 px-2 sm:px-5'} onClick={demoForward}>{demoStage === 0 ? 'Animer l’opération' : demoStage === 1 ? 'Voir le résultat' : demoIndex < steps.length - 1 ? 'Étape suivante' : 'Résoudre ensemble'}</button>
       </div>
-      <p className="text-xs text-slate-600">Démonstration non notée. Les opérations et leurs résultats proviennent du calcul exact, pas d’un texte généré par IA.</p>
+      <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+        <span>Démonstration sans note</span>
+        <button type="button" className="min-h-9 rounded-md px-2 font-medium text-slate-600 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700" onClick={() => { update({ assisted: true }); setDemoIndex(0); setDemoStage(0); }}>Revoir depuis le début</button>
+      </div>
     </section>}
     {mode === 'together' && <section className="space-y-3" aria-label="Résolution accompagnée">
       <p className="text-sm font-bold text-teal-900">Étape {guidedIndex + 1} sur {steps.length} — Choisis la prochaine opération</p>
