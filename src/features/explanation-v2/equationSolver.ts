@@ -114,8 +114,7 @@ export function equationSteps(input: EquationCoefficients): EquationTransformati
   }
   if (current.a !== 1) {
     const before = current;
-    const next: EquationState = { a: 1, b: 0, d: 0, c: 0 };
-    // The rational result is stored in the rendered expression, not an integer EquationState.
+    // A rational final result cannot be represented by integer EquationState.
     const after = 'x = ' + rationalText(solution);
     steps.push({
       id: 'divide', before: equationText(before), after,
@@ -125,16 +124,18 @@ export function equationSteps(input: EquationCoefficients): EquationTransformati
       rule: 'Diviser les deux membres par un même nombre non nul conserve l’égalité. Le résultat peut être une fraction.',
       choice: 'Diviser les deux côtés par ' + current.a,
       wrongFeedback: 'Le terme en x est isolé : il faut maintenant obtenir un seul x en divisant par son coefficient.',
-      beforeState: before, afterState: next,
+      beforeState: before, afterState: null,
     });
   }
   const originalText = equationText(original);
+  const leftValue = rationalText(rational(original.a * solution.n + original.b * solution.d, solution.d));
+  const rightValue = rationalText(rational(original.d * solution.n + original.c * solution.d, solution.d));
   steps.push({
     id: 'verify', before: 'x = ' + rationalText(solution),
-    after: originalText.replace(' = ', ' = ') + '  ✓',
+    after: leftValue + ' = ' + rightValue + '  ✓',
     leftOperation: 'x → ' + rationalText(solution), rightOperation: 'x → ' + rationalText(solution),
     title: 'Vérifier dans l’équation de départ',
-    explanation: 'On remplace x par ' + rationalText(solution) + ' dans les deux membres de l’équation de départ. Les deux calculs donnent la même valeur.',
+    explanation: 'On remplace x par ' + rationalText(solution) + ' dans l’équation de départ (' + originalText + '). Le membre gauche vaut ' + leftValue + ' et le membre droit vaut ' + rightValue + '.',
     rule: 'Une solution doit rendre l’égalité initiale vraie. Vérification exacte, sans arrondi.',
     choice: 'Remplacer x dans l’équation de départ',
     wrongFeedback: 'Une réponse se vérifie dans l’équation de départ, pas seulement dans la dernière ligne.',
