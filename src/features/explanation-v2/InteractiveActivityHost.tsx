@@ -202,6 +202,6 @@ export function InteractiveActivityHost(props: Props) {
               ? <LinearFunctionActivity {...props} spec={spec} />
               : spec.kind === 'line-fit'
                 ? <LineFitActivity {...props} spec={spec} />
-                : <EquationDecompositionActivity {...props} spec={spec} />}
+                : <EquationDecompositionActivity key={spec.id} {...props} spec={spec} />}
   </section>;
 }
