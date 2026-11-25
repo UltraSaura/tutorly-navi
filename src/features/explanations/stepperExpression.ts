@@ -23,6 +23,7 @@ export function getStepperExpression(exerciseText: string, exampleText?: string)
 
 /** Local worked example for straightforward arithmetic, independent of the provider. */
 export function getLocalArithmeticExample(source: string): string {
-  if (!/^\s*\d+\s*[+\-×*]\s*\d+\s*(?:=\s*\??\s*)?$/.test(source)) return '';
-  return getStepperExpression(source);
+  const match = source.match(/^\s*(?:(?:calcule|calculer|effectue|effectuer|pose|poser|calculate|compute|solve)\s*:?\s*)?(\d+\s*[+\-×*]\s*\d+)\s*(?:=\s*(?:\?|\d+)\s*)?[.!]?\s*$/i);
+  if (!match) return '';
+  return getStepperExpression(match[1]);
 }

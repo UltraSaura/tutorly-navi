@@ -810,6 +810,24 @@ export function useTwoCardTeaching() {
     } catch (err) {
       if (!isCurrentRequest()) return;
       console.error("[TwoCardTeaching] Error generating explanation:", err);
+      // When the provider repeats the source, use a checked different example
+      // for a single arithmetic expression rather than leaving the modal empty.
+      const source = row?.prompt || row?.question || row?.exercise_content || '';
+      if (err instanceof Error && err.message.includes('The explanation repeated your exercise')) {
+        const example = getLocalArithmeticExample(source);
+        if (example) {
+          const french = /^fr/i.test(profile?.response_language || '');
+          const fallback: TeachingSections = {
+            exercise: source, concept: '', example, method: '', currentExercise: '', pitfall: '',
+            check: '', practice: '', parentHelpHint: '',
+            steps: [{ title: french ? 'Un autre exemple' : 'A different example', body: example, kind: 'example', icon: 'magnifier' }],
+          };
+          assertDifferentTeachingExample(source, fallback);
+          setSections(fallback);
+          setLoading(false);
+          return;
+        }
+      }
       setError(err instanceof Error ? err.message : "Unknown error");
       setLoading(false);
 
