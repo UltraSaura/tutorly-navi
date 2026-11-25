@@ -98,6 +98,38 @@ test('arithmetic editor exposes level-bounded digit ranges and operations', asyn
   await expect(upperDialog.getByLabel('Division', { exact: true })).toBeVisible();
 });
 
+test('AI topic quiz generation exposes focused mental-calculation activities and curriculum controls', async ({ page }) => {
+  await coordinateLearner(page, 'ce1', 'fr', true);
+  await ready(page, '/admin/learning');
+  await page.getByRole('tab', { name: 'Quiz Banks', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate from Topics', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+
+  await dialog.getByRole('combobox').nth(0).click();
+  await page.getByRole('option', { name: 'France', exact: true }).click();
+  await dialog.getByRole('combobox').nth(1).click();
+  await page.getByRole('option', { name: 'CE1', exact: true }).click();
+  await dialog.getByRole('combobox').nth(2).click();
+  await page.getByRole('option', { name: 'Mathématiques', exact: true }).click();
+  await dialog.getByText('Coordonnées', { exact: true }).click();
+  await dialog.getByRole('button', { name: 'Next', exact: true }).click();
+
+  await expect(dialog.getByText('Mental calculation', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('🏁 Calculation race', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('🃏 Number flashcards', { exact: true })).toBeVisible();
+  await dialog.locator('label').filter({ hasText: '🏁 Calculation race' }).getByRole('checkbox').check();
+  const settings = dialog.getByTestId('mental-calculation-settings');
+  await expect(settings).toBeVisible();
+  await expect(dialog.getByText('Calculations in the set', { exact: true })).toBeVisible();
+  await settings.getByText('Specify operations or tables', { exact: true }).click();
+  await settings.getByLabel('Multiplication', { exact: true }).check();
+  await settings.getByRole('combobox').nth(0).click();
+  await page.getByRole('option', { name: '2 digits', exact: true }).click();
+  await expect(settings.getByText('Optional multiplication/division tables', { exact: true })).toBeVisible();
+  await expect(settings.getByRole('checkbox', { name: '10' })).toBeEnabled();
+  await expect(settings.getByRole('checkbox', { name: '11' })).toHaveCount(0);
+});
+
 test('a 5ème learner cannot open a CP-only bank even through a direct topic quiz URL', async ({ page }) => {
   const cpColour = { id: 'colour-grid-qa', kind: 'colour-grid', prompt: 'Count the red squares.', rows: 1, columns: 2,
     cells: ['red', 'blue'], targetColor: 'red', points: 1, curriculumCountry: 'fr', schoolLevels: ['cp'] };

@@ -31,6 +31,8 @@ export async function coordinateLearner(page: Page, level = '5eme', country = 'f
     if (table === 'users') rows = [{ id: userId, first_name: 'QA', user_type: admin ? 'admin' : 'student', country: 'France', level,
       curriculum_country_code: country, curriculum_level_code: level, product_tour_completed_at: '2026-01-01', approval_status: 'approved' }];
     else if (table === 'user_roles') rows = admin ? [{ role: 'admin' }] : [];
+    else if (table === 'countries') rows = [{ code: 'fr', name: 'France' }];
+    else if (table === 'school_levels') rows = country === 'fr' ? [{ level_code: level, level_name: level.toUpperCase(), country_code: country, sort_order: 1 }] : [];
     else if (table === 'children') rows = [];
     else if (table === 'topics') rows = [topic];
     else if (table === 'subjects') rows = [subject];

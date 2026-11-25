@@ -9,6 +9,15 @@ interface GenerateRequest {
   difficulty?: 'easy' | 'medium' | 'hard';
   mix?: boolean;
   language: string;
+  /** Options for curriculum-aware mental calculation decks. */
+  arithmeticSettings?: {
+    source: 'curriculum' | 'custom';
+    operations?: Array<'addition' | 'subtraction' | 'multiplication' | 'division'>;
+    tableNumbers?: number[];
+    leftDigits: number;
+    rightDigits: number;
+    calculationCount: number;
+  };
   // Optional progressif-level focus (batch "per level" mode).
   focusLabel?: string;
   focusContext?: string;

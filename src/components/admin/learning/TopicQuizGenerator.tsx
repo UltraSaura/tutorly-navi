@@ -1,6 +1,6 @@
-import { canAuthorExercise } from '@/features/practice/exerciseCurriculum';
+import { arithmeticDifficulty, canAuthorExercise, canAuthorExerciseType } from '@/features/practice/exerciseCurriculum';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ import { ensureQuizBank } from '@/types/quiz-bank';
 import type { Video } from '@/types/learning';
 import { dedupeSchoolLevels, getSchoolLevelLabel, normalizeSchoolLevel } from '@/domain/schoolLevels';
 import { SUPPORTED_LANGUAGES } from '@/locales';
+import { MENTAL_OPERATIONS, type MentalOperation } from '@/features/practice/mentalCalculationRace';
 
 interface TopicQuizGeneratorProps {
   open: boolean;
@@ -58,20 +59,29 @@ function rampDifficulty(index: number, total: number): 'easy' | 'medium' | 'hard
 }
 
 const QUESTION_TYPES = [
-  { value: 'single',       label: 'Single Choice',          description: 'One correct answer from 4 options' },
-  { value: 'multi',        label: 'Multiple Choice',         description: 'Several correct answers from 4 options' },
-  { value: 'numeric',      label: 'Numeric',                 description: 'Type a number as the answer' },
-  { value: 'ordering',     label: 'Ordering',                description: 'Arrange items in the correct sequence' },
-  { value: 'column-fill',  label: '🧮 Column method',         description: 'Fill missing digits in an arithmetic column layout' },
-  { value: 'addition-across-ten', label: '➕ Addition across ten', description: 'Bridge to the next ten, then add the units left (CE1)' },
-  { value: 'subtraction-with-dots', label: '− Subtraction with countable objects', description: 'Add scattered objects, take them away, and count what remains (CE1 review)' },
-  { value: 'counting',     label: '🔢 Count in groups of ten', description: 'Count grouped objects, add bundles, then choose the total' },
-  { value: 'slider',       label: '🎚️ Slider',               description: 'Drag a slider to the correct value — great for estimating quantities' },
-  { value: 'match',        label: '🔗 Match pairs',           description: 'Connect left-column items to their right-column matches' },
-  { value: 'fill_expr',    label: '🧩 Fill the expression',  description: 'Drag number chips into blanks to complete a formula' },
-  { value: 'visual_pie',   label: '🥧 Visual (Pie chart)',   description: 'Interact with a fraction pie chart' },
-  { value: 'visual_angle', label: '📐 Visual (Angle)',       description: 'Measure or identify angles' },
+  { group: 'core', value: 'single',       label: 'Single Choice',          description: 'One correct answer from 4 options' },
+  { group: 'core', value: 'multi',        label: 'Multiple Choice',         description: 'Several correct answers from 4 options' },
+  { group: 'core', value: 'numeric',      label: 'Numeric',                 description: 'Type a number as the answer' },
+  { group: 'core', value: 'ordering',     label: 'Ordering',                description: 'Arrange items in the correct sequence' },
+  { group: 'core', value: 'column-fill',  label: '🧮 Column method',         description: 'Fill missing digits in an arithmetic column layout' },
+  { group: 'guided', value: 'addition-across-ten', label: '➕ Addition across ten', description: 'Bridge to the next ten, then add the units left (CE1)' },
+  { group: 'guided', value: 'subtraction-with-dots', label: '− Subtraction with countable objects', description: 'Add scattered objects, take them away, and count what remains (CE1 review)' },
+  { group: 'guided', value: 'counting',     label: '🔢 Count in groups of ten', description: 'Count grouped objects, add bundles, then choose the total' },
+  { group: 'visual', value: 'slider',       label: '🎚️ Slider',               description: 'Drag a slider to the correct value — great for estimating quantities' },
+  { group: 'visual', value: 'match',        label: '🔗 Match pairs',           description: 'Connect left-column items to their right-column matches' },
+  { group: 'visual', value: 'fill_expr',    label: '🧩 Fill the expression',  description: 'Drag number chips into blanks to complete a formula' },
+  { group: 'visual', value: 'visual_pie',   label: '🥧 Visual (Pie chart)',   description: 'Interact with a fraction pie chart' },
+  { group: 'visual', value: 'visual_angle', label: '📐 Visual (Angle)',       description: 'Measure or identify angles' },
+  { group: 'mental', value: 'calculation-race', label: '🏁 Calculation race', description: 'Timed mental calculation with answer choices; review missed methods after the race' },
+  { group: 'mental', value: 'number-flashcards', label: '🃏 Number flashcards', description: 'One calculation card at a time, with a timer and answer choices' },
 ];
+
+const QUESTION_TYPE_GROUPS = [
+  { id: 'core', label: 'Core question formats', description: 'Common ways to answer curriculum questions.' },
+  { id: 'mental', label: 'Mental calculation', description: 'Create a focused set of calculations using the chosen topic and school level.' },
+  { id: 'guided', label: 'Guided number exercises', description: 'Structured models for counting and mental strategies.' },
+  { id: 'visual', label: 'Visual and interactive formats', description: 'Use diagrams, matching, sliders, or expression tools.' },
+] as const;
 
 const DIFFICULTIES = [
   { value: 'easy', label: 'Easy' },
@@ -128,6 +138,11 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [mixMode, setMixMode] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('fr');
+  const [arithmeticSource, setArithmeticSource] = useState<'curriculum' | 'custom'>('curriculum');
+  const [arithmeticOperations, setArithmeticOperations] = useState<MentalOperation[]>([]);
+  const [arithmeticTables, setArithmeticTables] = useState<number[]>([]);
+  const [arithmeticLeftDigits, setArithmeticLeftDigits] = useState(1);
+  const [arithmeticRightDigits, setArithmeticRightDigits] = useState(1);
 
   // Batch mode: one bank per topic (or per progressif level) instead of one mixed bank
   const [batchMode, setBatchMode] = useState(false);
@@ -203,7 +218,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     queryFn: async () => {
       const { data, error } = await supabase
         .from('learning_categories')
-        .select('id, subject_id, name')
+        .select('id, subject_id, name, order_index')
         .eq('is_active', true)
         .order('order_index');
       if (error) throw error;
@@ -351,6 +366,18 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     });
   }, [matchingTopics, onlyWithoutQuiz, topicQuizAvailability]);
 
+  const filteredTopicGroups = useMemo(() => {
+    const groups = new Map<string, { name: string; order: number; topics: typeof filteredTopics }>();
+    for (const topic of filteredTopics) {
+      const category = categories.find((item) => item.id === topic.category_id);
+      const name = category?.name || 'Other topics';
+      const existing = groups.get(name) ?? { name, order: category?.order_index ?? Number.MAX_SAFE_INTEGER, topics: [] };
+      existing.topics.push(topic);
+      groups.set(name, existing);
+    }
+    return [...groups.values()].sort((left, right) => left.order - right.order || left.name.localeCompare(right.name));
+  }, [filteredTopics, categories]);
+
   const allVisibleTopicsSelected = filteredTopics.length > 0
     && filteredTopics.every((topic) => selectedTopicIds.includes(topic.id));
 
@@ -371,7 +398,26 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     return levels[0] ?? null;
   }, [selectedTopicIds, topics]);
 
+  const arithmeticBands = selectedTopicIds.flatMap((topicId) => {
+    const topic = topics.find((item) => item.id === topicId);
+    return topic?.curriculum_level_code ? [arithmeticDifficulty(topic.curriculum_level_code)] : [];
+  });
+  const arithmeticMaxDigits = arithmeticBands.length
+    ? Math.min(...arithmeticBands.map((band) => band.maxDigits))
+    : 1;
+  const arithmeticMaxTable = normalizeSchoolLevel(selectedTopicLevel) === 'ce1' ? 10 : 12;
+  const allowedArithmeticOperations = MENTAL_OPERATIONS.filter((operation) =>
+    arithmeticBands.length > 0 && arithmeticBands.every((band) => band.operations.includes(operation))
+  );
+  const selectedArithmeticType = questionTypes.find((type) => type === 'calculation-race' || type === 'number-flashcards');
+
   const coordinateContext = { schoolLevels: selectedTopicLevel ? [selectedTopicLevel] : [], topics: selectedTopicIds.map(id => { const topic = topics.find(topic => topic.id === id); const category = categories.find(category => category.id === topic?.category_id); return { countryCode: topic?.curriculum_country_code, levelCode: topic?.curriculum_level_code, category: category?.name, subject: subjects.find(subject => subject.id === category?.subject_id)?.name }; }) };
+  const arithmeticEligible = ['calculation-race', 'number-flashcards'].some((type) => canAuthorExerciseType(type, coordinateContext));
+  useEffect(() => {
+    if (selectedArithmeticType && selectedTopicIds.length > 0 && !arithmeticEligible) {
+      setQuestionTypes((current) => current.filter((type) => type !== 'calculation-race' && type !== 'number-flashcards'));
+    }
+  }, [selectedArithmeticType, selectedTopicIds, arithmeticEligible]);
 
   const selectedTopicLevelLabel = selectedTopicLevel ? getSchoolLevelLabel(selectedTopicLevel) : '';
 
@@ -406,7 +452,26 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     difficulty,
     mix: mixMode,
     language: selectedLanguage,
+    ...(selectedArithmeticType ? {
+      arithmeticSettings: {
+        source: arithmeticSource,
+        operations: arithmeticSource === 'custom' ? arithmeticOperations : undefined,
+        tableNumbers: arithmeticSource === 'custom' ? arithmeticTables : undefined,
+        leftDigits: Math.min(arithmeticLeftDigits, arithmeticMaxDigits),
+        rightDigits: Math.min(arithmeticRightDigits, arithmeticMaxDigits),
+        calculationCount: questionCount,
+      },
+    } : {}),
   });
+
+  const updateArithmeticDigitLimit = (side: 'left' | 'right', value: number) => {
+    const left = Math.min(side === 'left' ? value : arithmeticLeftDigits, arithmeticMaxDigits);
+    const right = Math.min(side === 'right' ? value : arithmeticRightDigits, arithmeticMaxDigits);
+    if (side === 'left') setArithmeticLeftDigits(value);
+    else setArithmeticRightDigits(value);
+    const largestOperand = Math.max(10 ** left - 1, 10 ** right - 1);
+    setArithmeticTables((current) => current.filter((table) => table <= largestOperand));
+  };
 
   // Build the list of banks to generate (one per topic, or per progressif level).
   const buildBatchUnits = async (): Promise<BatchUnit[]> => {
@@ -512,9 +577,13 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         if (totalQ === 0) {
           toast.error(`Generation failed for all ${failedCount} bank(s). Review the errors below.`);
         } else if (failedCount > 0) {
-          toast.warning(`Generated ${totalQ} questions. ${failedCount} bank(s) failed and were kept for review.`);
+          toast.warning(selectedArithmeticType
+            ? `Generated ${totalQ} calculation set(s). ${failedCount} bank(s) failed and were kept for review.`
+            : `Generated ${totalQ} questions. ${failedCount} bank(s) failed and were kept for review.`);
         } else {
-          toast.success(`Generated ${totalQ} questions across ${filled.length} bank(s)!`);
+          toast.success(selectedArithmeticType
+            ? `Generated ${totalQ} calculation set(s) across ${filled.length} bank(s)!`
+            : `Generated ${totalQ} questions across ${filled.length} bank(s)!`);
         }
       } catch (error) {
         console.error('Batch generation failed:', error);
@@ -535,7 +604,9 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       setPartialGeneration(false);
       setPartialGenerationConfirmed(false);
       setStep('review');
-      toast.success(`Generated ${result.questions.length} questions!`);
+      toast.success(selectedArithmeticType
+        ? `Generated one calculation set with ${questionCount} calculations!`
+        : `Generated ${result.questions.length} questions!`);
     } catch (error) {
       console.error('Generation failed:', error);
       if (error instanceof QuizGenerationError && (error.progress?.questions?.length ?? 0) > 0) {
@@ -817,6 +888,11 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     setDifficulty('medium');
     setMixMode(false);
     setSelectedLanguage('fr');
+    setArithmeticSource('curriculum');
+    setArithmeticOperations([]);
+    setArithmeticTables([]);
+    setArithmeticLeftDigits(1);
+    setArithmeticRightDigits(1);
     setBatchMode(false);
     setBatchBy('topic');
     setBatchProgress(null);
@@ -831,7 +907,10 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   };
 
   const canProceedFromTopics = !!selectedCountryCode && !!selectedSchoolLevel && !!selectedSubjectId && selectedTopicIds.length > 0;
-  const canProceedFromSettings = !!selectedLanguage && (mixMode || questionTypes.length > 0) && questionCount >= 1;
+  const canProceedFromSettings = !!selectedLanguage
+    && (mixMode || questionTypes.length > 0)
+    && questionCount >= 1
+    && (!selectedArithmeticType || (arithmeticEligible && (arithmeticSource !== 'custom' || arithmeticOperations.length > 0)));
 
   const getStepIndex = (s: Step) => {
     if (s === 'generating') return STEP_ORDER.indexOf('review');
@@ -1004,7 +1083,9 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     <div className="w-16 text-center">{ui('Lesson')}</div>
                     <div className="w-16 text-center">{ui('Practice')}</div>
                   </div>
-                  {filteredTopics.map((topic) => {
+                  {filteredTopicGroups.map((group) => <section key={group.name} className="space-y-1 pt-2">
+                    <h3 className="rounded-md bg-muted/70 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">{ui(group.name)}</h3>
+                    {group.topics.map((topic) => {
                     const isSelected = selectedTopicIds.includes(topic.id);
                     const quizAvailability = topicQuizAvailability.get(normalizeTopicDisplayKey(topic.name));
                     const lessonCount = quizAvailability?.lesson.size ?? 0;
@@ -1049,7 +1130,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                         </div>
                       </div>
                     );
-                  })}
+                    })}
+                  </section>)}
                 </div>
               )}
             </ScrollArea>
@@ -1083,7 +1165,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               {/* Row: count + difficulty side by side */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">{ui("Questions")}</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">{ui(selectedArithmeticType ? "Calculations in the set" : "Questions")}</Label>
                   <Select value={questionCount.toString()} onValueChange={(v) => setQuestionCount(parseInt(v))}>
                     <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -1151,7 +1233,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                   <div>
                     <div className="text-xs font-medium">{ui("📚 Batch — une banque par")} {batchBy === "level" ? 'niveau' : ui("sujet")}</div>
                     <div className="text-[11px] text-muted-foreground">
-                      {ui("Crée une banque distincte pour chaque")} {batchBy === "level" ? 'niveau progressif' : ui("sujet")} ({questionCount} {ui("questions chacune). Décoché = une banque mixte.")}
+                      {ui("Crée une banque distincte pour chaque")} {batchBy === "level" ? 'niveau progressif' : ui("sujet")} ({questionCount} {selectedArithmeticType ? ui('calculations in each activity') : ui("questions chacune). Décoché = une banque mixte.")}{selectedArithmeticType ? ` · ${ui('Unchecked = one mixed bank.')}` : ''})
                     </div>
                   </div>
                 </label>
@@ -1183,40 +1265,76 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 <label className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-colors mb-2 ${
                   mixMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
                 }`}>
-                  <Checkbox checked={mixMode} onCheckedChange={(checked) => setMixMode(!!checked)} />
+                  <Checkbox checked={mixMode} disabled={Boolean(selectedArithmeticType)} onCheckedChange={(checked) => {
+                    setMixMode(!!checked);
+                    if (checked) setQuestionTypes((current) => current.filter((type) => type !== 'calculation-race' && type !== 'number-flashcards'));
+                  }} />
                   <div>
                     <div className="text-xs font-medium">{ui("🎲 Mix (Auto)")}</div>
                     <div className="text-[11px] text-muted-foreground">{ui("AI picks the best type for each question")}</div>
                   </div>
                 </label>
 
-                {/* Type cards — 2 columns with description */}
-                <div className={`grid grid-cols-2 gap-1.5 ${mixMode ? 'opacity-40 pointer-events-none' : ''}`}>
-                  {QUESTION_TYPES.map((type) => {
-                    const selected = questionTypes.includes(type.value);
-                    return (
-                      <label
-                        key={type.value}
-                        className={`flex items-start gap-2 px-2.5 py-2 rounded-lg border cursor-pointer transition-colors ${
-                          selected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
-                        }`}
-                      >
-                        <Checkbox
-                          checked={selected}
-                          onCheckedChange={(checked) => {
-                            if (checked) setQuestionTypes(prev => [...prev, type.value]);
-                            else setQuestionTypes(prev => prev.filter(t => t !== type.value));
-                          }}
-                          className="h-3.5 w-3.5 mt-0.5 shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <div className="text-xs font-medium leading-tight">{ui(type.label)}</div>
-                          <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{ui(type.description)}</div>
-                        </div>
-                      </label>
-                    );
-                  })}
+                <div className={`space-y-3 ${mixMode ? 'opacity-40 pointer-events-none' : ''}`}>
+                  {QUESTION_TYPE_GROUPS.map((group) => (
+                    <section key={group.id} className="space-y-1.5">
+                      <div className="border-b pb-1">
+                        <h3 className="text-xs font-bold">{ui(group.label)}</h3>
+                        <p className="text-[11px] text-muted-foreground">{ui(group.description)}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {QUESTION_TYPES.filter((type) => type.group === group.id).map((type) => {
+                          const selected = questionTypes.includes(type.value);
+                          const isMentalType = type.group === 'mental';
+                          const unavailable = isMentalType && !arithmeticEligible;
+                          return (
+                            <label
+                              key={type.value}
+                              className={`flex items-start gap-2 px-2.5 py-2 rounded-lg border transition-colors ${
+                                unavailable ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                              } ${selected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}
+                            >
+                              <Checkbox
+                                checked={selected}
+                                disabled={unavailable}
+                                onCheckedChange={(checked) => {
+                                  if (isMentalType) {
+                                    setMixMode(false);
+                                    setQuestionTypes(checked ? [type.value] : []);
+                                    if (checked && arithmeticSource === 'custom' && arithmeticOperations.length === 0) setArithmeticOperations(allowedArithmeticOperations);
+                                    return;
+                                  }
+                                  if (checked) setQuestionTypes((prev) => [...prev.filter((value) => value !== 'calculation-race' && value !== 'number-flashcards'), type.value]);
+                                  else setQuestionTypes((prev) => prev.filter((value) => value !== type.value));
+                                }}
+                                className="h-3.5 w-3.5 mt-0.5 shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <div className="text-xs font-medium leading-tight">{ui(type.label)}</div>
+                                <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{ui(type.description)}</div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
                 </div>
+                {!arithmeticEligible && <p className="mt-2 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-950">{ui('Mental calculation formats are for French Maths topics with an assigned school level. Select an eligible topic first.')}</p>}
+
+                {selectedArithmeticType && <section className="mt-3 space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3" data-testid="mental-calculation-settings">
+                  <div><h3 className="text-sm font-bold">{ui('Calculation set settings')}</h3><p className="text-xs text-muted-foreground">{ui('The selected topic and its curriculum objectives guide which facts the AI generates. Each generated bank question is one saved activity with the selected number of calculations.')}</p></div>
+                  <fieldset className="space-y-2"><legend className="text-xs font-semibold">{ui('Calculation scope')}</legend>
+                    <label className="flex items-start gap-2 rounded-lg border bg-white p-2.5 text-xs"><input type="radio" name="arithmetic-source" checked={arithmeticSource === 'curriculum'} onChange={() => setArithmeticSource('curriculum')} /><span><strong>{ui('Follow selected topic and curriculum')}</strong><span className="block text-muted-foreground">{ui('Let the AI use the selected topic, objectives, and school level to choose operations and table facts.')}</span></span></label>
+                    <label className="flex items-start gap-2 rounded-lg border bg-white p-2.5 text-xs"><input type="radio" name="arithmetic-source" checked={arithmeticSource === 'custom'} onChange={() => { setArithmeticSource('custom'); if (arithmeticOperations.length === 0) setArithmeticOperations(allowedArithmeticOperations); }} /><span><strong>{ui('Specify operations or tables')}</strong><span className="block text-muted-foreground">{ui('Use this when you want to practise a particular operation or multiplication/division table.')}</span></span></label>
+                  </fieldset>
+                  <div className="grid grid-cols-2 gap-2"><div><Label className="text-xs">{ui('Maximum digits · first number')}</Label><Select value={String(Math.min(arithmeticLeftDigits, arithmeticMaxDigits))} onValueChange={(value) => updateArithmeticDigitLimit('left', Number(value))}><SelectTrigger className="h-9 bg-white"><SelectValue /></SelectTrigger><SelectContent>{Array.from({ length: arithmeticMaxDigits }, (_, index) => index + 1).map((digits) => <SelectItem key={digits} value={String(digits)}>{digits} {digits === 1 ? ui('digit') : ui('digits')}</SelectItem>)}</SelectContent></Select></div><div><Label className="text-xs">{ui('Maximum digits · second number')}</Label><Select value={String(Math.min(arithmeticRightDigits, arithmeticMaxDigits))} onValueChange={(value) => updateArithmeticDigitLimit('right', Number(value))}><SelectTrigger className="h-9 bg-white"><SelectValue /></SelectTrigger><SelectContent>{Array.from({ length: arithmeticMaxDigits }, (_, index) => index + 1).map((digits) => <SelectItem key={digits} value={String(digits)}>{digits} {digits === 1 ? ui('digit') : ui('digits')}</SelectItem>)}</SelectContent></Select></div></div>
+                  {arithmeticSource === 'custom' && <div className="space-y-2 rounded-lg border bg-white p-2.5">
+                    <fieldset><legend className="mb-1 text-xs font-semibold">{ui('Operations allowed at this level')}</legend><div className="grid grid-cols-2 gap-1.5">{MENTAL_OPERATIONS.map((operation) => <label key={operation} className={`flex min-h-9 items-center gap-2 rounded-md border px-2 text-xs ${allowedArithmeticOperations.includes(operation) ? '' : 'cursor-not-allowed opacity-40'}`}><Checkbox checked={arithmeticOperations.includes(operation)} disabled={!allowedArithmeticOperations.includes(operation)} onCheckedChange={(checked) => setArithmeticOperations((current) => checked ? [...new Set([...current, operation])] : current.filter((item) => item !== operation))} />{ui(({ addition: 'Addition', subtraction: 'Subtraction', multiplication: 'Multiplication', division: 'Division' } as Record<MentalOperation, string>)[operation])}</label>)}</div></fieldset>
+                    {(arithmeticOperations.includes('multiplication') || arithmeticOperations.includes('division')) && <fieldset><legend className="mb-1 text-xs font-semibold">{ui('Optional multiplication/division tables')}</legend><p className="mb-1.5 text-[11px] text-muted-foreground">{ui('If none are selected, the AI follows the chosen topic and objectives.')}</p><div className="flex flex-wrap gap-1.5">{Array.from({ length: arithmeticMaxTable - 1 }, (_, index) => index + 2).map((table) => { const maxOperand = Math.max(10 ** Math.min(arithmeticLeftDigits, arithmeticMaxDigits) - 1, 10 ** Math.min(arithmeticRightDigits, arithmeticMaxDigits) - 1); return <label key={table} className={`flex min-h-9 items-center gap-1 rounded-md border px-2 text-xs ${table > maxOperand ? 'opacity-40' : ''}`}><Checkbox checked={arithmeticTables.includes(table)} disabled={table > maxOperand} onCheckedChange={(checked) => setArithmeticTables((current) => checked ? [...new Set([...current, table])] : current.filter((value) => value !== table))} />{table}</label>; })}</div></fieldset>}
+                  </div>}
+                  {arithmeticSource === 'custom' && arithmeticOperations.length === 0 && <p role="alert" className="text-xs font-medium text-red-700">{ui('Choose at least one operation to generate this set.')}</p>}
+                </section>}
               </div>
             </div>
 
@@ -1251,7 +1369,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-3">
               <p className="text-muted-foreground">
-                {batchUnits.length} {ui("banque(s) à créer ·")} {batchUnits.reduce((n, u) => n + u.questions.length, 0)} {ui("questions au total. Vérifie et supprime les questions à problème, puis crée tout.")}
+                {batchUnits.length} {ui("banque(s) à créer ·")} {batchUnits.reduce((n, u) => n + u.questions.length, 0)} {ui(selectedArithmeticType ? "calculation sets total. Review before saving." : "questions au total. Vérifie et supprime les questions à problème, puis crée tout.")}
               </p>
             </div>
             <ScrollArea className="border rounded-lg h-[50vh]">
@@ -1261,7 +1379,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     <div className="px-3 py-2 bg-muted/60 rounded-t-lg border-b flex items-center justify-between">
                       <div className="font-semibold text-sm truncate">{unit.title}</div>
                       <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                        {unit.difficulty ? `${unit.difficulty} · ` : ''}{unit.questions.length} {ui("q · 1 banque")}
+                        {unit.difficulty ? `${unit.difficulty} · ` : ''}{unit.questions.length} {ui(selectedArithmeticType ? "calculation set · 1 bank" : "q · 1 banque")}
                       </span>
                     </div>
                     <div className="p-3 space-y-2">
@@ -1312,7 +1430,9 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-4">
               <p className="text-muted-foreground">
-                {generatedQuestions.length} {ui("question")}{generatedQuestions.length !== 1 ? 's' : ''} {ui("generated. Review and edit before saving.")}
+                {selectedArithmeticType
+                  ? `${ui('One activity with')} ${questionCount} ${ui('calculations generated. Review and edit before saving.')}`
+                  : <>{generatedQuestions.length} {ui("question")}{generatedQuestions.length !== 1 ? 's' : ''} {ui("generated. Review and edit before saving.")}</>}
               </p>
             </div>
 

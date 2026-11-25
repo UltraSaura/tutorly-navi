@@ -7,6 +7,7 @@ import {
   promptReferencesVisual,
 } from "../../../src/lib/quiz/promptVisual.ts";
 import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
+import { materializeArithmeticDeck, type ArithmeticDeckValidation } from "../../../src/features/practice/materializeArithmeticDeck.ts";
 import { safeProviderContentDiagnostics } from '../_shared/provider-diagnostics.ts';
 import { fetchProviderResponse, isRetryableProviderFailure, PROVIDER_TOTAL_BUDGET_MS, readProviderJson } from '../_shared/provider-request.ts';
 import { generateQuizIncrementally, IncrementalQuizGenerationError, QUIZ_BATCH_SIZE, QUIZ_MAX_PROVIDER_CALLS, QUIZ_MAX_RETRIES_PER_BATCH } from '../_shared/incremental-quiz-generation.ts';
@@ -28,6 +29,27 @@ interface GenerateRequest {
   // targeted to one specific level of the topic.
   focusLabel?: string;
   focusContext?: string;
+  arithmeticSettings?: {
+    source?: 'curriculum' | 'custom';
+    operations?: Array<'addition' | 'subtraction' | 'multiplication' | 'division'>;
+    tableNumbers?: number[];
+    leftDigits?: number;
+    rightDigits?: number;
+    calculationCount?: number;
+  };
+}
+
+const MENTAL_OPERATIONS = ['addition', 'subtraction', 'multiplication', 'division'] as const;
+const ARITHMETIC_LEVEL_CODES = ['cp', 'ce1', 'ce2', 'cm1', 'cm2', '6eme', '5eme', '4eme', '3eme', '2nde', '1ere', 'terminale'];
+function normalizeLevelCode(value: unknown) {
+  return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[:_\s-]+/g, '').replace(/ème/g, 'eme');
+}
+function arithmeticLevelBounds(levels: string[]) {
+  const indexes = levels.map((level) => ARITHMETIC_LEVEL_CODES.indexOf(normalizeLevelCode(level)));
+  if (!indexes.length || indexes.some((index) => index < 0)) return null;
+  const index = Math.min(...indexes);
+  const operations = index === 0 ? ['addition', 'subtraction'] : index === 1 ? ['addition', 'subtraction', 'multiplication'] : [...MENTAL_OPERATIONS];
+  return { maxDigits: index === 0 ? 2 : index <= 2 ? 3 : index < 6 ? 4 : 7, maxTable: index === 1 ? 10 : 12, operations };
 }
 
 function buildTypeInstructions(questionTypes: string[]): string {
@@ -63,6 +85,10 @@ function buildTypeInstructions(questionTypes: string[]): string {
   Supported shape values: triangle, rectangle, square, circle, rhombus, parallelogram, trapezoid, pentagon, hexagon, polygon, cube, cuboid, cylinder, cone, sphere.`;
       case 'ordering':
         return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence). Frame these as step-building, process-ordering, or action-ordering when appropriate.`;
+      case 'calculation-race':
+        return `- "calculation-race": One saved mental-calculation race deck with a "problems" array. Each problem has id, operation, left, and right; Tutorly builds four answer choices. Use only operations allowed by the selected curriculum or explicit settings.`;
+      case 'number-flashcards':
+        return `- "number-flashcards": One saved mental-calculation flashcard deck with a "problems" array. Each problem has id, operation, left, and right; Tutorly builds four answer choices. Use only operations allowed by the selected curriculum or explicit settings.`;
       case 'column-fill':
         return `- "column-fill": Student fills missing digits inside a column-method arithmetic layout. Use this ONLY for kid-friendly arithmetic topics: addition, subtraction, one-digit multiplication, or integer division with remainder.
   Required fields:
@@ -217,7 +243,7 @@ function buildLearningFriendlyGuidance(): string {
 - For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
-- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, counting, addition-across-ten, subtraction-with-dots, visual, slider, match, fill-expr.
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, counting, addition-across-ten, subtraction-with-dots, calculation-race, number-flashcards, visual, slider, match, fill-expr.
 - For column-fill: include operation, operands, and optional instructions only. Do NOT include a layout object.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
 - If a "single", "multi", or "numeric" prompt references a visual ("ce gâteau", "cette figure", "ce triangle", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
@@ -233,6 +259,8 @@ function buildBatchSchemaGuidance(questionTypes: string[]): string {
       case 'multi': return 'multi: id, kind, prompt, hint, points, choices[{id,label,correct}] with at least two correct choices.';
       case 'numeric': return 'numeric: id, kind, prompt, hint, points, numeric answer; include answerUnit for measured quantities.';
       case 'ordering': return 'ordering: id, kind, prompt, hint, points, items[], correctOrder[] containing the same items.';
+      case 'calculation-race':
+      case 'number-flashcards': return `${type}: id, kind, prompt, operations[], leftDigits, rightDigits, problems[{id, operation, left, right}]. Generate one activity; the requested calculation count is the problems array length. Tutorly generates answer choices after validation.`;
       case 'column-fill': return 'column-fill: id, kind, prompt, hint, points, operation, operands[2], instructions.';
       case 'counting': return 'counting: id, kind, prompt, hint, points, object (pencil/apple/book/star), startingGroups, startingOnes, groupsToAdd; final total <= 100. The app derives four answer choices.';
       case 'addition-across-ten': return 'addition-across-ten: id, kind, prompt, hint, points, startNumber, addend; ones digit + addend > 10 and total <= 1000. App derives four answer choices.';
@@ -456,8 +484,10 @@ function repairContextVisual(question: any) {
   }
 }
 
-function validateQuestions(questions: any[]): any[] {
-  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'visual', 'slider', 'match', 'fill-expr']);
+// AI question objects have format-specific fields that are validated and normalized below.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function validateQuestions(questions: any[], arithmetic?: ArithmeticDeckValidation): any[] {
+  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'counting', 'addition-across-ten', 'subtraction-with-dots', 'calculation-race', 'number-flashcards', 'visual', 'slider', 'match', 'fill-expr']);
   const validVisualSubtypes = new Set(['pie', 'angle']);
 
   return questions.filter((q, idx) => {
@@ -465,6 +495,13 @@ function validateQuestions(questions: any[]): any[] {
     if (!q.id) q.id = `q-${idx + 1}`;
     if (!q.prompt) return false;
     if (!validKinds.has(q.kind)) return false;
+
+    if (q.kind === 'calculation-race' || q.kind === 'number-flashcards') {
+      if (!arithmetic) return false;
+      const materialized = materializeArithmeticDeck(q, arithmetic);
+      if (!materialized) return false;
+      Object.assign(q, materialized);
+    }
 
     if (q.kind === 'counting') {
       const objects = ['pencil', 'apple', 'book', 'star'];
@@ -663,7 +700,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { topicIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false, language = 'fr', focusLabel, focusContext }: GenerateRequest = await req.json();
+    const { topicIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false, language = 'fr', focusLabel, focusContext, arithmeticSettings }: GenerateRequest = await req.json();
 
     if (!topicIds || topicIds.length === 0) {
       return new Response(JSON.stringify({ error: "No topic IDs provided" }),
@@ -673,7 +710,7 @@ serve(async (req) => {
     // Fetch topics with their metadata
     const { data: topics, error: topicsError } = await supabase
       .from('topics')
-      .select('id, name, description, keywords, curriculum_domain_id, curriculum_subdomain_id, curriculum_level_code')
+      .select('id, name, description, keywords, curriculum_domain_id, curriculum_subdomain_id, curriculum_level_code, curriculum_country_code')
       .in('id', topicIds);
 
     if (topicsError) throw new Error("Failed to fetch topics");
@@ -717,6 +754,36 @@ serve(async (req) => {
 
     const desiredCount = Math.max(1, Math.min(20, Number(questionCount) || 5));
     const effectiveTypes = mix ? ['mix'] : questionTypes;
+    const arithmeticKind = !mix && effectiveTypes.length === 1 && ['calculation-race', 'number-flashcards'].includes(effectiveTypes[0])
+      ? effectiveTypes[0] as 'calculation-race' | 'number-flashcards'
+      : null;
+    const requestedArithmetic = effectiveTypes.some((type) => type === 'calculation-race' || type === 'number-flashcards');
+    if (requestedArithmetic && !arithmeticKind) {
+      return new Response(JSON.stringify({ error: 'Choose one mental calculation format at a time so the generated set stays focused.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const levelBounds = arithmeticKind ? arithmeticLevelBounds(topics.map((topic) => topic.curriculum_level_code).filter(Boolean) as string[]) : null;
+    if (arithmeticKind && (topics.length !== topicIds.length
+      || topics.some((topic) => String(topic.curriculum_country_code ?? '').toLowerCase() !== 'fr')
+      || !levelBounds)) {
+      return new Response(JSON.stringify({ error: 'Mental calculation decks require French curriculum topics with supported school levels.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (arithmeticKind && (mix || effectiveTypes.length !== 1)) {
+      return new Response(JSON.stringify({ error: 'Generate a mental calculation deck as its own focused activity.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const calculationCount = Math.max(3, Math.min(20, Math.trunc(Number(arithmeticSettings?.calculationCount) || desiredCount)));
+    const leftDigits = Math.max(1, Math.min(levelBounds?.maxDigits ?? 1, Math.trunc(Number(arithmeticSettings?.leftDigits) || 1)));
+    const rightDigits = Math.max(1, Math.min(levelBounds?.maxDigits ?? 1, Math.trunc(Number(arithmeticSettings?.rightDigits) || 1)));
+    const customOperations = arithmeticSettings?.source === 'custom' ? arithmeticSettings.operations : undefined;
+    const customTables = arithmeticSettings?.source === 'custom' && Array.isArray(arithmeticSettings.tableNumbers)
+      ? [...new Set(arithmeticSettings.tableNumbers.map(Number).filter((value) => Number.isInteger(value) && value >= 2 && value <= (levelBounds?.maxTable ?? 10)))]
+      : [];
+    if (arithmeticKind && arithmeticSettings?.source === 'custom'
+      && (!customOperations?.length || !customOperations.every((operation) => MENTAL_OPERATIONS.includes(operation) && levelBounds!.operations.includes(operation)))) {
+      return new Response(JSON.stringify({ error: 'Choose operations that are available at the selected school level.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (arithmeticKind && customTables.some((table) => table > 10 ** Math.max(leftDigits, rightDigits) - 1)) {
+      return new Response(JSON.stringify({ error: 'Increase the digit limit to include the selected table numbers.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     const forceOnlyColumnFill = !mix && effectiveTypes.length === 1 && effectiveTypes[0] === 'column-fill';
     const typeInstructions = buildTypeInstructions(effectiveTypes);
 
@@ -733,7 +800,35 @@ serve(async (req) => {
         (focusContext ? `Base the questions PRIMARILY on this level's content:\n${focusContext}\n` : '') +
         `Stay within this level's scope and difficulty; do NOT cover other levels.\n`
       : '';
-    const buildPrompt = (count: number, existingPrompts: string[] = []) => `You are an expert educator creating quiz questions based on curriculum topics and learning objectives.
+    const buildPrompt = (count: number, existingPrompts: string[] = []) => {
+      if (arithmeticKind) {
+        const operationScope = customOperations?.length
+          ? `Use only these operations: ${customOperations.join(', ')}.`
+          : 'Infer the operation(s) and specific facts from the selected topic name, description, keywords, and curriculum objectives. Do not introduce an operation or fact family that is not supported by that selected curriculum topic.';
+        const tableScope = customTables.length
+          ? `For multiplication, make one factor one of these selected tables: ${customTables.join(', ')}. For division, use one of these selected divisors and make every division exact.`
+          : 'For multiplication or division, stay with the fact families explicitly named by the topic/objectives; do not assume all tables have been taught.';
+        const subtractionScope = (levelBounds?.operations.includes('subtraction') && Math.min(...topics.map((topic) => ARITHMETIC_LEVEL_CODES.indexOf(normalizeLevelCode(topic.curriculum_level_code)))) >= 6)
+          ? 'Negative subtraction results are allowed only when the selected curriculum topic supports them.'
+          : 'Subtraction results must be zero or positive.';
+        return `You are creating one Tutorly ${arithmeticKind === 'calculation-race' ? 'calculation race' : 'number flashcards'} activity from the selected curriculum.
+
+SELECTED CURRICULUM:
+---
+${topicContext}
+---
+${focusBlock}
+
+Create exactly ONE saved activity with exactly ${calculationCount} calculations in its problems array. Use kind "${arithmeticKind}". ${operationScope} ${tableScope}
+The first operand may have at most ${leftDigits} digit(s), and the second at most ${rightDigits} digit(s). Use integer operands only. ${subtractionScope}
+Difficulty target: ${difficulty}. ${difficultyGuide[difficulty]}
+Every division must have a non-zero divisor and an exact integer answer. Avoid duplicate calculations. Include only these fields at the activity level: id, kind, prompt, operations, leftDigits, rightDigits, problems. Each problem must contain only id, operation, left, and right. Tutorly validates every problem and generates four shuffled answer choices. Do not include correct answers, choices, hints, or explanations in the output.
+
+Write the student-facing prompt in ${language === 'fr' ? 'French' : 'English'}. Use the curriculum topic and objective as the authority for which operations/facts are appropriate. If the exact table progression is not stated in the curriculum topic, use a suitable age-level calculation drawn from that topic; never claim a table has already been taught.
+
+Return only JSON: {"questions":[{"id":"q-1","kind":"${arithmeticKind}","prompt":"...","operations":[...],"leftDigits":${leftDigits},"rightDigits":${rightDigits},"problems":[${Array.from({ length: calculationCount }, (_, index) => `{"id":"c${index + 1}","operation":"...","left":0,"right":0}`).join(',')}]}]}`;
+      }
+      return `You are an expert educator creating quiz questions based on curriculum topics and learning objectives.
 
 TOPIC AND CURRICULUM CONTEXT:
 ---
@@ -766,8 +861,9 @@ RULES:
 - Hints must be short, encouraging, and actionable without giving away the answer
 - All prompts, hints, labels, explanations, instructions, and answer text must be written in ${language === 'fr' ? 'French' : 'English'}
 - Visual prompts must mention the visual object the student should inspect
-- Use only supported output kinds: single, multi, numeric, ordering, column-fill, visual, slider, match, fill-expr
+- Use only supported output kinds: single, multi, numeric, ordering, column-fill, counting, addition-across-ten, subtraction-with-dots, visual, slider, match, fill-expr
 - Return ONLY the JSON object {"questions":[...]}`;
+    };
 
     const parseAiQuestions = (content: unknown) => {
       const text = typeof content === 'string'
@@ -831,7 +927,7 @@ RULES:
           ],
           response_format: { type: "json_object" },
           temperature: 0.2,
-          max_tokens: maxOutputTokensForBatch(count),
+        max_tokens: arithmeticKind ? 4096 : maxOutputTokensForBatch(count),
         }),
       }, { deadline, signal: req.signal });
 
@@ -865,14 +961,25 @@ RULES:
     }
 
     const generationDeadline = Date.now() + PROVIDER_TOTAL_BUDGET_MS;
+    const arithmeticValidation: ArithmeticDeckValidation | undefined = arithmeticKind ? {
+      kind: arithmeticKind,
+      count: calculationCount,
+      leftDigits,
+      rightDigits,
+      allowedOperations: customOperations?.length ? customOperations : levelBounds?.operations ?? [],
+      tableNumbers: customTables,
+      schoolLevels: [...new Set(topics.map((topic) => String(topic.curriculum_level_code)))],
+      allowNegative: Math.min(...topics.map((topic) => ARITHMETIC_LEVEL_CODES.indexOf(normalizeLevelCode(topic.curriculum_level_code)))) >= 6,
+    } : undefined;
+    const generatedQuestionCount = arithmeticKind ? 1 : desiredCount;
     const generation = await generateQuizIncrementally({
-      requested: desiredCount,
+      requested: generatedQuestionCount,
       deadline: generationDeadline,
       batchSize: QUIZ_BATCH_SIZE,
       maxProviderCalls: QUIZ_MAX_PROVIDER_CALLS,
       maxRetriesPerBatch: QUIZ_MAX_RETRIES_PER_BATCH,
       callBatch: callAiForQuestions,
-      validateBatch: validateQuestions,
+      validateBatch: (questions) => validateQuestions(questions, arithmeticValidation),
       promptOf: (question) => String(question.prompt || ''),
       isRetryable: isRetryableProviderFailure,
       signal: req.signal,
