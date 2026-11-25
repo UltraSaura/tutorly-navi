@@ -311,6 +311,8 @@ async function runAtWidth(width) {
       assert.ok((await page.getByTestId('equation-terms-left').locator('span').allInnerTexts()).includes('-2 × (-5/2)'));
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /8 = 8/);
+      assert.equal(await page.getByTestId('equation-term-animation').count(), 0);
+      await page.screenshot({ path: dir + '/equation-verification-focused-' + width + '.png', fullPage: true });
     });
     await run('equation term animation respects reduced motion', async () => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
