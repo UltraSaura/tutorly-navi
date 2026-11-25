@@ -15,7 +15,7 @@ describe('getStepperExpression never teaches the original exercise', () => {
     expect(getLocalArithmeticExample('33 ÷ 3')).toBe('');
   });
 
-  it.each(['Calcule 33 × 4', 'Effectue : 33*4 = ?', '33 × 4 = 132', 'Calculate 33 × 4.'])('recognizes a single calculation with instructions: %s', source => {
+  it.each(['Calcule 33 × 4', 'Effectue : 33*4 = ?', '33 × 4 = 132', 'Calculate 33 × 4.', '44*9=7'])('recognizes a single calculation with instructions: %s', source => {
     const example = getLocalArithmeticExample(source);
     expect(example).toBeTruthy();
     expect(containsOriginalExercise(source, example)).toBe(false);
