@@ -30,6 +30,18 @@ const activities: InteractiveActivitySpec[] = [
     target: { m: 2, b: 1 },
   },
   {
+    schemaVersion: 1, id: '5e-equation-001', kind: 'equation-decomposition', schoolLevel: '5e',
+    title: 'Résoudre une équation, pas à pas', prompt: 'Comment trouver x dans 3x + 5 = 20 ? Observe, puis essaie.', a: 3, b: 5, c: 20,
+  },
+  {
+    schemaVersion: 1, id: '4e-equation-both-001', kind: 'equation-decomposition', schoolLevel: '4e',
+    title: 'Les x des deux côtés', prompt: 'Résous 5x − 4 = 2x + 8 en conservant l’égalité.', a: 5, b: -4, d: 2, c: 8,
+  },
+  {
+    schemaVersion: 1, id: '3e-equation-fraction-001', kind: 'equation-decomposition', schoolLevel: '3e',
+    title: 'Une solution fractionnaire', prompt: 'Résous −2x + 3 = 8. La solution peut être une fraction.', a: -2, b: 3, c: 8,
+  },
+  {
     schemaVersion: 1, id: '2nde-line-fit-001', kind: 'line-fit', schoolLevel: '2nde',
     title: 'Ajuster une droite à des données', prompt: 'Ajuste la pente et le départ pour réduire les écarts.',
     points: [{ x: -2, y: -2 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }],
@@ -54,7 +66,7 @@ export default function ExplanationV2MathLab() {
     <div className="flex flex-wrap gap-2">
       {activities.map((activity, index) => <button type="button" key={activity.id} onClick={() => setSelected(index)}
         className={'min-h-11 rounded-xl px-4 py-2 font-semibold ' + (selected === index ? 'bg-teal-600 text-white' : 'border border-slate-300 bg-white text-slate-800')}>
-        {activity.kind === 'fraction-select' ? 'CM2 · Sélectionner 3/4' : activity.kind === 'fraction-bar' ? 'CM2 · Additionner' : activity.kind === 'coordinate-plane' ? '4e · Coordonnées' : activity.kind === 'algebra-tiles' ? '5e · Tuiles' : activity.kind === 'linear-function' ? '4e · Fonctions' : '2nde · Ajustement'}
+        {activity.kind === 'fraction-select' ? 'CM2 · Sélectionner 3/4' : activity.kind === 'fraction-bar' ? 'CM2 · Additionner' : activity.kind === 'coordinate-plane' ? '4e · Coordonnées' : activity.kind === 'algebra-tiles' ? '5e · Tuiles'  : activity.kind === 'linear-function' ? '4e · Fonctions' : activity.kind === 'equation-decomposition' ? activity.schoolLevel + ' · Équations (' + (activity.d ? 'deux côtés' : activity.a < 0 ? 'fraction' : 'simple') + ')' : '2nde · Ajustement'}
       </button>)}
       <button type="button" onClick={() => { setProgress((current) => ({ ...current, [spec.id]: initialActivityProgress() })); setResults((current) => ({ ...current, [spec.id]: '' })); }} className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold">Recommencer</button>
     </div>
