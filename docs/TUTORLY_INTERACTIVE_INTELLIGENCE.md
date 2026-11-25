@@ -1,9 +1,9 @@
 # Tutorly / Stuwy — Interactive Learning Intelligence
 > **Living knowledge base for humans, Codex, Claude, and other coding agents.**
 >
-> **Status snapshot:** 2026-11-24 · **Repository:** `UltraSaura/tutorly-navi` · **Working branch:** `feature/explanation-v2-interactive-math` · **Draft PR:** [#56](https://github.com/UltraSaura/tutorly-navi/pull/56)
+> **Status snapshot:** 2026-11-25 · **Repository:** `UltraSaura/tutorly-navi` · **Working branch:** `feature/explanation-v2-interactive-math` · **Draft PR:** [#56](https://github.com/UltraSaura/tutorly-navi/pull/56)
 >
-> **Scope:** The six newly implemented Explanation V2 interactive math activities and their supporting modules. This is **not** a claim to inventory every pre-existing animation across Tutorly. Extend this catalogue as modules are audited or created.
+> **Scope:** The seven newly implemented Explanation V2 interactive math activity kinds and their supporting modules, including IM-D01 and IM-D02. This is **not** a claim to inventory every pre-existing animation across Tutorly. Extend this catalogue as modules are audited or created.
 >
 > **Safety:** This is a preview-only branch; do not merge, deploy to production, change Supabase data, or modify Universal Tutor, TwoCards or CompactMathStepper without explicit approval.
 
@@ -16,6 +16,9 @@
 - Click **4e · Coordonnées** to move a point on a grid.
 - Click **5e · Tuiles** to construct an algebraic expression.
 - Click **4e · Fonctions** to change slope and intercept.
+- Click **5e · Équations (simple)** to animate 3x + 5 = 20.
+- Click **4e · Équations (deux côtés)** to solve 5x − 4 = 2x + 8.
+- Click **3e · Équations (fraction)** to solve −2x + 3 = 8 exactly.
 - Click **2nde · Ajustement** to fit a line to observations.
 - Click **Parcours complet CM2 · 5 étapes** to see a simulated lesson sequence with progression gates.
 
@@ -40,6 +43,25 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 
 **Agent rule:** New demonstration scripts must use validated mathematical data, explicitly show each transformation, include grade-appropriate explanations and a clear handoff to unassisted work. Add a script registry and approval checks before automatic lesson generation. Never count a demonstration view as a solved question.
 
+## New teaching module — animated mathematical decomposition (IM-D02)
+
+**Status:** Implemented on the feature branch; **GitHub CI and final Vercel preview verification pending** at this documentation update. **IM-07** is the associated seventh validated activity kind (`equation-decomposition`).
+
+- **Goal:** Original Photomath-style mathematical decomposition with explicit, validated steps and age-appropriate French reasoning, followed by learner participation. No competitor artwork, code, or proprietary animation is used.
+- **Mathematics:** `equationSolver.ts` supports bounded integer-coefficient equations **ax + b = dx + c** with a unique rational solution, including negative coefficients, variables on both sides, and fractions as answers. It normalizes fractions exactly and checks every integer-coefficient transformation for algebraic equivalence. Verification substitutes the rational answer in both original members without rounding.
+- **Animation:** `EquationDecompositionActivity.tsx` + `equationAnimations.css` show the original left/right members, an identical operation on each, then the transformed equation with a motion-safe reveal. This is **not** yet animated individual term cancellation or a full symbolic expression morph.
+- **Modes:** **Comprendre** (manual operation → result → explanation, previous/replay); **Résoudre ensemble** (choose the valid next operation, targeted feedback); **M’entraîner seul** (strict integer/fraction input, sign-error feedback, three hints). Viewing a worked step or using guidance marks the activity as assisted; independent success requires a first-attempt solo answer without help.
+- **Curriculum:** Samples at 5e, 4e, 3e are illustrative and **not teacher-approved curriculum mappings**. Content intended for students around age 11+; no automatic age assignment.
+- **Lesson V2.0:** **YES**, through the existing validated `interactive_activity` block and host; no published lessons updated.
+- **Practice:** **CANDIDATE**, no session adapter.
+- **Homework explanation:** **CANDIDATE**, no Universal Tutor integration.
+- **Teacher/Admin:** **CANDIDATE**, no picker or approval workflow.
+- **Standalone demo:** **YES in source** (three equation tabs); deployed URL may lag or require authentication.
+- **Tests:** `equationSolver.test.ts` exercises thousands of bounded cases, exact rational arithmetic, negative and both-sided equations; browser QA includes animations, wrong answers, hints, mobile widths and standalone preview smoke. **Do not claim PASS until the latest run completes.**
+- **Limits:** Not a camera scanner, OCR pipeline, general CAS, arbitrary expression parser, quadratic solver, or universal Photomath replacement. Only the specified linear template is supported. No student data persistence, automated generator mapping, voice, or analytics integration.
+
+**Next iteration:** Validate on real student/teacher sessions; improve term-level animated cancellation and accessible mathematical notation; add structured authoring and safe objective mapping before expanding the solver to other equation families.
+
 ## 2. Terminology and deployment status
 
 - **Implemented:** Component, mathematical grading, validated activity schema and demo exist in this branch.
@@ -63,6 +85,7 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 | **IM-04** `algebra-tiles` | Drag/tap x-tiles and unit tiles to construct 2x + 3; remove tiles | 5e–4e; sample 5e | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/AlgebraTilesActivity.tsx` |
 | **IM-05** `linear-function` | Drag two graph handles or use +/- buttons to set slope m and intercept b of y = mx + b | 4e–2nde depending on topic; sample 4e (**review grade fit**) | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/LinearFunctionActivity.tsx` |
 | **IM-06** `line-fit` | Move a regression line with handles/sliders to reduce squared error against data points | 2nde–Terminale depending on topic; sample 2nde (**review grade fit**) | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/LineFitActivity.tsx` |
+| **IM-07 / IM-D02** `equation-decomposition` | Animate and justify both-sided operations; solve together or independently, exact rational checking | 5e–3e sample cases, pending curriculum review | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/EquationDecompositionActivity.tsx` + `equationSolver.ts` |
 
 **Curriculum caution:** `schoolLevel` is a validated display/scaffolding field, **not** a verified French programme mapping. In particular, the sample 4e affine-function activity and 2nde least-squares fitting require curriculum/teacher review before assignment. Never equate a demo label with proof that a concept is mandated at that grade.
 
@@ -74,11 +97,11 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 | **Practice / S'entraîner** | Short, repeatable skill drills with varying numeric targets; hints and mastery analytics | **Not wired**. Add a Practice adapter and question-to-activity mapping; preserve existing `exam_training_items` and `training_item_answers` semantics |
 | **Homework explanation / correction** | Demonstrate a misconception and allow the student to try the corrected step interactively | **Not wired**. Build a dedicated explanation adapter and safe activity selection. Do not touch Universal Tutor without approval |
 | **Teacher/Admin** | Preview, select, edit, validate and publish age-appropriate interactive content | **Not wired**. Requires an authoring catalogue, validation, preview and versioning |
-| **Standalone demo / QA** | Try all six interactions with no student data | **Working** at `demo.html` and local dev lab |
+| **Standalone demo / QA** | Try all seven interaction kinds with no student data | **Working** at `demo.html` and local dev lab |
 
 ## 4. Activity specifications, validation, and learning behavior
 
-All six kinds share the **versioned** `InteractiveActivitySchema` and `InteractiveActivitySpec` contract in `src/features/explanation-v2/activityContract.ts`. Required common fields: `schemaVersion: 1`, `id`, `kind`, `title`, `prompt`. Optional `schoolLevel` is one of `CE1, CE2, CM1, CM2, 6e, 5e, 4e, 3e, 2nde, 1re, terminale`.
+All seven kinds share the **versioned** `InteractiveActivitySchema` and `InteractiveActivitySpec` contract in `src/features/explanation-v2/activityContract.ts`. Required common fields: `schemaVersion: 1`, `id`, `kind`, `title`, `prompt`. Optional `schoolLevel` is one of `CE1, CE2, CM1, CM2, 6e, 5e, 4e, 3e, 2nde, 1re, terminale`.
 
 | Kind | Required kind-specific fields | Limits and checks | Grading / feedback |
 |---|---|---|---|
@@ -88,6 +111,7 @@ All six kinds share the **versioned** `InteractiveActivitySchema` and `Interacti
 | `algebra-tiles` | `target: { x, units }` | `x` integer 0–4, `units` integer 0–6, at least one nonzero | Exact x-tile and unit-tile counts; 3 hints; no negative tiles in this version |
 | `linear-function` | `target: { m, b }` | integer slope/intercept in `[-3,3]`, `abs(m+b) <= 5` | Exact slope and intercept; diagnosis of wrong intercept vs wrong slope; 3 hints |
 | `line-fit` | `points: [{ x, y }, ...]` | 3–8 points, distinct integer x in `[-4,4]`, finite y in `[-5,5]`, best-fit slope/intercept in `[-3,3]` | Deterministic least-squares optimum; pass when displayed squared error is within 0.051 of minimum; 3 hints |
+| `equation-decomposition` | `a, b, c, d?` for `ax + b = dx + c` | Integer a,d in [-8,8], b,c in [-20,20]; a ≠ d, unique rational solution | Exact fraction/integer grading, guided step-choice, sign-error feedback, 3 hints; assisted vs independent |
 
 **Known boundaries:** `fraction-bar` currently only handles the restricted denominator-conversion case above; `algebra-tiles` represents nonnegative coefficients only; graph handles/sliders are bounded; `line-fit` is a **linear** least-squares demonstration, not general nonlinear curve fitting. The current graph uses 0.1 increments for fitting. Do not generate out-of-range data or invent missing geometry.
 
@@ -109,7 +133,7 @@ All six kinds share the **versioned** `InteractiveActivitySchema` and `Interacti
 }
 ```
 
-The same envelope accepts any of the other five validated kinds, replacing the `kind` and required parameters. A block is part of a complete **V2.0** lesson `sequence`, not a standalone lesson document.
+The same envelope accepts any of the other six validated kinds, replacing the `kind` and required parameters. A block is part of a complete **V2.0** lesson `sequence`, not a standalone lesson document.
 
 ### Copyable component use in a future Practice or Explanation adapter
 
@@ -133,19 +157,22 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 
 | Module | Responsibility |
 |---|---|
-| `src/features/explanation-v2/activityContract.ts` | Zod schema, six `kind` discriminators, state shape and initial progress |
-| `src/features/explanation-v2/InteractiveActivityHost.tsx` | Validates and routes the six activity kinds; also renders fraction addition and coordinate placement |
+| `src/features/explanation-v2/activityContract.ts` | Zod schema, seven `kind` discriminators, state shape and initial progress |
+| `src/features/explanation-v2/InteractiveActivityHost.tsx` | Validates and routes the seven activity kinds; also renders fraction addition and coordinate placement |
 | `src/features/explanation-v2/FractionSelectActivity.tsx` | Selectable fraction parts |
 | `src/features/explanation-v2/AlgebraTilesActivity.tsx` | Drag/tap algebra manipulatives |
 | `src/features/explanation-v2/LineGraph.tsx` | Shared SVG graph, draggable slope and intercept handles, plotted points |
 | `src/features/explanation-v2/MathDemonstration.tsx` | Reusable step-by-step explanation and visual demonstrations, derived fraction script |
 | `src/features/explanation-v2/LinearFunctionActivity.tsx` | Affine function demonstration / exploration / challenge modes, live equation, +/- controls |
 | `src/features/explanation-v2/LineFitActivity.tsx` | Data-fitting task, sliders, live squared-error and regression comparison |
+| `src/features/explanation-v2/equationSolver.ts` | Exact linear-equation decomposition, rational normalization, equivalence and substitution checks |
+| `src/features/explanation-v2/EquationDecompositionActivity.tsx` | Three-mode worked equation animation and guided/solo response UI |
+| `src/features/explanation-v2/equationAnimations.css` | Original transformation reveal with reduced-motion support |
 | `src/features/explanation-v2/math.ts` | Exact rational math, coordinate transforms, strict grading, linear regression and squared error |
 | `src/features/explanation-v2/pedagogicalQuestions.ts` | Structured, level-conscious question wording for fraction/coordinate tasks |
 | `src/features/explanation-v2/cm2FractionLesson.ts` | Self-contained sample V2.0 lesson (not published) |
 | `src/features/explanation-v2/Cm2LessonPreview.tsx` | Five-step simulated CM2 lesson with completion gating |
-| `src/pages/dev/ExplanationV2MathLab.tsx` | Six-tab developer lab and CM2 preview switch |
+| `src/pages/dev/ExplanationV2MathLab.tsx` | Seven-kind developer lab and CM2 preview switch |
 | `src/features/explanation-v2/demo-entry.tsx` + `demo.html` | Standalone Vercel preview without router, login or DB |
 | `src/features/explanation-v2/qa-entry.tsx` | Isolated browser QA harness |
 | `src/features/explanation-v2/qa-player-entry.tsx` | Real `LessonV2Player` QA fixture |
@@ -184,6 +211,7 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 - “What does 2x+3 mean?” → `algebra-tiles` (positive counts only).
 - “How does y = mx+b move?” → `linear-function`.
 - “How well does a line represent measured data?” → `line-fit`.
+- “Why does each operation preserve the equation, and how do I solve for x?” → `equation-decomposition` (only the validated linear template).
 
 **Do not** select by keyword alone. Match the topic's **objective**, prerequisites, difficulty, approved curriculum level, available data, misconception and response format. An activity is not required in every lesson; it must add learning value. Do not copy proprietary competitors' visuals, assets or wording.
 
@@ -201,7 +229,7 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 
 ## 8. Safe integration roadmap — after the animation library is approved
 
-**Phase A — animation catalogue (current priority):** Finish and review each new interaction in the isolated lab, including its `kind` contract, correct math, feedback, mobile interaction and tests. Possible later entries: interactive number line, geometric transformations, angles, equation balancing, area/perimeter, graph transformations. These are **ideas, not implemented features**.
+**Phase A — animation catalogue (current priority):** IM-D02 is now implemented in source with CI pending. Finish and review each new interaction in the isolated lab, including its `kind` contract, correct math, feedback, mobile interaction and tests. Possible later entries: interactive number line, geometric transformations, angles, equation balancing, area/perimeter, graph transformations. These are **ideas, not implemented features**.
 
 **Phase B — lesson authoring:** Extend the appropriate V2.1 schema and authoring pipeline, add a teacher/admin picker and preview, map activities to validated objectives and grade levels, generate activity specs from safe templates, and publish only after review. Keep the existing lesson sequence until separately approved.
 
