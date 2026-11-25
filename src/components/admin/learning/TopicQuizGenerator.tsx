@@ -109,6 +109,10 @@ function normalizeTopicDisplayKey(value: string | null | undefined) {
     .replace(/\bnombres\b/g, 'nombre');
 }
 
+function getTopicDomainId(topic: { curriculum_domain_id?: string | null; curriculum_domain_id_uuid?: string | null }) {
+  return topic.curriculum_domain_id_uuid || topic.curriculum_domain_id || null;
+}
+
 function isSchemaMismatchError(error: unknown) {
   const message = String((error as any)?.message || '');
   return (
@@ -249,7 +253,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
-        .select('id, name, description, category_id, curriculum_country_code, curriculum_level_code, curriculum_subject_id, curriculum_subject_id_uuid, curriculum_domain_id_uuid')
+        .select('id, name, description, category_id, curriculum_country_code, curriculum_level_code, curriculum_subject_id, curriculum_subject_id_uuid, curriculum_domain_id, curriculum_domain_id_uuid')
         .eq('is_active', true)
         .order('order_index');
       if (error) throw error;
@@ -282,7 +286,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   // This lets the picker separate current and legacy curriculum records without
   // changing or deactivating any curriculum data.
   const curriculumDomainIds = useMemo(
-    () => Array.from(new Set(levelScopedTopics.map((topic) => topic.curriculum_domain_id_uuid).filter((id): id is string => Boolean(id)))).sort(),
+    () => Array.from(new Set(levelScopedTopics.map(getTopicDomainId).filter((id): id is string => Boolean(id)))).sort(),
     [levelScopedTopics],
   );
   const { data: curriculumDomainEditions = [] } = useQuery({
@@ -342,7 +346,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const availableCurriculumEditions = useMemo(() => {
     const editions = new Map<string, CurriculumEdition>();
     for (const topic of subjectTopics) {
-      const edition = topic.curriculum_domain_id_uuid ? editionByDomainId.get(topic.curriculum_domain_id_uuid) : null;
+      const domainId = getTopicDomainId(topic);
+      const edition = domainId ? editionByDomainId.get(domainId) : null;
       if (edition) editions.set(edition.id, edition);
     }
     return [...editions.values()].sort((a, b) => (b.published_at || '').localeCompare(a.published_at || '') || a.bo_reference.localeCompare(b.bo_reference));
@@ -354,7 +359,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     const editionFiltered = curriculumEditionFilter === 'all' || !selectedEditionId
       ? searchFilteredTopics
       : searchFilteredTopics.filter((topic) => {
-          const edition = topic.curriculum_domain_id_uuid ? editionByDomainId.get(topic.curriculum_domain_id_uuid) : null;
+          const domainId = getTopicDomainId(topic);
+          const edition = domainId ? editionByDomainId.get(domainId) : null;
           return edition?.id === selectedEditionId;
         });
     // Keep repeated topic titles from appearing twice in one curriculum edition.
