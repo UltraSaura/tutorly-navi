@@ -298,7 +298,7 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Étape suivante' }).click();
       await page.getByRole('button', { name: 'Animer l’opération' }).click();
       assert.equal(await page.getByTestId('equation-cancel-token').count(), 0);
-      assert.match(await page.getByTestId('equation-terms-left').innerText(), /-2 × \(-5\/2\)/);
+      assert.ok((await page.getByTestId('equation-terms-left').locator('span').allInnerTexts()).includes('-2 × (-5/2)'));
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /8 = 8/);
     });
