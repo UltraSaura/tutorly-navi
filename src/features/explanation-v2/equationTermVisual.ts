@@ -48,8 +48,9 @@ export function equationTermVisual(step: EquationTransformation): EquationTermVi
     if (d === 0 || !step.afterState || equationText(step.afterState) !== step.after) throw new Error('Invalid variable-cancellation storyboard');
     return {
       left: [
-        token('left-variable', variable(a), 'combine'),
-        ...(b !== 0 ? [token('left-constant', signedConstant(b), 'keep')] : []),
+        ...(a !== 0 ? [token('left-variable', variable(a), 'combine')] : []),
+        ...(b !== 0 ? [token('left-constant', a === 0 ? firstConstant(b) : signedConstant(b), 'keep')] : []),
+        ...(a === 0 && b === 0 ? [token('left-zero', '0', 'keep')] : []),
         token('left-operation', signedVariable(-d), 'combine'),
       ],
       right: [
