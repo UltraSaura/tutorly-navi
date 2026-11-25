@@ -60,6 +60,15 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 - **Tests:** `equationSolver.test.ts` exercises thousands of bounded cases, exact rational arithmetic, negative and both-sided equations; `equationTermVisual.test.ts` checks inverse-term pairs and exact substitutions across a bounded grid; browser QA now asserts individual canceled terms, grouping, fractional substitution and reduced-motion behavior at 375/447/1280px. **IM-D02.1 PASS:** 90 isolated browser checks at 375/447/1280px, 18 real-player checks, production-built standalone demo smoke, pure unit tests, lint, typecheck and build in [run #45716217322](https://github.com/UltraSaura/tutorly-navi/actions/runs/45716217322), commit `5728f7515`.
 - **Limits:** Not a camera scanner, OCR pipeline, general CAS, arbitrary expression parser, quadratic solver, or universal Photomath replacement. Only the specified linear template is supported. No student data persistence, automated generator mapping, voice, or analytics integration.
 
+### IM-D02.2 — Focused, low-clutter math workspace (feedback from screenshot review, 26 Nov 2026)
+
+- **Problem observed:** oversized left/right equation cards, large mode buttons, repeated original equation, multiple explanatory paragraphs and competing restart buttons obscured the mathematical transformation.
+- **New UI:** one centered equation state at a time (**before → highlighted operation/individual terms → simplified result**), with the solver and underlying algebra unchanged. The verification step likewise moves from the original equation to explicit substitution to equality.
+- **Hierarchy:** compact three-mode selector (Comprendre / Ensemble / À toi); brief objective and optional complete prompt; step title and slim progress indicator; single centered math workspace; one primary Next/Animate action plus Previous; optional `Pourquoi cette étape ?` disclosure; low-emphasis restart link.
+- **Responsive:** 44px minimum mode/navigation targets, bounded math canvas, wrapping terms, reduced-motion behavior retained. Tests assert no separate left/right cards, only one active equation stage, explanation disclosure and no horizontal overflow at 375/447/1280px.
+- **Status:** implementation in feature branch, CI for the new UI must pass before marking verified. No changes to solver, grading, published lessons or production.
+- **Design rule:** show **one mathematical idea per stage**; never hide the actual operation or verification behind a vague animation. Additional explanations are on demand, not repeated on every stage.
+
 **Next iteration:** Validate IM-D02.1 with teachers and students, then evaluate true position-to-position token morphing and accessible mathematical notation; add structured authoring and safe objective mapping before expanding to other equation families.
 
 ## 2. Terminology and deployment status
