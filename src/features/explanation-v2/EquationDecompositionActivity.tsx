@@ -111,10 +111,13 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
     update({ phaseHints: p.phaseHints + 1, hintsUsed: p.hintsUsed + 1, assisted: true, feedback: hints[p.phaseHints] });
   };
   const options = [
-    guidedStep.choice,
     'Modifier uniquement le membre gauche',
     'Changer les signes sans faire la même opération des deux côtés',
+    guidedStep.choice,
   ];
+  // Rotate the correct choice by step so the learner cannot pass by always tapping the same position.
+  const offset = (guidedIndex + 2) % options.length;
+  const choices = [...options.slice(offset), ...options.slice(0, offset)];
   return <div data-testid="equation-decomposition-activity" className="space-y-4">
     <div className="flex flex-wrap gap-2" aria-label="Mode d’apprentissage">
       <button type="button" className={control + (mode === 'understand' ? ' border-teal-700 bg-teal-50' : '')} aria-pressed={mode === 'understand'} onClick={() => chooseMode('understand')}>Comprendre</button>
@@ -145,7 +148,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       <p className="text-sm font-bold text-teal-900">Étape {guidedIndex + 1} sur {steps.length} — Choisis la prochaine opération</p>
       <p className="rounded-xl bg-slate-100 p-4 text-center text-xl font-bold">{guidedStep.before}</p>
       {!guidedRevealed && !p.completed && <div className="grid gap-2">
-        {options.map((option, i) => <button key={i} type="button" data-testid={'equation-choice-' + i} className={control + ' text-left'} onClick={() => guidedChoose(option)}>{option}</button>)}
+        {choices.map((option, i) => <button key={i} type="button" data-testid={'equation-choice-' + i} className={control + ' text-left'} onClick={() => guidedChoose(option)}>{option}</button>)}
       </div>}
       {guidedRevealed && <><TransformationVisual step={guidedStep} stage={2} />
         <p className="rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-950">{guidedStep.rule}</p>
