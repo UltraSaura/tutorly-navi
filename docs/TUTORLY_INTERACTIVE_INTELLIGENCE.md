@@ -71,6 +71,16 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 - **Preview limitation (26 Nov 2026):** the available READY Vercel preview for this layout is at commit `23b7b66b8` (core compact workspace). Newer commits include the smaller lab reset and additional QA assertions, but a fresh Vercel deployment was blocked by the account's free-tier daily API deployment limit (100/day). GitHub CI built and tested the newer code successfully; no production deployment was attempted.
 
 
+### IM-D02.3 — Always-visible teaching instruction (student screenshot feedback, 26 Nov 2026)
+
+- **Observed problem:** the simplified interface made the algebra more prominent, but a learner still had to expand `Pourquoi cette étape ?` to know *what operation was happening*.
+- **Pedagogical contract:** **What we're about to do → What we're doing → What we obtained** is always visible directly **above the equation animation**, changing with the three demonstration stages. The optional `Pourquoi cette étape ?` contains only the longer conceptual justification and general equality rule.
+- **Concrete example:** `3x + 5 = 20` → "Pour isoler le terme en x, on va soustraire 5 aux deux membres." → "On soustrait 5 à gauche ET à droite pour conserver l’égalité." → "Les nombres opposés s’annulent à gauche. À droite, 20 − 5 = 15." This short narration does **not** require opening a disclosure.
+- **Exactness:** `equationStepInstruction.ts` derives the instruction from validated solver steps for `subtract-variable`, `subtract-constant`, `divide`, `verify`; handles positive/negative constants, both-sided x terms, negative divisors and exact fractional answers. No AI-generated math.
+- **Visual sign clarity:** canceled terms use a small corner × marker instead of a strike-through line across `+`/`−` signs, so `+5` and `−5` remain visually distinct.
+- **QA:** `equationStepInstruction.test.ts` validates all three stages and negative/fractional cases. Browser QA checks the always-visible instruction in stage 0/1/2, the optional Why panel remaining closed, and exact verification. Existing 375/447/1280px and reduced-motion checks remain.
+- **Status:** implemented on the isolated feature branch; **latest CI pending** at this documentation update. Do not claim verified until the run for the final code commit succeeds. No merge or production release.
+
 **Next iteration:** Validate IM-D02.1 with teachers and students, then evaluate true position-to-position token morphing and accessible mathematical notation; add structured authoring and safe objective mapping before expanding to other equation families.
 
 ## 2. Terminology and deployment status
