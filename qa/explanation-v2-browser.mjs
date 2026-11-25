@@ -220,10 +220,13 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('equation-demo-progress').innerText(), /1 sur 3/);
       assert.match(await page.getByTestId('equation-transform').innerText(), /3x \+ 5/);
       assert.equal(await page.getByTestId('equation-after').count(), 0);
+      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on va faire.*soustraire 5 aux deux membres/s);
+      assert.equal(await page.locator('details').filter({ hasText: 'Pourquoi cette étape ?' }).getAttribute('open'), null);
       assert.equal(await page.getByTestId('equation-transform').getByText('Membre gauche').count(), 0);
       assert.equal(await page.getByTestId('equation-transform').getByText('Membre droit').count(), 0);
       assert.equal(await page.getByRole('button', { name: 'Comprendre' }).getAttribute('aria-pressed'), 'true');
       await page.getByRole('button', { name: 'Animer l’opération' }).click();
+      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on fait.*On soustrait 5 à gauche ET à droite/s);
       const operations = await page.getByTestId('equation-operation').locator('div').allInnerTexts();
       assert.equal(operations[0], operations[1]);
       assert.equal(await page.getByTestId('equation-after').count(), 0);
@@ -232,6 +235,7 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('equation-cancellation-explanation').innerText(), /font 0 à gauche/);
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /3x = 15/);
+      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on obtient.*20 − 5 = 15/s);
       assert.equal(await page.getByTestId('equation-operation').count(), 0);
       assert.equal(await page.getByTestId('equation-term-animation').count(), 0);
       await page.getByRole('button', { name: 'Précédent' }).click();
@@ -242,6 +246,7 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Animer l’opération' }).click();
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /x = 5/);
+      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on obtient.*x = 5/s);
       await page.screenshot({ path: dir + '/equation-focused-' + width + '.png', fullPage: true });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
       await page.getByText('Pourquoi cette étape ?').click();
@@ -311,6 +316,7 @@ async function runAtWidth(width) {
       assert.ok((await page.getByTestId('equation-terms-left').locator('span').allInnerTexts()).includes('-2 × (-5/2)'));
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /8 = 8/);
+      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on obtient.*8 = 8/s);
       assert.equal(await page.getByTestId('equation-term-animation').count(), 0);
       await page.screenshot({ path: dir + '/equation-verification-focused-' + width + '.png', fullPage: true });
     });
