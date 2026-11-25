@@ -110,6 +110,8 @@ async function runAtWidth(width) {
     await run('coordinate pointer or touch placement after reset', async () => {
       await page.getByTestId('reset').click();
       const svg = page.locator('svg[role=img]');
+      // Touchscreen.tap uses viewport coordinates and does not auto-scroll offscreen SVGs.
+      await svg.scrollIntoViewIfNeeded();
       const rect = await svg.boundingBox();
       assert.ok(rect);
       const x = rect.x + (230 / 360) * rect.width;
