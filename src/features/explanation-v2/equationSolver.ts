@@ -29,6 +29,7 @@ export function gcd(a: number, b: number): number {
 }
 export function rational(n: number, d = 1): Rational {
   if (!Number.isSafeInteger(n) || !Number.isSafeInteger(d) || d === 0) throw new Error('Invalid rational');
+  if (n === 0) return { n: 0, d: 1 };
   const sign = d < 0 ? -1 : 1;
   const divisor = gcd(n, d);
   return { n: sign * n / divisor, d: sign * d / divisor };
