@@ -7,6 +7,7 @@ import { FractionSelectActivity } from './FractionSelectActivity';
 import { AlgebraTilesActivity } from './AlgebraTilesActivity';
 import { LinearFunctionActivity } from './LinearFunctionActivity';
 import { LineFitActivity } from './LineFitActivity';
+import { EquationDecompositionActivity } from './EquationDecompositionActivity';
 import { MathDemonstration, fractionDemonstrationSteps } from './MathDemonstration';
 
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
@@ -199,6 +200,8 @@ export function InteractiveActivityHost(props: Props) {
             ? <AlgebraTilesActivity {...props} spec={spec} />
             : spec.kind === 'linear-function'
               ? <LinearFunctionActivity {...props} spec={spec} />
-              : <LineFitActivity {...props} spec={spec} />}
+              : spec.kind === 'line-fit'
+                ? <LineFitActivity {...props} spec={spec} />
+                : <EquationDecompositionActivity {...props} spec={spec} />}
   </section>;
 }
