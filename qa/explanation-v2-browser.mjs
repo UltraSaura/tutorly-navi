@@ -212,6 +212,80 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
     });
     await page.screenshot({ path: dir + '/linear-' + width + '.png', fullPage: true });
+    await page.getByTestId('tab-equation').click();
+    await run('equation visual decomposition animates identical operations on both sides', async () => {
+      await page.getByTestId('equation-decomposition-activity').waitFor();
+      assert.match(await page.getByTestId('equation-demo-progress').innerText(), /1 sur 3/);
+      assert.match(await page.getByTestId('equation-transform').innerText(), /3x \+ 5/);
+      assert.equal(await page.getByTestId('equation-after').count(), 0);
+      await page.getByRole('button', { name: 'Animer l’opération' }).click();
+      const operations = await page.getByTestId('equation-operation').locator('div').allInnerTexts();
+      assert.equal(operations[0], operations[1]);
+      assert.equal(await page.getByTestId('equation-after').count(), 0);
+      await page.getByRole('button', { name: 'Voir le résultat' }).click();
+      assert.match(await page.getByTestId('equation-after').innerText(), /3x = 15/);
+      await page.getByRole('button', { name: 'Précédent' }).click();
+      assert.equal(await page.getByTestId('equation-after').count(), 0);
+      await page.getByRole('button', { name: 'Voir le résultat' }).click();
+      await page.getByRole('button', { name: 'Étape suivante' }).click();
+      assert.match(await page.getByTestId('equation-demo-progress').innerText(), /2 sur 3/);
+      await page.getByRole('button', { name: 'Animer l’opération' }).click();
+      await page.getByRole('button', { name: 'Voir le résultat' }).click();
+      assert.match(await page.getByTestId('equation-after').innerText(), /x = 5/);
+    });
+    await run('equation guided mode diagnoses wrong operation and preserves help status', async () => {
+      await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
+      await page.getByTestId('equation-choice-1').click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /deux membres|deux côtés/i);
+      await page.getByTestId('equation-choice-0').click();
+      assert.match(await page.getByTestId('equation-after').innerText(), /3x = 15/);
+      await page.getByRole('button', { name: 'Étape suivante' }).click();
+      assert.match(await page.locator('section[aria-label="Résolution accompagnée"]').innerText(), /Étape 2 sur 3/);
+    });
+    await run('equation solo rejects malformed and incorrect answers, then accepts exact result', async () => {
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      const input = page.locator('#equation-answer-qa-equation');
+      await input.fill('5/0');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /dénominateur/i);
+      await input.fill('-5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /signe/i);
+      await input.fill('5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    });
+    await page.screenshot({ path: dir + '/equation-' + width + '.png', fullPage: true });
+    await page.getByTestId('tab-equation-both').click();
+    await run('equation with variables on both sides displays exact cancellation and guided result', async () => {
+      await page.getByRole('button', { name: 'Animer l’opération' }).click();
+      await page.getByRole('button', { name: 'Voir le résultat' }).click();
+      assert.match(await page.getByTestId('equation-after').innerText(), /3x − 4 = 8/);
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      await page.locator('#equation-answer-qa-equation-both').fill('4');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+    });
+    await page.getByTestId('tab-equation-rational').click();
+    await run('negative-coefficient equation accepts equivalent fraction and targeted hints', async () => {
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      await page.getByRole('button', { name: /Indice/ }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /deux membres/i);
+      await page.locator('#equation-answer-qa-equation-rational').fill('-10/4');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      assert.match(await page.getByText(/Solution vérifiée/).innerText(), /-5\/2/);
+    });
+    await page.screenshot({ path: dir + '/equation-rational-' + width + '.png', fullPage: true });
+    await run('equation independent grading requires no worked solution or hints', async () => {
+      await page.getByTestId('tab-equation').click();
+      await page.getByTestId('reset').click();
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      await page.locator('#equation-answer-qa-equation').fill('5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+    });
     await page.getByTestId('tab-fit').click();
     await run('fitting data exposes five plotted points and changing error', async () => {
       await page.getByTestId('line-fit-activity').waitFor();
