@@ -68,7 +68,7 @@ export default function ExplanationV2MathLab() {
         className={'min-h-11 rounded-xl px-4 py-2 font-semibold ' + (selected === index ? 'bg-teal-600 text-white' : 'border border-slate-300 bg-white text-slate-800')}>
         {activity.kind === 'fraction-select' ? 'CM2 · Sélectionner 3/4' : activity.kind === 'fraction-bar' ? 'CM2 · Additionner' : activity.kind === 'coordinate-plane' ? '4e · Coordonnées' : activity.kind === 'algebra-tiles' ? '5e · Tuiles'  : activity.kind === 'linear-function' ? '4e · Fonctions' : activity.kind === 'equation-decomposition' ? activity.schoolLevel + ' · Équations (' + (activity.d ? 'deux côtés' : activity.a < 0 ? 'fraction' : 'simple') + ')' : '2nde · Ajustement'}
       </button>)}
-      <button type="button" onClick={() => { setProgress((current) => ({ ...current, [spec.id]: initialActivityProgress() })); setResults((current) => ({ ...current, [spec.id]: '' })); }} className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold">Recommencer</button>
+      <button type="button" onClick={() => { setProgress((current) => ({ ...current, [spec.id]: initialActivityProgress() })); setResults((current) => ({ ...current, [spec.id]: '' })); }} className="min-h-11 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700">Réinitialiser l’exercice</button>
     </div>
     <InteractiveActivityHost spec={spec} progress={progress[spec.id]}
       onProgressChange={(next) => setProgress((current) => ({ ...current, [spec.id]: next }))}
