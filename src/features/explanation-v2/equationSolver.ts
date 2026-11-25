@@ -132,7 +132,7 @@ export function equationSteps(input: EquationCoefficients): EquationTransformati
   const leftValue = rationalText(rational(original.a * solution.n + original.b * solution.d, solution.d));
   const rightValue = rationalText(rational(original.d * solution.n + original.c * solution.d, solution.d));
   steps.push({
-    id: 'verify', before: 'x = ' + rationalText(solution),
+    id: 'verify', before: originalText,
     after: leftValue + ' = ' + rightValue + '  ✓',
     leftOperation: 'x → ' + rationalText(solution), rightOperation: 'x → ' + rationalText(solution),
     title: 'Vérifier dans l’équation de départ',
