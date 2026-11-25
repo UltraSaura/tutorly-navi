@@ -33,7 +33,7 @@ function TransformationVisual({ step, stage }: { step: EquationTransformation; s
       <div className="rounded-lg border border-amber-300 bg-amber-100 px-2 py-3 font-bold text-amber-950">{step.leftOperation}</div>
       <span aria-hidden="true" className="text-teal-800">↔</span>
       <div className="rounded-lg border border-amber-300 bg-amber-100 px-2 py-3 font-bold text-amber-950">{step.rightOperation}</div>
-      <p className="col-span-3 text-xs font-semibold text-amber-900">La même opération est appliquée aux deux membres.</p>
+      <p className="col-span-3 text-xs font-semibold text-amber-900">{step.id === 'verify' ? 'On remplace x par sa valeur partout où il apparaît.' : 'La même opération est appliquée aux deux membres.'}</p>
     </div>}
     {stage === 2 && <div data-testid="equation-after" className="equation-after space-y-2 rounded-xl border border-teal-200 bg-teal-50 p-4 text-center">
       <p className="text-xs font-bold uppercase text-teal-900">Résultat de cette étape</p>
@@ -110,11 +110,13 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
     ];
     update({ phaseHints: p.phaseHints + 1, hintsUsed: p.hintsUsed + 1, assisted: true, feedback: hints[p.phaseHints] });
   };
-  const options = [
-    'Modifier uniquement le membre gauche',
-    'Changer les signes sans faire la même opération des deux côtés',
-    guidedStep.choice,
-  ];
+  const alternativeChoices: Record<EquationTransformation['id'], [string, string]> = {
+    'subtract-variable': ['Faire l’opération inverse sur les deux membres', 'Déplacer les x sans modifier l’autre membre'],
+    'subtract-constant': ['Faire l’opération inverse sur les deux membres', 'Diviser immédiatement par le coefficient de x'],
+    divide: ['Multiplier les deux membres par le coefficient de x', 'Diviser un seul membre'],
+    verify: ['S’arrêter sans vérifier', 'Vérifier seulement la dernière ligne'],
+  };
+  const options = [...alternativeChoices[guidedStep.id], guidedStep.choice];
   // Rotate the correct choice by step so the learner cannot pass by always tapping the same position.
   const offset = (guidedIndex + 2) % options.length;
   const choices = [...options.slice(offset), ...options.slice(0, offset)];
