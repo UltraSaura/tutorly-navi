@@ -188,7 +188,7 @@ Known existing foundations to inspect/reuse:
 
 ## 8. NEXT ACTIONS — ORDER OF EXECUTION
 
-**A. Documentation and reality check (IN PROGRESS; GitHub structural audit checkpoint recorded 2026-11-26).** Inspect GitHub Explanation V2 and integration branches, identify latest commits, exact routes, previews, existing module catalog and tests. Populate a current-state evidence table in this ledger. Do not edit application code during the audit.
+**A. Documentation and reality check (repository/CI/deployment metadata reconciled 2026-11-26; interactive preview outstanding).** Inspect GitHub Explanation V2 and integration branches, identify latest commits, exact routes, previews, existing module catalog and tests. Populate a current-state evidence table in this ledger. Do not edit application code during the audit.
 
 **B. Restore a single working review surface.** Verify or publish an authorized non-production Vercel preview for Explanation V2; provide ONE working URL with a clear demo menu and a version/commit label. If Vercel is blocked, use a local/Work preview and report the limitation.
 
@@ -204,7 +204,7 @@ Known existing foundations to inspect/reuse:
 
 **H. Separate production launch and branch consolidation.** Keep V1 fixes isolated; propose merge plan with excluded Universal Tutor branch; regression-test before deployment.
 
-**Current execution state as of 2026-11-26:** A has a GitHub evidence checkpoint below, but remains IN PROGRESS until exact branch heads, CI/deployment-to-commit alignment and interactive browser QA are reconciled. B–H remain pending; do not claim deployment or browser acceptance.
+**Current execution state as of 2026-11-26:** A metadata reconciliation recorded in LEDGER-002/003. B is the next actionable gate: current preview and interactive browser validation remain outstanding. C–H pending; do not claim deployment or browser acceptance.
 
 ## 9. REQUIRED WORK LOG FORMAT — APPEND AFTER EACH TASK
 
@@ -244,6 +244,15 @@ Known existing foundations to inspect/reuse:
 - **Files changed:** this ledger only; no app code, Supabase, Vercel deployment, protected branches or production modification.
 - **Blockers:** full branch-head/PR SHA reconciliation, actual Vercel state and browser route check, current CI and exhaustive module mapping.
 - **Next action:** complete A with exact branch head SHAs, PR/CI and Vercel-to-commit matrix; then B verify one browser-working non-production review surface before UX redesign or code modification.
+
+
+### 2026-11-26 — LEDGER-003 Branch heads, CI and Vercel reconciliation
+- **Status:** Task A repository/CI/deployment metadata checkpoint complete; interactive preview validation remains outstanding, Task B blocked on current preview and browser access. No code or release acceptance implied.
+- **Exact branch heads:** main `5b5ea1de14c223b28f1838b105b6d82d0385cdf3`; feature/stuwy-explain-v2 `cec2b07a802844aacd789bd01e58d8316f73a1c4`; feature/explanation-v2-interactive-math `a92d3c797c3ce38361ea6e10d925e9e9ace2c97d`; integration/stuwy-explain-v2 `828413a32af273cb1f2dbc27711f7c86f0574a23`; feature/guided-practice-lessons `a57846c388c904fff15bc374a13afa06f0d9f6db`; release/v1-stabilization `d53af6c49d63fa8bffb9a939e3c5968267c21add`; feature/v2-universal-tutor `03698572729b756d9a90231ba45a4ca7ed574956` (excluded).
+- **PR #56:** open draft, head matches interactive-math branch, base parent `55f30eccc725a832463373dc85f0ce78cb0b229f`. IM-D02.4 adds guided operation -> cancellation -> simplified result -> advance, always-visible instructions, targeted remediation, mode state preservation. PR reports 93/93 browser and 18/18 real-player checks in run #45725652079; job status independently confirmed successful. Latest head-associated run [#45725868750](https://github.com/UltraSaura/tutorly-navi/actions/runs/45725868750) independently confirmed success, both browser and unit-and-build jobs, including desktop/mobile interactions, standalone demo smoke, exact math/parser, TypeScript, focused lint and production build. No tests newly executed in this chat; counts are PR-reported, not independently counted from logs.
+- **Vercel:** branch alias resolves to READY deployment `dpl_92ojhCdfh5gvwiWX7UM7QRtJYjeP`, source `ac0c7c37ea740e8ab6a992dca0c7fbf98ccadc45`, target null (preview), older than current head. List of recent branch deployments confirms this is latest returned record. PR reports daily Hobby API deployment limit 402 for IM-D02.4; no redeployment attempted or reset time inferred in this chat. B-01/B-02 remain open. Preview candidate https://stuwy-git-feature-explanation-v2-interactive-math-stuwy.vercel.app/demo.html ; Vercel metadata verified but route interaction NOT RUN. Existing browser tab inspection failed because extension lacks host permission; no interactive browser controls available in Chat mode.
+- **Files changed:** ledger only. No app code, branch merge, Supabase or Vercel writes.
+- **Next:** Task B: establish current non-production preview at head or verified equivalent runtime commit; use authorized Work/Codex browser to test /demo.html at 375/447/1280px, capture evidence and version label. If deployment limit persists, use isolated local preview of exact head. Keep user acceptance separate from CI. Full cross-app module inventory remains Task D.
 
 ## 10. CONTINUOUS UPDATE OPERATING PROCEDURE
 
