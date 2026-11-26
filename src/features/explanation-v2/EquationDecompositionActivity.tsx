@@ -109,7 +109,10 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
     if (modes.soloCompleted) return;
     const answer = parseRational(p.input);
     if (!answer) {
-      updateModes({ soloCorrect: false, soloFeedback: 'Écris un entier ou une fraction, par exemple −5/2. Le dénominateur ne peut pas être zéro.' });
+      const isZeroDenominator = /^\s*[+-]?\d+\s*\/\s*0+\s*$/.test(p.input);
+      update({ equationModes: { ...modes, soloCorrect: false, soloFeedback: isZeroDenominator
+        ? 'Le dénominateur ne peut pas être zéro. Écris une fraction avec un dénominateur non nul.'
+        : 'Écris un entier ou une fraction, par exemple −5/2. Vérifie le format de ta réponse.' } });
       return;
     }
     const attempts = p.attempts + 1;

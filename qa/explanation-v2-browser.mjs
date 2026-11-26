@@ -196,7 +196,7 @@ async function runAtWidth(width) {
     await run('function demonstration teaches starting point, slope and exploration before assessment', async () => {
       await page.getByTestId('math-demonstration').waitFor();
       await checkTouchTargets('[data-testid="linear-function-activity"]');
-      assert.match(await page.getByTestId('demo-step-title').innerText(), /horizontale/i);
+      assert.match(await page.getByTestId('demo-step-title').innerText(), /constante/i);
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
       assert.match(await page.getByTestId('demo-equation').innerText(), /f\(x\) = 1/);
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
@@ -212,6 +212,7 @@ async function runAtWidth(width) {
     });
     await run('function graph updates equation and diagnoses incorrect intercept', async () => {
       await page.getByTestId('linear-function-activity').waitFor();
+      await page.getByRole('button', { name: 'M’entraîner' }).click();
       await page.getByRole('button', { name: 'Valider la droite' }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /axe vertical/i);
       await page.getByRole('button', { name: 'Augmenter Ordonnée à l’origine b' }).click();
@@ -219,6 +220,8 @@ async function runAtWidth(width) {
       assert.match(await page.locator('[role=status]').last().innerText(), /pente/i);
     });
     await run('function graph changes slope and completes', async () => {
+      await page.getByTestId('reset').click();
+      await page.getByRole('button', { name: 'M’entraîner' }).click();
       await page.getByRole('button', { name: 'Augmenter Coefficient directeur a' }).click();
       await page.getByRole('button', { name: 'Augmenter Coefficient directeur a' }).click();
       assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 2x \+ 1/);
@@ -227,6 +230,7 @@ async function runAtWidth(width) {
     });
     await run('affine-function handles respond to pointer dragging', async () => {
       await page.getByTestId('reset').click();
+      await page.getByRole('button', { name: 'Explorer' }).click();
       const graph = page.getByTestId('line-graph');
       const rect = await graph.boundingBox();
       assert.ok(rect);
@@ -302,6 +306,15 @@ async function runAtWidth(width) {
       await input.fill('5/0');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /dénominateur/i);
+      await input.fill('');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /entier ou une fraction/i);
+      await input.fill('abc');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /format/i);
+      await input.fill('4/1');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /ne sont pas égaux/i);
       await input.fill('-5');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /signe/i);

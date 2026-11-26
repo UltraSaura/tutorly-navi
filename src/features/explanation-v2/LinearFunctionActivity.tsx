@@ -91,7 +91,7 @@ export function LinearFunctionActivity({ spec, progress, onProgressChange, onCom
       <MathDemonstration title="Comprendre une fonction, pas à pas"
         steps={functionDemonstrationSteps(spec.target)} onPractice={() => setMode('exploration')}
         practiceLabel="Manipuler la droite" />
-      <button type="button" className="text-sm font-semibold text-teal-800 underline" onClick={() => setMode('challenge')}>Je connais déjà : passer directement à l’exercice</button>
+      <button type="button" className="min-h-11 rounded-md px-2 text-sm font-semibold text-teal-800 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700" onClick={() => setMode('challenge')}>Je connais déjà : passer directement à l’exercice</button>
     </div> : <>
       {mode === 'exploration' ? <div className="rounded-xl bg-teal-50 p-3 leading-7">
         <p className="font-bold">Exploration libre — sans note</p>
