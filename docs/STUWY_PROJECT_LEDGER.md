@@ -204,7 +204,7 @@ Known existing foundations to inspect/reuse:
 
 **H. Separate production launch and branch consolidation.** Keep V1 fixes isolated; propose merge plan with excluded Universal Tutor branch; regression-test before deployment.
 
-**Current execution state as of 2026-11-26:** Tasks A/B and the B.3 browser review are recorded in LEDGER-001–006. Task C is **PARTIAL PASS** on the feature branch at code commit `74a1d9cfa8c23b13a7fa8ac69d51355470786975`, PR #56 remains open/draft. Equation mode state, 3e affine vocabulary/notation, and tile grammar are implemented; 464/464 unit tests, TypeScript and production build pass. Exact responsive/browser acceptance at 320/375/390/447/1280px is **NOT RUN** because Chromium is unavailable (Playwright browser download returned 403; installed Chromium wrapper points to a missing binary). Full-repository ESLint remains failing; see LEDGER-007. B-03/B-04 remain open pending browser screenshots/continuation checks. D–H pending.
+**Current execution state as of 2026-11-26:** A repository metadata audit complete; B preview restoration complete at historical a92d3c79 with B.3 partial live review; final corrected live preview alignment remains to verify. C technical PASS on 3fc22b11 (180/180 standalone, 40/40 player; LEDGER-009), teacher review pending. D documentation accepted at 72599d84 (LEDGER-010/011); E pedagogical review next. F–H pending. Full lint legacy baseline 946 errors/86 warnings unchanged. PR #56 remains open/draft. No production acceptance claimed.
 
 ## 9. REQUIRED WORK LOG FORMAT — APPEND AFTER EACH TASK
 
@@ -361,3 +361,11 @@ If two sources disagree: record both, identify dates/branches, preserve function
 - **Scope:** No application runtime code, protected branch, TwoCards, CompactMathStepper, Supabase or production deployment changed. PR #56 remains open/draft; no merge; Task E not started.
 
 - **Catalog reconciliation follow-up:** final catalog documentation commit is `72599d84a6c0ca0e185d79e27a55872249f8bbab`; older IM-D02 browser counts/three viewport widths and preview URL are explicitly historical, and the affine demo entry uses the 3e label. The exact audit source head remains `3fc22b11a3d595da53fe9b787daec475d3f233c4`.
+
+
+### 2026-11-26 — LEDGER-011 Task D management review and Task E gate
+- Task D documentation accepted for planning. PR #56 open/draft at 72599d84a6c0ca0e185d79e27a55872249f8bbab; GitHub comparison against accepted Task C head 3fc22b11a3d595da53fe9b787daec475d3f233c4 shows 3 commits ahead, 0 behind and only docs/TUTORLY_INTERACTIVE_INTELLIGENCE.md changed (+214/-6). No runtime differences in this comparison.
+- Catalog and ledger reviewed; six audited heads and isolated vs integrated status documented. Individual module records have variable detail; fields not evidenced (including accessibility, curriculum, assessment and test results) must be treated as unknown, not inferred. No independent exhaustive source re-audit or new tests performed during management review.
+- Task E follows canonical Section 8: teacher-style pedagogical validation, representative activity review, curriculum/evidence rubric and prioritized defects. Catalog D.07 suggestions for authoring adapters, runtime registry and lesson integration belong to later approved Task F scope, not E implementation. Do not implement new gap modules or consolidate branches in E.
+- Remaining: teacher approval, final live preview commit alignment, legacy lint debt, actual production persistence and cross-branch integration. Task C hosted evidence remains 180/180 standalone and 40/40 player checks at accepted runtime tree. B.3 historical live review partial; final live visual review not claimed.
+- Next E.01: evaluate nine V2 standalone activities and CM2 sample plus representative V1/isolated families where testable; record source-only/NOT RUN where not; use previously documented competitor observations, not unsupported claims. Produce rubric, examples, acceptance matrix and correction backlog; separate expert-style internal review from actual teacher sign-off. No runtime edits or production changes.
