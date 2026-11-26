@@ -7,44 +7,49 @@ const activities: InteractiveActivitySpec[] = [
   {
     schemaVersion: 1, id: 'cm2-select-quarters-001', kind: 'fraction-select', schoolLevel: 'CM2',
     title: 'Construire la fraction 3/4', prompt: 'Sélectionne trois des quatre parts égales.',
-    target: { n: 3, d: 4 },
+    target: { n: 3, d: 4 }, transfer: { n: 2, d: 5 },
   },
   {
     schemaVersion: 1, id: 'cm2-fractions-001', kind: 'fraction-bar', schoolLevel: 'CM2',
     title: 'Additionner des fractions', prompt: 'Observe 3/4 et 1/2. Transforme les moitiés en quarts, puis trouve le total.',
     left: { n: 3, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4,
+    transfer: { left: { n: 1, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4 },
   },
   {
     schemaVersion: 1, id: '4e-coordinates-001', kind: 'coordinate-plane', schoolLevel: '4e',
     title: 'Placer un point dans un repère', prompt: 'Place le point A(2 ; 3). Commence par l’abscisse, puis l’ordonnée.',
-    target: { x: 2, y: 3 },
+    target: { x: 2, y: 3 }, transfer: { x: -2, y: 1 },
   },
   {
     schemaVersion: 1, id: '5e-algebra-tiles-001', kind: 'algebra-tiles', schoolLevel: '5e',
     title: 'Construire une expression', prompt: 'Représente 2x + 3 avec des tuiles.',
-    target: { x: 2, units: 3 },
+    target: { x: 2, units: 3 }, transfer: { x: 3, units: 2 },
   },
   {
     schemaVersion: 1, id: '3e-function-001', kind: 'linear-function', schoolLevel: '3e',
-      title: 'Fonction affine : f(x) = ax + b', prompt: 'Construis f(x) = 2x + 1 : le coefficient directeur est a = 2 et l’ordonnée à l’origine est b = 1.',
-    target: { m: 2, b: 1 },
+      title: 'Fonction affine : f(x) = ax + b', prompt: 'Construis la droite de la fonction affine f(x) = 2x + 1.',
+    target: { m: 2, b: 1 }, transfer: { m: -2, b: 3 },
   },
   {
     schemaVersion: 1, id: '5e-equation-001', kind: 'equation-decomposition', schoolLevel: '5e',
     title: 'Résoudre une équation, pas à pas', prompt: 'Comment trouver x dans 3x + 5 = 20 ? Observe, puis essaie.', a: 3, b: 5, c: 20,
+    transfer: { a: 2, b: 4, c: 18 },
   },
   {
     schemaVersion: 1, id: '4e-equation-both-001', kind: 'equation-decomposition', schoolLevel: '4e',
     title: 'Les x des deux côtés', prompt: 'Résous 5x − 4 = 2x + 8 en conservant l’égalité.', a: 5, b: -4, d: 2, c: 8,
+    transfer: { a: 4, b: 1, d: 2, c: 9 },
   },
   {
     schemaVersion: 1, id: '3e-equation-fraction-001', kind: 'equation-decomposition', schoolLevel: '3e',
     title: 'Une solution fractionnaire', prompt: 'Résous −2x + 3 = 8. La solution peut être une fraction.', a: -2, b: 3, c: 8,
+    transfer: { a: -3, b: 2, c: 7 },
   },
   {
     schemaVersion: 1, id: '2nde-line-fit-001', kind: 'line-fit', schoolLevel: '2nde',
     title: 'Ajuster une droite à des données', prompt: 'Ajuste la pente et le départ pour réduire les écarts.',
     points: [{ x: -2, y: -2 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }],
+    interpretation: { examplePointIndex: 1, questionPointIndex: 2 },
   },
 ];
 export default function ExplanationV2MathLab() {

@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LineGraph } from './LineGraph';
 import { expectedFractionSteps } from './math';
 import type { InteractiveActivitySpec } from './activityContract';
 
 /**
  * Original, reusable, manually paced mathematical demonstration.
- * This is teaching content, not a graded activity: no attempts, scores or persistence.
+ * It records exposure for evidence, but never a score or mastery completion.
  */
 export type MathDemonstrationStep = {
   title: string;
@@ -22,6 +22,7 @@ type Props = {
   steps: readonly MathDemonstrationStep[];
   onPractice: () => void;
   practiceLabel?: string;
+  onExposure?: () => void;
 };
 
 function FractionStrip({ n, d, label }: { n: number; d: number; label: string }) {
@@ -36,8 +37,12 @@ function FractionStrip({ n, d, label }: { n: number; d: number; label: string })
   </div>;
 }
 
-export function MathDemonstration({ title, steps, onPractice, practiceLabel = 'À toi de jouer' }: Props) {
+export function MathDemonstration({ title, steps, onPractice, practiceLabel = 'À toi de jouer', onExposure }: Props) {
   const [index, setIndex] = useState(0);
+  const exposureRecorded = useRef(false);
+  useEffect(() => {
+    if (!exposureRecorded.current && onExposure) { exposureRecorded.current = true; onExposure(); }
+  }, [onExposure]);
   if (steps.length === 0) return null;
   const current = steps[Math.min(index, steps.length - 1)];
   const finalStep = index === steps.length - 1;

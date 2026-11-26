@@ -1,7 +1,7 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useRef, useState } from 'react';
-import { InteractiveActivitySchema, initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
-import { clampGrid, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, pixelToGraph } from './math';
+import { InteractiveActivitySchema, initialActivityProgress, learningEvidence, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
+import { clampGrid, expectedFractionSteps, gradePartCount, graphToPixel, isPointCorrect, parseRationalAnswer, pixelToGraph } from './math';
 import { coordinateGuidedQuestion, fractionGuidedQuestion, namedParts } from './pedagogicalQuestions';
 import { FractionSelectActivity } from './FractionSelectActivity';
 import { AlgebraTilesActivity } from './AlgebraTilesActivity';
@@ -36,32 +36,60 @@ function Tiles({ denominator, filled, label }: { denominator: number; filled: nu
 function FractionActivity({ spec, progress, onProgressChange, onComplete }: Props & { spec: Extract<InteractiveActivitySpec, { kind: 'fraction-bar' }> }) {
   const [showDemo, setShowDemo] = useState(false);
   const p = progress ?? initialActivityProgress();
-  const steps = expectedFractionSteps(spec.left, spec.right, spec.targetDenominator);
-  const guidance = fractionGuidedQuestion(spec, p.phase);
+  const transferPhase = p.phase >= 2 && !!spec.transfer;
+  const active = transferPhase ? { ...spec, ...spec.transfer } : spec;
+  const steps = expectedFractionSteps(active.left, active.right, active.targetDenominator);
+  const guidance = fractionGuidedQuestion(active, transferPhase ? 1 : p.phase);
+  const evidence = learningEvidence(p);
   const update = (patch: Partial<ActivityProgress>) => onProgressChange({ ...p, ...patch });
+  const toggleDemo = () => {
+    if (!showDemo) update({ learningEvidence: { ...evidence, exposure: true, disclosedItems: evidence.disclosedItems.includes('fraction-addition-base') ? evidence.disclosedItems : [...evidence.disclosedItems, 'fraction-addition-base'] } });
+    setShowDemo(value => !value);
+  };
   const check = () => {
     if (p.completed) return;
     const answer = p.input.trim();
-    if (gradePartCount(answer, p.phase === 0 ? steps.rightParts : steps.totalParts) === 'invalid') {
+    if (p.phase === 2 && spec.transfer) {
+      const expected = steps.total;
+      const parsed = parseRationalAnswer(answer);
+      const transferAttempts = evidence.transferAttempts + 1;
+      if (parsed?.numerator === expected.numerator && parsed.denominator === expected.denominator) {
+        update({ attempts: p.attempts + 1, completed: true, correct: true, feedback: 'Exact ! ' + active.left.n + '/' + active.left.d + ' + ' + active.right.n + '/' + active.right.d + ' = ' + expected.numerator + '/' + expected.denominator + '. Les fractions équivalentes sont acceptées.', learningEvidence: { ...evidence, independent: evidence.independent || (transferAttempts === 1 && evidence.transferHintsUsed === 0), transfer: true, transferAttempts } });
+        onComplete({ independent: transferAttempts === 1 && evidence.transferHintsUsed === 0, attempts: p.attempts + 1, hintsUsed: p.hintsUsed });
+      } else {
+        update({ attempts: p.attempts + 1, correct: false, feedback: parsed ? 'La somme ne correspond pas encore. Réécris les deux fractions avec des parts de même taille avant de les additionner.' : 'Écris le résultat sous forme de fraction, par exemple 3/4.', learningEvidence: { ...evidence, assisted: true, transferAttempts } });
+      }
+      return;
+    }
+    const conversionPhase = p.phase === 0;
+    const expectedParts = conversionPhase ? steps.rightParts : steps.totalParts;
+    if (gradePartCount(answer, expectedParts) === 'invalid') {
       update({ feedback: 'Écris un nombre entier de parts.', correct: false });
       return;
     }
-    const expected = p.phase === 0 ? steps.rightParts : steps.totalParts;
+    const expected = expectedParts;
     const attempts = p.attempts + 1;
     if (gradePartCount(answer, expected) !== 'correct') {
       update({ attempts, correct: false, feedback: p.phase === 0
         ? 'Pour additionner, les parts doivent être de même taille. Regarde la barre du bas : combien de ' + namedParts(spec.targetDenominator) + ' seront coloriés après le partage ?'
-        : 'Les dénominateurs sont identiques : additionne seulement les parts coloriées des deux barres.' });
+        : transferPhase
+          ? 'Vérifie que les deux fractions représentent des parts de même taille avant de calculer. Tu peux corriger ta réponse.'
+          : 'Les dénominateurs sont identiques : additionne seulement les parts coloriées des deux barres.', learningEvidence: { ...evidence, assisted: true, ...(transferPhase ? { transferAttempts: evidence.transferAttempts + 1 } : {}) } });
       return;
     }
-    if (p.phase === 0) {
-      update({ phase: 1, phaseHints: 0, input: '', attempts, correct: null, feedback: 'Exact ! ' + spec.right.n + '/' + spec.right.d + ' = ' + steps.rightParts + '/' + spec.targetDenominator + '.' });
+    if (conversionPhase) {
+      update({ phase: p.phase === 0 ? 1 : 3, phaseHints: 0, input: '', attempts, correct: null, feedback: p.phase === 0 ? 'Exact ! ' + spec.right.n + '/' + spec.right.d + ' = ' + steps.rightParts + '/' + spec.targetDenominator + '.' : '' });
     } else {
-      update({ attempts, completed: true, correct: true, feedback: 'Bravo ! Le total est ' + steps.totalParts + '/' + spec.targetDenominator + '.' });
-      onComplete({ independent: p.hintsUsed === 0 && attempts === 2, attempts, hintsUsed: p.hintsUsed });
+      if (p.phase === 1 && spec.transfer) {
+        update({ phase: 2, phaseHints: 0, input: '', attempts, correct: null, feedback: 'Exemple guidé terminé. Essaie maintenant un autre calcul sans aide.', learningEvidence: { ...evidence, guidedCompleted: true, assisted: true } });
+      } else {
+        const transferAttempts = evidence.transferAttempts + 1;
+        update({ attempts, completed: true, correct: true, feedback: 'Bravo ! Le total est ' + steps.totalParts + '/' + active.targetDenominator + '.', learningEvidence: { ...evidence, independent: p.phase === 3 && transferAttempts === 1 && evidence.transferHintsUsed === 0, assisted: evidence.assisted || p.hintsUsed > 0 || p.phase === 1, transfer: p.phase === 3, transferAttempts } });
+        onComplete({ independent: p.phase === 3 && transferAttempts === 1 && evidence.transferHintsUsed === 0, attempts, hintsUsed: p.hintsUsed });
+      }
     }
   };
-  const hints = p.phase === 0
+  const hints = conversionPhase
     ? [
         'Pour additionner, on choisit des parts de même taille.',
         'Dans la barre du bas, chaque morceau est partagé en ' + (spec.targetDenominator / spec.right.d) + ' morceaux égaux.',
@@ -74,27 +102,28 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
       ];
   const hint = () => {
     const next = Math.min(3, p.phaseHints + 1);
-    update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: hints[next - 1] });
+    update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: p.phase === 2 ? ['Choisis une taille de part commune aux deux fractions.', 'Réécris les deux fractions avec des parts de même taille, puis additionne les numérateurs.', 'Le résultat exact est ' + steps.total.numerator + '/' + steps.total.denominator + '.'][next - 1] : hints[next - 1], learningEvidence: { ...evidence, assisted: true, ...(p.phase >= 2 ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(next === 3 && p.phase >= 2 ? { disclosedItems: evidence.disclosedItems.includes('fraction-transfer') ? evidence.disclosedItems : [...evidence.disclosedItems, 'fraction-transfer'] } : {}) } });
   };
   return <div className="space-y-4" data-testid="fraction-bar-activity">
-    <button type="button" className={control} onClick={() => setShowDemo(value => !value)}>
+    <button type="button" className={control} onClick={toggleDemo}>
       {showDemo ? 'Revenir à l’exercice' : 'Voir la démonstration pas à pas'}
     </button>
     {showDemo ? <MathDemonstration
       title="Comprendre l’addition de fractions"
       steps={fractionDemonstrationSteps(spec)}
+      onExposure={() => update({ learningEvidence: { ...evidence, exposure: true, disclosedItems: evidence.disclosedItems.includes('fraction-addition-base') ? evidence.disclosedItems : [...evidence.disclosedItems, 'fraction-addition-base'] } })}
       onPractice={() => setShowDemo(false)}
       practiceLabel="Revenir à l’exercice" /> : <>
     <div className="space-y-2 rounded-xl bg-teal-50 p-3" data-testid="fraction-step-instructions">
-      <p className="text-sm font-bold text-teal-800">{guidance.step}</p>
-      <p className="text-base leading-7 text-slate-800">{guidance.context}</p>
+      <p className="text-sm font-bold text-teal-800">{transferPhase ? 'Transfert indépendant · Autres valeurs' : guidance.step}</p>
+      <p className="text-base leading-7 text-slate-800">{p.phase === 2 ? 'Résous ' + active.left.n + '/' + active.left.d + ' + ' + active.right.n + '/' + active.right.d + '. Les deux barres représentent des quantités de même longueur. Écris le résultat exact sous forme de fraction.' : guidance.context}</p>
     </div>
     <div className="rounded-xl bg-slate-50 p-3 space-y-4">
-      <Tiles denominator={spec.left.d} filled={spec.left.n} label={'Barre du haut : ' + spec.left.n + '/' + spec.left.d} />
-      <Tiles denominator={p.phase === 0 ? spec.right.d : spec.targetDenominator} filled={p.phase === 0 ? spec.right.n : steps.rightParts} label={'Barre du bas : ' + (p.phase === 0 ? spec.right.n + '/' + spec.right.d : steps.rightParts + '/' + spec.targetDenominator)} />
-      {p.completed && <Tiles denominator={spec.targetDenominator} filled={steps.totalParts} label={'Total : ' + steps.totalParts + '/' + spec.targetDenominator} />}
+      <Tiles denominator={active.left.d} filled={active.left.n} label={'Barre du haut : ' + active.left.n + '/' + active.left.d} />
+      <Tiles denominator={p.phase === 0 || p.phase === 2 ? active.right.d : active.targetDenominator} filled={p.phase === 0 || p.phase === 2 ? active.right.n : steps.rightParts} label={'Barre du bas : ' + (p.phase === 0 || p.phase === 2 ? active.right.n + '/' + active.right.d : steps.rightParts + '/' + active.targetDenominator)} />
+      {p.completed && <Tiles denominator={active.targetDenominator} filled={steps.totalParts} label={'Total : ' + steps.totalParts + '/' + active.targetDenominator} />}
     </div>
-    {!p.completed && <div className="space-y-2">
+    {!p.completed && p.phase !== 2 && <div className="space-y-2">
       <label htmlFor={'fraction-answer-' + spec.id} className="block font-semibold">
         {guidance.question}
       </label>
@@ -105,14 +134,24 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
         <button type="button" className={control} onClick={hint} disabled={p.phaseHints >= 3}>Indice {p.phaseHints}/3</button>
       </div>
     </div>}
+    {!p.completed && p.phase === 2 && <div className="flex flex-wrap gap-2">
+      <label className="sr-only" htmlFor={'fraction-transfer-answer-' + spec.id}>Résultat exact</label>
+      <input id={'fraction-transfer-answer-' + spec.id} aria-label="Résultat exact sous forme de fraction" className="min-h-11 w-40 rounded-xl border border-slate-300 px-3 text-lg" inputMode="text" value={p.input} onChange={e => update({ input: e.target.value, correct: null })} onKeyDown={e => { if (e.key === 'Enter') check(); }} />
+      <button type="button" className={action} onClick={check}>Valider le transfert</button>
+      <button type="button" className={control} onClick={hint} disabled={p.phaseHints >= 3}>Indice {p.phaseHints}/3</button>
+    </div>}
+    {!p.completed && p.phase === 1 && <div className="rounded-xl bg-indigo-50 p-3 text-sm">Pour parler d’une fraction, le dénominateur indique le nombre de parts égales du tout; le numérateur indique combien de ces parts on prend.</div>}
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
-    {p.completed && <p className="font-semibold text-teal-800">Activité réussie. Tu peux continuer la leçon.</p>}
+    {p.completed && <p className="font-semibold text-teal-800">{spec.transfer ? 'Transfert réussi sans aide.' : 'Activité réussie. Tu peux continuer la leçon.'}</p>}
     </>}
   </div>;
 }
 function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Props & { spec: Extract<InteractiveActivitySpec, { kind: 'coordinate-plane' }> }) {
   const p = progress ?? initialActivityProgress();
-  const guidance = coordinateGuidedQuestion(spec);
+  const evidence = learningEvidence(p);
+  const transferPhase = p.phase === 1 && !!spec.transfer;
+  const target = transferPhase ? spec.transfer! : spec.target;
+  const guidance = coordinateGuidedQuestion({ ...spec, target });
   const svgRef = useRef<SVGSVGElement>(null);
   const update = (patch: Partial<ActivityProgress>) => onProgressChange({ ...p, ...patch });
   const moveTo = (x: number, y: number) => {
@@ -129,27 +168,34 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
   const check = () => {
     if (p.completed) return;
     const attempts = p.attempts + 1;
-    if (isPointCorrect(p.x, p.y, spec.target)) {
-      update({ completed: true, correct: true, attempts, feedback: 'Bravo ! Le point est bien placé en (' + p.x + ' ; ' + p.y + ').' });
-      onComplete({ independent: p.hintsUsed === 0 && attempts === 1, attempts, hintsUsed: p.hintsUsed });
+    if (isPointCorrect(p.x, p.y, target)) {
+      if (!transferPhase && spec.transfer) {
+        update({ phase: 1, x: 0, y: 0, attempts, correct: null, feedback: 'Point guidé correctement placé. Essaie maintenant un autre point sans indication de déplacement.', learningEvidence: { ...evidence, guidedCompleted: true, assisted: true } });
+      } else {
+        const independent = transferPhase && evidence.transferAttempts === 0 && evidence.transferHintsUsed === 0;
+        update({ completed: true, correct: true, attempts, feedback: transferPhase ? 'Bravo ! Tu as placé B sans indication de déplacement.' : 'Bravo ! Le point est bien placé en (' + p.x + ' ; ' + p.y + ').', learningEvidence: { ...evidence, independent, transfer: transferPhase, transferAttempts: transferPhase ? evidence.transferAttempts + 1 : evidence.transferAttempts, assisted: evidence.assisted || p.hintsUsed > 0 } });
+        onComplete({ independent, attempts, hintsUsed: p.hintsUsed });
+      }
     } else {
-      const feedback = p.x !== spec.target.x
-        ? 'Vérifie l’abscisse : avance vers la droite si elle est positive, vers la gauche si elle est négative.'
-        : 'L’abscisse est correcte. Vérifie l’ordonnée : monte si elle est positive, descends si elle est négative.';
-      update({ attempts, correct: false, feedback });
+      const swapped = target.x !== target.y && p.x === target.y && p.y === target.x;
+      const feedback = swapped ? 'Vérifie l’ordre des coordonnées : l’abscisse vient avant l’ordonnée.'
+        : p.x === target.x ? 'L’abscisse est correcte. Vérifie la position verticale du point.'
+          : p.x === -target.x && target.x !== 0 ? 'Vérifie le signe de l’abscisse : le sens horizontal dépend de son signe.'
+            : 'Vérifie l’abscisse sur l’axe horizontal, puis contrôle l’ordonnée sur l’axe vertical.';
+      update({ attempts, correct: false, feedback, learningEvidence: { ...evidence, assisted: true, ...(transferPhase ? { transferAttempts: evidence.transferAttempts + 1 } : {}) } });
     }
   };
   const hint = () => {
     const count = Math.min(3, p.phaseHints + 1);
-    const messages = ['Lis d’abord l’abscisse sur l’axe horizontal.', 'L’ordonnée se lit sur l’axe vertical.', 'Le point attendu est (' + spec.target.x + ' ; ' + spec.target.y + ').'];
-    update({ phaseHints: count, hintsUsed: p.hintsUsed + 1, feedback: messages[count - 1] });
+    const messages = ['Lis d’abord l’abscisse sur l’axe horizontal.', 'L’ordonnée se lit sur l’axe vertical.', 'Le point attendu est (' + target.x + ' ; ' + target.y + ').'];
+    update({ phaseHints: count, hintsUsed: p.hintsUsed + 1, feedback: messages[count - 1], learningEvidence: { ...evidence, assisted: true, ...(transferPhase ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(transferPhase && count === 3 && !evidence.disclosedItems.includes('coordinate-transfer') ? { disclosedItems: [...evidence.disclosedItems, 'coordinate-transfer'] } : {}) } });
   };
   const dot = graphToPixel(p.x, p.y);
   return <div className="space-y-3" data-testid="coordinate-plane-activity">
     <div className="space-y-2 rounded-xl bg-teal-50 p-3" data-testid="coordinate-instructions">
-      <p className="text-sm font-bold text-teal-800">{guidance.step}</p>
-      <p className="text-base leading-7 text-slate-800">{guidance.context}</p>
-      <p className="text-base font-bold leading-7 text-slate-900">{guidance.question}</p>
+      <p className="text-sm font-bold text-teal-800">{transferPhase ? 'Transfert indépendant · Nouveau point' : guidance.step}</p>
+      <p className="text-base leading-7 text-slate-800">{transferPhase ? 'Place le point B aux coordonnées (' + target.x + ' ; ' + target.y + '). Les coordonnées sont écrites dans l’ordre (abscisse ; ordonnée).' : guidance.context}</p>
+      {!transferPhase && <p className="text-base font-bold leading-7 text-slate-900" data-testid="coordinate-question">{guidance.question}</p>}
     </div>
     <svg ref={svgRef} viewBox="0 0 360 360" className="mx-auto block aspect-square w-full max-w-[360px] rounded-xl bg-white" style={{ touchAction: 'none' }} role="img" aria-label={'Repère cartésien de -5 à 5. Point actuellement en (' + p.x + ' ; ' + p.y + ').'} onPointerDown={e => { if (!p.completed) { e.currentTarget.setPointerCapture(e.pointerId); movePointer(e); } }} onPointerMove={e => { if (e.buttons === 1 && !p.completed) movePointer(e); }}>
       {Array.from({ length: 11 }, (_, i) => {
@@ -166,9 +212,9 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
       <text x="320" y="174" fontSize="13" fontWeight="bold">x</text><text x="189" y="45" fontSize="13" fontWeight="bold">y</text>
       <rect x="55" y="55" width="250" height="250" fill="transparent" pointerEvents="all" />
       <circle cx={dot.x} cy={dot.y} r="12" fill="#14b8a6" stroke="#0f766e" strokeWidth="3" className="motion-safe:transition-all motion-safe:duration-100" />
-      <text x={Math.min(298, dot.x + 13)} y={Math.max(24, dot.y - 15)} fontSize="13" fontWeight="bold" fill="#0f766e">A</text>
+      <text x={Math.min(298, dot.x + 13)} y={Math.max(24, dot.y - 15)} fontSize="13" fontWeight="bold" fill="#0f766e">{transferPhase ? 'B' : 'A'}</text>
     </svg>
-    <p className="text-center text-sm font-semibold">A = ({p.x} ; {p.y})</p>
+    <p className="text-center text-sm font-semibold">{transferPhase ? 'B' : 'A'} = ({p.x} ; {p.y})</p>
     <p className="text-sm text-slate-600">{guidance.answerHelp}</p>
     <div className="flex flex-wrap justify-center gap-2" aria-label="Déplacer le point">
       <button type="button" className={control} disabled={p.completed} onClick={() => moveTo(p.x - 1, p.y)} aria-label="Déplacer à gauche">←</button>
@@ -181,6 +227,7 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
       <button type="button" className={control} onClick={hint} disabled={p.phaseHints >= 3}>Indice {p.phaseHints}/3</button>
     </div>}
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
+    {p.completed && spec.transfer && <p className="font-semibold text-teal-800">Transfert réussi sans aide.</p>}
   </div>;
 }
 export function InteractiveActivityHost(props: Props) {

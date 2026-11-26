@@ -4,6 +4,18 @@ import { cm2FractionLesson } from './cm2FractionLesson';
 import { InteractiveActivityHost } from './InteractiveActivityHost';
 import type { ActivityProgress } from './activityContract';
 
+function FractionEquivalenceVisual() {
+  return <div className="space-y-3 rounded-xl border border-teal-200 bg-white p-3" role="img" aria-label="La moitié coloriée dans une barre partagée en deux représente la même quantité que deux quarts coloriés dans la même barre partagée en quatre">
+    <p className="font-semibold">La barre garde la même longueur et la même quantité coloriée.</p>
+    <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+      <div><p className="mb-1 text-sm font-semibold">1 moitié sur 2</p><div className="flex h-10 w-full overflow-hidden rounded border-2 border-teal-800"><span className="flex-1 border-r border-teal-800 bg-teal-400" /><span className="flex-1 bg-white" /></div></div>
+      <span className="text-center text-xl font-bold" aria-hidden="true">=</span>
+      <div><p className="mb-1 text-sm font-semibold">2 quarts sur 4</p><div className="flex h-10 w-full overflow-hidden rounded border-2 border-teal-800"><span className="flex-1 border-r border-teal-800 bg-teal-400" /><span className="flex-1 border-r border-teal-800 bg-teal-400" /><span className="flex-1 border-r border-teal-800 bg-white" /><span className="flex-1 bg-white" /></div></div>
+    </div>
+    <p className="text-center font-bold">1/2 = 2/4</p>
+  </div>;
+}
+
 export function Cm2LessonPreview({ onExit }: { onExit: () => void }) {
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState<Record<string, ActivityProgress>>({});
@@ -34,6 +46,7 @@ export function Cm2LessonPreview({ onExit }: { onExit: () => void }) {
       {block.type === 'guided_example' && <>
         <h2 className="text-xl font-bold">Comment transformer une moitié en quarts ?</h2>
         <p className="leading-7">{block.context}</p>
+        <FractionEquivalenceVisual />
         {block.steps.map((item, i) => <div key={i} className="rounded-xl bg-slate-50 p-3">
           <p className="font-bold">{i + 1}. {item.instruction}</p>
           <p className="mt-1 font-semibold text-teal-900">{item.representation}</p>
@@ -49,7 +62,7 @@ export function Cm2LessonPreview({ onExit }: { onExit: () => void }) {
     </div>
     {complete ? <div className="space-y-2 rounded-xl bg-teal-50 p-4">
       <p className="font-bold text-teal-900">Leçon terminée !</p>
-      <p className="text-sm text-teal-900">Tu as construit 3/4, transformé une moitié en quarts, puis additionné les fractions.</p>
+      <p className="text-sm text-teal-900">Tu as construit 3/4, représenté 1/2 par 2/4, puis essayé une addition avec d’autres valeurs.</p>
       <button type="button" onClick={reset} className="min-h-11 rounded-xl bg-teal-600 px-5 font-bold text-white">Recommencer le parcours</button>
     </div> : <button type="button" disabled={!canContinue} onClick={() => setStep(value => value + 1)}
       className="min-h-12 w-full rounded-xl bg-teal-600 px-5 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"

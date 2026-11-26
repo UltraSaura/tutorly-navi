@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
+import { discloseLearningItem, initialActivityProgress, learningEvidence, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { equationSteps, parseRational, rationalText, satisfiesEquation, solutionOf, type EquationTransformation } from './equationSolver';
 import { equationTermVisual, type EquationTermToken } from './equationTermVisual';
 import { equationStepInstruction } from './equationStepInstruction';
@@ -63,10 +63,14 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   const [demoStage, setDemoStage] = useState<0 | 1 | 2>(0);
   const [guidedStage, setGuidedStage] = useState<0 | 1 | 2>(0);
   const p = progress ?? initialActivityProgress();
-  const modes = p.equationModes ?? { guidedCompleted: false, soloCompleted: false, soloAttempts: 0, soloHintsUsed: 0, independentEvidence: false, assistedEvidence: false, soloFeedback: '', soloCorrect: null, guidedFeedback: '', guidedCorrect: null };
+  const modes = { guidedCompleted: false, soloCompleted: false, soloAttempts: 0, soloHintsUsed: 0, independentEvidence: false, assistedEvidence: false, soloFeedback: '', soloCorrect: null, guidedFeedback: '', guidedCorrect: null, soloPhase: 'original' as const, soloBaseCompleted: false, soloTransferAttempts: 0, soloTransferHintsUsed: 0, ...p.equationModes };
+  const evidence = learningEvidence(p);
   const coefficients = { a: spec.a, b: spec.b, c: spec.c, d: spec.d ?? 0 };
   const steps = equationSteps(coefficients);
   const solution = solutionOf(coefficients);
+  const transferCoefficients = spec.transfer ? { a: spec.transfer.a, b: spec.transfer.b, c: spec.transfer.c, d: spec.transfer.d ?? 0 } : null;
+  const transferSolution = transferCoefficients ? solutionOf(transferCoefficients) : null;
+  const transferSteps = transferCoefficients ? equationSteps(transferCoefficients) : null;
   const update = (patch: Partial<ActivityProgress>) => onProgressChange({ ...p, ...patch });
   const demoStep = steps[demoIndex];
   const instruction = equationStepInstruction(demoStep, demoStage);
@@ -74,10 +78,11 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   const guidedStep = steps[guidedIndex];
   const chooseMode = (next: Mode) => {
     setMode(next);
-    if (next === 'together' && !modes.assistedEvidence) update({ assisted: true, equationModes: { ...modes, assistedEvidence: true } });
+    if (next === 'together' && !modes.assistedEvidence) update({ assisted: true, learningEvidence: { ...evidence, assisted: true }, equationModes: { ...modes, assistedEvidence: true } });
+    if (next === 'solo' && spec.transfer && (modes.guidedCompleted || evidence.disclosedItems.includes('equation-original'))) update({ input: '', phaseHints: 0, equationModes: { ...modes, soloPhase: 'transfer' } });
   };
   const demoForward = () => {
-    update({ assisted: true, equationModes: { ...modes, assistedEvidence: true } });
+    update({ assisted: true, learningEvidence: { ...evidence, exposure: true, assisted: true, ...(demoStage === 2 ? { disclosedItems: discloseLearningItem(p, 'equation-original').disclosedItems } : {}) }, equationModes: { ...modes, assistedEvidence: true } });
     if (demoStage < 2) setDemoStage((demoStage + 1) as 0 | 1 | 2);
     else if (demoIndex < steps.length - 1) { setDemoIndex(i => i + 1); setDemoStage(0); }
     else chooseMode('together');
@@ -86,27 +91,31 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
     if (modes.guidedCompleted || guidedStage !== 0) return;
     const attempts = p.attempts + 1;
     if (answer !== guidedStep.choice) {
-      update({ attempts, assisted: true, equationModes: { ...modes, guidedCorrect: false, guidedFeedback: guidedStep.wrongFeedback, assistedEvidence: true } });
+      update({ attempts, assisted: true, learningEvidence: { ...evidence, assisted: true }, equationModes: { ...modes, guidedCorrect: false, guidedFeedback: guidedStep.wrongFeedback, assistedEvidence: true } });
       return;
     }
-    update({ attempts, assisted: true, equationModes: { ...modes, guidedCorrect: true, guidedFeedback: '', assistedEvidence: true } });
+    update({ attempts, assisted: true, learningEvidence: { ...evidence, assisted: true }, equationModes: { ...modes, guidedCorrect: true, guidedFeedback: '', assistedEvidence: true } });
     setGuidedStage(1);
   };
   const guidedNext = () => {
     if (guidedStage === 1) {
       setGuidedStage(2);
+      update({ learningEvidence: { ...evidence, assisted: true, disclosedItems: discloseLearningItem(p, 'equation-original').disclosedItems } });
       return;
     }
     if (guidedStage !== 2 || modes.guidedCompleted) return;
     setGuidedStage(0);
     if (guidedIndex === steps.length - 1) {
       const wasComplete = p.completed;
-      update({ completed: true, correct: true, feedback: '', assisted: true, equationModes: { ...modes, guidedCompleted: true, assistedEvidence: true, guidedCorrect: true, guidedFeedback: 'Bravo ! Tu as justifié chaque transformation et vérifié la solution.' } });
-      if (!wasComplete) onComplete({ independent: false, attempts: p.attempts, hintsUsed: p.hintsUsed });
+      update({ completed: spec.transfer ? p.completed : true, correct: true, feedback: '', assisted: true, learningEvidence: { ...evidence, guidedCompleted: true, assisted: true }, equationModes: { ...modes, guidedCompleted: true, assistedEvidence: true, guidedCorrect: true, guidedFeedback: 'Bravo ! Tu as justifié chaque transformation et vérifié la solution.' } });
+      if (!spec.transfer && !wasComplete) onComplete({ independent: false, attempts: p.attempts, hintsUsed: p.hintsUsed });
     } else update({ phase: guidedIndex + 1, correct: null, feedback: '', phaseHints: 0, equationModes: { ...modes, guidedCorrect: null, guidedFeedback: '' } });
   };
   const checkSolo = () => {
     if (modes.soloCompleted) return;
+    const isTransfer = modes.soloPhase === 'transfer' && !!transferCoefficients && !!transferSolution;
+    const activeCoefficients = isTransfer ? transferCoefficients! : coefficients;
+    const activeSolution = isTransfer ? transferSolution! : solution;
     const answer = parseRational(p.input);
     if (!answer) {
       const isZeroDenominator = /^\s*[+-]?\d+\s*\/\s*0+\s*$/.test(p.input);
@@ -116,27 +125,35 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       return;
     }
     const attempts = p.attempts + 1;
-    if (answer.n === solution.n && answer.d === solution.d && satisfiesEquation(coefficients, answer)) {
-      const wasComplete = p.completed;
+    if (answer.n === activeSolution.n && answer.d === activeSolution.d && satisfiesEquation(activeCoefficients, answer)) {
       const soloAttempts = modes.soloAttempts + 1;
-      const independent = soloAttempts === 1 && modes.soloHintsUsed === 0 && !modes.assistedEvidence;
-      update({ attempts, completed: true, correct: true, feedback: '', equationModes: { ...modes, soloAttempts, soloCompleted: true, soloCorrect: true, soloFeedback: 'Bravo ! x = ' + rationalText(solution) + '. La substitution confirme l’égalité.', independentEvidence: modes.independentEvidence || independent } });
-      if (!wasComplete) onComplete({ independent, attempts, hintsUsed: p.hintsUsed });
+      if (!isTransfer && spec.transfer) {
+        update({ attempts, input: '', phaseHints: 0, correct: null, equationModes: { ...modes, soloAttempts, soloBaseCompleted: true, soloPhase: 'transfer', soloCorrect: true, soloFeedback: 'Équation résolue. Maintenant, résous une autre équation sans aide.' }, learningEvidence: { ...evidence, assisted: evidence.assisted || modes.soloHintsUsed > 0 } });
+        return;
+      }
+      const transferAttempts = isTransfer ? modes.soloTransferAttempts + 1 : 0;
+      const independent = isTransfer ? modes.soloTransferAttempts === 0 && modes.soloTransferHintsUsed === 0 && !evidence.disclosedItems.includes('equation-transfer') : soloAttempts === 1 && modes.soloHintsUsed === 0 && !modes.assistedEvidence;
+      update({ attempts, completed: true, correct: true, equationModes: { ...modes, soloAttempts, soloTransferAttempts: transferAttempts, soloCompleted: true, soloCorrect: true, soloFeedback: 'Bravo ! x = ' + rationalText(activeSolution) + '. La substitution confirme l’égalité.', independentEvidence: modes.independentEvidence || independent }, learningEvidence: { ...evidence, independent: evidence.independent || independent, transfer: isTransfer, transferAttempts: isTransfer ? evidence.transferAttempts + 1 : evidence.transferAttempts, assisted: evidence.assisted || modes.soloHintsUsed > 0 } });
+      if (!p.completed) onComplete({ independent, attempts, hintsUsed: p.hintsUsed });
       return;
     }
-    const opposite = answer.n === -solution.n && answer.d === solution.d;
-    update({ attempts, equationModes: { ...modes, soloAttempts: modes.soloAttempts + 1, soloCorrect: false, soloFeedback: opposite && solution.n !== 0
+    const opposite = answer.n === -activeSolution.n && answer.d === activeSolution.d;
+    update({ attempts, learningEvidence: { ...evidence, assisted: true, ...(isTransfer ? { transferAttempts: evidence.transferAttempts + 1 } : {}) }, equationModes: { ...modes, soloAttempts: modes.soloAttempts + 1, ...(isTransfer ? { soloTransferAttempts: modes.soloTransferAttempts + 1 } : {}), soloCorrect: false, soloFeedback: opposite && activeSolution.n !== 0
       ? 'Tu as peut-être inversé un signe. Vérifie ce que devient chaque terme quand tu changes de membre.'
       : 'En remplaçant x par ta réponse, les deux membres ne sont pas égaux. Vérifie la soustraction puis la division.' } });
   };
   const hintSolo = () => {
     if (p.phaseHints >= 3 || modes.soloCompleted) return;
+    const isTransfer = modes.soloPhase === 'transfer' && !!transferCoefficients && !!transferSolution;
+    const activeCoefficients = isTransfer ? transferCoefficients! : coefficients;
+    const activeSolution = isTransfer ? transferSolution! : solution;
     const hints = [
       'Pour isoler x, effectue la même opération sur les deux membres de l’égalité.',
-      'Après regroupement, on obtient ' + (spec.a - (spec.d ?? 0)) + 'x = ' + (spec.c - spec.b) + '.',
-      'Divise par le coefficient de x. La solution est x = ' + rationalText(solution) + '.',
+      'Après regroupement, on obtient ' + (activeCoefficients.a - activeCoefficients.d) + 'x = ' + (activeCoefficients.c - activeCoefficients.b) + '.',
+      'Divise par le coefficient de x. La solution est x = ' + rationalText(activeSolution) + '.',
     ];
-    update({ phaseHints: p.phaseHints + 1, hintsUsed: p.hintsUsed + 1, assisted: true, equationModes: { ...modes, assistedEvidence: true, soloHintsUsed: modes.soloHintsUsed + 1, soloCorrect: null, soloFeedback: hints[p.phaseHints] } });
+    const next = p.phaseHints + 1;
+    update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, assisted: true, learningEvidence: { ...evidence, assisted: true, ...(isTransfer ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(isTransfer && next === 3 ? { disclosedItems: discloseLearningItem(p, 'equation-transfer').disclosedItems } : {}) }, equationModes: { ...modes, assistedEvidence: true, soloHintsUsed: modes.soloHintsUsed + 1, ...(isTransfer ? { soloTransferHintsUsed: modes.soloTransferHintsUsed + 1 } : {}), soloCorrect: null, soloFeedback: hints[p.phaseHints] } });
   };
   const alternativeChoices: Record<EquationTransformation['id'], [string, string]> = {
     'subtract-variable': ['Faire l’opération inverse sur les deux membres', 'Déplacer les x sans modifier l’autre membre'],
@@ -181,7 +198,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       </details>
       <div className="flex items-center gap-2 pt-1">
         <button type="button" className={control + ' shrink-0 px-3 sm:px-4'} disabled={demoIndex === 0 && demoStage === 0} onClick={() => {
-          update({ assisted: true, equationModes: { ...modes, assistedEvidence: true } });
+          update({ assisted: true, learningEvidence: { ...evidence, exposure: true, assisted: true, disclosedItems: discloseLearningItem(p, 'equation-original').disclosedItems }, equationModes: { ...modes, assistedEvidence: true } });
           if (demoStage > 0) setDemoStage((demoStage - 1) as 0 | 1 | 2);
           else { setDemoIndex(i => i - 1); setDemoStage(2); }
         }}>Précédent</button>
@@ -219,8 +236,8 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       {modes.guidedFeedback && <p role="status" aria-live="polite" className={'text-sm font-semibold ' + (modes.guidedCorrect === false ? 'text-amber-800' : 'text-teal-800')}>{modes.guidedFeedback}</p>}
     </section>}
     {mode === 'solo' && <section className="space-y-3" aria-label="Résolution autonome">
-      <p className="font-bold">Trouve la valeur de x sans regarder les étapes.</p>
-      <p className="rounded-xl bg-slate-100 p-4 text-center text-2xl font-bold">{steps[0].before}</p>
+      <p className="font-bold">{modes.soloPhase === 'transfer' ? 'Transfert indépendant : résous cette nouvelle équation sans aide.' : 'Trouve la valeur de x sans regarder les étapes.'}</p>
+      <p className="rounded-xl bg-slate-100 p-4 text-center text-2xl font-bold">{modes.soloPhase === 'transfer' && transferSteps ? transferSteps[0].before : steps[0].before}</p>
       {!modes.soloCompleted && <div className="space-y-2">
         <label htmlFor={'equation-answer-' + spec.id} className="block font-semibold">x = ?</label>
         <p id={'equation-help-' + spec.id} className="text-sm text-slate-600">Écris un entier ou une fraction (ex. : -5/2). Pas de nombre décimal.</p>
@@ -233,7 +250,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
           <button type="button" className={control} onClick={hintSolo} disabled={p.phaseHints >= 3}>Indice {p.phaseHints}/3</button>
         </div>
       </div>}
-      {modes.soloCompleted && <p className="rounded-xl bg-teal-50 p-4 font-bold text-teal-900">Solution vérifiée : x = {rationalText(solution)}</p>}
+      {modes.soloCompleted && <p className="rounded-xl bg-teal-50 p-4 font-bold text-teal-900">Solution vérifiée : x = {rationalText(modes.soloPhase === 'transfer' && transferSolution ? transferSolution : solution)}</p>}
       <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (modes.soloCorrect === false ? 'text-amber-800' : 'text-teal-800')}>{modes.soloFeedback}</p>
     </section>}
     {p.completed && (mode !== 'together' || modes.guidedCompleted) && <p className="font-semibold text-teal-800">Activité terminée. Tu peux continuer la leçon.</p>}

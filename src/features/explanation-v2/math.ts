@@ -16,6 +16,23 @@ export function rational(n: number | bigint, d: number | bigint): Rational {
 export function addRationals(a: Rational, b: Rational): Rational {
   return rational(a.numerator * b.denominator + b.numerator * a.denominator, a.denominator * b.denominator);
 }
+/** Exact grading for integer, fraction, or finite decimal student input. */
+export function parseRationalAnswer(raw: string): Rational | null {
+  const value = raw.trim().replace(/\u2212/g, '-').replace(',', '.');
+  const fraction = value.match(/^([+-]?\d+)\s*\/\s*([+-]?\d+)$/);
+  if (fraction) {
+    try { return rational(BigInt(fraction[1]), BigInt(fraction[2])); } catch { return null; }
+  }
+  if (/^[+-]?\d+$/.test(value)) {
+    try { return rational(BigInt(value), 1n); } catch { return null; }
+  }
+  const decimal = value.match(/^([+-]?)(\d*)\.(\d+)$/);
+  if (!decimal) return null;
+  const places = decimal[3].length;
+  const denominator = 10n ** BigInt(places);
+  const whole = BigInt((decimal[2] || '0') + decimal[3]);
+  return rational(decimal[1] === '-' ? -whole : whole, denominator);
+}
 export function equivalentNumerator(n: number, d: number, targetDenominator: number): number {
   if (!Number.isSafeInteger(n) || !Number.isSafeInteger(d) || !Number.isSafeInteger(targetDenominator)
     || d <= 0 || targetDenominator <= 0 || targetDenominator % d !== 0) {
@@ -60,6 +77,32 @@ export function linearRegression(points: ReadonlyArray<{ x: number; y: number }>
   return { slope, intercept: meanY - slope * meanX };
 }
 export function sumSquaredError(points: ReadonlyArray<{ x: number; y: number }>, slope: number, intercept: number) {
+  if (points.length < 2 || points.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) throw new Error('Invalid points');
   if (!Number.isFinite(slope) || !Number.isFinite(intercept)) throw new Error('Invalid line');
   return points.reduce((sum, p) => sum + (p.y - (slope * p.x + intercept)) ** 2, 0);
+}
+
+export function residuals(points: ReadonlyArray<{ x: number; y: number }>, slope: number, intercept: number) {
+  if (!Number.isFinite(slope) || !Number.isFinite(intercept) || points.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) throw new Error('Invalid data');
+  return points.map(point => {
+    const predicted = slope * point.x + intercept;
+    const residual = point.y - predicted;
+    return { ...point, predicted, residual, squaredResidual: residual ** 2 };
+  });
+}
+
+/** Best score actually reachable with the activity's 0.1 slider increments. */
+export function bestDiscreteLineFit(points: ReadonlyArray<{ x: number; y: number }>, step = 0.1, min = -3, max = 3) {
+  if (!Number.isFinite(step) || step <= 0 || !Number.isFinite(min) || !Number.isFinite(max) || min > max) throw new Error('Invalid slider range');
+  let best = { slope: min, intercept: min, error: Number.POSITIVE_INFINITY };
+  const count = Math.round((max - min) / step);
+  for (let mIndex = 0; mIndex <= count; mIndex++) {
+    const slope = Math.round((min + mIndex * step) * 1e10) / 1e10;
+    for (let bIndex = 0; bIndex <= count; bIndex++) {
+      const intercept = Math.round((min + bIndex * step) * 1e10) / 1e10;
+      const error = sumSquaredError(points, slope, intercept);
+      if (error < best.error) best = { slope, intercept, error };
+    }
+  }
+  return best;
 }

@@ -2,11 +2,11 @@ import { useRef, type PointerEvent } from 'react';
 import { graphToPixel, pixelToGraph } from './math';
 
 type Point = { x: number; y: number };
-type Props = { slope: number; intercept: number; onChange: (slope: number, intercept: number) => void; step?: number; points?: Point[]; disabled?: boolean; showSteps?: boolean; affineNotation?: boolean };
+type Props = { slope: number; intercept: number; onChange: (slope: number, intercept: number) => void; step?: number; points?: Point[]; disabled?: boolean; showSteps?: boolean; affineNotation?: boolean; showResiduals?: boolean };
 const snap = (v: number, step: number) => Math.round(v / step) * step;
 const clamp = (v: number) => Math.max(-3, Math.min(3, v));
 /** Shared, original SVG graph with draggable y-intercept and slope handles. */
-export function LineGraph({ slope, intercept, onChange, step = 1, points = [], disabled = false, showSteps = false, affineNotation = false }: Props) {
+export function LineGraph({ slope, intercept, onChange, step = 1, points = [], disabled = false, showSteps = false, affineNotation = false, showResiduals = false }: Props) {
   const active = useRef<'intercept' | 'slope' | null>(null);
   const drag = (event: PointerEvent<SVGCircleElement>, handle: 'intercept' | 'slope') => {
     const rect = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
@@ -45,6 +45,11 @@ export function LineGraph({ slope, intercept, onChange, step = 1, points = [], d
           <text x="191" y={interceptDot.y + (slope >= 0 ? 17 : -8)} fontSize="12" fontWeight="bold" fill="#92400e">+1</text>
           <text x="211" y={(interceptDot.y + slopeDot.y) / 2} fontSize="12" fontWeight="bold" fill="#6d28d9">{slope >= 0 ? '+' : '−'}{Math.abs(slope)}</text>
         </>}
+        {showResiduals && points.map((p, i) => {
+          const observed = graphToPixel(p.x, p.y);
+          const predicted = graphToPixel(p.x, slope * p.x + intercept);
+          return <line key={'residual-' + i} data-testid={'residual-segment-' + i} x1={predicted.x} y1={predicted.y} x2={observed.x} y2={observed.y} stroke="#7c3aed" strokeWidth="2" strokeDasharray="3 2" />;
+        })}
         {points.map((p, i) => { const xy = graphToPixel(p.x, p.y); return <circle key={i} data-testid={'data-point-'+i} cx={xy.x} cy={xy.y} r="5.5" fill="#e8790d" stroke="white" strokeWidth="1.5" />; })}
       </g>
       {(['intercept','slope'] as const).map(handle => {

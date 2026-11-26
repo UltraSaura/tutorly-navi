@@ -10,7 +10,7 @@ const equationLesson = {
   ...cm2FractionLesson,
   lesson_goal: 'Résoudre une équation simple',
   sequence: [
-    { id: 'simple-equation', type: 'interactive_activity', activity: { schemaVersion: 1, id: 'player-equation-3x5', kind: 'equation-decomposition', schoolLevel: '5e', title: 'Résoudre 3x + 5 = 20', prompt: 'Trouve la valeur de x.', a: 3, b: 5, c: 20 } },
+    { id: 'simple-equation', type: 'interactive_activity', activity: { schemaVersion: 1, id: 'player-equation-3x5', kind: 'equation-decomposition', schoolLevel: '5e', title: 'Résoudre 3x + 5 = 20', prompt: 'Trouve la valeur de x.', a: 3, b: 5, c: 20, transfer: { a: 2, b: 4, c: 18 } } },
     { id: 'after-equation', type: 'concept', title: 'Étape suivante débloquée', content: 'La validation de l’équation permet de continuer.' },
   ],
 } as typeof cm2FractionLesson;

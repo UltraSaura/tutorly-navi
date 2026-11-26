@@ -34,12 +34,12 @@ export const cm2FractionLesson = LessonV2Schema.parse({
         schemaVersion: 1, id: 'cm2-lesson-select-3-4', kind: 'fraction-select', schoolLevel: 'CM2',
         title: 'À toi de construire 3/4',
         prompt: 'Cette barre a quatre parts égales. Sélectionne trois parts.',
-        target: { n: 3, d: 4 },
+        target: { n: 3, d: 4 }, transfer: { n: 2, d: 5 },
       },
     },
     {
       id: 'cm2-half-into-quarters', type: 'guided_example',
-      context: 'Tu sais maintenant représenter 3/4. Pour additionner 3/4 et 1/2, il faut que les morceaux soient de même taille.',
+      context: 'Tu viens de représenter 3/4. Pour additionner 3/4 et 1/2, il faut que les morceaux soient de même taille.',
       steps: [
         {
           instruction: 'Observe la moitié d’une barre.',
@@ -65,11 +65,12 @@ export const cm2FractionLesson = LessonV2Schema.parse({
         title: 'Additionne 3/4 et 1/2',
         prompt: 'Transforme la moitié en quarts, puis compte les quarts coloriés.',
         left: { n: 3, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4,
+        transfer: { left: { n: 1, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4 },
       },
     },
     {
-      id: 'cm2-conclusion', type: 'concept', title: 'Bravo ! Tu sais additionner des quarts',
-      content: 'Trois quarts et deux quarts font cinq quarts. Quatre quarts forment une barre entière ; il reste un quart. Le résultat est donc une barre entière et un quart.',
+      id: 'cm2-conclusion', type: 'concept', title: 'Exemple guidé terminé',
+      content: 'Tu as terminé l’exemple guidé et essayé un autre calcul. Dans l’exemple, le résultat est 5/4, soit 1 + 1/4. Pour additionner des fractions, exprime d’abord les quantités avec des parts de même taille.',
       representation: '3/4 + 1/2 = 3/4 + 2/4 = 5/4 = 1 + 1/4',
       key_points: [
         { label: 'Même taille', text: 'Avant d’additionner, exprime les deux fractions avec le même dénominateur.' },
