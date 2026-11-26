@@ -61,7 +61,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   const [mode, setMode] = useState<Mode>('understand');
   const [demoIndex, setDemoIndex] = useState(0);
   const [demoStage, setDemoStage] = useState<0 | 1 | 2>(0);
-  const [guidedRevealed, setGuidedRevealed] = useState(false);
+  const [guidedStage, setGuidedStage] = useState<0 | 1 | 2>(0);
   const p = progress ?? initialActivityProgress();
   const coefficients = { a: spec.a, b: spec.b, c: spec.c, d: spec.d ?? 0 };
   const steps = equationSteps(coefficients);
@@ -82,18 +82,22 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
     else chooseMode('together');
   };
   const guidedChoose = (answer: string) => {
-    if (p.completed || guidedRevealed) return;
+    if (p.completed || guidedStage !== 0) return;
     const attempts = p.attempts + 1;
     if (answer !== guidedStep.choice) {
       update({ attempts, correct: false, feedback: guidedStep.wrongFeedback, assisted: true });
       return;
     }
-    update({ attempts, correct: true, feedback: 'Exact ! ' + guidedStep.rule, assisted: true });
-    setGuidedRevealed(true);
+    update({ attempts, correct: true, feedback: 'Bonne opération ! Observe son effet sur les deux membres.', assisted: true });
+    setGuidedStage(1);
   };
   const guidedNext = () => {
-    if (!guidedRevealed || p.completed) return;
-    setGuidedRevealed(false);
+    if (guidedStage === 1) {
+      setGuidedStage(2);
+      return;
+    }
+    if (guidedStage !== 2 || p.completed) return;
+    setGuidedStage(0);
     if (guidedIndex === steps.length - 1) {
       update({ completed: true, correct: true, feedback: 'Bravo ! Tu as justifié chaque transformation et vérifié la solution.', assisted: true });
       onComplete({ independent: false, attempts: p.attempts, hintsUsed: p.hintsUsed });
@@ -181,15 +185,29 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       </div>
     </section>}
     {mode === 'together' && <section className="space-y-3" aria-label="Résolution accompagnée">
-      <p className="text-sm font-bold text-teal-900">Étape {guidedIndex + 1} sur {steps.length} — Choisis la prochaine opération</p>
-      <p className="rounded-xl bg-slate-100 p-4 text-center text-xl font-bold">{guidedStep.before}</p>
-      {!guidedRevealed && !p.completed && <div className="grid gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-base font-bold text-teal-900">Résolvons ensemble</h4>
+        <span className="text-sm font-semibold text-slate-600">Étape {guidedIndex + 1} sur {steps.length}</span>
+      </div>
+      <div data-testid="equation-guided-instruction" role="note" className="rounded-xl bg-teal-50 px-3 py-3 text-sm leading-6 text-slate-900 sm:px-4">
+        {guidedStage === 0
+          ? 'Quelle opération peut-on effectuer sur les deux membres pour avancer ?'
+          : <><strong className="mr-2 text-teal-900">{equationStepInstruction(guidedStep, guidedStage).label} :</strong>{equationStepInstruction(guidedStep, guidedStage).text}</>}
+      </div>
+      <TransformationVisual key={guidedIndex + '-' + guidedStage} step={guidedStep} stage={guidedStage} />
+      {guidedStage === 0 && !p.completed && <div className="grid gap-2">
         {choices.map((option, i) => <button key={i} type="button" data-testid={'equation-choice-' + i} className={control + ' text-left'} onClick={() => guidedChoose(option)}>{option}</button>)}
       </div>}
-      {guidedRevealed && <><TransformationVisual step={guidedStep} stage={2} />
-        <p className="rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-950">{guidedStep.rule}</p>
-        <button type="button" className={action} onClick={guidedNext}>{guidedIndex === steps.length - 1 ? 'Terminer la résolution' : 'Étape suivante'}</button>
-      </>}
+      {guidedStage > 0 && <div className="space-y-3">
+        <details className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+          <summary className="min-h-7 cursor-pointer font-semibold text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700">Pourquoi cette étape ?</summary>
+          <p className="mt-2 leading-6">{guidedStep.explanation}</p>
+          <p className="mt-2 leading-6">{guidedStep.rule}</p>
+        </details>
+        {!p.completed && <button type="button" className={action + ' w-full'} onClick={guidedNext}>
+          {guidedStage === 1 ? 'Voir le résultat' : guidedIndex === steps.length - 1 ? 'Terminer la résolution' : 'Étape suivante'}
+        </button>}
+      </div>}
       <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
     </section>}
     {mode === 'solo' && <section className="space-y-3" aria-label="Résolution autonome">
