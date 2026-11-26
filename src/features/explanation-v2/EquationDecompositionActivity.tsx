@@ -88,7 +88,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       update({ attempts, correct: false, feedback: guidedStep.wrongFeedback, assisted: true });
       return;
     }
-    update({ attempts, correct: true, feedback: 'Bonne opération ! Observe son effet sur les deux membres.', assisted: true });
+    update({ attempts, correct: true, feedback: '', assisted: true });
     setGuidedStage(1);
   };
   const guidedNext = () => {
@@ -208,7 +208,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
           {guidedStage === 1 ? 'Voir le résultat' : guidedIndex === steps.length - 1 ? 'Terminer la résolution' : 'Étape suivante'}
         </button>}
       </div>}
-      <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
+      {p.feedback && <p role="status" aria-live="polite" className={'text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>}
     </section>}
     {mode === 'solo' && <section className="space-y-3" aria-label="Résolution autonome">
       <p className="font-bold">Trouve la valeur de x sans regarder les étapes.</p>
