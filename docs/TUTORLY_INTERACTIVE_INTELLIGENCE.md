@@ -511,3 +511,14 @@ These are inventory recommendations only; Task E implementation did not begin.
 - Current affine wording is 3e: fonction affine, coefficient directeur a, ordonnée à l'origine b, f(x)=ax+b. Teacher review of exact curriculum fit and wording remains required against [Édubase 22940](https://edubase.eduscol.education.fr/fiche/22940).
 - Older preview hostnames and B.3 viewport limitations are historical and superseded by hosted Task C evidence. They are not current deployment claims.
 - The lab is a preview/simulation; it is not proof of production lesson persistence or integration of every feature-branch module.
+
+
+## Task E pedagogical validation — 26 Nov 2026
+
+The evidence-labelled internal pedagogical review is [STUWY_PEDAGOGICAL_VALIDATION_TASK_E.md](STUWY_PEDAGOGICAL_VALIDATION_TASK_E.md). It covers all nine live V2 scenarios and the five-step CM2 path, representative source-only legacy/isolated modules, the weighted rubric, French curriculum staging, bounded competitor evidence, teaching principles, example explanations and prioritized backlog.
+
+**Result:** TASK E PARTIAL — PEDAGOGICAL VALIDATION GAPS REMAIN. The live simulated lab was qualitatively reviewed; this does not establish production persistence, student learning outcomes or teacher approval. Task C hosted technical evidence remains inherited from [run #45887495298](https://github.com/UltraSaura/tutorly-navi/actions/runs/45887495298) (180/180 standalone, 40/40 player), not rerun for Task E. Keyboard/touch/drag/reduced-motion/accessibility were not re-run; source-only modules are clearly marked.
+
+Key findings: IM-03 and IM-05 reveal answer/recipe in the challenge; IM-01/IM-04 permit completion without explaining the mathematical relationship; the CM2 path uses “Tu sais…” after a single scaffolded example without independent transfer; line fitting invites trial-and-error without explaining residuals/squared error. Equation demonstrations visibly explain the operation and result without opening “Pourquoi cette étape ?”. The affine activity uses 3e French terminology consistently, but teacher review remains pending.
+
+The current programme-date distinction matters: the 2026 cycle-4 programme rolls out for 3e in 2028–29, so grade-year applicability must be confirmed; Édubase 22940 is a Troisième example resource, not a Stuwy approval. See report Section 5 for official sources and limitations. No runtime code was changed; no Task F implementation started.
