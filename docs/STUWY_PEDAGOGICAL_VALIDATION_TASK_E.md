@@ -65,18 +65,18 @@ Proposed bands are applied only to a complete evidence-backed total: **85–100 
 
 Activity identifiers and source paths follow [the existing interactive intelligence catalog](TUTORLY_INTERACTIVE_INTELLIGENCE.md), principally the V2 activity table and Task D inventory. All entries below are **LIVE PREVIEW** unless explicitly marked otherwise. Accessibility details beyond visible controls are not inferred from the browser review.
 
-| Scenario | MA / EX / CU / VI / IN / RE / PR / IA / AC | Observed strength and learning risk |
+| Evaluation scenario → catalog module | MA / EX / CU / VI / IN / RE / PR / IA / AC | Observed strength and learning risk |
 |---|---|---|
-| IM-01 Fraction selection — `FractionSelectActivity.tsx` | 4 / 4 / 3 / 4 / 2 / 4 / 2 / 1 / NR | Equal quarters and numerator are labelled; wrong 2/4 response receives a targeted cue and progressive hints. Toggling cells allows brute-force selection; the learner is not asked why the numerator counts selected equal parts or to transfer to a new fraction. |
-| IM-02 Fraction addition — `InteractiveActivityHost.tsx` (`FractionActivity`) | 5 / 4 / 3 / 4 / 3 / NR / 3 / 1 / NR | Optional four-step demo correctly explains unequal-sized parts, equivalence 1/2=2/4, adding parts and 5/4=1+1/4. One worked example and a numeric target do not establish transfer; incorrect response/hint sequence was not exercised in this review. |
-| IM-03 Coordinate placement — `InteractiveActivityHost.tsx` (`CoordinateActivity`) | 5 / 3 / 3 / 4 / 3 / 3 / 2 / 1 / NR | The point model and axis controls are visible, and feedback/hints distinguish axes. The prompt already states “2 right, then 3 up” and gives A(2;3), so it tests execution more than coordinate interpretation. Drag and keyboard accessibility not retested here; inherited Task C covers its browser acceptance. |
-| IM-04 Algebra tiles — `AlgebraTilesActivity.tsx` | 4 / 4 / 3 / 4 / 2 / 3 / 2 / 1 / NR | Long x-tile and unit-square mapping is concrete; wrong count identifies the coefficient. The target 2x+3 remains visible, and trial-and-error works without explaining “2 copies of x.” No concept demonstration or transfer item observed. |
-| IM-05 Affine functions — `LinearFunctionActivity.tsx`, `LineGraph.tsx` | 5 / 4 / 3 / 5 / 3 / 3 / 3 / 1 / NR | Four stages correctly connect b to (0,b) and a to rise/run; visible French terms are consistent with 3e. The challenge discloses f(x)=2x+1, a=2, b=1 and construction order, so copying succeeds. A prediction/table/second-function transfer check is absent. Teacher review remains pending. |
-| IM-06 Simple equation — `EquationDecompositionActivity.tsx` | 5 / 4 / 3 / 4 / 2 / NR / 4 / NR / NR | The demo shows subtracting 5 from both members, cancellation and division by 3; the “preserve equality” reason is visible without opening the optional panel. Conceptual balance is asserted more than elicited; live wrong-answer/hint and independent-mode learning quality were not re-exercised. Task C validates mode/evidence mechanics, not learning. |
-| IM-07 Two-sided equation — `EquationDecompositionActivity.tsx` | 5 / 4 / 3 / 4 / 2 / NR / 3 / NR / NR | In the observed step, subtracting 2x from both members and canceling terms is accurate and visible. Review did not complete the full learner sequence; wrong-answer remediation, transfer and independent evidence remain unscored. |
-| IM-08 Fractional solution — `EquationDecompositionActivity.tsx` | 5 / 4 / 3 / 4 / 2 / NR / 3 / NR / NR | Demonstration of −2x+3=8 correctly subtracts 3 then divides both sides by −2 to obtain −5/2. Learner-facing sign-rule reasoning and substitution as an independent check could be clearer. Full practice/hints were not re-exercised. |
-| IM-09 Line fitting — `LineFitActivity.tsx` | NV / 3 / 2 / 3 / 2 / 2 / 2 / 1 / NR | Sliders and squared-error total make the optimization target visible; trial and error can minimize the displayed value. The activity does not explain residuals or why squaring errors is useful in the observed prompt. Mathematical computation/edge cases were not independently checked, so MA is NV. Grade 2nde is a sample label, not an approved mapping. |
-| CM2 five-step path — `ExplanationV2MathLab` / existing fraction schema and host | 5 / 4 / 3 / 3 / 3 / NR / 3 / 1 / NR | Fraction identity and addition are accurate; progression gates operate. The equivalence interstitial is prose/equations rather than an enacted visual. The recap says “Tu sais additionner des quarts” after one scaffolded example, with no independent near-neighbor item; replace mastery wording with completion until transfer is demonstrated. |
+| EVAL-01 → IM-01 Fraction selection — `FractionSelectActivity.tsx` | 4 / 4 / 3 / 4 / 2 / 4 / 2 / 1 / NR | Equal quarters and numerator are labelled; wrong 2/4 response receives a targeted cue and progressive hints. Toggling cells allows brute-force selection; the learner is not asked why the numerator counts selected equal parts or to transfer to a new fraction. |
+| EVAL-02 → IM-02 Fraction addition — `InteractiveActivityHost.tsx` (`FractionActivity`) | 5 / 4 / 3 / 4 / 3 / NR / 3 / 1 / NR | Optional four-step demo correctly explains unequal-sized parts, equivalence 1/2=2/4, adding parts and 5/4=1+1/4. One worked example and a numeric target do not establish transfer; incorrect response/hint sequence was not exercised in this review. |
+| EVAL-03 → IM-03 Coordinate placement — `InteractiveActivityHost.tsx` (`CoordinateActivity`) | 5 / 3 / 3 / 4 / 3 / 3 / 2 / 1 / NR | The point model and axis controls are visible, and feedback/hints distinguish axes. The prompt already states “2 right, then 3 up” and gives A(2;3), so it tests execution more than coordinate interpretation. Drag and keyboard accessibility not retested here; inherited Task C covers its browser acceptance. |
+| EVAL-04 → IM-04 Algebra tiles — `AlgebraTilesActivity.tsx` | 4 / 4 / 3 / 4 / 2 / 3 / 2 / 1 / NR | Long x-tile and unit-square mapping is concrete; wrong count identifies the coefficient. The target 2x+3 remains visible, and trial-and-error works without explaining “2 copies of x.” No concept demonstration or transfer item observed. |
+| EVAL-05 → IM-05 Affine functions — `LinearFunctionActivity.tsx`, `LineGraph.tsx` | 5 / 4 / 3 / 5 / 3 / 3 / 3 / 1 / NR | Four stages correctly connect b to (0,b) and a to rise/run; visible French terms are consistent with 3e. The challenge discloses f(x)=2x+1, a=2, b=1 and construction order, so copying succeeds. A prediction/table/second-function transfer check is absent. Teacher review remains pending. |
+| EVAL-06 → IM-07 Simple equation — `EquationDecompositionActivity.tsx` | 5 / 4 / 3 / 4 / 2 / NR / 4 / NR / NR | The demo shows subtracting 5 from both members, cancellation and division by 3; the “preserve equality” reason is visible without opening the optional panel. Conceptual balance is asserted more than elicited; live wrong-answer/hint and independent-mode learning quality were not re-exercised. Task C validates mode/evidence mechanics, not learning. |
+| EVAL-07 → IM-07 Two-sided equation — `EquationDecompositionActivity.tsx` | 5 / 4 / 3 / 4 / 2 / NR / 3 / NR / NR | In the observed step, subtracting 2x from both members and canceling terms is accurate and visible. Review did not complete the full learner sequence; wrong-answer remediation, transfer and independent evidence remain unscored. |
+| EVAL-08 → IM-07 Fractional solution — `EquationDecompositionActivity.tsx` | 5 / 4 / 3 / 4 / 2 / NR / 3 / NR / NR | Demonstration of −2x+3=8 correctly subtracts 3 then divides both sides by −2 to obtain −5/2. Learner-facing sign-rule reasoning and substitution as an independent check could be clearer. Full practice/hints were not re-exercised. |
+| EVAL-09 → IM-06 Line fitting — `LineFitActivity.tsx` | NV / 3 / 2 / 3 / 2 / 2 / 2 / 1 / NR | Sliders and squared-error total make the optimization target visible; trial and error can minimize the displayed value. The activity does not explain residuals or why squaring errors is useful in the observed prompt. Mathematical computation/edge cases were not independently checked, so MA is NV. Grade 2nde is a sample label, not an approved mapping. |
+| EVAL-CM2 → IM-01 + IM-02 CM2 five-step path — `ExplanationV2MathLab` / existing fraction schema and host | 5 / 4 / 3 / 3 / 3 / NR / 3 / 1 / NR | Fraction identity and addition are accurate; progression gates operate. The equivalence interstitial is prose/equations rather than an enacted visual. The recap says “Tu sais additionner des quarts” after one scaffolded example, with no independent near-neighbor item; replace mastery wording with completion until transfer is demonstrated. |
 
 **Completion-result clarity:** fraction selection reports success after selection and IM-03 distinguishes supported success in its message. Other exact completion labels and every mode’s feedback were not exhaustively recorded; no wider claim is made.
 
@@ -84,14 +84,14 @@ Activity identifiers and source paths follow [the existing interactive intellige
 
 | Scenario | Explain-why check needed before claiming understanding |
 |---|---|
-| IM-01 | “Pourquoi le 3 de 3/4 indique-t-il trois morceaux, et qu’est-ce qui rend ces morceaux des quarts ?” |
-| IM-02 | Ask the learner to show that 1/2 and 2/4 name the same amount before adding. Follow with 1/4+1/2 without a visible worked answer. |
-| IM-03 | Give a new point without directional words and ask the learner to state which coordinate controls each move. |
-| IM-04 | Ask “Que représentent les deux tuiles x dans 2x ?” before hiding the target and presenting a new expression. |
-| IM-05 | Ask the learner to predict f(0), then the next point after x increases by 1; use another a,b pair for transfer. |
-| IM-06 | Ask what one residual means for one observation, then why signed errors could cancel and how squared errors change the comparison. |
-| IM-07/08 | Ask the learner to predict a legal operation, state why it preserves equality, then substitute their solution into the original equation unaided. |
-| CM2 | Use a structurally similar new sum after the model, with no answer revealed, before any “you know how” claim. |
+| EVAL-01 / IM-01 | “Pourquoi le 3 de 3/4 indique-t-il trois morceaux, et qu’est-ce qui rend ces morceaux des quarts ?” |
+| EVAL-02 / IM-02 | Ask the learner to show that 1/2 and 2/4 name the same amount before adding. Follow with 1/4+1/2 without a visible worked answer. |
+| EVAL-03 / IM-03 | Give a new point without directional words and ask the learner to state which coordinate controls each move. |
+| EVAL-04 / IM-04 | Ask “Que représentent les deux tuiles x dans 2x ?” before hiding the target and presenting a new expression. |
+| EVAL-05 / IM-05 | Ask the learner to predict f(0), then the next point after x increases by 1; use another a,b pair for transfer. |
+| EVAL-09 / IM-06 | Ask what one residual means for one observation, then why signed errors could cancel and how squared errors change the comparison. |
+| EVAL-06–08 / IM-07 | Ask the learner to predict a legal operation, state why it preserves equality, then substitute their solution into the original equation unaided. |
+| EVAL-CM2 / IM-01 + IM-02 | Use a structurally similar new sum after the model, with no answer revealed, before any “you know how” claim. |
 
 ## 4. Representative legacy and isolated modules
 
@@ -235,8 +235,58 @@ These are recommendations, not implementation.
 - Teacher review remains pending for affine 3e curriculum fit and for all sample curriculum mappings.
 - [Task C accepted hosted run](https://github.com/UltraSaura/tutorly-navi/actions/runs/45887495298) · [QA artifact](https://github.com/UltraSaura/tutorly-navi/actions/runs/45887495298/artifacts/15149678492) · [Task D catalog](TUTORLY_INTERACTIVE_INTELLIGENCE.md) · [2015 cycle 4 programme](https://www.education.gouv.fr/bo/15/Special11/MENE1526483Aannexe3.htm) · [2026 programme rollout](https://www.education.gouv.fr/bo/2026/Hebdo10/MENE2602912A) · [Édubase 22940](https://edubase.eduscol.education.fr/fiche/22940).
 
-## 13. Result
+## 13. Result at completion of the initial Task E review
 
 **TASK E PARTIAL — PEDAGOGICAL VALIDATION GAPS REMAIN**
 
-The report is complete as an evidence-labelled internal review. P1 answer disclosure/mastery claims, line-fit mathematical validation, human teacher review and untested accessibility/evidence behaviors remain open. No code changes were made.
+At this initial review checkpoint, P1 answer disclosure/mastery claims, line-fit mathematical validation, human teacher review and untested accessibility/evidence behaviors remained open; no code changes had yet been made. See the E.09 correction follow-up below for subsequent implementation and validation status.
+
+## 14. E.09 correction follow-up — 26 Nov 2026
+
+The preceding sections record the **first-round Task E observations**. The implementation and regression follow-up is tracked here; post-fix browser claims are limited to the final hosted run linked below. It is an internal pedagogical correction, not teacher approval or evidence of improved student outcomes.
+
+### Canonical identifiers
+
+Keep the three namespaces distinct. The activity kind is the runtime contract, IM is the existing catalog module ID, and EVAL identifies a specific evaluated scenario.
+
+| Runtime kind | Catalog module | Evaluation scenario(s) |
+|---|---|---|
+| `fraction-select` | IM-01 | EVAL-01; also part of EVAL-CM2 |
+| `fraction-bar` | IM-02 | EVAL-02; also part of EVAL-CM2 |
+| `coordinate-plane` | IM-03 | EVAL-03 |
+| `algebra-tiles` | IM-04 | EVAL-04 |
+| `linear-function` | IM-05 | EVAL-05 |
+| `line-fit` | IM-06 | EVAL-09 |
+| `equation-decomposition` | IM-07 | EVAL-06 simple, EVAL-07 both sides, EVAL-08 fractional solution |
+| Composite five-step CM2 path | No additional activity kind or module ID | EVAL-CM2 uses IM-01 and IM-02 |
+
+The earlier scenario-level residual question was incorrectly labelled IM-06 as if that were an equation scenario. It now belongs to **EVAL-09 / IM-06 line fitting**. No catalog module ID was duplicated.
+
+### Before and after
+
+| Area / exact source | First-round defect | E.09 correction now in the branch |
+|---|---|---|
+| Affine assessment — [`LinearFunctionActivity.tsx`](../src/features/explanation-v2/LinearFunctionActivity.tsx), [`LineGraph.tsx`](../src/features/explanation-v2/LineGraph.tsx) | The same `f(x)=2x+1` example exposed the values and answer method in the challenge. | Keeps the French 3e demonstration and graph; the initial construction is followed by a different `f(x)=−2x+3`: predict `f(0)`, state the change for `+1` in x, then construct the line. Controls start at 0,0, hints are progressive, and transfer evidence is separate. |
+| Coordinates — [`InteractiveActivityHost.tsx`](../src/features/explanation-v2/InteractiveActivityHost.tsx) | Guided prompt included the exact horizontal and vertical movement recipe. | Preserves the coordinate plane and guided moves, then resets to B(−2;1) for a changed-value item. Feedback diagnoses coordinate order, sign, abscissa and ordinate without revealing the complete target in the first hint. |
+| Fraction selection — [`FractionSelectActivity.tsx`](../src/features/explanation-v2/FractionSelectActivity.tsx) | A learner could brute-force visible counts; no concept check or new fraction. | Adds a numerator/denominator meaning check and a 2/5 construction. Before the first submission, selection count is withheld. Failed responses and hints mark assisted transfer; a first-try changed-value success can record independent evidence. |
+| Fraction addition / CM2 — [`InteractiveActivityHost.tsx`](../src/features/explanation-v2/InteractiveActivityHost.tsx), [`Cm2LessonPreview.tsx`](../src/features/explanation-v2/Cm2LessonPreview.tsx), [`cm2FractionLesson.ts`](../src/features/explanation-v2/cm2FractionLesson.ts) | The path called one scaffolded worked example “mastery”; equivalence was primarily stated. | Adds a same-length 1/2→2/4 bar visual, preserves the 3/4+1/2=5/4 example, then gates continuation on exact transfer 1/4+1/2. Equivalent rational forms are accepted. Recap wording now says the guided example ended; it does not claim mastery. |
+| Algebra tiles — [`AlgebraTilesActivity.tsx`](../src/features/explanation-v2/AlgebraTilesActivity.tsx) | Tile count could be guessed without explaining why the coefficient counts x copies. | Adds the conceptual check `2x=x+x`, distinguishes x tiles and unit tiles, then asks for a changed 3x+2 expression with targeted error feedback and corrected French plural forms. |
+| Equations — [`EquationDecompositionActivity.tsx`](../src/features/explanation-v2/EquationDecompositionActivity.tsx), [`activityContract.ts`](../src/features/explanation-v2/activityContract.ts) | Guided answer positions were mechanically predictable; a completed original practice response could be mistaken for overall completion. | Keeps the validated animation; rotates correct operation choices, adds transfer equations to the backward-compatible optional contract, and requires a new solo transfer after the original example or guided solve. Guided, solo and overall completion remain distinct; the player gate does not open on the base example. |
+| Line fitting — [`LineFitActivity.tsx`](../src/features/explanation-v2/LineFitActivity.tsx), [`math.ts`](../src/features/explanation-v2/math.ts), [`LineGraph.tsx`](../src/features/explanation-v2/LineGraph.tsx) | Slider score could be optimized by trial and error without a residual concept. | The activity shows observed-to-predicted residual segments, states `résidu = observé − prévu`, explains signed cancellation and squared residuals, then asks why squares are used and checks a different residual. The success comparison uses the exact best fit reachable on the configured 0.1 slider grid, not an arbitrary tolerance around an unattainable optimum. |
+
+### Evidence and validation status
+
+`ActivityProgress.learningEvidence` distinguishes `exposure`, `guidedCompleted`, `assisted`, `independent` and `transfer`, along with disclosed items and transfer attempts/hints. Existing attempt/hint totals and equation-mode evidence remain. A demonstration records exposure but cannot complete or score the activity. The existing LessonV2Player progression gate and per-block duplicate-completion guard remain in the exercised integration path. These fields are activity evidence; they are **not long-term mastery** and persistent mastery calculation was not changed.
+
+**Hosted browser validation is pending until the final run is linked here.** Local evidence: focused Vitest is 49/49 across eight files; TypeScript passes; focused ESLint has zero errors and four Fast Refresh warnings; production build passes (with pre-existing bundle/font warnings). No local Chromium installation was retried. Viewport, interaction, player and screenshot acceptance must be taken only from the final hosted workflow, not inferred from these local checks.
+
+The scenario scores in Section 3 remain the original review scores. They have not been numerically rescored merely because source code changed. A later score update requires reviewed post-fix browser evidence criterion by criterion; accessibility and teacher-approval criteria stay NR until actually evaluated.
+
+### Remaining acceptance requirements
+
+- Human French mathematics teacher review of the 3e affine level, terminology, prerequisite sequence and examples against the applicable curriculum year and Édubase 22940.
+- Review of every changed item by an educator; no actual student comprehension study or learning-effectiveness claim is available.
+- Final hosted browser and actual LessonV2Player workflow must pass all five required widths, report actual counts, runtime errors, reduced motion, keyboard/touch/pointer coverage and upload guided/transfer screenshots.
+- Teacher approval and a live, current preview are not implied by CI or by source changes.
+
+Task F has not started. No production deployment, Supabase change, PR merge, TwoCards or CompactMathStepper modification was made.

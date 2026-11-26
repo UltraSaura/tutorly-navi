@@ -17,7 +17,9 @@ async function runAtWidth(width) {
   });
   const page = await context.newPage();
   const jsErrors = [];
+  const consoleErrors = [];
   page.on('pageerror', err => jsErrors.push(err.message));
+  page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   const log = (test, result, detail = '') => report.push({ viewport: width, test, result, detail });
   const run = async (test, fn) => {
     try { await fn(); log(test, 'PASS'); }
@@ -465,7 +467,7 @@ async function runAtWidth(width) {
       saved = JSON.parse(await page.getByTestId('activity-progress').innerText());
       assert.equal(saved.equationModes.independentEvidence, true);
       assert.equal(saved.equationModes.assistedEvidence, true);
-      assert.equal(saved.learningEvidence.exposure, false);
+      assert.equal(saved.learningEvidence.exposure, true);
       assert.equal(saved.learningEvidence.guidedCompleted, true);
       assert.equal(saved.learningEvidence.assisted, true);
       assert.equal(saved.learningEvidence.independent, true);
@@ -602,6 +604,23 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
     });
+    await run('a disclosed equation transfer hint cannot count as independent evidence', async () => {
+      await page.getByTestId('reset').click();
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      await page.locator('#equation-answer-qa-equation').fill('5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      const hint = page.getByRole('button', { name: /Indice/ });
+      await hint.click(); await hint.click(); await hint.click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /solution est x = 7/i);
+      await page.locator('#equation-answer-qa-equation').fill('7');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      const evidence = JSON.parse(await page.getByTestId('activity-progress').innerText());
+      assert.equal(evidence.learningEvidence.independent, false);
+      assert.equal(evidence.learningEvidence.transfer, true);
+      assert.equal(evidence.learningEvidence.transferHintsUsed, 3);
+      assert.ok(evidence.learningEvidence.disclosedItems.includes('equation-transfer'));
+    });
     await page.getByTestId('tab-fit').click();
     await run('line-fit touch targets meet 44px minimum', async () => checkTouchTargets('[data-testid="line-fit-activity"]'));
     await run('fitting data exposes five plotted points and changing error', async () => {
@@ -637,13 +656,33 @@ async function runAtWidth(width) {
     await page.screenshot({ path: dir + '/line-fit-' + width + '.png', fullPage: true });
     await run('new animation state retained across tabs', async () => {
       await page.getByTestId('tab-algebra').click();
-      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
       await page.getByTestId('tab-fit').click();
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
     });
+    await run('line-fit transfer earns independent evidence only after interpreting a residual', async () => {
+      await page.getByTestId('reset').click();
+      const slope = page.getByRole('slider', { name: 'Pente m' });
+      await slope.focus(); await page.keyboard.press('End');
+      for (let i = 0; i < 13; i++) await page.keyboard.press('ArrowLeft');
+      const intercept = page.getByRole('slider', { name: 'Départ b' });
+      await intercept.focus(); await page.keyboard.press('End');
+      for (let i = 0; i < 16; i++) await page.keyboard.press('ArrowLeft');
+      await page.getByRole('button', { name: 'Valider l’ajustement' }).click();
+      await page.getByRole('button', { name: 'Parce que des écarts positifs et négatifs pourraient s’annuler; les carrés évitent cette annulation.' }).click();
+      await page.getByRole('button', { name: 'Vérifier mon explication' }).click();
+      await page.locator('#residual-answer-qa-fit').fill('-0.4');
+      await page.getByRole('button', { name: 'Valider le résidu' }).click();
+      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+      const evidence = JSON.parse(await page.getByTestId('activity-progress').innerText()).learningEvidence;
+      assert.equal(evidence.guidedCompleted, true);
+      assert.equal(evidence.independent, true);
+      assert.equal(evidence.transfer, true);
+      assert.equal(evidence.transferAttempts, 1);
+    });
     await run('no runtime errors', async () => assert.deepEqual(jsErrors, []));
   } catch (e) {
-    failures++; log('page startup or unhandled failure', 'FAIL', String(e));
+    failures++; log('page startup or unhandled failure', 'FAIL', String(e) + (jsErrors.length ? ' | JavaScript errors: ' + jsErrors.join(' | ') : '') + (consoleErrors.length ? ' | Console errors: ' + consoleErrors.join(' | ') : ''));
     await page.screenshot({ path: dir + '/error-' + width + '.png', fullPage: true }).catch(() => {});
   } finally {
     await context.close();

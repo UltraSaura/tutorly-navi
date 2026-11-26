@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { discloseLearningItem, initialActivityProgress, learningEvidence, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { equationSteps, parseRational, rationalText, satisfiesEquation, solutionOf, type EquationTransformation } from './equationSolver';
 import { equationTermVisual, type EquationTermToken } from './equationTermVisual';
@@ -72,6 +72,13 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   const transferSolution = transferCoefficients ? solutionOf(transferCoefficients) : null;
   const transferSteps = transferCoefficients ? equationSteps(transferCoefficients) : null;
   const update = (patch: Partial<ActivityProgress>) => onProgressChange({ ...p, ...patch });
+  const exposureRecorded = useRef(false);
+  useEffect(() => {
+    if (mode === 'understand' && !exposureRecorded.current) {
+      exposureRecorded.current = true;
+      onProgressChange({ ...p, learningEvidence: { ...evidence, exposure: true } });
+    }
+  }, [mode, p, evidence, onProgressChange]);
   const demoStep = steps[demoIndex];
   const instruction = equationStepInstruction(demoStep, demoStage);
   const guidedIndex = Math.min(p.phase, steps.length - 1);
