@@ -233,6 +233,7 @@ async function runAtWidth(width) {
       await page.getByTestId('reset').click();
       await page.getByRole('button', { name: 'Explorer' }).click();
       const graph = page.getByTestId('line-graph');
+      await graph.scrollIntoViewIfNeeded();
       const rect = await graph.boundingBox();
       assert.ok(rect);
       const dragHandle = async (handle, x, y) => {
