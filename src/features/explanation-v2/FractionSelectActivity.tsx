@@ -37,7 +37,7 @@ export function FractionSelectActivity({ spec, progress, onProgressChange, onCom
     if (selected.length !== target.n) {
       update({ attempts, correct: false, feedback: isTransfer
         ? 'Compare ta sélection au numérateur de la fraction. Tu peux modifier les cases avant de valider à nouveau.'
-        : 'Tu peux vérifier le nombre du haut et ajuster les parts colorées.', learningEvidence: { ...evidence, assisted: true, ...(isTransfer ? { transferAttempts: evidence.transferAttempts + 1 } : {}) } });
+        : 'Tu as sélectionné ' + selected.length + ' quarts; il en faut 3. Ajuste les parts colorées avant de valider à nouveau.', learningEvidence: { ...evidence, assisted: true, ...(isTransfer ? { transferAttempts: evidence.transferAttempts + 1 } : {}) } });
       return;
     }
     if (!isTransfer && spec.transfer) {

@@ -32,7 +32,7 @@ export function AlgebraTilesActivity({ spec, progress, onProgressChange, onCompl
     const attempts = p.attempts + 1;
     if (counts.x !== x || counts.units !== units) {
       const problem = counts.x !== x
-        ? 'Le coefficient indique combien de copies de x sont nécessaires. Compte les grandes tuiles, puis réessaie.'
+        ? 'Le coefficient est le nombre devant x : il indique combien de copies de x sont nécessaires. Compte les grandes tuiles, puis réessaie.'
         : 'Le nombre sans x représente les unités. Compte les petits carrés, puis réessaie.';
       update({ attempts, correct: false, feedback: problem, learningEvidence: { ...evidence, assisted: true, ...(transferPhase ? { transferAttempts: evidence.transferAttempts + 1 } : {}) } });
       return;

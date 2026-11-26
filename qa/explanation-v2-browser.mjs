@@ -154,10 +154,13 @@ async function runAtWidth(width) {
       else await page.touchscreen.tap(x, y);
       assert.match(await page.locator('p').filter({ hasText: /^A =/ }).innerText(), /\(2 ; 3\)/);
       await page.getByRole('button', { name: 'Valider la position' }).click();
-      const transferX = rect.x + (130 / 360) * rect.width;
-      const transferY = rect.y + (155 / 360) * rect.height;
-      if (width === 1280) await page.mouse.click(transferX, transferY);
-      else await page.touchscreen.tap(transferX, transferY);
+      await svg.scrollIntoViewIfNeeded();
+      const transferRect = await svg.boundingBox();
+      assert.ok(transferRect);
+      const transferY = transferRect.y + (155 / 360) * transferRect.height;
+      const updatedTransferX = transferRect.x + (130 / 360) * transferRect.width;
+      if (width === 1280) await page.mouse.click(updatedTransferX, transferY);
+      else await page.touchscreen.tap(updatedTransferX, transferY);
       await page.getByRole('button', { name: 'Valider la position' }).click();
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
     });
@@ -189,10 +192,16 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
     });
     await run('activity state retained after tab switch', async () => {
+      const fractionResult = await page.getByTestId('completion').innerText();
+      const fractionProgress = await page.getByTestId('activity-progress').innerText();
       await page.getByTestId('tab-fraction').click();
-      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+      assert.equal(await page.getByTestId('completion').innerText(), fractionResult);
+      assert.equal(await page.getByTestId('activity-progress').innerText(), fractionProgress);
+      const coordinateResult = await page.getByTestId('completion').innerText();
+      const coordinateProgress = await page.getByTestId('activity-progress').innerText();
       await page.getByTestId('tab-coordinate').click();
-      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+      assert.equal(await page.getByTestId('completion').innerText(), coordinateResult);
+      assert.equal(await page.getByTestId('activity-progress').innerText(), coordinateProgress);
     });
     await page.screenshot({ path: dir + '/coordinate-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-fraction-select').click();
@@ -409,6 +418,7 @@ async function runAtWidth(width) {
       assert.match(await page.locator('section[aria-label="Résolution accompagnée"]').innerText(), /Étape 2 sur 3/);
     });
     await run('equation solo rejects malformed and incorrect answers, then accepts exact result', async () => {
+      await page.getByTestId('reset').click();
       await page.getByRole('button', { name: 'M’entraîner seul' }).click();
       const input = page.locator('#equation-answer-qa-equation');
       await input.fill('5/0');
@@ -656,9 +666,17 @@ async function runAtWidth(width) {
     await page.screenshot({ path: dir + '/line-fit-' + width + '.png', fullPage: true });
     await run('new animation state retained across tabs', async () => {
       await page.getByTestId('tab-algebra').click();
-      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+      const algebraResult = await page.getByTestId('completion').innerText();
+      const algebraProgress = await page.getByTestId('activity-progress').innerText();
       await page.getByTestId('tab-fit').click();
-      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      const fitResult = await page.getByTestId('completion').innerText();
+      const fitProgress = await page.getByTestId('activity-progress').innerText();
+      await page.getByTestId('tab-algebra').click();
+      assert.equal(await page.getByTestId('completion').innerText(), algebraResult);
+      assert.equal(await page.getByTestId('activity-progress').innerText(), algebraProgress);
+      await page.getByTestId('tab-fit').click();
+      assert.equal(await page.getByTestId('completion').innerText(), fitResult);
+      assert.equal(await page.getByTestId('activity-progress').innerText(), fitProgress);
     });
     await run('line-fit transfer earns independent evidence only after interpreting a residual', async () => {
       await page.getByTestId('reset').click();

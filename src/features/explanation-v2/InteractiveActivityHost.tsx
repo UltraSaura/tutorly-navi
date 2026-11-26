@@ -102,7 +102,7 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
       ];
   const hint = () => {
     const next = Math.min(3, p.phaseHints + 1);
-    update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: p.phase === 2 ? ['Choisis une taille de part commune aux deux fractions.', 'Réécris les deux fractions avec des parts de même taille, puis additionne les numérateurs.', 'Le résultat exact est ' + steps.total.numerator + '/' + steps.total.denominator + '.'][next - 1] : hints[next - 1], learningEvidence: { ...evidence, assisted: true, ...(p.phase >= 2 ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(next === 3 && p.phase >= 2 ? { disclosedItems: evidence.disclosedItems.includes('fraction-transfer') ? evidence.disclosedItems : [...evidence.disclosedItems, 'fraction-transfer'] } : {}) } });
+    update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: p.phase === 2 ? ['Choisis des parts de même taille pour les deux fractions.', 'Réécris les deux fractions avec des parts de même taille, puis additionne les numérateurs.', 'Le résultat exact est ' + steps.total.numerator + '/' + steps.total.denominator + '.'][next - 1] : hints[next - 1], learningEvidence: { ...evidence, assisted: true, ...(p.phase >= 2 ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(next === 3 && p.phase >= 2 ? { disclosedItems: evidence.disclosedItems.includes('fraction-transfer') ? evidence.disclosedItems : [...evidence.disclosedItems, 'fraction-transfer'] } : {}) } });
   };
   return <div className="space-y-4" data-testid="fraction-bar-activity">
     <button type="button" className={control} onClick={toggleDemo}>

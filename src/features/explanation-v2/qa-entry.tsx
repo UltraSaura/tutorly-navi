@@ -32,6 +32,7 @@ function App() {
   const [states, setStates] = useState<Record<string, ActivityProgress>>({});
   const [results, setResults] = useState<Record<string, string>>({});
   const [completionCounts, setCompletionCounts] = useState<Record<string, number>>({});
+  const [activityInstance, setActivityInstance] = useState(0);
   const spec = specs[active];
   return <main className="mx-auto max-w-xl space-y-4 p-3 sm:p-6">
     <h1 className="text-xl font-bold">Explanation V2 — isolated QA</h1>
@@ -49,9 +50,10 @@ function App() {
         setStates(prev => ({ ...prev, [spec.id]: initialActivityProgress() }));
         setResults(prev => ({ ...prev, [spec.id]: '' }));
         setCompletionCounts(prev => ({ ...prev, [spec.id]: 0 }));
+        setActivityInstance(value => value + 1);
       }}>Recommencer</button>
     </div>
-    <InteractiveActivityHost spec={spec} progress={states[spec.id]}
+    <InteractiveActivityHost key={activityInstance} spec={spec} progress={states[spec.id]}
       onProgressChange={next => setStates(prev => ({ ...prev, [spec.id]: next }))}
       onComplete={result => { setResults(prev => ({ ...prev, [spec.id]: result.independent ? 'Indépendant' : 'Avec aide' })); setCompletionCounts(prev => ({ ...prev, [spec.id]: (prev[spec.id] ?? 0) + 1 })); }} />
     {results[spec.id] && <p data-testid="completion">{results[spec.id]}</p>}
