@@ -192,16 +192,17 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
     });
     await run('activity state retained after tab switch', async () => {
-      const fractionResult = await page.getByTestId('completion').innerText();
-      const fractionProgress = await page.getByTestId('activity-progress').innerText();
-      await page.getByTestId('tab-fraction').click();
-      assert.equal(await page.getByTestId('completion').innerText(), fractionResult);
-      assert.equal(await page.getByTestId('activity-progress').innerText(), fractionProgress);
       const coordinateResult = await page.getByTestId('completion').innerText();
       const coordinateProgress = await page.getByTestId('activity-progress').innerText();
+      await page.getByTestId('tab-fraction').click();
+      const fractionResult = await page.getByTestId('completion').innerText();
+      const fractionProgress = await page.getByTestId('activity-progress').innerText();
       await page.getByTestId('tab-coordinate').click();
       assert.equal(await page.getByTestId('completion').innerText(), coordinateResult);
       assert.equal(await page.getByTestId('activity-progress').innerText(), coordinateProgress);
+      await page.getByTestId('tab-fraction').click();
+      assert.equal(await page.getByTestId('completion').innerText(), fractionResult);
+      assert.equal(await page.getByTestId('activity-progress').innerText(), fractionProgress);
     });
     await page.screenshot({ path: dir + '/coordinate-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-fraction-select').click();
@@ -233,7 +234,10 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: /Indice/ }).click();
       await page.getByTestId('fraction-part-1').click();
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
-      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+      const evidence = JSON.parse(await page.getByTestId('activity-progress').innerText()).learningEvidence;
+      assert.equal(evidence.independent, false, 'a wrong transfer and hint cannot count as independent success');
+      assert.equal(evidence.assisted, true, 'the transfer correction remains in the historical evidence');
+      assert.equal(evidence.transferAttempts, 2);
       assert.equal(await page.getByTestId('fraction-part-0').isDisabled(), true);
     });
     await run('fraction selection resets, toggles off and completes independently', async () => {
@@ -249,6 +253,9 @@ async function runAtWidth(width) {
       await page.getByTestId('fraction-part-0').click();
       await page.getByTestId('fraction-part-1').click();
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      const evidence = JSON.parse(await page.getByTestId('activity-progress').innerText()).learningEvidence;
+      assert.equal(evidence.independent, true, 'changed-value fraction transfer is first-try and unassisted');
+      assert.equal(evidence.assisted, false);
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
     });
     await page.screenshot({ path: dir + '/fraction-select-' + width + '.png', fullPage: true });
@@ -276,7 +283,10 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Retirer une unité' }).first().click();
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /3 tuiles x et 2 unités/i);
-      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+      const evidence = JSON.parse(await page.getByTestId('activity-progress').innerText()).learningEvidence;
+      assert.equal(evidence.independent, false, 'the wrong transfer attempt and correction are not first-try evidence');
+      assert.equal(evidence.assisted, true);
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
     });
     await page.screenshot({ path: dir + '/algebra-' + width + '.png', fullPage: true });
@@ -439,7 +449,7 @@ async function runAtWidth(width) {
       await input.fill('5');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.equal(await page.getByTestId('completion').count(), 0);
-      assert.match(await page.getByText(/Maintenant, résous une autre équation/).innerText(), /sans aide/);
+      assert.match(await page.locator('section[aria-label="Résolution autonome"] [role=status]').innerText(), /Maintenant, résous une autre équation.*sans aide/);
       await input.fill('7');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
@@ -475,13 +485,13 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.equal(await page.getByTestId('completion-count').innerText(), '1');
       saved = JSON.parse(await page.getByTestId('activity-progress').innerText());
-      assert.equal(saved.equationModes.independentEvidence, true);
+      assert.equal(saved.equationModes.independentEvidence, true, 'the first transfer answer is correct without hints');
       assert.equal(saved.equationModes.assistedEvidence, true);
       assert.equal(saved.learningEvidence.exposure, true);
       assert.equal(saved.learningEvidence.guidedCompleted, true);
       assert.equal(saved.learningEvidence.assisted, true);
       assert.equal(saved.learningEvidence.independent, true);
-      assert.equal(saved.learningEvidence.transfer, true);
+      assert.equal(saved.learningEvidence.transferAttempts, 1);
       await page.getByRole('button', { name: 'Comprendre' }).click();
       await page.getByTestId('equation-demo-progress').waitFor();
       assert.equal(await page.locator('section[aria-label="Démonstration de l’équation"] [role=status]').count(), 0);
@@ -526,10 +536,12 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       const saved = JSON.parse(await page.getByTestId('activity-progress').innerText());
       assert.equal(saved.equationModes.guidedCompleted, true);
-      assert.equal(saved.equationModes.independentEvidence, true);
+      assert.equal(saved.equationModes.independentEvidence, false, 'incorrect transfer answer is not independent mastery');
       assert.equal(saved.equationModes.assistedEvidence, true);
+      assert.equal(saved.learningEvidence.independent, false);
+      assert.equal(saved.learningEvidence.transferAttempts, 2);
       assert.equal(await page.getByTestId('completion-count').innerText(), '1');
-      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
     });
     await page.screenshot({ path: dir + '/equation-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-equation-both').click();
