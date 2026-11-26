@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 const base = process.env.DEMO_BASE_URL || 'http://127.0.0.1:4173';
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
 let failed = 0;
 try {
   const page = await browser.newPage({ viewport: { width: 375, height: 820 } });
@@ -27,7 +27,7 @@ try {
   await page.getByText('Réussi sans aide').waitFor();
   await page.getByRole('button', { name: '5e · Tuiles' }).click();
   await page.getByTestId('algebra-tiles-activity').waitFor();
-  await page.getByRole('button', { name: '4e · Fonctions' }).click();
+  await page.getByRole('button', { name: '3e · Fonction affine' }).click();
   await page.getByTestId('linear-function-activity').waitFor();
   await page.getByRole('button', { name: '5e · Équations (simple)' }).click();
   await page.getByTestId('equation-decomposition-activity').waitFor();

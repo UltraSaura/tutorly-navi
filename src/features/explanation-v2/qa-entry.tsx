@@ -15,8 +15,8 @@ const specs: InteractiveActivitySpec[] = [
     prompt: 'Place le point A(2 ; 3) sur le repère.', target: { x: 2, y: 3 } },
   { schemaVersion: 1, id: 'qa-algebra', kind: 'algebra-tiles', schoolLevel: '5e', title: 'Construire 2x + 3',
     prompt: 'Construis l’expression avec les tuiles.', target: { x: 2, units: 3 } },
-  { schemaVersion: 1, id: 'qa-linear', kind: 'linear-function', schoolLevel: '4e', title: 'Construire y = 2x + 1',
-    prompt: 'Déplace la droite pour obtenir y = 2x + 1.', target: { m: 2, b: 1 } },
+  { schemaVersion: 1, id: 'qa-linear', kind: 'linear-function', schoolLevel: '3e', title: 'Construire une fonction affine',
+    prompt: 'Déplace la droite pour obtenir f(x) = 2x + 1. Le coefficient directeur est a = 2 et l’ordonnée à l’origine est b = 1.', target: { m: 2, b: 1 } },
   { schemaVersion: 1, id: 'qa-equation', kind: 'equation-decomposition', schoolLevel: '5e',
     title: 'Résoudre 3x + 5 = 20', prompt: 'Résous cette équation, étape par étape.', a: 3, b: 5, c: 20 },
   { schemaVersion: 1, id: 'qa-equation-both', kind: 'equation-decomposition', schoolLevel: '4e',
@@ -30,6 +30,7 @@ function App() {
   const [active, setActive] = useState(1);
   const [states, setStates] = useState<Record<string, ActivityProgress>>({});
   const [results, setResults] = useState<Record<string, string>>({});
+  const [completionCounts, setCompletionCounts] = useState<Record<string, number>>({});
   const spec = specs[active];
   return <main className="mx-auto max-w-xl space-y-4 p-3 sm:p-6">
     <h1 className="text-xl font-bold">Explanation V2 — isolated QA</h1>
@@ -46,12 +47,15 @@ function App() {
       <button className="rounded border p-3" type="button" data-testid="reset" onClick={() => {
         setStates(prev => ({ ...prev, [spec.id]: initialActivityProgress() }));
         setResults(prev => ({ ...prev, [spec.id]: '' }));
+        setCompletionCounts(prev => ({ ...prev, [spec.id]: 0 }));
       }}>Recommencer</button>
     </div>
     <InteractiveActivityHost spec={spec} progress={states[spec.id]}
       onProgressChange={next => setStates(prev => ({ ...prev, [spec.id]: next }))}
-      onComplete={result => setResults(prev => ({ ...prev, [spec.id]: result.independent ? 'Indépendant' : 'Avec aide' }))} />
+      onComplete={result => { setResults(prev => ({ ...prev, [spec.id]: result.independent ? 'Indépendant' : 'Avec aide' })); setCompletionCounts(prev => ({ ...prev, [spec.id]: (prev[spec.id] ?? 0) + 1 })); }} />
     {results[spec.id] && <p data-testid="completion">{results[spec.id]}</p>}
+    <output data-testid="activity-progress" className="hidden">{JSON.stringify(states[spec.id] ?? initialActivityProgress())}</output>
+    <output data-testid="completion-count" className="hidden">{completionCounts[spec.id] ?? 0}</output>
   </main>;
 }
 const root = document.getElementById('root');

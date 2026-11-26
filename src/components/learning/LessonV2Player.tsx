@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Lightbulb, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLearner } from '@/context/FamilyProfileContext';
@@ -164,6 +164,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   const [prerequisiteResult, setPrerequisiteResult] = useState<boolean | null>(null);
   const [prerequisitesPassed, setPrerequisitesPassed] = useState(false);
   const [activityProgressById, setActivityProgressById] = useState<Record<string, ActivityProgress>>({});
+  const completedActivityBlocks = useRef(new Set<string>());
   const block = lesson.sequence[index];
   useEffect(() => { onSequencePosition?.(index); }, [index, onSequencePosition]);
   const required = block?.type === 'student_try' || block?.type === 'feedback_checkpoint' || block?.type === 'mastery_check' || block?.type === 'prediction' || block?.type === 'interactive_activity';
@@ -345,7 +346,10 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
             onComplete={(result) => {
               setSubmitted(true);
               setCorrect(true);
-              record('quiz_completed', { activityId: block.activity.id, attempts: result.attempts, hintsUsed: result.hintsUsed, independent: result.independent });
+              if (!completedActivityBlocks.current.has(block.id)) {
+                completedActivityBlocks.current.add(block.id);
+                record('quiz_completed', { activityId: block.activity.id, attempts: result.attempts, hintsUsed: result.hintsUsed, independent: result.independent });
+              }
             }}
           />}
           {block.type === 'concept' && <ConceptPresentation block={block} />}

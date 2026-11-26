@@ -5,7 +5,7 @@ import { chromium } from 'playwright';
 const base = process.env.QA_BASE_URL || 'http://127.0.0.1:8080';
 const dir = process.env.QA_SCREENSHOT_DIR || 'qa/screenshots';
 await fs.mkdir(dir, { recursive: true });
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
 const report = [];
 let failures = 0;
 
@@ -23,9 +23,17 @@ async function runAtWidth(width) {
     try { await fn(); log(test, 'PASS'); }
     catch (e) { failures++; log(test, 'FAIL', String(e)); }
   };
+  const checkTouchTargets = async selector => {
+    const small = await page.locator(selector + ' button:visible').evaluateAll(buttons => buttons.flatMap(button => {
+      const rect = button.getBoundingClientRect();
+      return rect.width < 44 || rect.height < 44 ? [{ label: button.getAttribute('aria-label') || button.innerText, width: Math.round(rect.width), height: Math.round(rect.height) }] : [];
+    }));
+    assert.deepEqual(small, []);
+  };
   try {
     await page.goto(base + '/qa/explanation-v2.html', { waitUntil: 'networkidle', timeout: 60000 });
     await page.getByTestId('fraction-bar-activity').waitFor();
+    await run('fraction-addition touch targets meet 44px minimum', async () => checkTouchTargets('[data-testid="fraction-bar-activity"]'));
     await run('CM2 question states one concrete task and answer format', async () => {
       assert.match(await page.getByTestId('fraction-step-instructions').innerText(), /Étape 1 sur 2/);
       assert.match(await page.locator('label[for=fraction-answer-qa-fraction]').innerText(), /combien de quarts/i);
@@ -94,6 +102,7 @@ async function runAtWidth(width) {
       assert.match(instructions, /Peux-tu placer le point A/i);
     });
     await run('coordinate incorrect feedback', async () => {
+      await checkTouchTargets('[data-testid="coordinate-plane-activity"]');
       await page.getByRole('button', { name: 'Valider la position' }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /abscisse/i);
     });
@@ -137,6 +146,7 @@ async function runAtWidth(width) {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
     });
     await run('select two quarters, get targeted feedback, then correct by tapping', async () => {
+      await checkTouchTargets('[data-testid="fraction-select-activity"]');
       await page.getByTestId('fraction-part-0').click();
       await page.getByTestId('fraction-part-1').click();
       assert.equal(await page.getByTestId('fraction-part-1').getAttribute('aria-pressed'), 'true');
@@ -165,6 +175,7 @@ async function runAtWidth(width) {
     await page.getByTestId('tab-algebra').click();
     await run('algebra tiles explain unknown and units, show wrong-answer feedback', async () => {
       await page.getByTestId('algebra-tiles-activity').waitFor();
+      await checkTouchTargets('[data-testid="algebra-tiles-activity"]');
       await page.getByRole('button', { name: 'Ajouter une tuile x' }).click();
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /nombre devant x/i);
@@ -184,13 +195,14 @@ async function runAtWidth(width) {
     await page.getByTestId('tab-linear').click();
     await run('function demonstration teaches starting point, slope and exploration before assessment', async () => {
       await page.getByTestId('math-demonstration').waitFor();
+      await checkTouchTargets('[data-testid="linear-function-activity"]');
       assert.match(await page.getByTestId('demo-step-title').innerText(), /horizontale/i);
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
-      assert.match(await page.getByTestId('demo-equation').innerText(), /y = 1/);
+      assert.match(await page.getByTestId('demo-equation').innerText(), /f\(x\) = 1/);
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
-      assert.match(await page.getByTestId('demo-equation').innerText(), /y = 2x \+ 1/);
+      assert.match(await page.getByTestId('demo-equation').innerText(), /f\(x\) = 2x \+ 1/);
       await page.getByRole('button', { name: 'Précédent' }).click();
-      assert.match(await page.getByTestId('demo-equation').innerText(), /y = 1/);
+      assert.match(await page.getByTestId('demo-equation').innerText(), /f\(x\) = 1/);
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
       await page.getByRole('button', { name: 'Manipuler la droite' }).click();
@@ -202,21 +214,33 @@ async function runAtWidth(width) {
       await page.getByTestId('linear-function-activity').waitFor();
       await page.getByRole('button', { name: 'Valider la droite' }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /axe vertical/i);
-      await page.getByRole('button', { name: 'Augmenter Départ b' }).click();
+      await page.getByRole('button', { name: 'Augmenter Ordonnée à l’origine b' }).click();
       await page.getByRole('button', { name: 'Valider la droite' }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /pente/i);
     });
     await run('function graph changes slope and completes', async () => {
-      await page.getByRole('button', { name: 'Augmenter Pente m' }).click();
-      await page.getByRole('button', { name: 'Augmenter Pente m' }).click();
-      assert.match(await page.getByTestId('live-equation').innerText(), /y = 2x \+ 1/);
+      await page.getByRole('button', { name: 'Augmenter Coefficient directeur a' }).click();
+      await page.getByRole('button', { name: 'Augmenter Coefficient directeur a' }).click();
+      assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 2x \+ 1/);
       await page.getByRole('button', { name: 'Valider la droite' }).click();
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+    });
+    await run('affine-function handles respond to pointer dragging', async () => {
+      await page.getByTestId('reset').click();
+      const graph = page.getByTestId('line-graph');
+      const rect = await graph.boundingBox();
+      assert.ok(rect);
+      const px = value => rect.x + (value / 360) * rect.width;
+      const py = value => rect.y + (value / 360) * rect.height;
+      await page.mouse.move(px(180), py(180)); await page.mouse.down(); await page.mouse.move(px(180), py(155)); await page.mouse.up();
+      await page.mouse.move(px(205), py(155)); await page.mouse.down(); await page.mouse.move(px(205), py(105)); await page.mouse.up();
+      assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 2x \+ 1/);
     });
     await page.screenshot({ path: dir + '/linear-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-equation').click();
     await run('equation visual decomposition animates identical operations on both sides', async () => {
       await page.getByTestId('equation-decomposition-activity').waitFor();
+      await checkTouchTargets('[data-testid="equation-decomposition-activity"]');
       assert.match(await page.getByTestId('equation-demo-progress').innerText(), /1 sur 3/);
       assert.match(await page.getByTestId('equation-transform').innerText(), /3x \+ 5/);
       assert.equal(await page.getByTestId('equation-after').count(), 0);
@@ -286,6 +310,35 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
     });
+    await run('mode switch keeps solo completion local and guided progression available', async () => {
+      await page.getByTestId('reset').click();
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      await page.locator('#equation-answer-qa-equation').fill('5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
+      assert.match(await page.locator('section[aria-label="Résolution accompagnée"]').innerText(), /Étape 1 sur 3/);
+      assert.equal(await page.getByTestId('equation-choice-0').count(), 1);
+      assert.equal(await page.getByText('Activité terminée. Tu peux continuer la leçon.', { exact: true }).count(), 0);
+      assert.equal(await page.locator('section[aria-label="Résolution accompagnée"] [role=status]').count(), 0);
+      assert.equal(await page.getByTestId('completion-count').innerText(), '1');
+      for (const [index, choice] of [0, 2, 1].entries()) {
+        await page.getByTestId('equation-choice-' + choice).click();
+        await page.getByRole('button', { name: 'Voir le résultat' }).click();
+        await page.getByRole('button', { name: index === 2 ? 'Terminer la résolution' : 'Étape suivante' }).click();
+      }
+      assert.equal(await page.getByTestId('completion-count').innerText(), '1');
+      const saved = JSON.parse(await page.getByTestId('activity-progress').innerText());
+      assert.equal(saved.equationModes.independentEvidence, true);
+      assert.equal(saved.equationModes.guidedCompleted, true);
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      assert.match(await page.locator('section[aria-label="Résolution autonome"] [role=status]').innerText(), /x = 5/);
+      assert.doesNotMatch(await page.locator('section[aria-label="Résolution autonome"] [role=status]').innerText(), /justifié chaque transformation/);
+      await page.getByRole('button', { name: 'Comprendre' }).click();
+      await page.getByTestId('equation-demo-progress').waitFor();
+      assert.equal(await page.locator('section[aria-label="Démonstration de l’équation"] [role=status]').count(), 0);
+      await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
+      assert.match(await page.locator('section[aria-label="Résolution accompagnée"] [role=status]').innerText(), /justifié chaque transformation/);
+    });
     await run('guided equations require all operations and verification before completion', async () => {
       await page.getByTestId('tab-equation-both').click();
       await page.getByTestId('tab-equation').click();
@@ -306,6 +359,25 @@ async function runAtWidth(width) {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
       await page.screenshot({ path: dir + '/equation-guided-' + width + '.png', fullPage: true });
     });
+    await run('assisted completion remains distinct from later independent practice', async () => {
+      await page.getByTestId('reset').click();
+      await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
+      for (const [index, choice] of [0, 2, 1].entries()) {
+        await page.getByTestId('equation-choice-' + choice).click();
+        await page.getByRole('button', { name: 'Voir le résultat' }).click();
+        await page.getByRole('button', { name: index === 2 ? 'Terminer la résolution' : 'Étape suivante' }).click();
+      }
+      assert.equal(await page.getByTestId('completion-count').innerText(), '1');
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      await page.locator('#equation-answer-qa-equation').fill('5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      const saved = JSON.parse(await page.getByTestId('activity-progress').innerText());
+      assert.equal(saved.equationModes.guidedCompleted, true);
+      assert.equal(saved.equationModes.independentEvidence, false);
+      assert.equal(saved.equationModes.assistedEvidence, true);
+      assert.equal(await page.getByTestId('completion-count').innerText(), '1');
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+    });
     await page.screenshot({ path: dir + '/equation-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-equation-both').click();
     await run('equation with variables on both sides displays exact cancellation and guided result', async () => {
@@ -315,12 +387,18 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /3x − 4 = 8/);
       await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      await page.locator('#equation-answer-qa-equation-both').fill('0');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /ne sont pas égaux/i);
+      await page.getByRole('button', { name: /Indice/ }).click();
+      assert.match(await page.locator('[role=status]').last().innerText(), /opération sur les deux membres/i);
       await page.locator('#equation-answer-qa-equation-both').fill('4');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
     });
     await page.getByTestId('tab-equation-rational').click();
     await run('negative-coefficient equation accepts equivalent fraction and targeted hints', async () => {
+      await checkTouchTargets('[data-testid="equation-decomposition-activity"]');
       await page.getByRole('button', { name: 'M’entraîner seul' }).click();
       await page.getByRole('button', { name: /Indice/ }).click();
       assert.match(await page.locator('[role=status]').last().innerText(), /deux membres/i);
@@ -369,6 +447,7 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
     });
     await page.getByTestId('tab-fit').click();
+    await run('line-fit touch targets meet 44px minimum', async () => checkTouchTargets('[data-testid="line-fit-activity"]'));
     await run('fitting data exposes five plotted points and changing error', async () => {
       await page.getByTestId('line-fit-activity').waitFor();
       assert.equal(await page.locator('[data-testid^="data-point-"]').count(), 5);
@@ -404,7 +483,7 @@ async function runAtWidth(width) {
     await context.close();
   }
 }
-for (const width of [375, 447, 1280]) await runAtWidth(width);
+for (const width of [320, 375, 390, 447, 1280]) await runAtWidth(width);
 await browser.close();
 await fs.writeFile(dir + '/report.json', JSON.stringify({ failures, checks: report }, null, 2));
 for (const item of report) console.log(item.result + ' ' + item.viewport + 'px ' + item.test + (item.detail ? ': ' + item.detail : ''));

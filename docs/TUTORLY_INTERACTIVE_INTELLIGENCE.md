@@ -113,11 +113,11 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 | **IM-02** `fraction-bar` | Convert 1/2 to 2/4, then add 3/4 + 1/2 = 5/4 in two guided questions | CM2–6e; sample CM2 | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/InteractiveActivityHost.tsx` (`FractionActivity`) |
 | **IM-03** `coordinate-plane` | Place A(2;3) by touching/dragging or using four arrow controls | 6e–4e depending on curriculum; sample 4e | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `InteractiveActivityHost.tsx` (`CoordinateActivity`) |
 | **IM-04** `algebra-tiles` | Drag/tap x-tiles and unit tiles to construct 2x + 3; remove tiles | 5e–4e; sample 5e | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/AlgebraTilesActivity.tsx` |
-| **IM-05** `linear-function` | Drag two graph handles or use +/- buttons to set slope m and intercept b of y = mx + b | 4e–2nde depending on topic; sample 4e (**review grade fit**) | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/LinearFunctionActivity.tsx` |
+| **IM-05** `linear-function` | Drag two graph handles or use +/- buttons to set coefficient directeur a and ordonnée à l’origine b of f(x) = ax + b | 3e sample; **teacher review still required** | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/LinearFunctionActivity.tsx` |
 | **IM-06** `line-fit` | Move a regression line with handles/sliders to reduce squared error against data points | 2nde–Terminale depending on topic; sample 2nde (**review grade fit**) | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/LineFitActivity.tsx` |
 | **IM-07 / IM-D02** `equation-decomposition` | Animate and justify both-sided operations; solve together or independently, exact rational checking | 5e–3e sample cases, pending curriculum review | **YES** | CANDIDATE | CANDIDATE | **DEMO** | `src/features/explanation-v2/EquationDecompositionActivity.tsx` + `equationSolver.ts` |
 
-**Curriculum caution:** `schoolLevel` is a validated display/scaffolding field, **not** a verified French programme mapping. In particular, the sample 4e affine-function activity and 2nde least-squares fitting require curriculum/teacher review before assignment. Never equate a demo label with proof that a concept is mandated at that grade.
+**Curriculum caution:** `schoolLevel` is a validated display/scaffolding field, **not** a verified French programme mapping. The affine-function demo now uses the 3e label and French notation (coefficient directeur a, ordonnée à l’origine b, f(x) = ax + b); a teacher must still review the exact grade fit and wording before assignment. The 2nde least-squares fitting activity also requires curriculum review. Never equate a demo label with proof that a concept is mandated at that grade.
 
 ### Suggested pedagogical placement (product design, not implemented integration)
 
@@ -240,7 +240,7 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 - “Why does 1/2 equal 2/4? Add quarters” → `fraction-bar` (within current denominator limits).
 - “Place A(2;3) / understand axes” → `coordinate-plane`.
 - “What does 2x+3 mean?” → `algebra-tiles` (positive counts only).
-- “How does y = mx+b move?” → `linear-function`.
+- “How does f(x) = ax + b change when a or b moves?” → `linear-function`.
 - “How well does a line represent measured data?” → `line-fit`.
 - “Why does each operation preserve the equation, and how do I solve for x?” → `equation-decomposition` (only the validated linear template).
 

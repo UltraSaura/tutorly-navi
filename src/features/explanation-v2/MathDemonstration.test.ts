@@ -7,16 +7,16 @@ describe('step-by-step mathematical demonstrations', () => {
   it('derives function visual steps and explanations from target coefficients', () => {
     const steps = functionDemonstrationSteps({ m: 2, b: 1 });
     expect(steps).toHaveLength(4);
-    expect(steps[0].equation).toBe('y = 0');
-    expect(steps[1].equation).toBe('y = 1');
-    expect(steps[2].equation).toBe('y = 2x + 1');
+    expect(steps[0].equation).toBe('f(x) = 0');
+    expect(steps[1].equation).toBe('f(x) = 1');
+    expect(steps[2].equation).toBe('f(x) = 2x + 1');
     expect(steps[2].visual).toEqual({ kind: 'graph', slope: 2, intercept: 1 });
-    expect(steps[3].takeaway).toMatch(/b = départ, m = pente/);
+    expect(steps[3].takeaway).toMatch(/coefficient directeur.*ordonnée à l’origine/);
   });
   it('explains negative and zero slopes without falsely saying they rise', () => {
     expect(functionDemonstrationSteps({ m: -2, b: 1 })[2].explanation).toContain('descend de 2');
     expect(functionDemonstrationSteps({ m: 0, b: -2 })[2].explanation).toContain('reste à la même hauteur');
-    expect(functionDemonstrationSteps({ m: -1, b: -2 })[2].equation).toBe('y = -1x − 2');
+    expect(functionDemonstrationSteps({ m: -1, b: -2 })[2].equation).toBe('f(x) = -1x − 2');
   });
   it('shows 1/2 = 2/4, then 5/4 = 1 + 1/4 from actual values', () => {
     const spec = InteractiveActivitySchema.parse({

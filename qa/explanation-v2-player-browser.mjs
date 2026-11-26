@@ -5,10 +5,10 @@ import { chromium } from 'playwright';
 const base = process.env.QA_BASE_URL || 'http://127.0.0.1:8080';
 const dir = process.env.QA_SCREENSHOT_DIR || 'qa/screenshots';
 await fs.mkdir(dir, { recursive: true });
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
 let failed = 0;
 const checks = [];
-for (const width of [375, 447, 1280]) {
+for (const width of [320, 375, 390, 447, 1280]) {
   const context = await browser.newContext({ viewport: { width, height: 860 }, isMobile: width !== 1280, hasTouch: width !== 1280 });
   const page = await context.newPage();
   const errors = [];
@@ -19,6 +19,12 @@ for (const width of [375, 447, 1280]) {
   };
   try {
     await page.goto(base + '/qa/explanation-v2-player.html', { waitUntil: 'networkidle', timeout: 60000 });
+    await check('CM2 lesson has no horizontal overflow and a visible continuation region', async () => {
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+      const continueButton = page.getByRole('button', { name: 'Continuer', exact: true });
+      const rect = await continueButton.boundingBox();
+      assert.ok(rect && rect.height >= 44 && rect.y + rect.height <= 860);
+    });
     await check('CM2 prerequisite uses a meaningful fractions question', async () => {
       assert.match(await page.getByText(/Combien de quarts faut-il pour reconstituer la barre entière/).innerText(), /Combien de quarts/i);
       await page.getByRole('textbox', { name: 'Réponse au prérequis' }).fill('4');
@@ -65,6 +71,21 @@ for (const width of [375, 447, 1280]) {
       await page.getByRole('heading', { name: 'Leçon terminée' }).waitFor();
     });
     await page.screenshot({ path: dir + '/player-complete-' + width + '.png', fullPage: true });
+    await page.getByRole('button', { name: 'Fixture équation' }).click();
+    await page.getByTestId('equation-decomposition-activity').waitFor();
+    await check('equation fixture is progression-gated, and solo completion does not block guided solving', async () => {
+      assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
+      await page.getByRole('button', { name: 'M’entraîner seul' }).click();
+      await page.locator('#equation-answer-player-equation-3x5').fill('5');
+      await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 1);
+      await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
+      assert.match(await page.locator('section[aria-label="Résolution accompagnée"]').innerText(), /Étape 1 sur 3/);
+      assert.equal(await page.getByTestId('equation-choice-0').count(), 1);
+      assert.equal(await page.getByText('Activité terminée. Tu peux continuer la leçon.', { exact: true }).count(), 0);
+      assert.equal(await page.locator('section[aria-label="Résolution accompagnée"] [role=status]').count(), 0);
+    });
+    await page.screenshot({ path: dir + '/player-equation-mode-switch-' + width + '.png', fullPage: true });
     await check('no runtime errors', async () => assert.deepEqual(errors, []));
   } catch (e) {
     failed++; checks.push({ width, name: 'page startup', status: 'FAIL', detail: String(e) });

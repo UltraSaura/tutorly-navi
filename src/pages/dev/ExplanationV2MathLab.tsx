@@ -25,8 +25,8 @@ const activities: InteractiveActivitySpec[] = [
     target: { x: 2, units: 3 },
   },
   {
-    schemaVersion: 1, id: '4e-function-001', kind: 'linear-function', schoolLevel: '4e',
-    title: 'Déplacer une fonction affine', prompt: 'Fais passer la droite par (0 ; 1) et (1 ; 3).',
+    schemaVersion: 1, id: '3e-function-001', kind: 'linear-function', schoolLevel: '3e',
+      title: 'Fonction affine : f(x) = ax + b', prompt: 'Construis f(x) = 2x + 1 : le coefficient directeur est a = 2 et l’ordonnée à l’origine est b = 1.',
     target: { m: 2, b: 1 },
   },
   {
@@ -66,7 +66,7 @@ export default function ExplanationV2MathLab() {
     <div className="flex flex-wrap gap-2">
       {activities.map((activity, index) => <button type="button" key={activity.id} onClick={() => setSelected(index)}
         className={'min-h-11 rounded-xl px-4 py-2 font-semibold ' + (selected === index ? 'bg-teal-600 text-white' : 'border border-slate-300 bg-white text-slate-800')}>
-        {activity.kind === 'fraction-select' ? 'CM2 · Sélectionner 3/4' : activity.kind === 'fraction-bar' ? 'CM2 · Additionner' : activity.kind === 'coordinate-plane' ? '4e · Coordonnées' : activity.kind === 'algebra-tiles' ? '5e · Tuiles'  : activity.kind === 'linear-function' ? '4e · Fonctions' : activity.kind === 'equation-decomposition' ? activity.schoolLevel + ' · Équations (' + (activity.d ? 'deux côtés' : activity.a < 0 ? 'fraction' : 'simple') + ')' : '2nde · Ajustement'}
+        {activity.kind === 'fraction-select' ? 'CM2 · Sélectionner 3/4' : activity.kind === 'fraction-bar' ? 'CM2 · Additionner' : activity.kind === 'coordinate-plane' ? '4e · Coordonnées' : activity.kind === 'algebra-tiles' ? '5e · Tuiles'  : activity.kind === 'linear-function' ? '3e · Fonction affine' : activity.kind === 'equation-decomposition' ? activity.schoolLevel + ' · Équations (' + (activity.d ? 'deux côtés' : activity.a < 0 ? 'fraction' : 'simple') + ')' : '2nde · Ajustement'}
       </button>)}
       <button type="button" onClick={() => { setProgress((current) => ({ ...current, [spec.id]: initialActivityProgress() })); setResults((current) => ({ ...current, [spec.id]: '' })); }} className="min-h-11 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700">Réinitialiser l’exercice</button>
     </div>

@@ -63,6 +63,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   const [demoStage, setDemoStage] = useState<0 | 1 | 2>(0);
   const [guidedStage, setGuidedStage] = useState<0 | 1 | 2>(0);
   const p = progress ?? initialActivityProgress();
+  const modes = p.equationModes ?? { guidedCompleted: false, soloCompleted: false, soloAttempts: 0, soloHintsUsed: 0, independentEvidence: false, assistedEvidence: false, soloFeedback: '', soloCorrect: null, guidedFeedback: '', guidedCorrect: null };
   const coefficients = { a: spec.a, b: spec.b, c: spec.c, d: spec.d ?? 0 };
   const steps = equationSteps(coefficients);
   const solution = solutionOf(coefficients);
@@ -73,22 +74,22 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   const guidedStep = steps[guidedIndex];
   const chooseMode = (next: Mode) => {
     setMode(next);
-    if (next === 'together' && !p.assisted) update({ assisted: true });
+    if (next === 'together' && !modes.assistedEvidence) update({ assisted: true, equationModes: { ...modes, assistedEvidence: true } });
   };
   const demoForward = () => {
-    update({ assisted: true });
+    update({ assisted: true, equationModes: { ...modes, assistedEvidence: true } });
     if (demoStage < 2) setDemoStage((demoStage + 1) as 0 | 1 | 2);
     else if (demoIndex < steps.length - 1) { setDemoIndex(i => i + 1); setDemoStage(0); }
     else chooseMode('together');
   };
   const guidedChoose = (answer: string) => {
-    if (p.completed || guidedStage !== 0) return;
+    if (modes.guidedCompleted || guidedStage !== 0) return;
     const attempts = p.attempts + 1;
     if (answer !== guidedStep.choice) {
-      update({ attempts, correct: false, feedback: guidedStep.wrongFeedback, assisted: true });
+      update({ attempts, assisted: true, equationModes: { ...modes, guidedCorrect: false, guidedFeedback: guidedStep.wrongFeedback, assistedEvidence: true } });
       return;
     }
-    update({ attempts, correct: true, feedback: '', assisted: true });
+    update({ attempts, assisted: true, equationModes: { ...modes, guidedCorrect: true, guidedFeedback: '', assistedEvidence: true } });
     setGuidedStage(1);
   };
   const guidedNext = () => {
@@ -96,39 +97,43 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       setGuidedStage(2);
       return;
     }
-    if (guidedStage !== 2 || p.completed) return;
+    if (guidedStage !== 2 || modes.guidedCompleted) return;
     setGuidedStage(0);
     if (guidedIndex === steps.length - 1) {
-      update({ completed: true, correct: true, feedback: 'Bravo ! Tu as justifié chaque transformation et vérifié la solution.', assisted: true });
-      onComplete({ independent: false, attempts: p.attempts, hintsUsed: p.hintsUsed });
-    } else update({ phase: guidedIndex + 1, correct: null, feedback: '', phaseHints: 0 });
+      const wasComplete = p.completed;
+      update({ completed: true, correct: true, feedback: '', assisted: true, equationModes: { ...modes, guidedCompleted: true, assistedEvidence: true, guidedCorrect: true, guidedFeedback: 'Bravo ! Tu as justifié chaque transformation et vérifié la solution.' } });
+      if (!wasComplete) onComplete({ independent: false, attempts: p.attempts, hintsUsed: p.hintsUsed });
+    } else update({ phase: guidedIndex + 1, correct: null, feedback: '', phaseHints: 0, equationModes: { ...modes, guidedCorrect: null, guidedFeedback: '' } });
   };
   const checkSolo = () => {
-    if (p.completed) return;
+    if (modes.soloCompleted) return;
     const answer = parseRational(p.input);
     if (!answer) {
-      update({ correct: false, feedback: 'Écris un entier ou une fraction, par exemple −5/2. Le dénominateur ne peut pas être zéro.' });
+      updateModes({ soloCorrect: false, soloFeedback: 'Écris un entier ou une fraction, par exemple −5/2. Le dénominateur ne peut pas être zéro.' });
       return;
     }
     const attempts = p.attempts + 1;
     if (answer.n === solution.n && answer.d === solution.d && satisfiesEquation(coefficients, answer)) {
-      update({ attempts, correct: true, completed: true, feedback: 'Bravo ! x = ' + rationalText(solution) + '. La substitution confirme l’égalité.' });
-      onComplete({ independent: attempts === 1 && p.hintsUsed === 0 && !p.assisted, attempts, hintsUsed: p.hintsUsed });
+      const wasComplete = p.completed;
+      const soloAttempts = modes.soloAttempts + 1;
+      const independent = soloAttempts === 1 && modes.soloHintsUsed === 0 && !modes.assistedEvidence;
+      update({ attempts, completed: true, correct: true, feedback: '', equationModes: { ...modes, soloAttempts, soloCompleted: true, soloCorrect: true, soloFeedback: 'Bravo ! x = ' + rationalText(solution) + '. La substitution confirme l’égalité.', independentEvidence: modes.independentEvidence || independent } });
+      if (!wasComplete) onComplete({ independent, attempts, hintsUsed: p.hintsUsed });
       return;
     }
     const opposite = answer.n === -solution.n && answer.d === solution.d;
-    update({ attempts, correct: false, feedback: opposite && solution.n !== 0
+    update({ attempts, equationModes: { ...modes, soloAttempts: modes.soloAttempts + 1, soloCorrect: false, soloFeedback: opposite && solution.n !== 0
       ? 'Tu as peut-être inversé un signe. Vérifie ce que devient chaque terme quand tu changes de membre.'
-      : 'En remplaçant x par ta réponse, les deux membres ne sont pas égaux. Vérifie la soustraction puis la division.' });
+      : 'En remplaçant x par ta réponse, les deux membres ne sont pas égaux. Vérifie la soustraction puis la division.' } });
   };
   const hintSolo = () => {
-    if (p.phaseHints >= 3 || p.completed) return;
+    if (p.phaseHints >= 3 || modes.soloCompleted) return;
     const hints = [
       'Pour isoler x, effectue la même opération sur les deux membres de l’égalité.',
       'Après regroupement, on obtient ' + (spec.a - (spec.d ?? 0)) + 'x = ' + (spec.c - spec.b) + '.',
       'Divise par le coefficient de x. La solution est x = ' + rationalText(solution) + '.',
     ];
-    update({ phaseHints: p.phaseHints + 1, hintsUsed: p.hintsUsed + 1, assisted: true, feedback: hints[p.phaseHints] });
+    update({ phaseHints: p.phaseHints + 1, hintsUsed: p.hintsUsed + 1, assisted: true, equationModes: { ...modes, assistedEvidence: true, soloHintsUsed: modes.soloHintsUsed + 1, soloCorrect: null, soloFeedback: hints[p.phaseHints] } });
   };
   const alternativeChoices: Record<EquationTransformation['id'], [string, string]> = {
     'subtract-variable': ['Faire l’opération inverse sur les deux membres', 'Déplacer les x sans modifier l’autre membre'],
@@ -173,7 +178,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       </details>
       <div className="flex items-center gap-2 pt-1">
         <button type="button" className={control + ' shrink-0 px-3 sm:px-4'} disabled={demoIndex === 0 && demoStage === 0} onClick={() => {
-          update({ assisted: true });
+          update({ assisted: true, equationModes: { ...modes, assistedEvidence: true } });
           if (demoStage > 0) setDemoStage((demoStage - 1) as 0 | 1 | 2);
           else { setDemoIndex(i => i - 1); setDemoStage(2); }
         }}>Précédent</button>
@@ -181,7 +186,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       </div>
       <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
         <span>Démonstration sans note</span>
-        <button type="button" className="min-h-9 rounded-md px-2 font-medium text-slate-600 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700" onClick={() => { update({ assisted: true }); setDemoIndex(0); setDemoStage(0); }}>Revoir depuis le début</button>
+        <button type="button" className="min-h-11 rounded-md px-2 font-medium text-slate-600 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700" onClick={() => { update({ assisted: true, equationModes: { ...modes, assistedEvidence: true } }); setDemoIndex(0); setDemoStage(0); }}>Revoir depuis le début</button>
       </div>
     </section>}
     {mode === 'together' && <section className="space-y-3" aria-label="Résolution accompagnée">
@@ -195,7 +200,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
           : <><strong className="mr-2 text-teal-900">{equationStepInstruction(guidedStep, guidedStage).label} :</strong>{equationStepInstruction(guidedStep, guidedStage).text}</>}
       </div>
       <TransformationVisual key={guidedIndex + '-' + guidedStage} step={guidedStep} stage={guidedStage} />
-      {guidedStage === 0 && !p.completed && <div className="grid gap-2">
+      {guidedStage === 0 && !modes.guidedCompleted && <div className="grid gap-2">
         {choices.map((option, i) => <button key={i} type="button" data-testid={'equation-choice-' + i} className={control + ' text-left'} onClick={() => guidedChoose(option)}>{option}</button>)}
       </div>}
       {guidedStage > 0 && <div className="space-y-3">
@@ -204,16 +209,16 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
           <p className="mt-2 leading-6">{guidedStep.explanation}</p>
           <p className="mt-2 leading-6">{guidedStep.rule}</p>
         </details>
-        {!p.completed && <button type="button" className={action + ' w-full'} onClick={guidedNext}>
+        {!modes.guidedCompleted && <button type="button" className={action + ' w-full'} onClick={guidedNext}>
           {guidedStage === 1 ? 'Voir le résultat' : guidedIndex === steps.length - 1 ? 'Terminer la résolution' : 'Étape suivante'}
         </button>}
       </div>}
-      {p.feedback && <p role="status" aria-live="polite" className={'text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>}
+      {modes.guidedFeedback && <p role="status" aria-live="polite" className={'text-sm font-semibold ' + (modes.guidedCorrect === false ? 'text-amber-800' : 'text-teal-800')}>{modes.guidedFeedback}</p>}
     </section>}
     {mode === 'solo' && <section className="space-y-3" aria-label="Résolution autonome">
       <p className="font-bold">Trouve la valeur de x sans regarder les étapes.</p>
       <p className="rounded-xl bg-slate-100 p-4 text-center text-2xl font-bold">{steps[0].before}</p>
-      {!p.completed && <div className="space-y-2">
+      {!modes.soloCompleted && <div className="space-y-2">
         <label htmlFor={'equation-answer-' + spec.id} className="block font-semibold">x = ?</label>
         <p id={'equation-help-' + spec.id} className="text-sm text-slate-600">Écris un entier ou une fraction (ex. : -5/2). Pas de nombre décimal.</p>
         <div className="flex flex-wrap gap-2">
@@ -225,9 +230,9 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
           <button type="button" className={control} onClick={hintSolo} disabled={p.phaseHints >= 3}>Indice {p.phaseHints}/3</button>
         </div>
       </div>}
-      {p.completed && <p className="rounded-xl bg-teal-50 p-4 font-bold text-teal-900">Solution vérifiée : x = {rationalText(solution)}</p>}
-      <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
+      {modes.soloCompleted && <p className="rounded-xl bg-teal-50 p-4 font-bold text-teal-900">Solution vérifiée : x = {rationalText(solution)}</p>}
+      <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (modes.soloCorrect === false ? 'text-amber-800' : 'text-teal-800')}>{modes.soloFeedback}</p>
     </section>}
-    {p.completed && <p className="font-semibold text-teal-800">Activité terminée. Tu peux continuer la leçon.</p>}
+    {p.completed && (mode !== 'together' || modes.guidedCompleted) && <p className="font-semibold text-teal-800">Activité terminée. Tu peux continuer la leçon.</p>}
   </div>;
 }

@@ -5,6 +5,7 @@ type Spec = Extract<InteractiveActivitySpec, { kind: 'algebra-tiles' }>;
 type Props = { spec: Spec; progress?: ActivityProgress; onProgressChange: (p: ActivityProgress) => void; onComplete: (result: { independent: boolean; attempts: number; hintsUsed: number }) => void };
 const button = 'min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 disabled:opacity-50';
 const tile = 'flex min-h-16 items-center justify-center rounded-xl border-2 font-bold shadow-sm transition-transform motion-safe:hover:scale-105';
+const counted = (count: number, singular: string, plural = singular + 's') => `${count} ${count === 1 ? singular : plural}`;
 export function AlgebraTilesActivity({ spec, progress, onProgressChange, onComplete }: Props) {
   const p = progress ?? initialActivityProgress();
   const counts = p.tileCounts ?? { x: 0, units: 0 };
@@ -27,7 +28,7 @@ export function AlgebraTilesActivity({ spec, progress, onProgressChange, onCompl
     if (p.completed) return;
     const attempts = p.attempts + 1;
     if (counts.x === x && counts.units === units) {
-      update({ attempts, completed: true, correct: true, feedback: 'Bravo ! ' + counts.x + ' tuile(s) x et ' + counts.units + ' unité(s) représentent ' + x + 'x + ' + units + '.' });
+      update({ attempts, completed: true, correct: true, feedback: 'Bravo ! ' + counted(counts.x, 'tuile x', 'tuiles x') + ' et ' + counted(counts.units, 'unité') + ' représentent ' + x + 'x + ' + units + '.' });
       onComplete({ independent: attempts === 1 && p.hintsUsed === 0, attempts, hintsUsed: p.hintsUsed });
     } else {
       const problem = counts.x !== x
@@ -38,8 +39,8 @@ export function AlgebraTilesActivity({ spec, progress, onProgressChange, onCompl
   };
   const hints = [
     'La grande tuile représente une quantité inconnue, appelée x. La petite tuile vaut 1.',
-    'Pour écrire ' + x + 'x, il faut ' + x + ' grandes tuiles. Le signe + sépare les unités.',
-    'Construis exactement ' + x + ' tuile(s) x et ' + units + ' unité(s).',
+    'Pour écrire ' + x + 'x, il faut ' + counted(x, 'grande tuile', 'grandes tuiles') + '. Le signe + sépare les unités.',
+    'Construis exactement ' + counted(x, 'tuile x', 'tuiles x') + ' et ' + counted(units, 'unité') + '.',
   ];
   const hint = () => {
     if (p.completed || p.phaseHints >= hints.length) return;

@@ -25,7 +25,7 @@ describe('Explanation V2 lesson integration', () => {
   it('accepts algebra, graph and equation activities in the lesson contract', () => {
     const activities = [
       { schemaVersion: 1, id: 'tiles', kind: 'algebra-tiles', title: 'Tuiles', prompt: 'Construis 2x + 3', schoolLevel: '5e', target: { x: 2, units: 3 } },
-      { schemaVersion: 1, id: 'function', kind: 'linear-function', title: 'Fonction', prompt: 'Construis y = 2x + 1', schoolLevel: '4e', target: { m: 2, b: 1 } },
+      { schemaVersion: 1, id: 'function', kind: 'linear-function', title: 'Fonction affine', prompt: 'Construis f(x) = 2x + 1', schoolLevel: '3e', target: { m: 2, b: 1 } },
       { schemaVersion: 1, id: 'equation', kind: 'equation-decomposition', title: 'Équation', prompt: 'Trouve x', schoolLevel: '5e', a: 3, b: 5, c: 20 },
       { schemaVersion: 1, id: 'fitting', kind: 'line-fit', title: 'Ajustement', prompt: 'Ajuste la droite', schoolLevel: '2nde', points: [{ x: -2, y: -2 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }] },
     ];

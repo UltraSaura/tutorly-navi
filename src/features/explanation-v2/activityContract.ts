@@ -92,6 +92,19 @@ export type ActivityProgress = {
   correct: boolean | null;
   /** Has the learner used guided or worked-solution assistance? */
   assisted?: boolean;
+  /** Mode-scoped equation state and historical assessment evidence. */
+  equationModes?: {
+    guidedCompleted: boolean;
+    soloCompleted: boolean;
+    soloAttempts: number;
+    soloHintsUsed: number;
+    independentEvidence: boolean;
+    assistedEvidence: boolean;
+    soloFeedback: string;
+    soloCorrect: boolean | null;
+    guidedFeedback: string;
+    guidedCorrect: boolean | null;
+  };
 };
 export const initialActivityProgress = (): ActivityProgress => ({
   phase: 0, input: '', selectedParts: [], x: 0, y: 0, attempts: 0, hintsUsed: 0, phaseHints: 0, completed: false, feedback: '', correct: null,
