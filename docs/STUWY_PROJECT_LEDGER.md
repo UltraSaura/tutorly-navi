@@ -396,3 +396,11 @@ If two sources disagree: record both, identify dates/branches, preserve function
 - Remaining requirements: human French mathematics teacher review of the 3e affine curriculum fit and changed learning content; applicability by school year; student comprehension/outcome study. No teacher approval or student learning effect is claimed.
 - No merge, deployment, Supabase change, TwoCards/CompactMathStepper edit, or Task F implementation occurred.
 - **Current status:** TASK E COMPLETE — READY FOR REVIEW. **Next action:** obtain teacher review before any curriculum approval or future Task F implementation.
+
+### 2026-11-26 — LEDGER-015 Final E.09 commit and hosted-run reconciliation
+- Final feature-branch head: `b2c7c3e87a9930232d03500b2f08fc7f51480f6f` (includes the Task E report/catalog status clarification). PR #56 remains open and draft; not merged.
+- The exact-head hosted run [#45906620185](https://github.com/UltraSaura/tutorly-navi/actions/runs/45906620185) passed: **195/195 standalone checks**, **40/40 actual LessonV2Player fixture checks**, five widths (320/375/390/447/1280), production-built demo smoke, five-step CM2 preview and no page errors. Unit/build: 49/49 tests in 8 files, TypeScript PASS, focused lint 0 errors/4 Fast Refresh warnings, production build PASS.
+- [Screenshot and QA artifact](https://github.com/UltraSaura/tutorly-navi/actions/runs/45906620185/artifacts/15156979900) contains 96 files (~6.4 MB).
+- Clarification: the live Vercel preview was not refreshed or verified; the passing standalone smoke used the hosted CI server's production build. No production lesson persistence or long-term mastery writes were tested.
+- Human review remains open for the French 3e affine fit, changed student-facing material and applicable curriculum year. No student learning-effectiveness claim or teacher approval is made.
+- **Status:** TASK E.09 COMPLETE — READY FOR PEDAGOGICAL ACCEPTANCE. **Next:** teacher review, then separately approved curriculum follow-up. No Task F implementation, merge, deployment, Supabase change, TwoCards or CompactMathStepper edit occurred.
