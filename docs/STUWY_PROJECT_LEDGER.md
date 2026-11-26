@@ -262,6 +262,15 @@ Known existing foundations to inspect/reuse:
 - **Decision:** deploy exact CI-verified branch head without forced rebuild, project-settings change or production promotion; no application source, database or branch merge changes.
 - **Next:** inspect deployment and verify branch alias/source SHA; interactively test /demo.html at 375/447/1280px, record actual screenshots and outcomes. If browser access unavailable, hand off to Work/Codex.
 
+
+### 2026-11-26 — LEDGER-005 Latest preview READY and route verified
+- **Status:** Task B deployment and HTTP route verification PASS; interactive live browser acceptance NOT RUN, remains open.
+- **Branch / SHA:** feature/explanation-v2-interactive-math / a92d3c797c3ce38361ea6e10d925e9e9ace2c97d, exact match with audited GitHub head.
+- **Deployment:** dpl_2df5cLdJssKvScv8dH1W5gMbSDJ6 READY, target null, no alias error. Exact preview https://stuwy-6dy8t334d-stuwy.vercel.app/demo.html . Authenticated Vercel fetch returned HTTP 200, expected French demo HTML, React root, built demo JS and CSS asset references, noindex. Fetch uses Vercel temporary share-link mechanism; no share token recorded or distributed. This verifies HTTP delivery, not JS runtime or pedagogical acceptance.
+- **Tests:** existing head CI PASS as recorded in LEDGER-003; no new interactive browser tests or screenshots. Chat browser only reads open tabs and prior host permission failure remains; use Work/Codex for live visual acceptance.
+- **Files changed:** ledger only. No app code, database, production promotion, or branch merges.
+- **Next:** targeted live preview validation of guided equation operation/cancellation, mode switching, fraction selection/addition, graph manipulation, hints and completion at 375/447/1280px, then Task C based on observed defects.
+
 ## 10. CONTINUOUS UPDATE OPERATING PROCEDURE
 
 ### In every ChatGPT Work / Codex session
