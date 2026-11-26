@@ -237,7 +237,7 @@ These are recommendations, not implementation.
 
 ## 13. Result at completion of the initial Task E review
 
-**TASK E PARTIAL — PEDAGOGICAL VALIDATION GAPS REMAIN**
+**Historical first-round status:** TASK E PARTIAL — PEDAGOGICAL VALIDATION GAPS REMAIN.
 
 At this initial review checkpoint, P1 answer disclosure/mastery claims, line-fit mathematical validation, human teacher review and untested accessibility/evidence behaviors remained open; no code changes had yet been made. See the E.09 correction follow-up below for subsequent implementation and validation status.
 
@@ -278,7 +278,7 @@ The earlier scenario-level residual question was incorrectly labelled IM-06 as i
 
 `ActivityProgress.learningEvidence` distinguishes `exposure`, `guidedCompleted`, `assisted`, `independent` and `transfer`, along with disclosed items and transfer attempts/hints. Existing attempt/hint totals and equation-mode evidence remain. A demonstration records exposure but cannot complete or score the activity. The existing LessonV2Player progression gate and per-block duplicate-completion guard remain in the exercised integration path. These fields are activity evidence; they are **not long-term mastery** and persistent mastery calculation was not changed.
 
-**Hosted browser validation is pending until the final run is linked here.** Local evidence: focused Vitest is 49/49 across eight files; TypeScript passes; focused ESLint has zero errors and four Fast Refresh warnings; production build passes (with pre-existing bundle/font warnings). No local Chromium installation was retried. Viewport, interaction, player and screenshot acceptance must be taken only from the final hosted workflow, not inferred from these local checks.
+**Hosted validation:** [workflow run #45905584726](https://github.com/UltraSaura/tutorly-navi/actions/runs/45905584726), on implementation commit `389c97040c069b6938b3ad77704c7cdc8d3c7d2e`, passed. The standalone browser runner reported **195/195 checks** across 320, 375, 390, 447 and 1280px; the actual LessonV2Player runner reported **40/40 checks** across the same widths. The production-built `/demo.html` smoke passed, including the five-step CM2 preview, with no page errors. [Screenshots and QA report artifact](https://github.com/UltraSaura/tutorly-navi/actions/runs/45905584726/artifacts/15157763030) contains 96 files (6.4 MB), including viewport screenshots and JSON reports. The hosted unit/build job passed **49/49 tests across eight files**, TypeScript and focused lint (0 errors; 4 Fast Refresh warnings), and production build. The build still emits font-resolution, large-chunk and mixed Supabase import warnings. No local Chromium installation was retried.
 
 The scenario scores in Section 3 remain the original review scores. They have not been numerically rescored merely because source code changed. A later score update requires reviewed post-fix browser evidence criterion by criterion; accessibility and teacher-approval criteria stay NR until actually evaluated.
 
@@ -286,7 +286,9 @@ The scenario scores in Section 3 remain the original review scores. They have no
 
 - Human French mathematics teacher review of the 3e affine level, terminology, prerequisite sequence and examples against the applicable curriculum year and Édubase 22940.
 - Review of every changed item by an educator; no actual student comprehension study or learning-effectiveness claim is available.
-- Final hosted browser and actual LessonV2Player workflow must pass all five required widths, report actual counts, runtime errors, reduced motion, keyboard/touch/pointer coverage and upload guided/transfer screenshots.
-- Teacher approval and a live, current preview are not implied by CI or by source changes.
+- Task E.09 did not review a live production lesson player or persistent mastery writes; hosted player checks used the repository's isolated fixture and preview.
+- Teacher approval and production readiness are not implied by CI or by source changes.
 
 Task F has not started. No production deployment, Supabase change, PR merge, TwoCards or CompactMathStepper modification was made.
+
+**Current E.09 result:** TASK E COMPLETE — READY FOR REVIEW. Technical browser acceptance is complete; human teacher review and student learning-outcome evidence remain open and are not represented as approvals or proven outcomes. The live simulated lab is not the production lesson runtime. Task F has not started.
