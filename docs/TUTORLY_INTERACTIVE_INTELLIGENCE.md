@@ -81,6 +81,15 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 - **QA:** `equationStepInstruction.test.ts` validates all three stages and negative/fractional cases. Browser QA checks the always-visible instruction in stage 0/1/2, the optional Why panel remaining closed, and exact verification. Existing 375/447/1280px and reduced-motion checks remain.
 - **Status:** implemented on the isolated feature branch; **CI PASS** for the final runtime-code commit `64fa31dd8` in [GitHub Actions #45722482002](https://github.com/UltraSaura/tutorly-navi/actions/runs/45722482002): 90/90 interactive browser checks (375/447/1280px), 18/18 lesson-player checks, standalone production-built demo smoke, unit tests, TypeScript, lint and build. The subsequent documentation-only commit does not affect runtime behavior. No merge or production release.
 
+### IM-D02.4 — Guided learning shows the operation before the answer (26 Nov 2026)
+
+- **Observed gap:** in `Résoudre ensemble`, a correct multiple-choice operation immediately displayed the simplified equation. The learner never saw the cancellation they had chosen; guided practice was less explanatory than the `Comprendre` demonstration.
+- **New three-stage guided flow:** (0) choose a valid operation from the original equation → (1) **watch the exact operation and its canceled/grouped terms**, with an always-visible, solver-derived French explanation → (2) explicitly choose **Voir le résultat** to reveal the simplified equation and a short result explanation. Only then can the learner advance or finish the final verification.
+- **UI consistency:** reuse the same single-equation `TransformationVisual` and `equationStepInstruction` used in `Comprendre`; optional `Pourquoi cette étape ?` retains the deeper justification. Remove duplicated success text to keep the view focused.
+- **Correctness:** incorrect choices still receive targeted feedback and cannot advance. Assisted/independent scoring rules and exact equation validation are unchanged. Switching between learning modes retains the current guided stage while mounted.
+- **QA:** browser tests at 375/447/1280px verify wrong operation feedback, operation-before-result gating, cancellation tokens, optional explanation, state preservation on mode switch, complete guided solve including substitution verification, and assisted completion. All other activities remain unchanged.
+- **Status:** feature branch only, new CI run pending. No merge, production release, Supabase or Universal Tutor changes.
+
 **Next iteration:** Validate IM-D02.1 with teachers and students, then evaluate true position-to-position token morphing and accessible mathematical notation; add structured authoring and safe objective mapping before expanding to other equation families.
 
 ## 2. Terminology and deployment status
