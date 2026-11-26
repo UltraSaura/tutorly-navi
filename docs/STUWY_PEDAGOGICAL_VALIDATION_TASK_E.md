@@ -291,4 +291,4 @@ The scenario scores in Section 3 remain the original review scores. They have no
 
 Task F has not started. No production deployment, Supabase change, PR merge, TwoCards or CompactMathStepper modification was made.
 
-**Current E.09 result:** TASK E COMPLETE — READY FOR REVIEW. Technical browser acceptance is complete; human teacher review and student learning-outcome evidence remain open and are not represented as approvals or proven outcomes. The live simulated lab is not the production lesson runtime. Task F has not started.
+**Current E.09 result:** TASK E.09 COMPLETE — READY FOR PEDAGOGICAL ACCEPTANCE. Technical browser acceptance is complete; human teacher review and student learning-outcome evidence remain open and are not represented as approvals or proven outcomes. The hosted production-built demo smoke passed, but the live Vercel preview was not refreshed or verified; the live simulated lab is not the production lesson runtime. Task F has not started.
