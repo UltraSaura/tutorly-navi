@@ -258,7 +258,14 @@ async function runAtWidth(width) {
       await page.getByTestId('equation-choice-1').click();
       assert.match(await page.locator('[role=status]').last().innerText(), /deux membres|deux côtés/i);
       await page.getByTestId('equation-choice-0').click();
+      assert.match(await page.getByTestId('equation-guided-instruction').innerText(), /Ce qu’on fait.*soustrait 5 à gauche ET à droite/s);
+      assert.equal(await page.getByTestId('equation-after').count(), 0);
+      assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['+ 5', '− 5']);
+      assert.equal(await page.locator('section[aria-label="Résolution accompagnée"] details').getAttribute('open'), null);
+      await page.getByRole('button', { name: 'Voir le résultat' }).click();
+      assert.match(await page.getByTestId('equation-guided-instruction').innerText(), /Ce qu’on obtient.*20 − 5 = 15/s);
       assert.match(await page.getByTestId('equation-after').innerText(), /3x = 15/);
+      assert.equal(await page.getByTestId('equation-term-animation').count(), 0);
       await page.getByRole('button', { name: 'Étape suivante' }).click();
       assert.match(await page.locator('section[aria-label="Résolution accompagnée"]').innerText(), /Étape 2 sur 3/);
     });
@@ -275,6 +282,26 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    });
+    await run('guided equations require all operations and verification before completion', async () => {
+      await page.getByTestId('tab-equation-both').click();
+      await page.getByTestId('tab-equation').click();
+      await page.getByTestId('reset').click();
+      await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
+      for (const [index, choice] of [[0, 0], [1, 2], [2, 1]]) {
+        assert.match(await page.getByTestId('equation-guided-instruction').innerText(), /Quelle opération/);
+        assert.equal(await page.getByTestId('equation-after').count(), 0);
+        await page.getByTestId('equation-choice-' + choice).click();
+        assert.match(await page.getByTestId('equation-guided-instruction').innerText(), /Ce qu’on fait/);
+        assert.equal(await page.getByTestId('equation-after').count(), 0);
+        await page.getByRole('button', { name: 'Voir le résultat' }).click();
+        assert.match(await page.getByTestId('equation-guided-instruction').innerText(), /Ce qu’on obtient/);
+        assert.equal(await page.getByTestId('equation-after').count(), 1);
+        await page.getByRole('button', { name: index === 2 ? 'Terminer la résolution' : 'Étape suivante' }).click();
+      }
+      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+      await page.screenshot({ path: dir + '/equation-guided-' + width + '.png', fullPage: true });
     });
     await page.screenshot({ path: dir + '/equation-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-equation-both').click();
