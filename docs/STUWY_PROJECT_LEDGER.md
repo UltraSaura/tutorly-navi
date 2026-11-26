@@ -173,7 +173,7 @@ Known existing foundations to inspect/reuse:
 
 | ID | Severity | Issue | Required evidence to close |
 |---|---|---|---|
-| B-01 | High | Demo link has previously returned 404 | Open verified preview route in browser; record working URL and commit |
+| B-01 | Closed for this preview | The specified /demo.html route opened and ran in the interactive browser at the audited head | Recheck if the deployment or alias changes |
 | B-02 | High | Vercel preview may be limited by deployment quota | Query deployment status/limit; retry when allowed; do not invent reset time |
 | B-03 | High | Mobile explanation bottom action can be obscured by composer/nav | 320/375/390/447px and desktop screenshots + clickable continuation |
 | B-04 | High | Excessive margins/nested feedback cards | Side-by-side before/after mobile QA; maintain readability |
@@ -204,7 +204,7 @@ Known existing foundations to inspect/reuse:
 
 **H. Separate production launch and branch consolidation.** Keep V1 fixes isolated; propose merge plan with excluded Universal Tutor branch; regression-test before deployment.
 
-**Current execution state as of 2026-11-26:** A metadata reconciliation recorded in LEDGER-002/003. B is the next actionable gate: current preview and interactive browser validation remain outstanding. C–H pending; do not claim deployment or browser acceptance.
+**Current execution state as of 2026-11-26:** A metadata reconciliation is complete. The preview in B is READY and /demo.html is browser-verified at the audited interactive-math head. Task B.3 functional interaction review is recorded in LEDGER-006; exact 375px, 447px and 1280px viewport acceptance remains NOT RUN because the available browser did not expose viewport resizing. B-03/B-04 remain open pending those sizes. C is next; D–H pending.
 
 ## 9. REQUIRED WORK LOG FORMAT — APPEND AFTER EACH TASK
 
@@ -296,3 +296,18 @@ Known existing foundations to inspect/reuse:
 6. **Unverified historic assistant statements:** background only until corroborated.
 
 If two sources disagree: record both, identify dates/branches, preserve functioning production behavior, request approval for a product-direction change, and do not silently merge conflicting architectures.
+
+
+### 2026-11-26 — LEDGER-006 Task B.3 interactive preview acceptance
+- **Workstream / branch / SHA:** Explanation V2 interactive mathematics / `feature/explanation-v2-interactive-math` / `a92d3c797c3ce38361ea6e10d925e9e9ace2c97d`.
+- **Status before -> after:** preview HTTP-ready, interactive acceptance NOT RUN -> functional browser review PASS for the activities below; exact requested viewport acceptance PARTIAL / NOT RUN.
+- **Preview:** https://stuwy-6dy8t334d-stuwy.vercel.app/demo.html opened and rendered. UI identifies this as a simulated local lab with no Supabase access and no saved grades.
+- **Functional checks:** PASS — CM2 fraction selection (3/4), fraction addition (3/4 + 1/2 = 5/4), coordinate placement to (2 ; 3) using arrow controls, algebra tiles for 2x + 3, linear-function construction y = 2x + 1 using controls and mode switching, simple equation 3x + 5 = 20 with wrong/correct answer and hint, complete two-sided equation walkthrough through 16 = 16, fractional solution walkthrough and independent grading of -5/2 with wrong answer and all three progressive hints, line fit adjusted to slope 1.7/intercept 1.4 with displayed squared error 0.3 and success feedback, and complete CM2 path through its 5/5 conclusion. Exact arithmetic checked against the displayed transformations and expected results.
+- **Animation check:** PASS for the equation demonstrations inspected. The operation and immediate consequence remain visible without opening “Pourquoi cette étape ?” (subtract 5, subtract 2x, subtract 3, divide by -2, substitute/check). Fraction-addition walkthrough also exposes the visual goal and explanation. Animation motion itself was reviewed through the live UI; no timing/accessibility or reduced-motion audit was performed.
+- **Defect — Medium:** switching from completed “M’entraîner seul” to “Résoudre ensemble” leaves the independent-mode “Bravo ! x = 5” completion message, “Activité terminée” and “Réussi sans aide” status visible while the guided mode is at step 1/3 asking what operation to perform. This gives contradictory progress and feedback. **Correction:** scope completion/feedback to the active mode or reset it when switching modes; preserve only compatible progress. Screenshot captured in the browser review thread.
+- **Potential curriculum issue — Medium / verify:** the affine-function activity is labelled 4e while explicitly teaching slope m and intercept b, then asks students to build y = 2x + 1. Confirm intended grade and French curriculum vocabulary/notation with a teacher before release; stage or relabel the activity to match the intended level.
+- **Minor copy issue:** tile success text renders “2 tuile(s) x”; use correct French agreement (“2 tuiles x”).
+- **Viewport / visual QA:** a responsive screenshot was captured at the available browser size (approximately 1365 × 1024). The requested exact 375px, 447px and 1280px widths were **NOT RUN**: the available browser controls did not expose viewport resizing. Mobile layout, drag-only graph/point interactions, touch target sizing, keyboard navigation, reduced-motion behavior, and small-screen continuation visibility remain unverified. Screenshots of the line-fit prompt and equation mode mismatch were captured inline in the browser review thread; no local screenshot artifacts were persisted.
+- **PASS/FAIL/NOT RUN summary:** all 8 standalone activities and the full CM2 learning path were functionally exercised; core math and visible feedback PASS. Equation mode-switch progress consistency FAIL. Exact viewport acceptance NOT RUN. Production/LessonV2Player persistence NOT RUN because this route is explicitly a simulated local lab.
+- **Files changed:** this ledger only. No application code, merge, Supabase, or production/deployment change was made.
+- **Next action:** fix the equation mode-switch state leak and confirm the affine-function grade/notation; then rerun acceptance at 375px, 447px and 1280px, including actual drag/touch behavior and scroll-to-completion. Keep production acceptance separate from this demo.
