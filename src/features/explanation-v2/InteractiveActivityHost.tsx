@@ -37,6 +37,7 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
   const [showDemo, setShowDemo] = useState(false);
   const p = progress ?? initialActivityProgress();
   const transferPhase = p.phase >= 2 && !!spec.transfer;
+  const conversionPhase = p.phase === 0;
   const active = transferPhase ? { ...spec, ...spec.transfer } : spec;
   const steps = expectedFractionSteps(active.left, active.right, active.targetDenominator);
   const guidance = fractionGuidedQuestion(active, transferPhase ? 1 : p.phase);
@@ -61,7 +62,6 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
       }
       return;
     }
-    const conversionPhase = p.phase === 0;
     const expectedParts = conversionPhase ? steps.rightParts : steps.totalParts;
     if (gradePartCount(answer, expectedParts) === 'invalid') {
       update({ feedback: 'Écris un nombre entier de parts.', correct: false });
