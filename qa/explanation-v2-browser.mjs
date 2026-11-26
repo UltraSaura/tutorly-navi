@@ -255,7 +255,7 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       const evidence = JSON.parse(await page.getByTestId('activity-progress').innerText()).learningEvidence;
       assert.equal(evidence.independent, true, 'changed-value fraction transfer is first-try and unassisted');
-      assert.equal(evidence.assisted, false);
+      assert.equal(evidence.assisted, true, 'guided concept feedback remains in the historical record');
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
     });
     await page.screenshot({ path: dir + '/fraction-select-' + width + '.png', fullPage: true });
