@@ -261,6 +261,9 @@ async function runAtWidth(width) {
       assert.match(await page.getByTestId('equation-guided-instruction').innerText(), /Ce qu’on fait.*soustrait 5 à gauche ET à droite/s);
       assert.equal(await page.getByTestId('equation-after').count(), 0);
       assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['+ 5', '− 5']);
+      await page.getByRole('button', { name: 'Comprendre' }).click();
+      await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
+      assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['+ 5', '− 5']);
       assert.equal(await page.locator('section[aria-label="Résolution accompagnée"] details').getAttribute('open'), null);
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-guided-instruction').innerText(), /Ce qu’on obtient.*20 − 5 = 15/s);
