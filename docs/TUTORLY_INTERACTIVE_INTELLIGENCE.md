@@ -303,3 +303,212 @@ When adding or changing an animation or learning module:
 - [Latest CI evidence at snapshot](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708) — automated verification.
 
 **Owner decision:** Complete the animation library **before** restructuring lessons. Keep this file as the single entry point for the **new interactive animation catalogue**, and expand it to other app modules only after source-level verification.
+
+
+# Task D — Cross-branch inventory and selection intelligence (2026-11-26)
+
+> Evidence means the path or call site was inspected at the exact branch head below. Source presence does not establish integration, curriculum approval, runtime use, or successful tests. Tests mentioned here are source-only unless a result is explicitly cited. Recommendations are not teacher-approved.
+>
+> Scope: read-only source inventory across the six requested branches. feature/v2-universal-tutor was excluded. Task D made no runtime changes.
+
+## Branch heads audited
+
+| Branch | Exact head | Finding |
+|---|---|---|
+| main | [5b5ea1de](https://github.com/UltraSaura/tutorly-navi/tree/5b5ea1de14c223b28f1838b105b6d82d0385cdf3) | Shared V1 baseline. |
+| release/v1-stabilization | [d53af6c](https://github.com/UltraSaura/tutorly-navi/tree/d53af6c49d63fa8bffb9a939e3c5968267c21add) | Pedagogical source tree matches main except one practice page test path; this does not establish deployment status. |
+| feature/stuwy-explain-v2 | [cec2b07](https://github.com/UltraSaura/tutorly-navi/tree/cec2b07a802844aacd789bd01e58d8316f73a1c4) | Contains teaching-session, subtraction-guide and structured-operation work. |
+| feature/explanation-v2-interactive-math | [3fc22b1](https://github.com/UltraSaura/tutorly-navi/tree/3fc22b11a3d595da53fe9b787daec475d3f233c4) | Task C accepted feature head; PR #56 remains open/draft. |
+| feature/guided-practice-lessons | [a57846c](https://github.com/UltraSaura/tutorly-navi/tree/a57846c388c904fff15bc374a13afa06f0d9f6db) | Contains additional early numeracy practice families. |
+| integration/stuwy-explain-v2 | [828413a](https://github.com/UltraSaura/tutorly-navi/tree/828413a32af273cb1f2dbc27711f7c86f0574a23) | No new explain-session or V2 activity paths. Compared with main, observed changes are limited to bulk lesson generation/admin workflow files. |
+
+The branch heads diverge. A path absent from an older divergent tree is not necessarily deleted from the project. Source presence on a feature branch does not mean integrated in main or integration/stuwy-explain-v2.
+
+## Standard module records
+
+Each record identifies its source, teaching goal, supported concepts and interactions, evidence, integration and reuse limits. Curriculum/age suggestions are conservative inferences from the activity content, not approvals.
+
+### Shared baseline and V1
+
+| ID | Component and exact source | Teaching contract, integration and reuse |
+|---|---|---|
+| V1-TWOCARDS | [TwoCards.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/features/explanations/TwoCards.tsx), [useTwoCardTeaching.ts](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/features/explanations/useTwoCardTeaching.ts), ExplanationCards.tsx | Tutor worked explanation, child-friendly verbal/visual/action cues, supported arithmetic and fraction tasks. Inputs are the existing quick-explanation/exercise contracts, not an arbitrary solver. Tutor integrated through TwoCards call sites. Learn/Practice/Admin direct integration not verified. Viewing is not mastery. Reuse unchanged within current contract. |
+| V1-COMPACT-STEPPER | [CompactMathStepper.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/math/CompactMathStepper.tsx), src/utils/mathStepper/*, [MathExplanationReader.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/math/MathExplanationReader.tsx) | Animated written arithmetic and operation-specific step builders; learner-paced steps/read-along. Tutor integrated via TwoCards. No claim of arbitrary expression support. Preserve unchanged; a lesson adapter may be considered later. |
+| V1-INTERACTIVE-STEPPER | [InteractiveMathStepper.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/math/InteractiveMathStepper.tsx), src/utils/mathStepper/{stepGenerator,parser,types}.ts | Interactive answer checking at supported generated steps. Source exists; broad surface integration and persistence not verified. Overlaps with compact stepper/V2 equation but uses different contracts. |
+| V1-ADAPTIVE-STEPPER | [AdaptiveTeachingStepper.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/user/chat/AdaptiveTeachingStepper.tsx) | Displays grouped retry practice and retry-original callback. Tutor candidate/reusable with adapter to GroupedRetryPractice; no Learn/Practice integration verified. |
+| V1-RUNTIME-MINI-PRACTICE | [RuntimeMiniPracticeInline.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/features/explanations/RuntimeMiniPracticeInline.tsx) | Inline exact/structured mini-practice, staged hints and remediation in an explanation. Existing explanation child integration; completion is local, not lesson mastery. Reuse only through current QuickExplanation/check contract. |
+| V1-EXPLANATION-RENDERING | src/features/explanations/{ExplanationRenderer,ExplanationModal,quickExplanation,canonicalSkill}.tsx/ts | Explanation section and supported quick explanation/rendering mechanisms, canonical skill navigation. These are supporting mechanisms rather than new learner activity schemas. |
+| V1-MANIPULATIVE-POSEE | [ManipulativeMathRenderer.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/manipulative-maths/ManipulativeMathRenderer.tsx), [OperationPoseeExercise.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/manipulative-maths/operation-posee/OperationPoseeExercise.tsx), src/lib/manipulative-maths/* | Manipulation/verification for written operation by existing typed mode/result contract. Renderer and callbacks exist. Exact Tutor/Learn/Practice use not fully verified. Reuse only through current operation schema. |
+| V1-LESSON-VISUAL | [PedagogicalVisual.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/learning/PedagogicalVisual.tsx), [LessonVisualBlock.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/learning/LessonVisualBlock.tsx) | Data-driven clock, timeline, number line, fraction bar/circle, shapes, angle, symmetry, coordinate plane and other VISUAL_KINDS; validates shared visual contracts. Learn integrated through LessonV2Player. Primarily visual explanation, not necessarily interaction/scoring. |
+| V1-LESSON-PLAYER | [LessonV2Player.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/learning/LessonV2Player.tsx), [LessonV21Path.tsx](https://github.com/UltraSaura/tutorly-navi/blob/5b5ea1de14c223b28f1838b105b6d82d0385cdf3/src/components/learning/LessonV21Path.tsx), src/types/lesson-generator.ts | Ordered blocks, prerequisites, question/hint/retry and level gates. LessonV2Path integrates visuals/questions and updates mastery from task results. Learn integrated. Use exact lesson schema and progression contracts. |
+| V1-PRACTICE-SHELL | src/components/practice/{ExerciseViewer,ParsedExerciseViewer,QuestionCard,CorrectionReveal,HintBox,PracticeFeedback,SessionProgress}.tsx; src/pages/practice/{PracticePage,PracticeSubjectPage,PracticeTopicsPage,TrainingSessionPage,GraduatedNumberLinePage}.tsx | Existing catalogue/session, questions, correction, hints, feedback and progress. Practice integrated for existing schemas. It does not make feature-branch activities integrated. |
+| V1-ADMIN-TOOLS | src/components/admin/learning/{BulkLessonGenerator,GeneratedLessonsPage,QuestionEditor,QuizManager,QuizPreviewDialog,StagingLessonVersionPanel,TopicObjectivesSelector}.tsx; src/components/admin/visual-editors/{AngleEditor,GridEditor,LineEditor,PieEditor,ShapeEditor}.tsx; geometryDraft.ts | Lesson/question/quiz generation, review and selected visual authoring. Teacher/Admin integrated for existing contracts. No V2 interactive_activity editor verified. |
+
+### Explanation V2 — accepted feature head
+
+Exact activity union: [activityContract.ts](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/features/explanation-v2/activityContract.ts); dispatcher and progress callbacks: [InteractiveActivityHost.tsx](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/features/explanation-v2/InteractiveActivityHost.tsx). These use validated activity specs and ActivityProgress. Generated lessons must use these exact schemas; do not invent activity kinds.
+
+| ID | Exact paths | Objective, schema, interaction, modes, evidence and limits |
+|---|---|---|
+| V2-FRACTION-SELECT | FractionSelectActivity.tsx; fraction-select spec in activityContract.ts | Select equal parts to represent a target fraction; bar manipulation; phased feedback and hints. CM2 sample fit is a design suggestion, not curriculum approval. |
+| V2-FRACTION-ADD | InteractiveActivityHost.tsx fraction branch; MathDemonstration.tsx; fraction-bar schema | Visual same-denominator fraction recomposition/addition, with optional paced demo, guided phases and independent challenge. Bounded schema. |
+| V2-COORDINATE | InteractiveActivityHost.tsx coordinate branch; coordinate spec | Place a point on a grid and respond to coordinate prompts; graph interaction with guided and independent feedback. |
+| V2-ALGEBRA-TILES | [AlgebraTilesActivity.tsx](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/features/explanation-v2/AlgebraTilesActivity.tsx); algebra-tiles schema | Compose/check bounded algebraic expressions with x/unit tiles. Feedback grammar fixed in C.06. Teacher review for age and objective fit. |
+| V2-AFFINE-FUNCTION | [LinearFunctionActivity.tsx](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/features/explanation-v2/LinearFunctionActivity.tsx), LineGraph.tsx, MathDemonstration.tsx | Learn f(x)=ax+b with coefficient directeur a and ordonnée à l'origine b; demonstration, free exploration and challenge. Independent evidence includes attempts/hints. Teacher review remains required for exact 3e fit/wording. |
+| V2-LINE-FIT | [LineFitActivity.tsx](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/features/explanation-v2/LineFitActivity.tsx) | Fit line to points/data with pointer interaction, feedback and hints. It is not interchangeable with the 3e affine lesson; level requires teacher review. |
+| V2-EQUATION | [EquationDecompositionActivity.tsx](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/features/explanation-v2/EquationDecompositionActivity.tsx), equationSolver.ts, equationStepInstruction.ts, equationTermVisual.ts, equationAnimations.css | Bounded linear equations including simple, variables on both sides, and exact rational solutions. Demonstration, guided solving, solo practice separated; hints/retries and assisted versus independent assessment tracked. Not an arbitrary CAS. |
+| V2-MATH-DEMO | [MathDemonstration.tsx](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/features/explanation-v2/MathDemonstration.tsx), LinearFunctionActivity.tsx, fraction branch in host | Manually paced steps with next/previous/replay and handoff. Current scripts cover affine functions and a restricted fraction addition case. Watching does not equal mastery. |
+| V2-CM2-SAMPLE | [cm2FractionLesson.ts](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/features/explanation-v2/cm2FractionLesson.ts), Cm2LessonPreview.tsx, LessonV2Player.tsx | Five-step sample with fraction prerequisite and gated practice. Preview fixture, not published curriculum. Task C hosted smoke covered this flow. |
+| V2-SUPPORT | LineGraph.tsx, math.ts, pedagogicalQuestions.ts, equation utilities and their colocated tests | Graph, exact arithmetic, visual token and question-generation support. Supporting code, not separately addressable learner activities. |
+| V2-LAB | [ExplanationV2MathLab.tsx](https://github.com/UltraSaura/tutorly-navi/blob/3fc22b11a3d595da53fe9b787daec475d3f233c4/src/pages/dev/ExplanationV2MathLab.tsx), demo-entry.tsx, qa-entry.tsx, qa-player-entry.tsx | Preview and QA surfaces only; simulated lab is not production lesson persistence. |
+
+### feature/stuwy-explain-v2 — implemented but isolated
+
+Exact head and paths: [branch cec2b07](https://github.com/UltraSaura/tutorly-navi/tree/cec2b07a802844aacd789bd01e58d8316f73a1c4/src/features/explanations), [math components](https://github.com/UltraSaura/tutorly-navi/tree/cec2b07a802844aacd789bd01e58d8316f73a1c4/src/components/math), [step utilities](https://github.com/UltraSaura/tutorly-navi/tree/cec2b07a802844aacd789bd01e58d8316f73a1c4/src/utils/mathStepper). These paths are absent from main/integration at audited heads; tests are source-only in Task D.
+
+| ID | Exact source paths | Teaching purpose and limits |
+|---|---|---|
+| STUWY-SESSION | InteractiveStudentSession.tsx; interactiveTutorSession.ts; explanationMode.ts; studentSessionPersistence.ts (+ colocated tests) | Structured tutor session, mode and persistence helpers. Persistence and evidence policies need integration review; not a verified user-flow integration. |
+| STUWY-SUBTRACTION | SubtractionVisualGuide.tsx; subtractionVisualModel.ts (+ test) | Visual subtraction guide/model; proposed subtraction scaffold, schema and curriculum scope require review. |
+| STUWY-TEACHER-ENGINE | teacherEngine.ts; pedagogicalCorrection.ts (+ tests) | Feedback/teaching decision logic; not a UI or integrated tutor by itself. |
+| STUWY-LAB | stuwyExplainLab.ts; stuwyExplainBenchmark.ts (+ tests) | Lab and benchmark definitions, not learner activities. |
+| STUWY-AVAILABILITY | practiceStuwyAvailability.ts (+ test) | Practice availability policy helper; no route integration verified. |
+| STUWY-CLEAN-WRITTEN-OP | src/components/math/CleanWrittenOperation.tsx (+ test) | Written-operation presentation; adapter and supported schema require comparison before use. |
+| STUWY-STRUCTURED-GRID | StructuredOperationGrid.tsx; CompactConceptIllustration.tsx | Structured operation/place-value visuals; static/structured renderer, not proof of scored interaction. |
+| STUWY-COMPENSATION | src/utils/mathStepper/compensationSubtraction.ts (+ test) | Compensation-subtraction helper, not a student activity. |
+| STUWY-PLACE-VALUE | src/utils/mathStepper/placeValueGrid.ts (+ test) | Place-value calculation/render helper, no independent route verified. |
+
+### feature/guided-practice-lessons — implemented but isolated from main/integration
+
+Exact branch folders: [practice components](https://github.com/UltraSaura/tutorly-navi/tree/a57846c388c904fff15bc374a13afa06f0d9f6db/src/components/practice), [feature logic](https://github.com/UltraSaura/tutorly-navi/tree/a57846c388c904fff15bc374a13afa06f0d9f6db/src/features/practice), [pages](https://github.com/UltraSaura/tutorly-navi/tree/a57846c388c904fff15bc374a13afa06f0d9f6db/src/pages/practice). Branch contains activity/page/editor families. Main/integration does not have these new paths. Tests are present in source, not executed here.
+
+| ID | Exact component / logic / page sources | Objective, prerequisites, validation |
+|---|---|---|
+| GP-ARITHMETIC-QUIZ | ArithmeticQuizActivity.tsx; features/practice/arithmeticQuiz.ts; AddUpTo100Page.tsx; ArithmeticQuizEditor.tsx | Targeted arithmetic retrieval; prerequisites depend on deck. Logic tests exist. |
+| GP-ADD-ACROSS-TEN | AdditionAcrossTenModel.tsx; features/practice/additionAcrossTen.ts; AdditionAcrossTenPage.tsx | Addition across ten with concrete grouping; counting/place-value prerequisite. Tests exist. |
+| GP-COUNTABLE-DOTS | CountableDotModel.tsx; features/practice/countingExercise.ts | One-to-one counting and quantity; model/logic tests exist. |
+| GP-COUNTABLE-OBJECTS | CountableObjectModel.tsx; features/practice/countingExercise.ts | Concrete collection counting; tests exist. |
+| GP-SUBTRACTION-DOTS | SubtractionWithDotsModel.tsx; features/practice/subtractionWithDots.ts; SubtractionWithDotsPage.tsx | Subtraction as remove/count remaining; counting prerequisite. Tests exist. |
+| GP-COORDINATES | CoordinatePlaneActivity.tsx; CoordinateQuestion.tsx; features/practice/coordinatePlane.ts; CoordinatePlanePage.tsx; CoordinatePlaneEditor.tsx | Read/place ordered pairs; axes prerequisite. Tests and browser scenario are source-only here. |
+| GP-EQUAL-GROUPS | EqualGroupsTransfer.tsx; features/practice/equalGroupsFeedback.ts | Equal groups/repeated addition as multiplication precursor. Helper tests exist. |
+| GP-GUIDED-FAMILIES | GuidedFamilyActivity.tsx; features/practice/guidedFamilies.ts; GuidedFamiliesPracticePage.tsx; GuidedFamilyEditor.tsx | Practice related number/arithmetic families; typed family schema, tests exist. |
+| GP-VISUAL-QUIZ | VisualQuizActivity.tsx; features/practice/visualQuiz.ts; VisualQuizEditor.tsx | Match/answer authored visual quiz items; schema tied to visual kind. Tests exist. |
+| GP-FLASHCARDS | features/practice/flashcardPractice.ts; FlashcardPracticePage.tsx | Retrieval practice; spacing/mastery relation needs validation before adaptive use. Test exists. |
+| GP-MENTAL-RACE | features/practice/mentalCalculationRace.ts; MentalCalculationRacePage.tsx | Timed mental calculation. Avoid for remediation unless learner/teacher policy allows. Test exists. |
+| GP-NUMBERS-AFTER-TEN | features/practice/numbersAfterTen.ts; NumbersAfterTenPage.tsx | Sequence/place value past ten. Test exists. |
+| GP-ONE-HOUR-LATER | features/practice/oneHourLater.ts; OneHourLaterPracticePage.tsx | Time arithmetic on clock/time concepts. Test exists. |
+| GP-NUMBER-LINE | GraduatedNumberLineActivity.tsx; numberLineActivities.ts; numberLineUtils.ts; numberLineFeedback.ts; numberLineSupport.ts; GraduatedNumberLinePage.tsx | Place values/fractions/decimals with graduated line; drag plus keyboard/button paths, retry and targeted hints. Existing in main; feature branch adds helper tests. Static Learn renderer and interactive practice activity remain separate. |
+| GP-CATALOGUE-HELPERS | features/practice/exerciseCurriculum.ts; exerciseCataloguePolicy tests; materializeArithmeticDeck.ts; addUpTo100.ts | Catalogue policy, curriculum metadata and deck materialization; infrastructure rather than standalone teaching UI. |
+
+## D.03 — Cross-application integration matrix
+
+Statuses describe availability in the audited main/application surface. Feature branch sources remain isolated unless explicitly noted.
+
+| Module family | Tutor | Learn | Practice | Teacher/Admin | Adaptive remediation |
+|---|---|---|---|---|---|
+| TwoCards / CompactMathStepper | INTEGRATED — TwoCards imports/renders CompactMathStepper for supported examples. | REQUIRES DEVELOPMENT — no V2 lesson-block adapter. | REUSABLE WITH ADAPTER — mini-practice contract exists, no universal targeted catalogue adapter. | NOT VERIFIED — no authoring path verified. | REUSABLE WITH ADAPTER — existing explanation hints/check contract only. |
+| PedagogicalVisual / LessonVisualBlock | REQUIRES DEVELOPMENT — no Tutor call site verified. | INTEGRATED — LessonV2Player renders both. | REUSABLE WITH ADAPTER — visual prompt only where practice schema accepts it. | REUSABLE WITH ADAPTER — selected visual editors exist, not full kind coverage. | REUSABLE WITH ADAPTER — only validated visual data and kind. |
+| LessonV2Player / LessonV21Path | REQUIRES DEVELOPMENT — no Tutor homework bridge verified. | INTEGRATED — exact paths above; progression and mastery callbacks exist. | INTEGRATED for lesson-contained practice only; does not imply all practice routes use it. | INTEGRATED — GeneratedLessonsPage and StagingLessonVersionPanel review flows. | REUSABLE WITH ADAPTER — lesson prerequisites/remediation hints; cross-session adaptive selector not verified. |
+| Number line | REQUIRES DEVELOPMENT | INTEGRATED for static visual; drag activity not verified inside LessonV2Player. | INTEGRATED — GraduatedNumberLinePage and GraduatedNumberLineActivity. | REUSABLE WITH ADAPTER — config exists; parameter authoring not fully verified. | REUSABLE WITH ADAPTER — feedback/support helpers need shared misconception contract. |
+| Seven V2 activities | REQUIRES DEVELOPMENT for Tutor; do not assume UniversalTutor compatibility. | INTEGRATED on accepted branch through LessonV2Player activity rendering and InteractiveActivityHost; Task C player tests. | REUSABLE WITH ADAPTER — independent challenges exist; catalogue integration not verified. | REQUIRES DEVELOPMENT — no V2 editor authoring verified. | REUSABLE WITH ADAPTER — hints/outcomes exist; no shared misconception selector. |
+| feature/stuwy-explain-v2 modules | IMPLEMENTED BUT ISOLATED at cec2b07; absent from main/integration. | REQUIRES DEVELOPMENT | REQUIRES DEVELOPMENT | REQUIRES DEVELOPMENT; teacher engine is logic, not editor | REQUIRES DEVELOPMENT pending runtime and evidence integration |
+| guided-practice feature families | REQUIRES DEVELOPMENT for Tutor | REUSABLE WITH ADAPTER if lesson block schema can represent them; no current adapter verified | IMPLEMENTED BUT ISOLATED at a57846c, except number-line family already on main | IMPLEMENTED BUT ISOLATED for new arithmetic/coordinate/family/visual editors | REUSABLE WITH ADAPTER after common skill/error semantics; no adaptive routing verified |
+| Main admin visual/quiz tools | NOT VERIFIED | REQUIRES DEVELOPMENT for editor-to-player preview proof | REUSABLE WITH ADAPTER for current quiz schemas | INTEGRATED through admin learning/visual-editor paths | REQUIRES DEVELOPMENT |
+
+Exact source evidence for integrated statuses: TwoCards and CompactMathStepper files above; LessonV2Player and LessonV21Path paths above; number-line page/activity paths above; V2 activity host and lesson player above; admin editor paths listed under V1-ADMIN-TOOLS.
+
+## D.04 — Pedagogical capability map
+
+This is a source capability map, not curriculum approval.
+
+| Objective | Existing module evidence | Coverage and gap |
+|---|---|---|
+| Number sense/place value | GP countable objects/dots, numbers-after-ten, add-across-ten; STUWY place-value grid; V1 number line | Early numeracy exists on isolated branch; main branch coverage is less broad. Misconception routing absent. |
+| Number lines | GraduatedNumberLineActivity; PedagogicalVisual number_line | Static Learn rendering and interactive Practice activity use separate contracts. |
+| Addition/subtraction | CompactMathStepper; OperationPosee; GP arithmetic/add-across-ten/subtraction dots; STUWY subtraction guide/compensation | Rich representation choices, but fragmented by branch and no consolidated error taxonomy. |
+| Multiplication/division | Supported CompactMathStepper operations; GP equal groups; existing exact-practice generation | No dedicated interactive division manipulative verified. |
+| Fractions | V2 fraction select/addition; visual fraction bar/circle; TwoCards fraction bounds | V2 covers bounded fraction cases. General denominator operations need schema check. |
+| Decimals | Stepper builders and number-line representation | No dedicated decimal interactive module among reviewed V2 activities; scale alignment needs dedicated verification. |
+| Proportionality | Affine graph may illustrate rate in 3e, but is not a general proportionality activity | Gap: no verified ratio/unit-rate/scale-table interactive module. |
+| Percentages | None verified | Gap: no percent bar, benchmark or discount activity. |
+| Algebraic expressions | V2 algebra tiles; supported stepper visuals | Bounded expression construction; expansion, distribution and term collection need schema coverage review. |
+| Equations/inequalities | V2 bounded linear equation module incl. exact rational solutions | Gap: no inequality module; equation grammar is bounded. |
+| Coordinates/functions | V2 coordinate, affine function, line fit; GP coordinate activity | Coordinate modules are in separate branches/contracts. Line fit is not the 3e affine lesson. |
+| Geometry | PedagogicalVisual shapes/angle/symmetry; visual editors; geometry draft fixtures | Static diagrams and authoring exist; no broad interactive construction/proof module verified. |
+| Statistics/probability | Line-fit points/data context | Gap: no data interpretation or probability experiment activity verified. |
+| Other subjects | Generic lesson/question/visual contracts only | No distinct reusable non-math manipulative identified in this scoped audit. |
+
+## D.05 — Module-selection intelligence (proposal, not implemented)
+
+1. Validate: accept only allowlisted module ID + schema version whose input and prerequisites validate. Never generate unknown component IDs or unsupported schemas.
+2. Filter by objective tags, curriculum level, age suitability evidence, problem type, supported operation and available representation. Curriculum labels remain unreviewed until a teacher approves them.
+3. Use prerequisite evidence, not grade alone. Missing prerequisite or high-confidence misconception selects concrete/visual demonstration or guided representation; uncertain mastery uses guided practice; independent challenge only when assessment is intended.
+4. Match misconception only when module error tags support it. If evidence is ambiguous, use a typed diagnostic question instead of inferring from one error.
+5. Keep evidence distinct: demo viewing is exposure only; guided success is assisted; independent assessment records mode, attempts, hints and retries per contract. Lesson completion and historical assessment evidence are separate.
+6. Honor accessibility metadata: select a keyboard/touch alternative when available, respect reduced motion, do not select drag-only interaction if an equivalent path is required. Avoid timed practice for remediation unless policy permits.
+7. Respect LessonV2Player progression gates. Do not advance from a demo viewed alone; preserve compatible progress on mode switch.
+
+Fallback ladder: compatible same-objective module; existing validated visual plus typed question; supported worked explanation/stepper; plain text worked example plus diagnostic question. If none validates, omit the activity block and identify the objective for teacher authoring.
+
+### Proposed registry schema (design only)
+
+    type ModuleRegistryEntry = {
+      id: string; version: string;
+      component: { exportName: string; sourcePath: string; branchCommit: string };
+      availability: { tutor: Status; learn: Status; practice: Status; teacherAdmin: Status; remediation: Status };
+      objectiveTags: string[]; concepts: string[]; problemTypes: string[]; misconceptionTags: string[];
+      curriculum: Array<{ system: string; level: string; approval: "unreviewed" | "teacher-reviewed"; evidenceUrl?: string }>;
+      prerequisites: Array<{ skillId: string; evidenceRequired: "independent" | "guided" | "diagnostic"; minimum?: number }>;
+      inputSchema: { schemaId: string; version: string }; operations: string[]; representations: string[];
+      modes: { demonstration: boolean; guided: boolean; independent: boolean };
+      interaction: { keyboard: boolean | "unknown"; pointer: boolean | "unknown"; touch: boolean | "unknown"; reducedMotion: boolean | "unknown" };
+      feedback: { incorrect: boolean | "unknown"; progressiveHints: boolean | "unknown"; retry: boolean | "unknown" };
+      completion: { criterion: string; demoCountsAsMastery: false };
+      evidence: { attempts: boolean | "unknown"; hints: boolean | "unknown"; independentAssessed: boolean | "unknown"; assistedAssessed: boolean | "unknown" };
+      tests: Array<{ path: string; verifiedCommit?: string; result: "pass" | "fail" | "not-run" | "source-only" }>;
+      dependencies: string[]; limitations: string[];
+      reuse: "unchanged" | "adapter" | "extension" | "isolated" | "legacy" | "not-verified";
+    };
+
+Consumers must resolve ID and version against a reviewed allowlist before rendering; generated lesson text cannot select arbitrary components.
+
+## D.06 — Overlap, duplication and dependencies
+
+| Overlap | Assessment | Recommendation |
+|---|---|---|
+| TwoCards / ExplanationTwoCards / AdaptiveTeachingStepper | Current Tutor composition, chat wrapper and grouped retry have distinct contracts. | Keep separate until call-site/contracts are reconciled; do not consolidate by name. |
+| CompactMathStepper / InteractiveMathStepper / V2 equation | Written operation animation, parser-generated interactive steps, and bounded equation/assessment engine differ. | Keep separate. Preserve CompactMathStepper; adapter only after schema and evidence review. |
+| PedagogicalVisual number line / GraduatedNumberLineActivity / GP coordinate activity | Static visual, interactive number placement, coordinate quiz differ in schemas and scoring. | Reuse static renderer unchanged; keep interactive schemas separate; compare utility contracts before sharing. |
+| OperationPosee / CleanWrittenOperation / StructuredOperationGrid | Manipulative verification differs from structured visual presentation. | Adapter only if operation and feedback contracts match. |
+| Algebra tiles / equal groups | Symbolic expression construction vs concrete multiplicative grouping. | Keep separate; concrete-to-symbolic sequencing is a design recommendation requiring teacher review. |
+| MathDemonstration / CompactMathStepper | Conceptual scripted explanation vs algorithmic written computation. | Keep separate; demo never inherits mastery attribution. |
+| SubtractionVisualGuide / SubtractionWithDots / stepper | Different representation and feature-branch contracts. | Adapter only after mismatch taxonomy and regression proof. |
+| CountableDotModel / CountableObjectModel | Similar counting goal with different concrete representations. | Keep separate unless interaction/accessibility parity is established. |
+| Practice activity/page/feature triplets | Logic, rendering and route each own validation/control. | Reuse unchanged; consider central helper only after approved integration and regression tests. |
+
+Dependencies to preserve: V2 activities rely on Zod activity schema, ActivityProgress, host dispatch, math helpers and lesson generator integration. V1 visuals rely on PedagogicalVisual supported kinds and shared visual contracts. Stepper modules rely on operation builders/parser. Practice pages rely on feature data builders and exercise contracts. Editors must not save data the runtime rejects.
+
+## D.07 — Gaps and priorities for Task E/F
+
+Proposed Task E:
+1. Review stable module IDs, schema versions, adapters and evidence semantics before implementing runtime registry.
+2. Add teacher authoring/preview for existing V2 kinds using the runtime validator.
+3. Integrate one bounded V2 lesson with teacher-authored preview and preserve demo/guided/independent evidence.
+4. Decide whether/how to integrate isolated explain-session and guided-practice branches; compare contracts and migration evidence, not filenames.
+5. Obtain teacher review for 3e affine sequence, language and all proposed mappings.
+
+Proposed Task F:
+1. Prioritize proportionality, percentages, inequalities, decimal scale, statistics/probability and interactive geometry construction.
+2. Add cross-module progression/evidence regression tests for gates, assisted/independent work, retries/hints and duplicate attribution.
+3. Verify an accessible non-drag path, keyboard, touch, reduced-motion behavior per activity and expose these capabilities in registry.
+4. Establish teacher-facing coverage review with unapproved mappings clearly marked.
+
+These are inventory recommendations only; Task E implementation did not begin.
+
+## Current validation and stale-reference reconciliation
+
+- Current accepted code head is 3fc22b11a3d595da53fe9b787daec475d3f233c4. Hosted Task C run [#45887495298](https://github.com/UltraSaura/tutorly-navi/actions/runs/45887495298) is recorded in the ledger: 180/180 standalone checks, 40/40 actual LessonV2Player checks, five widths 320/375/390/447/1280, complete CM2 path, runtime-error checks, screenshots and JSON reports. This is inherited Task C evidence, not a Task D rerun.
+- Task D tests were NOT RUN; source test files in feature branches are source-only unless stated in the CI evidence above.
+- Current affine wording is 3e: fonction affine, coefficient directeur a, ordonnée à l'origine b, f(x)=ax+b. Teacher review of exact curriculum fit and wording remains required against [Édubase 22940](https://edubase.eduscol.education.fr/fiche/22940).
+- Older preview hostnames and B.3 viewport limitations are historical and superseded by hosted Task C evidence. They are not current deployment claims.
+- The lab is a preview/simulation; it is not proof of production lesson persistence or integration of every feature-branch module.
