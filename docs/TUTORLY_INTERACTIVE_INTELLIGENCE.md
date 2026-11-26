@@ -260,10 +260,12 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 
 ### C.06 stabilization status — 2026-11-26
 
-- Equation invalid-answer feedback now uses the existing progress updater and distinguishes a zero denominator from malformed or empty input. Hosted standalone checks cover empty, malformed, zero-denominator, wrong integer/fraction, equivalent correct fraction, retry, hint and correct-answer paths.
-- The affine-function “skip demonstration” control has a 44px minimum height. The French 3e notation remains `f(x) = ax + b`, with coefficient directeur `a` and ordonnée à l’origine `b`; teacher review is still required for exact level fit and wording.
-- Hosted run [#45885806033](https://github.com/UltraSaura/tutorly-navi/actions/runs/45885806033) verified **180/180 standalone checks PASS** at 320, 375, 390, 447 and 1280px, including the affine pointer drag after the graph is scrolled into view. The real LessonV2Player script executed 35 checks; 25 passed and 10 exposed fixture setup assumptions about the CM2 prerequisite gate. Those fixtures now explicitly verify and clear the prerequisite before checking the activity; the corrected player run is pending.
-- The standalone browser suite found no JavaScript runtime errors. The previous player failures were QA setup issues, not a confirmed player defect. The corrected final hosted run will provide definitive player and production-preview results.
+- Equation invalid-answer handling now uses the existing solo-mode updater. Empty and malformed input receive format guidance; a zero denominator receives specific feedback. Hosted checks exercise empty, malformed, zero denominator, incorrect integer and fraction, equivalent correct fraction, retry, hints and success without JavaScript errors.
+- The affine-function “skip demonstration” control has a minimum 44px target. French 3e content consistently uses “fonction affine”, “coefficient directeur a”, “ordonnée à l’origine b” and f(x) = ax + b. Teacher review remains required for the exact grade fit and terminology.
+- Final hosted run [#45887170548](https://github.com/UltraSaura/tutorly-navi/actions/runs/45887170548), on implementation commit `ab12e74da3831c29628db3f0c54f9eb948e0461c`: **180/180 standalone checks PASS** across 320, 375, 390, 447 and 1280px; **40/40 actual LessonV2Player checks PASS**; five-step CM2 preview and production-built standalone smoke PASS; no browser runtime errors. Coverage includes mode switching/progress, wrong answers, hints/retries, touch/keyboard/pointer interactions, reduced motion, overflow and completion gating.
+- The run’s [QA artifact](https://github.com/UltraSaura/tutorly-navi/actions/runs/45887170548/artifacts/15149039486) contains screenshots and JSON reports, including the corrected narrow mobile LessonV2Player view.
+- Focused unit suite: **46/46 PASS**; TypeScript, focused lint, production build and demo artifact checks PASS. Repository-wide lint baseline is unchanged from starting commit a92d3c7: **946 errors and 86 warnings** at both revisions; no new lint errors were introduced.
+- No production release, curriculum publication, Supabase change or merge is implied by these isolated QA results.
 
 ## 8. Safe integration roadmap — after the animation library is approved
 
