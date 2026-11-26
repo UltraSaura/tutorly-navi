@@ -88,7 +88,7 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 - **UI consistency:** reuse the same single-equation `TransformationVisual` and `equationStepInstruction` used in `Comprendre`; optional `Pourquoi cette étape ?` retains the deeper justification. Remove duplicated success text to keep the view focused.
 - **Correctness:** incorrect choices still receive targeted feedback and cannot advance. Assisted/independent scoring rules and exact equation validation are unchanged. Switching between learning modes retains the current guided stage while mounted.
 - **QA:** browser tests at 375/447/1280px verify wrong operation feedback, operation-before-result gating, cancellation tokens, optional explanation, state preservation on mode switch, complete guided solve including substitution verification, and assisted completion. All other activities remain unchanged.
-- **Status:** feature branch only, new CI run pending. No merge, production release, Supabase or Universal Tutor changes.
+- **Status:** **CI PASS** in [GitHub Actions #45725652079](https://github.com/UltraSaura/tutorly-navi/actions/runs/45725652079) on code commit `81b226606`: **93/93 isolated browser checks** across 375/447/1280px, **18/18 lesson-player checks**, standalone production-built demo smoke, unit tests, lint, TypeScript and build. Feature branch only; no merge, production release, Supabase or Universal Tutor changes.
 
 **Next iteration:** Validate IM-D02.1 with teachers and students, then evaluate true position-to-position token morphing and accessible mathematical notation; add structured authoring and safe objective mapping before expanding to other equation families.
 
