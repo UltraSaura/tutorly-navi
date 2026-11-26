@@ -248,8 +248,7 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 
 ## 7. Tests, release evidence and current limitations
 
-- **Latest verified CI at time of this snapshot:** [GitHub Actions #45714358708](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708) — **PASS** for IM-D02 source commit `ad399dd4f`.
-- **84** isolated activity browser checks across **375px, 447px and 1280px**; **18** real lesson-player browser checks; standalone demo smoke, unit/build/typecheck in the same workflow.
+- **Historical IM-D02 CI (superseded):** [GitHub Actions #45714358708](https://github.com/UltraSaura/tutorly-navi/actions/runs/45714358708) — PASS for source commit `ad399dd4f`; this earlier run had 84 isolated activity checks at 375/447/1280px and 18 lesson-player checks. The current accepted totals and five widths are recorded in the Task C section below.
 - Tests: `src/features/explanation-v2/math.test.ts`, `lessonIntegration.test.ts`, `pedagogicalQuestions.test.ts`, `previewAccess.test.ts`; browser QA: `qa/explanation-v2-browser.mjs`, `qa/explanation-v2-player-browser.mjs`, `qa/explanation-v2-demo-browser.mjs`.
 - CI success proves tested scenarios, **not** broad curriculum approval, production rollout or automatic lesson generation.
 - No cross-session activity persistence; no new database tables, migrations or writes.
