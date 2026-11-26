@@ -14,7 +14,12 @@ try {
   await page.getByTestId('fraction-select-activity').waitFor();
   for (const i of [0, 1, 2]) await page.getByTestId('fraction-part-' + i).click();
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
-  await page.getByText('Réussi sans aide').waitFor();
+  await page.getByRole('button', { name: 'Le dénominateur partage le tout en parts égales; le numérateur indique combien de parts on prend.' }).click();
+  await page.getByRole('button', { name: 'Vérifier mon explication' }).click();
+  await page.getByTestId('fraction-part-0').click();
+  await page.getByTestId('fraction-part-1').click();
+  await page.getByRole('button', { name: 'Valider', exact: true }).click();
+  await page.getByText('Transfert réussi sans aide.').waitFor();
   console.log('PASS production-built /demo.html opens and completes selectable 3/4 fraction');
   await page.getByRole('button', { name: '4e · Coordonnées' }).click();
   await page.getByTestId('coordinate-plane-activity').waitFor();
@@ -24,7 +29,9 @@ try {
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
   await page.locator('#fraction-answer-cm2-fractions-001').fill('5');
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
-  await page.getByText('Réussi sans aide').waitFor();
+  await page.locator('#fraction-transfer-answer-cm2-fractions-001').fill('3/4');
+  await page.getByRole('button', { name: 'Valider le transfert' }).click();
+  await page.getByText('Transfert réussi sans aide.').waitFor();
   await page.getByRole('button', { name: '5e · Tuiles' }).click();
   await page.getByTestId('algebra-tiles-activity').waitFor();
   await page.getByRole('button', { name: '3e · Fonction affine' }).click();
@@ -50,6 +57,10 @@ try {
   assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
   for (const i of [0, 1, 2]) await page.getByTestId('fraction-part-' + i).click();
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
+  await page.getByRole('button', { name: 'Le dénominateur partage le tout en parts égales; le numérateur indique combien de parts on prend.' }).click();
+  await page.getByRole('button', { name: 'Vérifier mon explication' }).click();
+  for (const i of [0, 1]) await page.getByTestId('fraction-part-' + i).click();
+  await page.getByRole('button', { name: 'Valider', exact: true }).click();
   await page.getByRole('button', { name: 'Continuer', exact: true }).click();
   await page.getByRole('heading', { name: 'Comment transformer une moitié en quarts ?' }).waitFor();
   await page.getByRole('button', { name: 'Continuer', exact: true }).click();
@@ -58,8 +69,10 @@ try {
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
   await page.locator('#fraction-answer-cm2-lesson-add-quarters').fill('5');
   await page.getByRole('button', { name: 'Valider', exact: true }).click();
+  await page.locator('#fraction-transfer-answer-cm2-lesson-add-quarters').fill('3/4');
+  await page.getByRole('button', { name: 'Valider le transfert' }).click();
   await page.getByRole('button', { name: 'Continuer', exact: true }).click();
-  await page.getByRole('heading', { name: 'Bravo ! Tu sais additionner des quarts' }).waitFor();
+  await page.getByRole('heading', { name: 'Exemple guidé terminé' }).waitFor();
   await page.getByText('Leçon terminée !').waitFor();
   console.log('PASS five-step CM2 lesson preview enforces interactive completion');
   assert.deepEqual(errors, []);
