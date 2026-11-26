@@ -1,7 +1,7 @@
 # Tutorly / Stuwy — Interactive Learning Intelligence
 > **Living knowledge base for humans, Codex, Claude, and other coding agents.**
 >
-> **Status snapshot:** 2026-11-25 · **Repository:** `UltraSaura/tutorly-navi` · **Working branch:** `feature/explanation-v2-interactive-math` · **Draft PR:** [#56](https://github.com/UltraSaura/tutorly-navi/pull/56)
+> **Status snapshot:** 2026-11-26 · **Repository:** `UltraSaura/tutorly-navi` · **Working branch:** `feature/explanation-v2-interactive-math` · **Draft PR:** [#56](https://github.com/UltraSaura/tutorly-navi/pull/56)
 >
 > **Scope:** The seven newly implemented Explanation V2 interactive math activity kinds and their supporting modules, including IM-D01 and IM-D02. This is **not** a claim to inventory every pre-existing animation across Tutorly. Extend this catalogue as modules are audited or created.
 >
@@ -9,13 +9,13 @@
 
 ## 1. Where to see the activities
 
-**Current branch preview:** [Interactive Math Lab](https://stuwy-git-feature-explanation-v2-interactive-math-stuwy.vercel.app/demo.html)
+**Historical preview URL (not verified at the current catalog commit):** [Interactive Math Lab](https://stuwy-git-feature-explanation-v2-interactive-math-stuwy.vercel.app/demo.html). For current acceptance evidence, use the hosted CI and artifact linked in the Task C section below; the latest deployment attempt was rate-limited.
 
 - Click **CM2 · Sélectionner 3/4** for the selectable fraction strip.
 - Click **CM2 · Additionner** for guided fraction addition.
 - Click **4e · Coordonnées** to move a point on a grid.
 - Click **5e · Tuiles** to construct an algebraic expression.
-- Click **4e · Fonctions** to change slope and intercept.
+- Click **3e · Fonction affine** to change the coefficient directeur a and ordonnée à l’origine b in f(x) = ax + b.
 - Click **5e · Équations (simple)** to animate 3x + 5 = 20.
 - Click **4e · Équations (deux côtés)** to solve 5x − 4 = 2x + 8.
 - Click **3e · Équations (fraction)** to solve −2x + 3 = 8 exactly.
@@ -30,7 +30,7 @@ The URL is a **Vercel preview** and may require Vercel authentication/share acce
 
 - **Where:** `src/features/explanation-v2/MathDemonstration.tsx` (generic step player, formula text, visual state, previous/next/replay, practice handoff); `src/features/explanation-v2/LinearFunctionActivity.tsx` (script generator and three learning modes); `src/features/explanation-v2/LineGraph.tsx` (animated rise/run visual guides); `src/features/explanation-v2/InteractiveActivityHost.tsx` (optional fraction demo).
 - **Purpose:** Give an understandable, original **step-by-step visual mathematical explanation**, with the learner controlling the pace. Inspired by the broad pedagogy of worked solutions (e.g. Photomath), **without copying proprietary content, UI, animation assets or code**.
-- **Function graphs:** **Comprendre** (four-stage demonstration: horizontal line → y-intercept → slope → recap) → **Explorer** (free manipulation without scoring) → **M’entraîner** (independent interactive challenge). The function activity starts in **Comprendre**; students who already know the concept may skip to the challenge.
+- **Fonction affine (3e):** **Comprendre** (four-stage demonstration: horizontal line → y-intercept → slope → recap) → **Explorer** (free manipulation without scoring) → **M’entraîner** (independent interactive challenge). The function activity starts in **Comprendre**; students who already know the concept may skip to the challenge.
 - **Fraction addition:** **Voir la démonstration pas à pas** optionally shows four derived steps: identify fractions → rewrite in equal-sized parts → add colored parts → interpret the result. Returning to the exercise does not change attempts, hints, selected answer or completion.
 - **Visual animations:** Graph transitions and dashed rise/run guides, stepwise fraction-bar transformations. Navigation is manually paced; no autoplay, sound, narration, or video yet. Respect reduced-motion settings.
 - **Lesson:** YES, displayed as part of the `linear-function` and `fraction-bar` V2.0 activity UI; no change to lesson block sequence schema.
