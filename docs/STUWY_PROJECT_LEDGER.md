@@ -254,6 +254,14 @@ Known existing foundations to inspect/reuse:
 - **Files changed:** ledger only. No app code, branch merge, Supabase or Vercel writes.
 - **Next:** Task B: establish current non-production preview at head or verified equivalent runtime commit; use authorized Work/Codex browser to test /demo.html at 375/447/1280px, capture evidence and version label. If deployment limit persists, use isolated local preview of exact head. Keep user acceptance separate from CI. Full cross-app module inventory remains Task D.
 
+
+### 2026-11-26 — LEDGER-004 Task B preview deployment
+- **Status:** Task B IN PROGRESS; authorized isolated preview request accepted by Vercel, latest observed state BUILDING.
+- **Branch / SHA:** feature/explanation-v2-interactive-math / a92d3c797c3ce38361ea6e10d925e9e9ace2c97d.
+- **Deployment:** dpl_2df5cLdJssKvScv8dH1W5gMbSDJ6, https://stuwy-6dy8t334d-stuwy.vercel.app/demo.html (candidate; browser NOT RUN). Target null (non-production preview). Previous quota restriction did not prevent this request. Do not claim READY until confirmed; do not claim interactive acceptance without browser QA.
+- **Decision:** deploy exact CI-verified branch head without forced rebuild, project-settings change or production promotion; no application source, database or branch merge changes.
+- **Next:** inspect deployment and verify branch alias/source SHA; interactively test /demo.html at 375/447/1280px, record actual screenshots and outcomes. If browser access unavailable, hand off to Work/Codex.
+
 ## 10. CONTINUOUS UPDATE OPERATING PROCEDURE
 
 ### In every ChatGPT Work / Codex session
