@@ -74,8 +74,13 @@ for (const width of [320, 375, 390, 447, 1280]) {
     });
     await page.screenshot({ path: dir + '/player-complete-' + width + '.png', fullPage: true });
     await page.getByRole('button', { name: 'Fixture équation' }).click();
-    await page.getByRole('textbox', { name: 'Réponse au prérequis' }).fill('4');
+    await page.getByRole('heading', { name: 'Avant de commencer' }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
+    const equationPrerequisite = page.getByRole('textbox', { name: 'Réponse au prérequis' });
+    await equationPrerequisite.fill('4');
+    assert.equal(await equationPrerequisite.inputValue(), '4');
     await page.getByRole('button', { name: 'Valider', exact: true }).click();
+    await page.getByRole('heading', { name: 'Résoudre 3x + 5 = 20' }).waitFor();
     await page.getByTestId('equation-decomposition-activity').waitFor();
     await check('equation fixture is progression-gated, and solo completion does not block guided solving', async () => {
       assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
