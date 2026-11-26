@@ -222,11 +222,12 @@ async function runAtWidth(width) {
     await run('function graph changes slope and completes', async () => {
       await page.getByTestId('reset').click();
       await page.getByRole('button', { name: 'M’entraîner' }).click();
+      await page.getByRole('button', { name: 'Augmenter Ordonnée à l’origine b' }).click();
       await page.getByRole('button', { name: 'Augmenter Coefficient directeur a' }).click();
       await page.getByRole('button', { name: 'Augmenter Coefficient directeur a' }).click();
       assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 2x \+ 1/);
       await page.getByRole('button', { name: 'Valider la droite' }).click();
-      assert.match(await page.getByTestId('completion').innerText(), /Avec aide/);
+      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
     });
     await run('affine-function handles respond to pointer dragging', async () => {
       await page.getByTestId('reset').click();
@@ -234,10 +235,17 @@ async function runAtWidth(width) {
       const graph = page.getByTestId('line-graph');
       const rect = await graph.boundingBox();
       assert.ok(rect);
-      const px = value => rect.x + (value / 360) * rect.width;
-      const py = value => rect.y + (value / 360) * rect.height;
-      await page.mouse.move(px(180), py(180)); await page.mouse.down(); await page.mouse.move(px(180), py(155)); await page.mouse.up();
-      await page.mouse.move(px(205), py(155)); await page.mouse.down(); await page.mouse.move(px(205), py(105)); await page.mouse.up();
+      const dragHandle = async (handle, x, y) => {
+        const box = await page.getByTestId('drag-' + handle).boundingBox();
+        assert.ok(box);
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(rect.x + (x / 360) * rect.width, rect.y + (y / 360) * rect.height, { steps: 5 });
+        await page.mouse.up();
+      };
+      await dragHandle('intercept', 180, 155);
+      assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 0x \+ 1/);
+      await dragHandle('slope', 205, 105);
       assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 2x \+ 1/);
     });
     await page.screenshot({ path: dir + '/linear-' + width + '.png', fullPage: true });
