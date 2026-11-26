@@ -188,7 +188,7 @@ Known existing foundations to inspect/reuse:
 
 ## 8. NEXT ACTIONS — ORDER OF EXECUTION
 
-**A. Documentation and reality check (NEXT).** Inspect GitHub Explanation V2 and integration branches, identify latest commits, exact routes, previews, existing module catalog and tests. Populate a current-state evidence table in this ledger. Do not edit application code during the audit.
+**A. Documentation and reality check (IN PROGRESS; GitHub structural audit checkpoint recorded 2026-11-26).** Inspect GitHub Explanation V2 and integration branches, identify latest commits, exact routes, previews, existing module catalog and tests. Populate a current-state evidence table in this ledger. Do not edit application code during the audit.
 
 **B. Restore a single working review surface.** Verify or publish an authorized non-production Vercel preview for Explanation V2; provide ONE working URL with a clear demo menu and a version/commit label. If Vercel is blocked, use a local/Work preview and report the limitation.
 
@@ -204,7 +204,7 @@ Known existing foundations to inspect/reuse:
 
 **H. Separate production launch and branch consolidation.** Keep V1 fixes isolated; propose merge plan with excluded Universal Tutor branch; regression-test before deployment.
 
-**Current execution state as of this ledger:** A is the immediate next step. Steps B–H are planned; no claim that they were completed in this ledger-writing session.
+**Current execution state as of 2026-11-26:** A has a GitHub evidence checkpoint below, but remains IN PROGRESS until exact branch heads, CI/deployment-to-commit alignment and interactive browser QA are reconciled. B–H remain pending; do not claim deployment or browser acceptance.
 
 ## 9. REQUIRED WORK LOG FORMAT — APPEND AFTER EACH TASK
 
@@ -229,6 +229,21 @@ Known existing foundations to inspect/reuse:
 - **Basis:** project conversation, user-provided canonical architecture and prior handover material; current repository implementation details NOT yet audited.
 - **Application code / database / production:** no changes intended.
 - **Next action:** verify latest GitHub branch heads, demo route, Vercel state and module inventory; update status with concrete evidence.
+
+
+### 2026-11-26 — LEDGER-002 GitHub branch and interactive-module audit checkpoint
+- **Workstream / branch:** documentation-only audit of `feature/stuwy-explain-v2`, `feature/explanation-v2-interactive-math`, `integration/stuwy-explain-v2`, `feature/guided-practice-lessons`; recorded on `docs/stuwy-project-ledger`.
+- **Status before -> after:** NEXT / UNKNOWN -> IN PROGRESS (repository structure and PR evidence checked; no browser acceptance).
+- **Decision / user approval:** Follow Memory.txt's instruction to continue from ledger, audit first, preserve branch and release safeguards.
+- **GitHub evidence as checked 2026-11-26:** default `main` comparison base `5b5ea1de14c223b28f1838b105b6d82d0385cdf3`. GitHub compare reports feature/stuwy-explain-v2 diverged (60 ahead, 1 behind); feature/explanation-v2-interactive-math diverged (158 ahead, 408 behind); integration/stuwy-explain-v2 diverged (16 ahead, 1 behind); feature/guided-practice-lessons diverged (82 ahead, 5 behind). These figures are per comparison against current main, NOT a recommendation to merge. `feature/v2-universal-tutor` was behind main (0 ahead, 44 behind); leave excluded. `release/v1-stabilization` was behind main (0 ahead, 5 behind).
+- **PR evidence:** [#56](https://github.com/UltraSaura/tutorly-navi/pull/56) WIP Explanation V2 interactive math open; [#54](https://github.com/UltraSaura/tutorly-navi/pull/54) development baseline/browser QA open; [#55](https://github.com/UltraSaura/tutorly-navi/pull/55) mental calculation quiz open. Open PR does not prove release.
+- **Module catalog discovery:** `docs/TUTORLY_INTERACTIVE_INTELLIGENCE.md` already exists on `feature/explanation-v2-interactive-math`; it describes the new Explanation V2 activity kinds, `MathDemonstration`, equation solver/animation modules, reusable contracts, linked GitHub CI runs, and a standalone demo at `/demo.html`. It explicitly disclaims a complete inventory of old Tutorly modules. **Reconcile/extend that file; do not replace it with an unrelated catalog.**
+- **Routes found in source:** `src/App.tsx` in interactive-math branch registers `/dev/explanation-v2-math` only on dev/approved preview hosts. The catalog describes a preview at https://stuwy-git-feature-explanation-v2-interactive-math-stuwy.vercel.app/demo.html ; this URL was documented in source but **NOT opened/validated in an interactive browser during this checkpoint**. Do not advertise it as verified working.
+- **Code/tests:** file and comparison inspection only. Tests NOT RUN in this checkpoint. The catalog cites historical CI PASS runs, including #45722482002 and #45718920651; independently reconcile current head SHA to each CI run before treating these as current.
+- **Visual QA:** NOT RUN; screenshot/device acceptance remains outstanding.
+- **Files changed:** this ledger only; no app code, Supabase, Vercel deployment, protected branches or production modification.
+- **Blockers:** full branch-head/PR SHA reconciliation, actual Vercel state and browser route check, current CI and exhaustive module mapping.
+- **Next action:** complete A with exact branch head SHAs, PR/CI and Vercel-to-commit matrix; then B verify one browser-working non-production review surface before UX redesign or code modification.
 
 ## 10. CONTINUOUS UPDATE OPERATING PROCEDURE
 
