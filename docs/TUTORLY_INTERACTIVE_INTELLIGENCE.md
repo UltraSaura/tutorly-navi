@@ -258,6 +258,13 @@ Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** p
 - Preview protection may require a Vercel login or a share link; a successful deployment alone does not prove anonymous access.
 - Potential future QA: screen-reader end-to-end, pointer dragging across device/browser variants, real pupil comprehension, teacher validation, real-content compatibility, and regression checks against existing learning flows.
 
+### C.06 stabilization status — 2026-11-26
+
+- Equation invalid-answer feedback now uses the existing progress updater and distinguishes a zero denominator from malformed or empty input. Hosted standalone checks cover empty, malformed, zero-denominator, wrong integer/fraction, equivalent correct fraction, retry, hint and correct-answer paths.
+- The affine-function “skip demonstration” control has a 44px minimum height. The French 3e notation remains `f(x) = ax + b`, with coefficient directeur `a` and ordonnée à l’origine `b`; teacher review is still required for exact level fit and wording.
+- Hosted run [#45885806033](https://github.com/UltraSaura/tutorly-navi/actions/runs/45885806033) verified **180/180 standalone checks PASS** at 320, 375, 390, 447 and 1280px, including the affine pointer drag after the graph is scrolled into view. The real LessonV2Player script executed 35 checks; 25 passed and 10 exposed fixture setup assumptions about the CM2 prerequisite gate. Those fixtures now explicitly verify and clear the prerequisite before checking the activity; the corrected player run is pending.
+- The standalone browser suite found no JavaScript runtime errors. The previous player failures were QA setup issues, not a confirmed player defect. The corrected final hosted run will provide definitive player and production-preview results.
+
 ## 8. Safe integration roadmap — after the animation library is approved
 
 **Phase A — animation catalogue (current priority):** IM-D02 is now implemented and passed isolated CI. Finish and review each new interaction in the isolated lab, including its `kind` contract, correct math, feedback, mobile interaction and tests. Possible later entries: interactive number line, geometric transformations, angles, equation balancing, area/perimeter, graph transformations. These are **ideas, not implemented features**.

@@ -19,10 +19,12 @@ for (const width of [320, 375, 390, 447, 1280]) {
   };
   try {
     await page.goto(base + '/qa/explanation-v2-player.html', { waitUntil: 'networkidle', timeout: 60000 });
-    await check('CM2 lesson has no horizontal overflow and a visible continuation region', async () => {
+    await check('CM2 lesson has no horizontal overflow and blocks continuation before its prerequisite', async () => {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
-      const continueButton = page.getByRole('button', { name: 'Continuer', exact: true });
-      const rect = await continueButton.boundingBox();
+      assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
+      const answer = page.getByRole('textbox', { name: 'Réponse au prérequis' });
+      await answer.waitFor();
+      const rect = await page.getByRole('button', { name: 'Valider', exact: true }).boundingBox();
       assert.ok(rect && rect.height >= 44 && rect.y + rect.height <= 860);
     });
     await check('CM2 prerequisite uses a meaningful fractions question', async () => {
@@ -72,6 +74,8 @@ for (const width of [320, 375, 390, 447, 1280]) {
     });
     await page.screenshot({ path: dir + '/player-complete-' + width + '.png', fullPage: true });
     await page.getByRole('button', { name: 'Fixture équation' }).click();
+    await page.getByRole('textbox', { name: 'Réponse au prérequis' }).fill('4');
+    await page.getByRole('button', { name: 'Valider', exact: true }).click();
     await page.getByTestId('equation-decomposition-activity').waitFor();
     await check('equation fixture is progression-gated, and solo completion does not block guided solving', async () => {
       assert.equal(await page.getByRole('button', { name: 'Continuer', exact: true }).count(), 0);
