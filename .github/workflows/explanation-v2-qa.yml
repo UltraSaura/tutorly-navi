@@ -10,8 +10,12 @@ on:
     paths:
       - 'src/features/explanation-v2/**'
       - 'src/components/learning/LessonV2Player.tsx'
+      - 'src/components/learning/LessonV21Path.tsx'
+      - 'src/components/learning/LessonContentStudent.tsx'
       - 'src/types/lesson-generator.ts'
+      - 'src/types/lesson-v21-contract.ts'
       - 'src/pages/dev/ExplanationV2MathLab.tsx'
+      - 'src/features/explanation-v2/fixtures/**'
       - 'qa/**'
       - '.github/workflows/explanation-v2-qa.yml'
 
@@ -31,11 +35,11 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Exact math and lesson parser tests
-        run: npx vitest run src/components/math/MathText.test.tsx src/features/explanation-v2/math.test.ts src/features/explanation-v2/lessonIntegration.test.ts src/features/explanation-v2/previewAccess.test.ts src/features/explanation-v2/pedagogicalQuestions.test.ts src/features/explanation-v2/MathDemonstration.test.ts src/features/explanation-v2/equationSolver.test.ts src/features/explanation-v2/equationTermVisual.test.ts src/features/explanation-v2/equationStepInstruction.test.ts
+        run: npx vitest run src/components/math/MathText.test.tsx src/features/explanation-v2/math.test.ts src/features/explanation-v2/lessonIntegration.test.ts src/features/explanation-v2/previewAccess.test.ts src/features/explanation-v2/pedagogicalQuestions.test.ts src/features/explanation-v2/MathDemonstration.test.ts src/features/explanation-v2/equationSolver.test.ts src/features/explanation-v2/equationTermVisual.test.ts src/features/explanation-v2/equationStepInstruction.test.ts src/types/lesson-generator.test.ts src/types/lesson-v21-contract.test.ts
       - name: TypeScript check
         run: npx tsc --noEmit
       - name: Focused lint
-        run: npx eslint src/components/math/MathText.tsx src/components/math/MathRenderer.tsx src/features/explanation-v2 src/pages/dev/ExplanationV2MathLab.tsx
+        run: npx eslint src/types/lesson-generator.ts src/types/lesson-v21-contract.ts src/components/learning/LessonContentStudent.tsx src/components/learning/LessonV21Path.tsx src/components/learning/LessonV2Player.tsx src/components/math/MathText.tsx src/components/math/MathRenderer.tsx src/features/explanation-v2 src/pages/dev/ExplanationV2MathLab.tsx
       - name: Production build
         run: npm run build
       - name: Verify standalone demo artifact

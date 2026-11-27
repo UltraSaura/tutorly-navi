@@ -3,7 +3,12 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AuthProvider } from '@/context/AuthContext';
 import { LessonV2Player } from '@/components/learning/LessonV2Player';
+import { LessonV21Path } from '@/components/learning/LessonV21Path';
 import { cm2FractionLesson } from './cm2FractionLesson';
+import { cm2FractionLessonV21Fixture } from './fixtures/cm2FractionLessonV21.fixture';
+import { v21ActivityFixtures } from './fixtures/v21ActivityFixtures';
+import { InteractiveActivitySchema } from './activityContract';
+import { parseLessonV21 } from '@/types/lesson-generator';
 import '../../index.css';
 
 const equationLesson = {
@@ -15,12 +20,36 @@ const equationLesson = {
   ],
 } as typeof cm2FractionLesson;
 
+const cm2V21Lesson = parseLessonV21(cm2FractionLessonV21Fixture);
+if (!cm2V21Lesson) throw new Error('The four-level V2.1 CM2 QA fixture is invalid.');
+
+const v21ActivityLessons = v21ActivityFixtures.map((rawActivity) => {
+  const activity = InteractiveActivitySchema.parse(rawActivity);
+  const kind = activity.kind;
+  const lesson = parseLessonV21({
+    version: '2.1', topic_goal: `Fixture ${kind}`,
+    levels: [{
+      id: `qa-v21-${kind}`, level_number: 1, title: `Fixture ${kind}`, purpose: `Vérifier le rendu ${kind}.`, difficulty: 'fixture', objective_ids: [`test-fixture:${kind}`],
+      lesson: { lesson_goal: `Tester ${kind} dans le parcours V2.1.`, success_criteria: ['Le bloc interactif est rendu.'], prerequisites: [{ id: `qa-prerequisite-${kind}`, description: 'Saisis 4 pour ouvrir le test.', check_question: 'Écris le nombre 4.', answer_type: 'short_text', expected_answer: '4', remediation_hint: 'Le nombre attendu est 4.' }], misconceptions: [], sequence: [{ id: `qa-block-${kind}`, type: 'interactive_activity', activity }], mastery: { skills: [`test-fixture:${kind}`], threshold: 0.8 } },
+    }],
+  });
+  if (!lesson) throw new Error(`The ${kind} V2.1 QA fixture is invalid.`);
+  return { kind, lesson };
+});
+
 function App() {
-  const [fixture, setFixture] = useState<'cm2' | 'equation'>('cm2');
-  const lesson = fixture === 'cm2' ? cm2FractionLesson : equationLesson;
+  const [fixture, setFixture] = useState<'cm2' | 'equation' | 'cm2-v21' | string>('cm2');
+  const v21Activity = v21ActivityLessons.find((item) => item.kind === fixture);
   return <AuthProvider><div className="mx-auto h-[95vh] max-w-2xl border p-3">
-    <div className="mb-3 flex gap-2"><button type="button" onClick={() => setFixture('cm2')}>Fixture CM2</button><button type="button" onClick={() => setFixture('equation')}>Fixture équation</button></div>
-    <LessonV2Player key={fixture} lesson={lesson} topicId="qa-topic" topicName="QA — leçon interactive" />
+    <div className="mb-3 flex flex-wrap gap-2">
+      <button type="button" onClick={() => setFixture('cm2')}>Fixture CM2</button>
+      <button type="button" onClick={() => setFixture('equation')}>Fixture équation</button>
+      <button type="button" onClick={() => setFixture('cm2-v21')}>Fixture CM2 V2.1</button>
+      {v21ActivityLessons.map(({ kind }) => <button type="button" key={kind} onClick={() => setFixture(kind)}>Fixture V2.1 {kind}</button>)}
+    </div>
+    {fixture === 'cm2-v21' ? <LessonV21Path key={fixture} lesson={cm2V21Lesson} topicId="qa-v21-cm2" topicName="QA — parcours CM2 V2.1" />
+      : v21Activity ? <LessonV21Path key={fixture} lesson={v21Activity.lesson} topicId={`qa-v21-${v21Activity.kind}`} topicName={`QA — ${v21Activity.kind}`} />
+        : <LessonV2Player key={fixture} lesson={fixture === 'cm2' ? cm2FractionLesson : equationLesson} topicId="qa-topic" topicName="QA — leçon interactive" />}
   </div></AuthProvider>;
 }
 const root = document.getElementById('root');

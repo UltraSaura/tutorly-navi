@@ -2,10 +2,10 @@ import { z } from 'zod';
 const unitFraction = z.object({
   n: z.number().int().min(0).max(12),
   d: z.number().int().min(1).max(12),
-}).refine(v => v.n <= v.d, 'Numerator must not exceed denominator');
+}).refine(v => v.n <= v.d, { message: 'Numerator must not exceed denominator', path: ['n'] });
 const transferFraction = z.object({
   n: z.number().int().min(0).max(12), d: z.number().int().min(1).max(12),
-}).refine(v => v.n <= v.d, 'Transfer numerator cannot exceed denominator');
+}).refine(v => v.n <= v.d, { message: 'Transfer numerator cannot exceed denominator', path: ['n'] });
 const common = {
   schemaVersion: z.literal(1),
   id: z.string().min(1).max(120),
@@ -22,10 +22,10 @@ const fraction = z.object({
   transfer: z.object({ left: transferFraction, right: transferFraction, targetDenominator: z.number().int().min(2).max(12) }).optional(),
 }).superRefine((v, ctx) => {
   if (v.targetDenominator !== v.left.d || v.targetDenominator % v.right.d !== 0) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'MVP requires left denominator = target and divisible right denominator' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['targetDenominator'], message: 'MVP requires left denominator = target and divisible right denominator' });
   }
   if (v.transfer && (v.transfer.targetDenominator !== v.transfer.left.d || v.transfer.targetDenominator % v.transfer.right.d !== 0)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Transfer fractions must use a valid common denominator' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['transfer', 'targetDenominator'], message: 'Transfer fractions must use a valid common denominator' });
   }
 });
 /** A student constructs a fraction by selecting the required number of equal parts. */
@@ -35,9 +35,9 @@ const fractionSelect = z.object({
   target: z.object({
     n: z.number().int().min(0).max(12),
     d: z.number().int().min(2).max(12),
-  }).refine(v => v.n <= v.d, 'Selected numerator cannot exceed denominator'),
+  }).refine(v => v.n <= v.d, { message: 'Selected numerator cannot exceed denominator', path: ['n'] }),
   transfer: z.object({ n: z.number().int().min(0).max(12), d: z.number().int().min(2).max(12) })
-    .refine(v => v.n <= v.d, 'Transfer numerator cannot exceed denominator').optional(),
+    .refine(v => v.n <= v.d, { message: 'Transfer numerator cannot exceed denominator', path: ['n'] }).optional(),
 });
 const coordinate = z.object({
   ...common,
@@ -49,17 +49,17 @@ const algebraTiles = z.object({
   ...common,
   kind: z.literal('algebra-tiles'),
   target: z.object({ x: z.number().int().min(0).max(4), units: z.number().int().min(0).max(6) })
-    .refine(v => v.x + v.units > 0, 'Expression cannot be empty'),
+    .refine(v => v.x + v.units > 0, { message: 'Expression cannot be empty', path: ['x'] }),
   transfer: z.object({ x: z.number().int().min(0).max(4), units: z.number().int().min(0).max(6) })
-    .refine(v => v.x + v.units > 0, 'Transfer expression cannot be empty').optional(),
+    .refine(v => v.x + v.units > 0, { message: 'Transfer expression cannot be empty', path: ['x'] }).optional(),
 });
 const linearFunction = z.object({
   ...common,
   kind: z.literal('linear-function'),
   target: z.object({ m: z.number().int().min(-3).max(3), b: z.number().int().min(-3).max(3) })
-    .refine(v => Math.abs(v.m + v.b) <= 5, 'Second handle must fit on graph'),
+    .refine(v => Math.abs(v.m + v.b) <= 5, { message: 'Second handle must fit on graph', path: ['b'] }),
   transfer: z.object({ m: z.number().int().min(-3).max(3), b: z.number().int().min(-3).max(3) })
-    .refine(v => Math.abs(v.m + v.b) <= 5, 'Transfer handle must fit on graph').optional(),
+    .refine(v => Math.abs(v.m + v.b) <= 5, { message: 'Transfer handle must fit on graph', path: ['b'] }).optional(),
 });
 const lineFit = z.object({
   ...common,
@@ -77,10 +77,10 @@ const lineFit = z.object({
   const m = v.points.reduce((a, p) => a + (p.x - meanX) * (p.y - meanY), 0) / denominator;
   const b = meanY - m * meanX;
   if (!(Number.isFinite(m) && Number.isFinite(b) && m >= -3 && m <= 3 && b >= -3 && b <= 3)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Best-fit line must be within interactive controls' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['points'], message: 'Best-fit line must be within interactive controls' });
   }
   if (v.interpretation && (v.interpretation.examplePointIndex >= v.points.length || v.interpretation.questionPointIndex >= v.points.length || v.interpretation.examplePointIndex === v.interpretation.questionPointIndex)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Interpretation points must be distinct valid point indexes' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['interpretation'], message: 'Interpretation points must be distinct valid point indexes' });
   }
 });
 /** Unique-solution bounded linear equations, including negative coefficients and rational answers. */
@@ -93,8 +93,8 @@ const equationDecomposition = z.object({
   d: z.number().int().min(-8).max(8).optional(),
   transfer: z.object({ a: z.number().int().min(-8).max(8), b: z.number().int().min(-20).max(20), c: z.number().int().min(-20).max(20), d: z.number().int().min(-8).max(8).optional() }).optional(),
 }).superRefine((v, ctx) => {
-  if (v.a === (v.d ?? 0)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Equation must have a unique solution' });
-  if (v.transfer && v.transfer.a === (v.transfer.d ?? 0)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Transfer equation must have a unique solution' });
+  if (v.a === (v.d ?? 0)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['a'], message: 'Equation must have a unique solution' });
+  if (v.transfer && v.transfer.a === (v.transfer.d ?? 0)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['transfer', 'a'], message: 'Transfer equation must have a unique solution' });
 });
 
 export const InteractiveActivitySchema = z.union([fraction, coordinate, fractionSelect, algebraTiles, linearFunction, lineFit, equationDecomposition]);

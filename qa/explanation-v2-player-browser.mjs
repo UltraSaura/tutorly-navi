@@ -127,6 +127,123 @@ for (const width of [320, 375, 390, 447, 1280]) {
       assert.deepEqual(errors, []);
     });
     await page.screenshot({ path: dir + '/player-equation-mode-switch-' + width + '.png', fullPage: true });
+    for (const kind of ['fraction-select', 'fraction-bar', 'coordinate-plane', 'algebra-tiles', 'linear-function', 'line-fit', 'equation-decomposition']) {
+      await check(`V2.1 path renders the ${kind} activity fixture`, async () => {
+        await page.getByRole('button', { name: `Fixture V2.1 ${kind}`, exact: true }).click();
+        await page.getByText('Niveau 1 sur 1', { exact: true }).waitFor();
+        await page.getByRole('button', { name: new RegExp(`Fixture ${kind}`) }).click();
+        const answer = page.getByRole('textbox', { name: 'Réponse au prérequis' });
+        await answer.waitFor();
+        await answer.fill('4');
+        await page.getByRole('button', { name: 'Valider', exact: true }).click();
+        const testId = {
+          'fraction-select': 'fraction-select-activity',
+          'fraction-bar': 'fraction-bar-activity',
+          'coordinate-plane': 'coordinate-plane-activity',
+          'algebra-tiles': 'algebra-tiles-activity',
+          'linear-function': 'linear-function-activity',
+          'line-fit': 'line-fit-activity',
+          'equation-decomposition': 'equation-decomposition-activity',
+        }[kind];
+        await page.getByTestId(testId).waitFor();
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+      });
+    }
+    await check('complete four-level V2.1 CM2 path preserves mastery gates and transfer', async () => {
+      if (width === 320) await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.getByRole('button', { name: 'Fixture CM2 V2.1', exact: true }).click();
+      if (width === 320) assert.equal(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), true);
+      await page.getByText('Niveau 1 sur 4', { exact: true }).waitFor();
+      const levelTwo = page.getByRole('button', { name: /Partager chaque moitié en deux quarts/ });
+      assert.equal(await levelTwo.isDisabled(), true, 'later levels remain locked before mastery');
+      const answerMastery = async (question, choiceIndex = 0) => {
+        const card = page.getByRole('heading', { name: question }).locator('..');
+        await card.getByRole('button').nth(choiceIndex).click();
+        await card.getByRole('button', { name: 'Valider', exact: true }).click();
+      };
+      const finishLevel = async () => {
+        await page.getByRole('button', { name: 'Terminer', exact: true }).click();
+        await page.getByRole('heading', { name: 'Leçon terminée' }).waitFor();
+        await page.getByRole('button', { name: 'Retour' }).click();
+      };
+      const openLevel = async (title) => page.getByRole('button', { name: title }).click();
+      const answerShortPrerequisite = async (answer) => {
+        await page.getByRole('textbox', { name: 'Réponse au prérequis' }).fill(answer);
+        await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      };
+      const completeSelection = async (baseParts, transferParts) => {
+        await page.getByTestId('fraction-select-activity').waitFor();
+        for (const i of baseParts) {
+          const part = page.getByTestId(`fraction-part-${i}`);
+          if (i === baseParts[0] && width === 375) {
+            await part.focus();
+            await page.keyboard.press('Enter');
+          } else if (i === baseParts[0] && width === 390) {
+            const box = await part.boundingBox();
+            assert.ok(box, 'touch target is visible');
+            await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+          } else await part.click();
+        }
+        await page.getByRole('button', { name: 'Valider', exact: true }).click();
+        await page.getByRole('button', { name: 'Le dénominateur partage le tout en parts égales; le numérateur indique combien de parts on prend.' }).click();
+        await page.getByRole('button', { name: 'Vérifier mon explication' }).click();
+        for (const i of transferParts) await page.getByTestId(`fraction-part-${i}`).click();
+        await page.getByRole('button', { name: 'Valider', exact: true }).click();
+      };
+      const completeAddition = async (activityId, conversion, total, transfer) => {
+        await page.locator(`#fraction-answer-${activityId}`).fill(String(conversion));
+        await page.getByRole('button', { name: 'Valider', exact: true }).click();
+        await page.locator(`#fraction-answer-${activityId}`).fill(String(total));
+        await page.getByRole('button', { name: 'Valider', exact: true }).click();
+        await page.locator(`#fraction-transfer-answer-${activityId}`).fill(transfer);
+        await page.getByRole('button', { name: 'Valider le transfert', exact: true }).click();
+      };
+      await page.getByRole('button', { name: /Reconnaître les parts d’une fraction/ }).click();
+      const prerequisiteCard = page.getByRole('heading', { name: 'Une barre est-elle partagée en parts égales ?' }).locator('..');
+      await prerequisiteCard.getByRole('button').filter({ hasText: 'Oui, chaque part a la même longueur' }).click();
+      await prerequisiteCard.getByRole('button', { name: 'Valider', exact: true }).click();
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await completeSelection([0, 1, 2], [0, 1]);
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await answerMastery(/Dans/, 1);
+      await finishLevel();
+      assert.equal(await levelTwo.isDisabled(), false, 'a successful mastery check unlocks the next level');
+      await openLevel(/Partager chaque moitié en deux quarts/);
+      const secondPrerequisite = page.getByRole('heading', { name: /Dans une moitié/ }).locator('..');
+      await secondPrerequisite.getByText('2', { exact: true }).last().click();
+      await secondPrerequisite.getByRole('button', { name: 'Valider', exact: true }).click();
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await completeSelection([0, 1], [0]);
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await answerMastery(/Quelle fraction représente/);
+      await finishLevel();
+
+      await openLevel(/Additionner des quarts de même taille/);
+      const thirdPrerequisite = page.getByRole('heading', { name: /Combien de quarts représentent une moitié/ }).locator('..');
+      await thirdPrerequisite.getByText('2', { exact: true }).last().click();
+      await thirdPrerequisite.getByRole('button', { name: 'Valider', exact: true }).click();
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await completeAddition('cm2-fraction-add-3-4-plus-1-2', 2, 5, '3/4');
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await answerMastery(/Pourquoi peut-on additionner/);
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await answerMastery(/Combien vaut/);
+      await finishLevel();
+
+      await openLevel(/Résoudre un nouveau calcul et expliquer le résultat/);
+      await answerShortPrerequisite('Que les parts ont la même taille');
+      await completeAddition('cm2-fraction-transfer-2-4-plus-1-4', 1, 3, '3/4');
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await answerMastery(/Pour résoudre/);
+      await finishLevel();
+      await page.getByText('✓ Parcours terminé', { exact: true }).waitFor();
+      if (width === 375 || width === 1280) await page.screenshot({ path: dir + '/v21-cm2-complete-' + width + '.png', fullPage: true });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+      assert.deepEqual(errors, []);
+    });
     await check('no runtime errors', async () => assert.deepEqual(errors, []));
   } catch (e) {
     failed++; checks.push({ width, name: 'page startup', status: 'FAIL', detail: String(e) });

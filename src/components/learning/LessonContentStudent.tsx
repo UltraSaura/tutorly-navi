@@ -114,6 +114,22 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
     );
   }
 
+  const storedVersion = topic.lesson_content && typeof topic.lesson_content === 'object' && 'version' in topic.lesson_content
+    ? topic.lesson_content.version
+    : undefined;
+  if (typeof storedVersion === 'string' && /^\d+\.\d+$/.test(storedVersion)) {
+    return (
+      <div id="lesson-section" data-testid="invalid-modern-lesson" role="alert" className="mx-auto max-w-2xl p-4">
+        <Card className="border-amber-300">
+          <CardHeader><CardTitle className="flex items-center gap-2"><AlertCircle className="h-5 w-5 text-amber-600" />Leçon indisponible</CardTitle></CardHeader>
+          <CardContent>
+            <p>Le contenu de cette leçon ne peut pas être affiché pour le moment. Demande à ton professeur de vérifier la leçon avant de réessayer.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <MathTextTree><div id="lesson-section" className="space-y-6">
       {/* Explanation */}
@@ -156,18 +172,13 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
           <CardContent>
             <ul className="space-y-3">
         {content.common_mistakes.map((mistake, idx) => {
-          const mistakeItem = mistake as any;
-          const mistakeText = typeof mistake === 'string' 
-            ? mistake 
-            : mistakeItem.mistake || mistakeItem.tip || '';
-          
-          const mistakeWhy = typeof mistake === 'object' && mistake !== null && mistakeItem.why 
-            ? mistakeItem.why 
-            : null;
-          
-          const mistakeTip = typeof mistake === 'object' && mistake !== null && mistakeItem.tip 
-            ? mistakeItem.tip 
-            : null;
+          const mistakeItem = typeof mistake === 'string' ? null : mistake;
+          const rawTip = mistakeItem && 'tip' in mistakeItem ? mistakeItem.tip : undefined;
+          const mistakeText = typeof mistake === 'string'
+            ? mistake
+            : mistakeItem.mistake || (typeof rawTip === 'string' ? rawTip : '');
+          const mistakeWhy = mistakeItem?.why || null;
+          const mistakeTip = typeof rawTip === 'string' ? rawTip : null;
           
           return (
             <li key={idx} className="flex gap-3">

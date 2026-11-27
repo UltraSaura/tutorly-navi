@@ -4,6 +4,14 @@
 **Reference feature head:** `b2c7c3e87a9930232d03500b2f08fc7f51480f6f`  
 **Scope:** Read-only source audit. No runtime, database, branch integration, or production change was made.
 
+## F.03 compatibility implementation update
+
+On the isolated `feature/explanation-v2-interactive-math` implementation line, V2.1 lesson validation now permits the `interactive_activity` block only through the shared `InteractiveActivitySchema` (seven existing kinds). V2.0 normalization now validates the complete normalized payload rather than relying on the former incomplete block type allow-list. `LessonContentStudent → LessonV21Path → LessonV2Player → InteractiveActivityHost` is preserved; no player, runtime registry, schema, or persisted lesson was added. The four-level CM2 fixture uses placeholder test objective IDs and remains local/non-persistent.
+
+This is not integration of the teacher staging workflow. The workflow service, staging page/panel and guarded publication migrations remain on the audited `main` / `feature/guided-practice-lessons` line, absent from the implementation tree. The shared validator's staging prerequisite option is supported, but branch reconciliation and verification that all owning-branch authoring/publication validators delegate to the same activity schema remain required. The separate Supabase Edge Function validator also remains incompatible with interactive blocks; it must not become a direct `topics.lesson_content` write path. No Supabase reads or writes were made.
+
+Local checkpoint evidence: 42 focused tests passed, TypeScript passed, focused lint had no errors (one QA-entry Fast Refresh warning), and production build passed. Final hosted browser and integration counts, artifact URL and exact commit are intentionally deferred to the workflow result for the final implementation SHA. Learning evidence remains local to the current player lifecycle; no durable cross-refresh evidence or mastery/XP calculation change is claimed. Objective binding, teacher approval, and the unavailable canonical architecture/V2.2 references remain open.
+
 ## Executive finding
 
 Extend the existing student lesson route and `LessonV2Player` / `LessonV21Path` family; do not add a third player. V2.0 has a typed `interactive_activity` block and host integration. V2.1 has a stronger level-path structure and reuses the V2.0 player per level, but the V2.1 validator rejects `interactive_activity`. Because the student route prefers V2.1 parsing before V2.0 parsing, simply placing the current activity block into V2.1 is invalid. The integration decision is therefore a contract/validation/rendering adapter task, not an engine replacement.

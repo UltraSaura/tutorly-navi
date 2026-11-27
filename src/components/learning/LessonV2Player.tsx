@@ -49,7 +49,17 @@ function responseChoices(question: { choices?: string[]; correct_answer?: unknow
   return [...new Set(candidates)];
 }
 
-function practiceQuestion(question: any): Question | null {
+function practiceQuestion(question: {
+  id?: unknown;
+  question?: unknown;
+  answer_type?: unknown;
+  choices?: unknown;
+  correct_answer?: unknown;
+  answerUnit?: string;
+  answer_unit?: string;
+  targetUnit?: string;
+  target_unit?: string;
+}): Question | null {
   const base = {
     id: String(question.id),
     prompt: String(question.question),

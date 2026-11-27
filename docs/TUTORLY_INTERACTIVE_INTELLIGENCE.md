@@ -2,6 +2,14 @@ Warning: truncated output (original token count: 20763)
 Total output lines: 572
 
 # Tutorly / Stuwy — Interactive Learning Intelligence
+
+## Task F.03 — V2.1 lesson compatibility implementation
+
+The isolated interactive feature branch now validates V2.1 `interactive_activity` blocks through the shared `InteractiveActivitySchema`; supported kinds remain exactly `fraction-select`, `fraction-bar`, `coordinate-plane`, `algebra-tiles`, `linear-function`, `line-fit`, and `equation-decomposition`. It keeps the existing `LessonContentStudent → LessonV21Path → LessonV2Player → InteractiveActivityHost` path and adds no runtime registry or player. V2.0 normalization is strict and invalid versioned content no longer falls through to legacy rendering. Source: `src/types/lesson-v21-contract.ts`, `src/types/lesson-generator.ts`, `src/components/learning/LessonContentStudent.tsx`.
+
+Test fixtures in `src/features/explanation-v2/fixtures/` include all seven activity kinds plus the four-level CM2 proposal; objective IDs are test placeholders. Local checkpoint: 42/42 focused tests, TypeScript and build passed; focused lint 0 errors (one QA-only Fast Refresh warning). Final hosted browser results are pending and must be read from the workflow for the exact final commit before any acceptance statement.
+
+Integration boundary: the lesson-version staging workflow remains on `main` / `feature/guided-practice-lessons` and is not present in this feature branch. The validator supports the staging prerequisite format, but workflow branch reconciliation, authoring/publication validation parity, and the separate Edge Function validator remain follow-up integration work. No persistent evidence, mastery calculation, XP, curriculum objective binding, or teacher approval is claimed. See [F.02 contract with F.03 record](STUWY_UNIFIED_LESSON_CONTRACT_TASK_F02.md) and [F.01 architecture audit update](STUWY_LESSON_ARCHITECTURE_AUDIT_TASK_F.md).
 > **Living knowledge base for humans, Codex, Claude, and other coding agents.**
 >
 > **Status snapshot:** 2026-11-26 · **Repository:** `UltraSaura/tutorly-navi` · **Working branch:** `feature/explanation-v2-interactive-math` · **Draft PR:** [#56](https://github.com/UltraSaura/tutorly-navi/pull/56)
