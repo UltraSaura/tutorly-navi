@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 13684)
+Total output lines: 732
+
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { chromium } from 'playwright';
@@ -59,7 +62,7 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
       const demoEquation = page.getByTestId('demo-equation');
       assert.equal(await demoEquation.locator('.katex-mathml mfrac').count(), 2, 'equivalent fractions are vertically rendered');
-      assert.doesNotMatch(await demoEquation.locator('.katex-html').innerText(), /\\frac/);
+      assert.doesNotMatch(await demoEquation.locator('.katex-html').first().innerText(), /\\frac/);
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
       assert.equal(await page.getByTestId('demo-equation').locator('.katex-mathml mfrac').count(), 3, 'fraction addition keeps all three stacked fractions');
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
@@ -333,91 +336,7 @@ async function runAtWidth(width) {
       assert.equal(await page.getByTestId('completion').count(), 0);
       await page.locator('#affine-transfer-qa-linear').fill('3');
       await page.getByRole('button', { name: 'Vérifier f(0)' }).click();
-      await page.locator('#affine-change-qa-linear').fill('-2');
-      await page.getByRole('button', { name: 'Vérifier la variation' }).click();
-      assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 0x \+ 0/);
-      assert.match(await page.getByText(/Construis une droite qui coupe l’axe vertical en 3 et varie de -2 pour \+1 en x/).innerText(), /Construis une droite/);
-      await page.screenshot({ path: dir + '/affine-transfer-' + width + '.png', fullPage: true });
-      await page.getByRole('button', { name: 'Diminuer Coefficient directeur a' }).click();
-      await page.getByRole('button', { name: 'Diminuer Coefficient directeur a' }).click();
-      await page.getByRole('button', { name: 'Augmenter Ordonnée à l’origine b' }).click();
-      await page.getByRole('button', { name: 'Augmenter Ordonnée à l’origine b' }).click();
-      await page.getByRole('button', { name: 'Augmenter Ordonnée à l’origine b' }).click();
-      await page.getByRole('button', { name: 'Valider le transfert' }).click();
-      assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
-    });
-    await run('affine-function handles respond to pointer dragging', async () => {
-      await page.getByTestId('reset').click();
-      await page.getByRole('button', { name: 'Explorer' }).click();
-      const graph = page.getByTestId('line-graph');
-      await graph.scrollIntoViewIfNeeded();
-      const rect = await graph.boundingBox();
-      assert.ok(rect);
-      const dragHandle = async (handle, x, y) => {
-        const box = await page.getByTestId('drag-' + handle).boundingBox();
-        assert.ok(box);
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.mouse.down();
-        await page.mouse.move(rect.x + (x / 360) * rect.width, rect.y + (y / 360) * rect.height, { steps: 5 });
-        await page.mouse.up();
-      };
-      await dragHandle('intercept', 180, 155);
-      assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 0x \+ 1/);
-      await dragHandle('slope', 205, 105);
-      assert.match(await page.getByTestId('live-equation').innerText(), /f\(x\) = 2x \+ 1/);
-    });
-    await page.screenshot({ path: dir + '/linear-' + width + '.png', fullPage: true });
-    await page.getByTestId('tab-equation').click();
-    await run('equation visual decomposition animates identical operations on both sides', async () => {
-      await page.getByTestId('equation-decomposition-activity').waitFor();
-      await checkTouchTargets('[data-testid="equation-decomposition-activity"]');
-      assert.match(await page.getByTestId('equation-demo-progress').innerText(), /1 sur 3/);
-      assert.match(await page.getByTestId('equation-transform').innerText(), /3x \+ 5/);
-      assert.equal(await page.getByTestId('equation-after').count(), 0);
-      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on va faire.*soustraire 5 aux deux membres/s);
-      assert.equal(await page.locator('details').filter({ hasText: 'Pourquoi cette étape ?' }).getAttribute('open'), null);
-      assert.equal(await page.getByTestId('equation-transform').getByText('Membre gauche').count(), 0);
-      assert.equal(await page.getByTestId('equation-transform').getByText('Membre droit').count(), 0);
-      assert.equal(await page.getByRole('button', { name: 'Comprendre' }).getAttribute('aria-pressed'), 'true');
-      const exposureOnly = JSON.parse(await page.getByTestId('activity-progress').innerText()).learningEvidence;
-      assert.equal(exposureOnly.exposure, true);
-      assert.equal(exposureOnly.guidedCompleted, false);
-      assert.equal(exposureOnly.independent, false);
-      assert.equal(exposureOnly.transfer, false);
-      await page.getByRole('button', { name: 'Animer l’opération' }).click();
-      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on fait.*On soustrait 5 à gauche ET à droite/s);
-      const operations = await page.getByTestId('equation-operation').locator('div').allInnerTexts();
-      assert.equal(operations[0], operations[1]);
-      assert.equal(await page.getByTestId('equation-after').count(), 0);
-      assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['+ 5', '− 5']);
-      assert.deepEqual(await page.getByTestId('equation-combine-token').allInnerTexts(), ['20', '− 5']);
-      assert.match(await page.getByTestId('equation-cancellation-explanation').innerText(), /font 0 à gauche/);
-      await page.getByRole('button', { name: 'Voir le résultat' }).click();
-      assert.match(await page.getByTestId('equation-after').innerText(), /3x = 15/);
-      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on obtient.*20 − 5 = 15/s);
-      assert.equal(await page.getByTestId('equation-operation').count(), 0);
-      assert.equal(await page.getByTestId('equation-term-animation').count(), 0);
-      await page.getByRole('button', { name: 'Précédent' }).click();
-      assert.equal(await page.getByTestId('equation-after').count(), 0);
-      await page.getByRole('button', { name: 'Voir le résultat' }).click();
-      await page.getByRole('button', { name: 'Étape suivante' }).click();
-      assert.match(await page.getByTestId('equation-demo-progress').innerText(), /2 sur 3/);
-      await page.getByRole('button', { name: 'Animer l’opération' }).click();
-      await page.getByRole('button', { name: 'Voir le résultat' }).click();
-      assert.match(await page.getByTestId('equation-after').innerText(), /x = 5/);
-      assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on obtient.*x = 5/s);
-      await page.screenshot({ path: dir + '/equation-focused-' + width + '.png', fullPage: true });
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
-      await page.getByText('Pourquoi cette étape ?').click();
-      assert.equal(await page.locator('details').filter({ hasText: 'Pourquoi cette étape ?' }).getAttribute('open'), '');
-      await page.getByText('Pourquoi cette étape ?').click();
-    });
-    await run('equation guided mode diagnoses wrong operation and preserves help status', async () => {
-      await page.getByRole('button', { name: 'Résoudre ensemble' }).click();
-      await page.getByTestId('equation-choice-1').click();
-      assert.match(await page.locator('[role=status]').last().innerText(), /deux membres|deux côtés/i);
-      await page.getByTestId('equation-choice-0').click();
-      assert.match(await page.getByTestId('equation-guided-instruction').innerText(), /Ce qu’on fait.*soustrait 5 à gauche ET à droite/s);
+   …1684 tokens truncated…e ET à droite/s);
       assert.equal(await page.getByTestId('equation-after').count(), 0);
       assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['+ 5', '− 5']);
       await page.getByRole('button', { name: 'Comprendre' }).click();

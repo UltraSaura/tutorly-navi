@@ -31,7 +31,7 @@ function TermTokens({ tokens, side }: { tokens: EquationTermToken[]; side: 'left
 
 function TransformationVisual({ step, stage }: { step: EquationTransformation; stage: 0 | 1 | 2 }) {
   const visual = equationTermVisual(step);
-  return <div data-testid="equation-transform" aria-live="polite"
+  return <MathTextTree><div data-testid="equation-transform" aria-live="polite"
     className="flex min-h-[240px] flex-col justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-5 text-center sm:min-h-[230px] sm:px-6">
     {stage === 0 && <div className="equation-focus space-y-3">
       <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Équation à transformer</p>
@@ -56,7 +56,7 @@ function TransformationVisual({ step, stage }: { step: EquationTransformation; s
       <p className="text-xs font-semibold uppercase tracking-wider text-teal-800">{step.id === 'verify' ? 'Égalité vérifiée' : 'Équation simplifiée'}</p>
       <p className="break-words text-2xl font-extrabold leading-relaxed tracking-tight text-teal-900 sm:text-3xl">{step.after}</p>
     </div>}
-  </div>;
+  </div></MathTextTree>;
 }
 
 export function EquationDecompositionActivity({ spec, progress, onProgressChange, onComplete }: Props) {
