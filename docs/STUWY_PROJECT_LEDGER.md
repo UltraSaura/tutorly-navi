@@ -204,7 +204,7 @@ Known existing foundations to inspect/reuse:
 
 **H. Separate production launch and branch consolidation.** Keep V1 fixes isolated; propose merge plan with excluded Universal Tutor branch; regression-test before deployment.
 
-**Current execution state as of 2026-11-26:** A metadata audit complete; B historical preview restored and initial review partial; C technical PASS at 3fc22b11; D documentation accepted at 72599d84; E review delivered at 1b88aab8, pedagogical acceptance PARTIAL, E.09 corrective implementation next. F–H pending. Teacher approval, exact final live preview alignment and legacy lint debt remain open. PR #56 open/draft. No production acceptance claimed.
+**Current execution state as of 2026-11-27:** A metadata audit complete; B historical preview restored, latest live alignment pending; C technical PASS; D documentation accepted; E.09 technical PASS at b2c7c3e8 (195/195 standalone, 40/40 player, 49/49 focused unit). Pedagogical acceptance and teacher approval pending. F.00 preview/teacher review preparation and F.01 read-only architecture audit proposed next; F runtime implementation not authorized. G–H pending. PR #56 open/draft. No production acceptance claimed.
 
 ## 9. REQUIRED WORK LOG FORMAT — APPEND AFTER EACH TASK
 
@@ -404,3 +404,10 @@ If two sources disagree: record both, identify dates/branches, preserve function
 - Clarification: the live Vercel preview was not refreshed or verified; the passing standalone smoke used the hosted CI server's production build. No production lesson persistence or long-term mastery writes were tested.
 - Human review remains open for the French 3e affine fit, changed student-facing material and applicable curriculum year. No student learning-effectiveness claim or teacher approval is made.
 - **Status:** TASK E.09 COMPLETE — READY FOR PEDAGOGICAL ACCEPTANCE. **Next:** teacher review, then separately approved curriculum follow-up. No Task F implementation, merge, deployment, Supabase change, TwoCards or CompactMathStepper edit occurred.
+
+
+### 2026-11-27 — LEDGER-016 E.09 management verification and proposed Task F preparation
+- Verified PR #56 open/draft at b2c7c3e87a9930232d03500b2f08fc7f51480f6f. Exact-head hosted run #45906620185 both jobs PASS; independently read logs: 195 standalone checks/0 failures, 40 player checks/0 failures, 49 unit tests in 8 files PASS, focused lint 0 errors/4 warnings. Artifact 15156979900 metadata confirms exact head; images not independently inspected. Production-built smoke passed, not live Vercel or production persistence.
+- Reviewed Task E report section 14: canonical kind/module/scenario mapping, changed-value transfer, separate learningEvidence fields, line-fit residuals and attainable slider-grid optimum, CM2 wording/gate corrections documented. Technical readiness accepted; human teacher review and actual learning outcomes remain unverified. Historical qualitative scores not rescored.
+- Proposed next F.00: verify exact-head isolated preview (refresh only within authorized non-production scope), prepare teacher review packet and record decisions; F.01: read-only lesson architecture audit/design preparation, reconcile canonical LearningSessionPlayer and existing V2/V2.1, teacher draft/publish, video and Tutor/Practice handoffs. No Task F runtime implementation or curriculum publication until separately authorized and required teacher review obtained, consistent with LEDGER-015. Later F phases are proposals, not approved implementation.
+- No application code, deployments, Supabase, PR state or branch merges changed in this management review.
