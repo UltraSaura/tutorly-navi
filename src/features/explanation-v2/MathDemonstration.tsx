@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { LineGraph } from './LineGraph';
 import { expectedFractionSteps } from './math';
 import type { InteractiveActivitySpec } from './activityContract';
+import { MathTextTree } from '@/components/math/MathText';
 
 /**
  * Original, reusable, manually paced mathematical demonstration.
@@ -27,14 +28,14 @@ type Props = {
 
 function FractionStrip({ n, d, label }: { n: number; d: number; label: string }) {
   const rows = Math.max(1, Math.ceil(n / d));
-  return <div className="space-y-1.5">
+  return <MathTextTree><div className="space-y-1.5">
     <p className="text-sm font-semibold">{label} : {n}/{d}</p>
     {Array.from({ length: rows }, (_, row) => <div key={row} className="grid gap-1" style={{ gridTemplateColumns: 'repeat(' + d + ', minmax(0, 1fr))' }}>
       {Array.from({ length: d }, (_, i) => <div key={i}
         className={'h-10 rounded-md border border-teal-700 motion-safe:transition-colors motion-safe:duration-300 ' + (row * d + i < n ? 'bg-teal-400' : 'bg-white')}
         aria-hidden="true" />)}
     </div>)}
-  </div>;
+  </div></MathTextTree>;
 }
 
 export function MathDemonstration({ title, steps, onPractice, practiceLabel = 'À toi de jouer', onExposure }: Props) {
@@ -46,7 +47,7 @@ export function MathDemonstration({ title, steps, onPractice, practiceLabel = '�
   if (steps.length === 0) return null;
   const current = steps[Math.min(index, steps.length - 1)];
   const finalStep = index === steps.length - 1;
-  return <section data-testid="math-demonstration" aria-label={title} className="space-y-4 rounded-2xl border border-teal-200 bg-white p-3 sm:p-5">
+  return <MathTextTree><section data-testid="math-demonstration" aria-label={title} className="space-y-4 rounded-2xl border border-teal-200 bg-white p-3 sm:p-5">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <h3 className="text-lg font-bold text-slate-900">{title}</h3>
       <span data-testid="demo-progress" className="rounded-full bg-teal-50 px-3 py-1 text-sm font-semibold text-teal-800">
@@ -81,7 +82,7 @@ export function MathDemonstration({ title, steps, onPractice, practiceLabel = '�
         className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold">Revoir depuis le début</button>
     </div>
     <p className="text-xs text-slate-600">Tu avances à ton rythme. Cette démonstration ne donne pas de note et ne valide pas l’exercice.</p>
-  </section>;
+  </section></MathTextTree>;
 }
 
 /** Derive every displayed quantity from the validated exercise, never from generated prose. */

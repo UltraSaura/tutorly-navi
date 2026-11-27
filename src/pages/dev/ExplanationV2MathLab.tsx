@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Cm2LessonPreview } from '@/features/explanation-v2/Cm2LessonPreview';
 import { InteractiveActivityHost } from '@/features/explanation-v2/InteractiveActivityHost';
 import { initialActivityProgress, type ActivityProgress, type InteractiveActivitySpec } from '@/features/explanation-v2/activityContract';
+import { MathTextTree } from '@/components/math/MathText';
 
 const activities: InteractiveActivitySpec[] = [
   {
@@ -58,7 +59,7 @@ export default function ExplanationV2MathLab() {
   const [progress, setProgress] = useState<Record<string, ActivityProgress>>({});
   const [results, setResults] = useState<Record<string, string>>({});
   const spec = activities[selected];
-  return <main className="mx-auto min-h-screen max-w-3xl space-y-5 bg-slate-50 p-3 sm:p-8">
+  return <MathTextTree><main className="mx-auto min-h-screen max-w-3xl space-y-5 bg-slate-50 p-3 sm:p-8">
     <header className="space-y-2">
       <p className="text-xs font-bold uppercase tracking-wide text-teal-700">Stuwy · Explanation V2 · laboratoire local</p>
       <h1 className="text-2xl font-extrabold text-slate-900">Mathématiques interactives</h1>
@@ -81,5 +82,5 @@ export default function ExplanationV2MathLab() {
     {results[spec.id] && <p role="status" className="rounded-xl bg-teal-50 p-3 font-semibold text-teal-900">{results[spec.id]}</p>}
     <p className="text-xs text-slate-500">Parcours de démonstration uniquement. La validation des leçons réelles reste contrôlée par LessonV2Player.</p>
     </>}
-  </main>;
+  </main></MathTextTree>;
 }

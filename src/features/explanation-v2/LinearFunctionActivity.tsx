@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { LineGraph } from './LineGraph';
 import { MathDemonstration, type MathDemonstrationStep } from './MathDemonstration';
 import { initialActivityProgress, learningEvidence, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
+import { MathTextTree } from '@/components/math/MathText';
 
 type Spec = Extract<InteractiveActivitySpec, { kind: 'linear-function' }>;
 type Props = { spec: Spec; progress?: ActivityProgress; onProgressChange: (p: ActivityProgress) => void; onComplete: (result: { independent: boolean; attempts: number; hintsUsed: number }) => void };
@@ -108,7 +109,7 @@ export function LinearFunctionActivity({ spec, progress, onProgressChange, onCom
       </div>
     </div>)}
   </div>;
-  return <div className="space-y-4" data-testid="linear-function-activity">
+  return <MathTextTree><div className="space-y-4" data-testid="linear-function-activity">
     <div className="flex flex-wrap gap-2" aria-label="Mode d’apprentissage">
       <button type="button" onClick={() => setMode('demonstration')} aria-pressed={mode === 'demonstration'}
         className={control + (mode === 'demonstration' ? ' border-teal-700 bg-teal-50' : '')}>Comprendre</button>
@@ -144,5 +145,5 @@ export function LinearFunctionActivity({ spec, progress, onProgressChange, onCom
       </div>}
       <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
     </>}
-  </div>;
+  </div></MathTextTree>;
 }

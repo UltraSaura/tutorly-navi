@@ -1,6 +1,7 @@
 import { LineGraph } from './LineGraph';
 import { bestDiscreteLineFit, linearRegression, parseRationalAnswer, residuals, sumSquaredError } from './math';
 import { initialActivityProgress, learningEvidence, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
+import { MathTextTree } from '@/components/math/MathText';
 type Spec = Extract<InteractiveActivitySpec, { kind: 'line-fit' }>;
 type Props = { spec: Spec; progress?: ActivityProgress; onProgressChange: (p: ActivityProgress) => void; onComplete: (result: { independent: boolean; attempts: number; hintsUsed: number }) => void };
 const round = (n: number) => Math.round(n * 10) / 10;
@@ -69,7 +70,7 @@ export function LineFitActivity({ spec, progress, onProgressChange, onComplete }
     <button type="button" className="min-h-11 w-full rounded-xl border p-3 text-left" onClick={() => update({ input: 'positive-slope' })} aria-pressed={p.input === 'positive-slope'}>Pour rendre automatiquement la pente positive.</button>
     <button type="button" className="min-h-11 rounded-xl bg-teal-600 px-4 py-3 font-bold text-white" onClick={check}>Vérifier mon explication</button>
   </div>;
-  return <div className="space-y-4" data-testid="line-fit-activity">
+  return <MathTextTree><div className="space-y-4" data-testid="line-fit-activity">
     <p className="rounded-xl bg-teal-50 p-3 leading-7">{spec.prompt} Les points orange sont des observations. La droite verte est un modèle; ajuste-la pour réduire la somme des carrés des écarts.</p>
     {concept}
     <LineGraph slope={slope} intercept={intercept} onChange={change} points={spec.points} step={0.1} disabled={p.completed || p.phase !== 0} showResiduals />
@@ -97,5 +98,5 @@ export function LineFitActivity({ spec, progress, onProgressChange, onComplete }
     {p.completed && <p className="font-semibold text-teal-800">Interprétation et transfert réussis.</p>}
     <output className="hidden" data-testid="line-fit-best-discrete">{JSON.stringify(reachable)}</output>
     <output className="hidden" data-testid="line-fit-theoretical">{JSON.stringify(optimum)}</output>
-  </div>;
+  </div></MathTextTree>;
 }

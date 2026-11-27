@@ -78,6 +78,12 @@ for (const width of [320, 375, 390, 447, 1280]) {
       await page.getByRole('button', { name: 'Continuer', exact: true }).click();
       await page.getByRole('heading', { name: 'Exemple guidé terminé' }).waitFor();
       await page.getByText(/Tu as terminé l’exemple guidé et essayé un autre calcul/).waitFor();
+      const conclusionMath = page.getByTestId('cm2-conclusion-math');
+      assert.equal(await conclusionMath.locator('.katex-display').count(), 1, 'the complete summary is displayed as aligned math');
+      assert.equal(await conclusionMath.locator('.katex-mathml mfrac').count(), 6, 'all six fractions use stacked MathML fractions');
+      assert.equal((await conclusionMath.locator('.katex-html').innerText()).includes('\\frac'), false, 'raw LaTeX is not visible');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'lesson has no horizontal overflow');
+      await page.screenshot({ path: dir + '/cm2-conclusion-' + width + '.png', fullPage: true });
       await page.getByRole('button', { name: 'Terminer', exact: true }).click();
       await page.getByRole('heading', { name: 'Leçon terminée' }).waitFor();
     });

@@ -1,5 +1,6 @@
 import { initialActivityProgress, learningEvidence, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { namedParts } from './pedagogicalQuestions';
+import { MathTextTree } from '@/components/math/MathText';
 
 type Spec = Extract<InteractiveActivitySpec, { kind: 'fraction-select' }>;
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
@@ -58,7 +59,7 @@ export function FractionSelectActivity({ spec, progress, onProgressChange, onCom
     const next = p.phaseHints + 1;
     update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: hints[next - 1], learningEvidence: { ...evidence, assisted: true, ...(isTransfer ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(isTransfer && next === hints.length && !evidence.disclosedItems.includes('fraction-selection-transfer') ? { disclosedItems: [...evidence.disclosedItems, 'fraction-selection-transfer'] } : {}) } });
   };
-  return <div className="space-y-4" data-testid="fraction-select-activity">
+  return <MathTextTree><div className="space-y-4" data-testid="fraction-select-activity">
     <div className="space-y-2 rounded-xl bg-teal-50 p-3">
       <p className="text-sm font-bold text-teal-800">{isTransfer ? 'Transfert indépendant · Une autre fraction' : p.phase === 1 ? 'Vérifions ce que signifient les deux nombres' : 'Construis une fraction'}</p>
       <p className="text-base leading-7 text-slate-800">{p.phase === 1
@@ -100,5 +101,5 @@ export function FractionSelectActivity({ spec, progress, onProgressChange, onCom
     </>}
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
     {p.completed && <p className="font-semibold text-teal-800">{spec.transfer ? 'Transfert réussi sans aide.' : 'Activité réussie. Tu peux continuer la leçon.'}</p>}
-  </div>;
+  </div></MathTextTree>;
 }

@@ -583,7 +583,8 @@ async function runAtWidth(width) {
       await page.locator('#equation-answer-qa-equation-rational').fill('-5/3');
       await page.getByRole('button', { name: 'Valider', exact: true }).click();
       assert.match(await page.getByTestId('completion').innerText(), /Indépendant/);
-      assert.match(await page.getByText(/Solution vérifiée/).innerText(), /-5\/3/);
+      const checkedSolution = page.getByText(/Solution vérifiée/);
+      assert.equal(await checkedSolution.locator('.katex-mathml mfrac').count(), 1, 'the rational solution is rendered as a stacked fraction');
     });
     await page.screenshot({ path: dir + '/equation-rational-' + width + '.png', fullPage: true });
     await run('fractional equation shows term cancellation, coefficient division and exact substitution', async () => {
@@ -595,11 +596,12 @@ async function runAtWidth(width) {
       await page.getByRole('button', { name: 'Animer l’opération' }).click();
       assert.deepEqual(await page.getByTestId('equation-cancel-token').allInnerTexts(), ['-2', '÷ (-2)']);
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
-      assert.match(await page.getByTestId('equation-after').innerText(), /x = -5\/2/);
+      assert.equal(await page.getByTestId('equation-after').locator('.katex-mathml mfrac').count(), 1, 'fractional equation result is stacked');
       await page.getByRole('button', { name: 'Étape suivante' }).click();
       await page.getByRole('button', { name: 'Animer l’opération' }).click();
       assert.equal(await page.getByTestId('equation-cancel-token').count(), 0);
-      assert.ok((await page.getByTestId('equation-terms-left').locator('span').allInnerTexts()).includes('-2 × (-5/2)'));
+      assert.equal(await page.getByTestId('equation-terms-left').locator('[data-math-source="-2 × (-5/2)"]').count(), 1, 'fractional substitution remains exact and unchanged');
+      assert.equal(await page.getByTestId('equation-terms-left').locator('.katex-mathml mfrac').count(), 1, 'fractional substitution is vertically rendered');
       await page.getByRole('button', { name: 'Voir le résultat' }).click();
       assert.match(await page.getByTestId('equation-after').innerText(), /8 = 8/);
       assert.match(await page.getByTestId('equation-step-instruction').innerText(), /Ce qu’on obtient.*8 = 8/s);

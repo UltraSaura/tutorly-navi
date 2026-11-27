@@ -2,7 +2,7 @@ import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DndContext, PointerSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
-import katex from "katex";
+import { MathText, MathTextTree } from "@/components/math/MathText";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
 import { cn } from "@/lib/utils";
@@ -11,42 +11,12 @@ import { normalizeAngle } from "@/lib/quiz/visual-geometry";
 import { GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ManipulativeMathRenderer } from "@/components/manipulative-maths/ManipulativeMathRenderer";
-import { MathRenderer } from "@/components/math/MathRenderer";
 import { SliderQuestionView } from "./SliderQuestion";
 import { MatchQuestionView } from "./MatchQuestion";
 import { FillExprQuestionView } from "./FillExprQuestion";
 import { ColumnFillQuestionView } from "./ColumnFillQuestion";
 import { useLearningDragDrop } from "./useLearningDragDrop";
 import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
-
-// Renders text that may contain $...$ inline or $$...$$ display LaTeX.
-function MathText({ text, style }: { text: string; style?: React.CSSProperties }) {
-  const parts: { math: boolean; display: boolean; content: string }[] = [];
-  const re = /\$\$([^$]+)\$\$|\$([^$\n]+)\$/g;
-  let last = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    if (m.index > last) parts.push({ math: false, display: false, content: text.slice(last, m.index) });
-    if (m[1] !== undefined) parts.push({ math: true, display: true,  content: m[1] });
-    else                    parts.push({ math: true, display: false, content: m[2] });
-    last = m.index + m[0].length;
-  }
-  if (last < text.length) parts.push({ math: false, display: false, content: text.slice(last) });
-
-  return (
-    <span style={style}>
-      {parts.map((p, i) => {
-        if (!p.math) return <span key={i}>{p.content}</span>;
-        try {
-          const html = katex.renderToString(p.content, { throwOnError: false, displayMode: p.display });
-          return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
-        } catch {
-          return <span key={i}>{p.content}</span>;
-        }
-      })}
-    </span>
-  );
-}
 
 interface QuestionCardProps {
   question: Question;
@@ -630,66 +600,7 @@ function renderChoiceLabel(label: string) {
 }
 
 function InlineMathText({ text }: { text: string }) {
-  const segments = splitMathSegments(text);
-  const hasMath = segments.some((segment) => segment.type === "math");
-
-  if (!hasMath) {
-    return <>{text}</>;
-  }
-
-  return (
-    <>
-      {segments.map((segment, index) => {
-        if (segment.type === "math") {
-          return (
-            <MathRenderer
-              key={`math-${index}`}
-              latex={segment.value}
-              inline
-              className="inline-block align-middle"
-            />
-          );
-        }
-
-        return (
-          <span key={`text-${index}`} className="whitespace-pre-wrap">
-            {segment.value}
-          </span>
-        );
-      })}
-    </>
-  );
-}
-
-function splitMathSegments(text: string): Array<{ type: "text" | "math"; value: string }> {
-  const pattern = /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\])/g;
-  const matches = Array.from(text.matchAll(pattern));
-
-  if (matches.length === 0) {
-    return [{ type: "text", value: text }];
-  }
-
-  const segments: Array<{ type: "text" | "math"; value: string }> = [];
-  let cursor = 0;
-
-  for (const match of matches) {
-    const raw = match[0];
-    const start = match.index ?? 0;
-    const end = start + raw.length;
-
-    if (start > cursor) {
-      segments.push({ type: "text", value: text.slice(cursor, start) });
-    }
-
-    segments.push({ type: "math", value: raw });
-    cursor = end;
-  }
-
-  if (cursor < text.length) {
-    segments.push({ type: "text", value: text.slice(cursor) });
-  }
-
-  return segments;
+  return <MathText>{text}</MathText>;
 }
 
 function choiceState(
@@ -846,7 +757,7 @@ export function QuestionCard({
   };
 
   return (
-    <motion.div
+    <MathTextTree><motion.div
       className="max-w-md w-full rounded-2xl bg-white dark:bg-card shadow-xl p-3 sm:p-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -1390,7 +1301,7 @@ export function QuestionCard({
           </motion.button>
         </div>
       )}
-    </motion.div>
+    </motion.div></MathTextTree>
   );
 }
 

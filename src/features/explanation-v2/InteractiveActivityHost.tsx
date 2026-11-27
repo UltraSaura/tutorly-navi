@@ -9,6 +9,7 @@ import { LinearFunctionActivity } from './LinearFunctionActivity';
 import { LineFitActivity } from './LineFitActivity';
 import { EquationDecompositionActivity } from './EquationDecompositionActivity';
 import { MathDemonstration, fractionDemonstrationSteps } from './MathDemonstration';
+import { MathText, MathTextTree } from '@/components/math/MathText';
 
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
 type Props = {
@@ -104,7 +105,7 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
     const next = Math.min(3, p.phaseHints + 1);
     update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: p.phase === 2 ? ['Choisis des parts de même taille pour les deux fractions.', 'Réécris les deux fractions avec des parts de même taille, puis additionne les numérateurs.', 'Le résultat exact est ' + steps.total.numerator + '/' + steps.total.denominator + '.'][next - 1] : hints[next - 1], learningEvidence: { ...evidence, assisted: true, ...(p.phase >= 2 ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(next === 3 && p.phase >= 2 ? { disclosedItems: evidence.disclosedItems.includes('fraction-transfer') ? evidence.disclosedItems : [...evidence.disclosedItems, 'fraction-transfer'] } : {}) } });
   };
-  return <div className="space-y-4" data-testid="fraction-bar-activity">
+  return <MathTextTree><div className="space-y-4" data-testid="fraction-bar-activity">
     <button type="button" className={control} onClick={toggleDemo}>
       {showDemo ? 'Revenir à l’exercice' : 'Voir la démonstration pas à pas'}
     </button>
@@ -144,7 +145,7 @@ function FractionActivity({ spec, progress, onProgressChange, onComplete }: Prop
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
     {p.completed && <p className="font-semibold text-teal-800">{spec.transfer ? 'Transfert réussi sans aide.' : 'Activité réussie. Tu peux continuer la leçon.'}</p>}
     </>}
-  </div>;
+  </div></MathTextTree>;
 }
 function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Props & { spec: Extract<InteractiveActivitySpec, { kind: 'coordinate-plane' }> }) {
   const p = progress ?? initialActivityProgress();
@@ -191,7 +192,7 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
     update({ phaseHints: count, hintsUsed: p.hintsUsed + 1, feedback: messages[count - 1], learningEvidence: { ...evidence, assisted: true, ...(transferPhase ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(transferPhase && count === 3 && !evidence.disclosedItems.includes('coordinate-transfer') ? { disclosedItems: [...evidence.disclosedItems, 'coordinate-transfer'] } : {}) } });
   };
   const dot = graphToPixel(p.x, p.y);
-  return <div className="space-y-3" data-testid="coordinate-plane-activity">
+  return <MathTextTree><div className="space-y-3" data-testid="coordinate-plane-activity">
     <div className="space-y-2 rounded-xl bg-teal-50 p-3" data-testid="coordinate-instructions">
       <p className="text-sm font-bold text-teal-800">{transferPhase ? 'Transfert indépendant · Nouveau point' : guidance.step}</p>
       <p className="text-base leading-7 text-slate-800">{transferPhase ? 'Place le point B aux coordonnées (' + target.x + ' ; ' + target.y + '). Les coordonnées sont écrites dans l’ordre (abscisse ; ordonnée).' : guidance.context}</p>
@@ -228,14 +229,14 @@ function CoordinateActivity({ spec, progress, onProgressChange, onComplete }: Pr
     </div>}
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
     {p.completed && spec.transfer && <p className="font-semibold text-teal-800">Transfert réussi sans aide.</p>}
-  </div>;
+  </div></MathTextTree>;
 }
 export function InteractiveActivityHost(props: Props) {
   const parsed = InteractiveActivitySchema.safeParse(props.spec);
   if (!parsed.success) return <p role="alert">Cette activité interactive est indisponible : données mathématiques invalides.</p>;
   const spec = parsed.data;
   return <section className="rounded-2xl border border-teal-200 bg-white p-3 sm:p-5" aria-label={spec.title}>
-    <h3 className="mb-1 text-lg font-bold text-slate-900">{spec.title}</h3>
+    <h3 className="mb-1 text-lg font-bold text-slate-900"><MathText>{spec.title}</MathText></h3>
     {spec.schoolLevel && <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-teal-800">Niveau {spec.schoolLevel}</p>}
     {spec.kind === 'fraction-bar'
       ? <FractionActivity {...props} spec={spec} />

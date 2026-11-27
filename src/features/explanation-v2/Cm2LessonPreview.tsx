@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { cm2FractionLesson } from './cm2FractionLesson';
 import { InteractiveActivityHost } from './InteractiveActivityHost';
 import type { ActivityProgress } from './activityContract';
+import { MathText, MathTextTree } from '@/components/math/MathText';
 
 function FractionEquivalenceVisual() {
   return <div className="space-y-3 rounded-xl border border-teal-200 bg-white p-3" role="img" aria-label="La moitié coloriée dans une barre partagée en deux représente la même quantité que deux quarts coloriés dans la même barre partagée en quatre">
@@ -12,7 +13,7 @@ function FractionEquivalenceVisual() {
       <span className="text-center text-xl font-bold" aria-hidden="true">=</span>
       <div><p className="mb-1 text-sm font-semibold">2 quarts sur 4</p><div className="flex h-10 w-full overflow-hidden rounded border-2 border-teal-800"><span className="flex-1 border-r border-teal-800 bg-teal-400" /><span className="flex-1 border-r border-teal-800 bg-teal-400" /><span className="flex-1 border-r border-teal-800 bg-white" /><span className="flex-1 bg-white" /></div></div>
     </div>
-    <p className="text-center font-bold">1/2 = 2/4</p>
+    <p className="text-center font-bold"><MathText>{'\\(\\frac{1}{2}=\\frac{2}{4}\\)'}</MathText></p>
   </div>;
 }
 
@@ -24,7 +25,7 @@ export function Cm2LessonPreview({ onExit }: { onExit: () => void }) {
   const canContinue = !isActivity || progress[block.id]?.completed === true;
   const complete = step === cm2FractionLesson.sequence.length - 1;
   const reset = () => { setStep(0); setProgress({}); };
-  return <section className="space-y-4" data-testid="cm2-lesson-preview">
+  return <MathTextTree><section className="space-y-4" data-testid="cm2-lesson-preview">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div>
         <p className="text-sm font-bold text-teal-800">Parcours CM2 · Fractions</p>
@@ -68,5 +69,5 @@ export function Cm2LessonPreview({ onExit }: { onExit: () => void }) {
       className="min-h-12 w-full rounded-xl bg-teal-600 px-5 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
     >{canContinue ? 'Continuer' : 'Termine cette activité pour continuer'}</button>}
     <p className="text-xs text-slate-500">Simulation sans compte ni sauvegarde. Le lecteur de leçons réel est vérifié séparément.</p>
-  </section>;
+  </section></MathTextTree>;
 }

@@ -1,5 +1,6 @@
 import type { DragEvent } from 'react';
 import { initialActivityProgress, learningEvidence, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
+import { MathTextTree } from '@/components/math/MathText';
 
 type Spec = Extract<InteractiveActivitySpec, { kind: 'algebra-tiles' }>;
 type Props = { spec: Spec; progress?: ActivityProgress; onProgressChange: (p: ActivityProgress) => void; onComplete: (result: { independent: boolean; attempts: number; hintsUsed: number }) => void };
@@ -61,7 +62,7 @@ export function AlgebraTilesActivity({ spec, progress, onProgressChange, onCompl
     const next = p.phaseHints + 1;
     update({ phaseHints: next, hintsUsed: p.hintsUsed + 1, feedback: hints[next - 1], learningEvidence: { ...evidence, assisted: true, ...(transferPhase ? { transferHintsUsed: evidence.transferHintsUsed + 1 } : {}), ...(transferPhase && next === 3 && !evidence.disclosedItems.includes('algebra-tiles-transfer') ? { disclosedItems: [...evidence.disclosedItems, 'algebra-tiles-transfer'] } : {}) } });
   };
-  return <div className="space-y-4" data-testid="algebra-tiles-activity">
+  return <MathTextTree><div className="space-y-4" data-testid="algebra-tiles-activity">
     <p className="rounded-xl bg-teal-50 p-3 leading-7">Une tuile longue représente <b>x</b>, une quantité inconnue. Un petit carré représente <b>1</b>. Ainsi, <b>2x = x + x</b> : deux copies de la même quantité. Glisse les tuiles dans la zone ou touche les boutons pour les ajouter.</p>
     <p className="font-bold" data-testid="algebra-target">{p.phase === 1 ? 'Question : que signifie 2x ?' : 'Construis l’expression ' + x + 'x + ' + units + '.'}</p>
     {p.phase === 1 ? <div className="grid gap-2" role="group" aria-label="Signification du coefficient 2">
@@ -89,5 +90,5 @@ export function AlgebraTilesActivity({ spec, progress, onProgressChange, onCompl
     </>}
     <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (p.correct === false ? 'text-amber-800' : 'text-teal-800')}>{p.feedback}</p>
     {p.completed && <p className="font-semibold text-teal-800">{spec.transfer ? 'Transfert réussi sans aide.' : 'Activité terminée.'}</p>}
-  </div>;
+  </div></MathTextTree>;
 }

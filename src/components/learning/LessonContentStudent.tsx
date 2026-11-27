@@ -12,6 +12,7 @@ import { useGenerateLessonContent } from '@/hooks/useGenerateLessonContent';
 import { LessonV2Player } from '@/components/learning/LessonV2Player';
 import { LessonV21Path } from '@/components/learning/LessonV21Path';
 import { parseLessonContent, parseLessonV21 } from '@/types/lesson-generator';
+import { MathTextTree } from '@/components/math/MathText';
 
 interface LessonContentStudentProps {
   topicId: string;
@@ -114,7 +115,7 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
   }
 
   return (
-    <div id="lesson-section" className="space-y-6">
+    <MathTextTree><div id="lesson-section" className="space-y-6">
       {/* Explanation */}
       <Card>
         <CardHeader>
@@ -197,6 +198,6 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
       )}
 
       <Separator />
-    </div>
+    </div></MathTextTree>
   );
 }

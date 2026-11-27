@@ -3,6 +3,7 @@ import { discloseLearningItem, initialActivityProgress, learningEvidence, type A
 import { equationSteps, parseRational, rationalText, satisfiesEquation, solutionOf, type EquationTransformation } from './equationSolver';
 import { equationTermVisual, type EquationTermToken } from './equationTermVisual';
 import { equationStepInstruction } from './equationStepInstruction';
+import { MathTextTree } from '@/components/math/MathText';
 import './equationAnimations.css';
 
 type Spec = Extract<InteractiveActivitySpec, { kind: 'equation-decomposition' }>;
@@ -17,14 +18,15 @@ const control = 'min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 
 const action = 'min-h-11 rounded-xl bg-teal-600 px-5 py-2 font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-900 disabled:opacity-50';
 
 function TermTokens({ tokens, side }: { tokens: EquationTermToken[]; side: 'left' | 'right' }) {
-  return <div data-testid={'equation-terms-' + side} className="flex min-h-12 flex-wrap items-center justify-center gap-1.5">
+  return <MathTextTree><div data-testid={'equation-terms-' + side} className="flex min-h-12 flex-wrap items-center justify-center gap-1.5">
     {tokens.map(item => <span key={item.key}
       data-testid={item.role === 'cancel' ? 'equation-cancel-token' : item.role === 'combine' ? 'equation-combine-token' : undefined}
+      data-math-source={item.text}
       aria-label={item.role === 'cancel' ? 'Terme annulé : ' + item.text : item.role === 'combine' ? 'Terme à regrouper : ' + item.text : undefined}
       className={'equation-term equation-term--' + item.role + ' inline-flex min-h-10 items-center rounded-md border px-2 py-1 text-base font-bold sm:text-lg'}>
       {item.text}
     </span>)}
-  </div>;
+  </div></MathTextTree>;
 }
 
 function TransformationVisual({ step, stage }: { step: EquationTransformation; stage: 0 | 1 | 2 }) {
@@ -172,7 +174,7 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
   // Rotate the correct choice by step so the learner cannot pass by always tapping the same position.
   const offset = (guidedIndex + 2) % options.length;
   const choices = [...options.slice(offset), ...options.slice(0, offset)];
-  return <div data-testid="equation-decomposition-activity" className="mx-auto max-w-3xl space-y-4">
+  return <MathTextTree><div data-testid="equation-decomposition-activity" className="mx-auto max-w-3xl space-y-4">
     <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1" aria-label="Mode d’apprentissage">
       <button type="button" className={'min-h-11 rounded-lg px-1 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 ' + (mode === 'understand' ? 'bg-white text-teal-900 shadow-sm' : 'text-slate-600')} aria-label="Comprendre" aria-pressed={mode === 'understand'} onClick={() => chooseMode('understand')}>Comprendre</button>
       <button type="button" className={'min-h-11 rounded-lg px-1 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 ' + (mode === 'together' ? 'bg-white text-teal-900 shadow-sm' : 'text-slate-600')} aria-label="Résoudre ensemble" aria-pressed={mode === 'together'} onClick={() => chooseMode('together')}>Ensemble</button>
@@ -261,5 +263,5 @@ export function EquationDecompositionActivity({ spec, progress, onProgressChange
       <p role="status" aria-live="polite" className={'min-h-7 text-sm font-semibold ' + (modes.soloCorrect === false ? 'text-amber-800' : 'text-teal-800')}>{modes.soloFeedback}</p>
     </section>}
     {p.completed && (mode !== 'together' || modes.guidedCompleted) && <p className="font-semibold text-teal-800">Activité terminée. Tu peux continuer la leçon.</p>}
-  </div>;
+  </div></MathTextTree>;
 }

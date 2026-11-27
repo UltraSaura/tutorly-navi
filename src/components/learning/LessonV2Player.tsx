@@ -9,6 +9,7 @@ import { QuestionCard } from './QuestionCard';
 import type { Question } from '@/types/quiz-bank';
 import { InteractiveActivityHost } from '@/features/explanation-v2/InteractiveActivityHost';
 import type { ActivityProgress } from '@/features/explanation-v2/activityContract';
+import { MathTextTree } from '@/components/math/MathText';
 
 type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void };
 
@@ -113,13 +114,13 @@ function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) 
 function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'concept' }> }) {
   const compactPoint = (point: { label: string; text: string }) => point.text.trim().length <= 64 && point.label.trim().length <= 28;
   return (
-    <div className="space-y-3" data-concept-presentation>
+    <MathTextTree><div className="space-y-3" data-concept-presentation>
       {block.visual && (
         <PedagogicalVisual block={{ ...block, visual: block.visual, showText: false }} />
       )}
       <p className="max-w-2xl text-left text-base leading-7 text-[#344054]">{block.content}</p>
       {block.representation && (
-        <div className="rounded-xl border border-[#D8E1F0] bg-white px-4 py-2.5 text-left font-semibold text-[#3448A5]">
+        <div data-testid={block.id === 'cm2-conclusion' ? 'cm2-conclusion-math' : undefined} className="rounded-xl border border-[#D8E1F0] bg-white px-4 py-2.5 text-left font-semibold text-[#3448A5]">
           {block.representation}
         </div>
       )}
@@ -145,7 +146,7 @@ function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'c
           <p className="text-base font-semibold leading-6 text-[#111827]">{block.takeaway}</p>
         </div>
       )}
-    </div>
+    </div></MathTextTree>
   );
 }
 
@@ -239,7 +240,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
 
   if (!prerequisitesPassed) {
     return (
-      <div className="flex h-full flex-col bg-background">
+      <MathTextTree><div className="flex h-full flex-col bg-background">
         <div className="flex-1 overflow-y-auto p-4">
           <div className="mb-6">
             <div className="h-2 rounded-full bg-muted">
@@ -320,14 +321,14 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
             </button>
           </div>
         </div>}
-      </div>
+      </div></MathTextTree>
     );
   }
 
   if (!block) return <div className="p-6 text-center">Cette leçon ne contient aucun contenu valide.</div>;
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <MathTextTree><div className="flex h-full flex-col bg-background">
       <div className="flex-1 overflow-y-auto p-4">
         <div className="mb-4">
           <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -412,6 +413,6 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
           )}
         </div>
       </div>
-    </div>
+    </div></MathTextTree>
   );
 }
