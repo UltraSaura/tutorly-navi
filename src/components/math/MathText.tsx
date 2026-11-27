@@ -116,7 +116,7 @@ export function MathFormula({
 /** Adds safe math rendering to visible text descendants without touching values/attributes. */
 export function MathTextTree({ children }: { children: ReactNode }) {
   const visit = (node: ReactNode, key: string): ReactNode => {
-    if (typeof node === 'string' && /(?:\d+\s*\/\s*\d+|\\(?:d?frac)\{)/.test(node)) {
+    if (typeof node === 'string' && /(?:[+-]?\d+\s*\/\s*\d+|\\(?:d?frac)\{)/.test(node)) {
       return <MathText key={key}>{node}</MathText>;
     }
     if (Array.isArray(node)) return node.map((child, index) => visit(child, `${key}-${index}`));

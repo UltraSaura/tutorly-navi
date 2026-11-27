@@ -166,7 +166,113 @@ All seven kinds share the **versioned** `InteractiveActivitySchema` and `Interac
 }
 ```
 
-The same envelope ac…8763 tokens truncated…fied. | REUSABLE WITH ADAPTER — hints/outcomes exist; no shared misconception selector. |
+The same envelope accepts any of the other six validated kinds, replacing the `kind` and required parameters. A block is part of a complete **V2.0** lesson `sequence`, not a standalone lesson document.
+
+### Copyable component use in a future Practice or Explanation adapter
+
+```tsx
+const [progress, setProgress] = useState(initialActivityProgress());
+<InteractiveActivityHost
+  spec={validatedSpec}
+  progress={progress}
+  onProgressChange={setProgress}
+  onComplete={({ independent, attempts, hintsUsed }) => {
+    // Parent product decides whether/how to persist analytics and advance.
+  }}
+/>
+```
+
+Validate `validatedSpec` with `InteractiveActivitySchema.safeParse` **before** publishing. Do not trust generated JSON or pass raw unvalidated teacher input into production. The host also performs a safe validation check and displays an error if invalid. For real usage, the parent owns persistence, authorization, navigation and scoring.
+
+## 5. Code map — where everything sits
+
+### Core feature (all paths relative to repository root)
+
+| Module | Responsibility |
+|---|---|
+| `src/features/explanation-v2/activityContract.ts` | Zod schema, seven `kind` discriminators, state shape and initial progress |
+| `src/features/explanation-v2/InteractiveActivityHost.tsx` | Validates and routes the seven activity kinds; also renders fraction addition and coordinate placement |
+| `src/features/explanation-v2/FractionSelectActivity.tsx` | Selectable fraction parts |
+| `src/features/explanation-v2/AlgebraTilesActivity.tsx` | Drag/tap algebra manipulatives |
+| `src/features/explanation-v2/LineGraph.tsx` | Shared SVG graph, draggable slope and intercept handles, plotted points |
+| `src/features/explanation-v2/MathDemonstration.tsx` | Reusable step-by-step explanation and visual demonstrations, derived fraction script |
+| `src/features/explanation-v2/LinearFunctionActivity.tsx` | Affine function demonstration / exploration / challenge modes, live equation, +/- controls |
+| `src/features/explanation-v2/LineFitActivity.tsx` | Data-fitting task, sliders, live squared-error and regression comparison |
+| `src/features/explanation-v2/equationSolver.ts` | Exact linear-equation decomposition, rational normalization, equivalence and substitution checks |
+| `src/features/explanation-v2/equationTermVisual.ts` | Derived left/right cancellation token storyboard with explicit inverse pairs, grouping and substitution |
+| `src/features/explanation-v2/EquationDecompositionActivity.tsx` | Three-mode worked equation animation and guided/solo response UI |
+| `src/features/explanation-v2/equationAnimations.css` | Original transformation reveal, term-level cancellation/combination, reduced-motion support |
+| `src/features/explanation-v2/math.ts` | Exact rational math, coordinate transforms, strict grading, linear regression and squared error |
+| `src/features/explanation-v2/pedagogicalQuestions.ts` | Structured, level-conscious question wording for fraction/coordinate tasks |
+| `src/features/explanation-v2/cm2FractionLesson.ts` | Self-contained sample V2.0 lesson (not published) |
+| `src/features/explanation-v2/Cm2LessonPreview.tsx` | Five-step simulated CM2 lesson with completion gating |
+| `src/pages/dev/ExplanationV2MathLab.tsx` | Seven-kind developer lab and CM2 preview switch |
+| `src/features/explanation-v2/demo-entry.tsx` + `demo.html` | Standalone Vercel preview without router, login or DB |
+| `src/features/explanation-v2/qa-entry.tsx` | Isolated browser QA harness |
+| `src/features/explanation-v2/qa-player-entry.tsx` | Real `LessonV2Player` QA fixture |
+| `src/features/explanation-v2/previewAccess.ts` | Guards dev-only preview route to development/preview hostnames |
+
+### Existing app integration points
+
+| Existing module | Actual connection |
+|---|---|
+| `src/types/lesson-generator.ts` | `LessonBlockSchema` accepts `type: 'interactive_activity'` with `InteractiveActivitySchema` in **V2.0** |
+| `src/components/learning/LessonV2Player.tsx` | Renders `InteractiveActivityHost`, holds per-block progress while mounted, gates Continue |
+| `src/App.tsx` | Dev/preview-host route `/dev/explanation-v2-math` |
+| `vite.config.ts` | Builds `demo.html` alongside the app |
+| `vercel.json` | Preview-route rewrite |
+| `src/pages/practice/PracticePage.tsx` and Practice session pages | **Not connected** to this new activity host |
+| Existing homework explanation / Universal Tutor | **Not connected** to this new activity host |
+
+### Existing visuals vs interactive activities
+
+`src/types/lesson-generator.ts` also defines a **different** `VisualSchema` for visual representations (`clock`, `timeline`, `number_line`, `fraction_bar`, `fraction_circle`, `triangle`, `rectangle`, `circle`, `polygon`, `angle`, `symmetry`, `coordinate_plane`, `geometric_solid`, `solid_section`, `measurement`, `unit_conversion`, `groups`, `comparison`, `part_whole`, `table`, `equation`, `diagram`, `sequence`). These are **visual schema categories, not the six new interactive `kind` implementations**. A visual block must not be silently treated as a manipulable exercise. The existing `PedagogicalVisual` component and other older animations need their own separate inventory/audit.
+
+## 6. Student experience and activity-selection guidance
+
+**Mandatory question quality** (see `docs/EXPLANATION_V2_QUESTION_QUALITY.md`):
+1. Show a meaningful visual and context before asking for input.
+2. Ask **one concrete, grade-appropriate question** at a time.
+3. Explain how to respond (tap, drag, type, slider) and in which format.
+4. Give targeted wrong-answer feedback, then progressive hints.
+5. Allow retries and preserve local progress; celebrate completion without overclaiming mastery.
+6. Make mobile/touch and keyboard alternatives available, and use accessible status announcements.
+
+**Choosing a component:**
+- “Color 3/4 of a whole” → `fraction-select`.
+- “Why does 1/2 equal 2/4? Add quarters” → `fraction-bar` (within current denominator limits).
+- “Place A(2;3) / understand axes” → `coordinat…5763 tokens truncated…
+Exact branch folders: [practice components](https://github.com/UltraSaura/tutorly-navi/tree/a57846c388c904fff15bc374a13afa06f0d9f6db/src/components/practice), [feature logic](https://github.com/UltraSaura/tutorly-navi/tree/a57846c388c904fff15bc374a13afa06f0d9f6db/src/features/practice), [pages](https://github.com/UltraSaura/tutorly-navi/tree/a57846c388c904fff15bc374a13afa06f0d9f6db/src/pages/practice). Branch contains activity/page/editor families. Main/integration does not have these new paths. Tests are present in source, not executed here.
+
+| ID | Exact component / logic / page sources | Objective, prerequisites, validation |
+|---|---|---|
+| GP-ARITHMETIC-QUIZ | ArithmeticQuizActivity.tsx; features/practice/arithmeticQuiz.ts; AddUpTo100Page.tsx; ArithmeticQuizEditor.tsx | Targeted arithmetic retrieval; prerequisites depend on deck. Logic tests exist. |
+| GP-ADD-ACROSS-TEN | AdditionAcrossTenModel.tsx; features/practice/additionAcrossTen.ts; AdditionAcrossTenPage.tsx | Addition across ten with concrete grouping; counting/place-value prerequisite. Tests exist. |
+| GP-COUNTABLE-DOTS | CountableDotModel.tsx; features/practice/countingExercise.ts | One-to-one counting and quantity; model/logic tests exist. |
+| GP-COUNTABLE-OBJECTS | CountableObjectModel.tsx; features/practice/countingExercise.ts | Concrete collection counting; tests exist. |
+| GP-SUBTRACTION-DOTS | SubtractionWithDotsModel.tsx; features/practice/subtractionWithDots.ts; SubtractionWithDotsPage.tsx | Subtraction as remove/count remaining; counting prerequisite. Tests exist. |
+| GP-COORDINATES | CoordinatePlaneActivity.tsx; CoordinateQuestion.tsx; features/practice/coordinatePlane.ts; CoordinatePlanePage.tsx; CoordinatePlaneEditor.tsx | Read/place ordered pairs; axes prerequisite. Tests and browser scenario are source-only here. |
+| GP-EQUAL-GROUPS | EqualGroupsTransfer.tsx; features/practice/equalGroupsFeedback.ts | Equal groups/repeated addition as multiplication precursor. Helper tests exist. |
+| GP-GUIDED-FAMILIES | GuidedFamilyActivity.tsx; features/practice/guidedFamilies.ts; GuidedFamiliesPracticePage.tsx; GuidedFamilyEditor.tsx | Practice related number/arithmetic families; typed family schema, tests exist. |
+| GP-VISUAL-QUIZ | VisualQuizActivity.tsx; features/practice/visualQuiz.ts; VisualQuizEditor.tsx | Match/answer authored visual quiz items; schema tied to visual kind. Tests exist. |
+| GP-FLASHCARDS | features/practice/flashcardPractice.ts; FlashcardPracticePage.tsx | Retrieval practice; spacing/mastery relation needs validation before adaptive use. Test exists. |
+| GP-MENTAL-RACE | features/practice/mentalCalculationRace.ts; MentalCalculationRacePage.tsx | Timed mental calculation. Avoid for remediation unless learner/teacher policy allows. Test exists. |
+| GP-NUMBERS-AFTER-TEN | features/practice/numbersAfterTen.ts; NumbersAfterTenPage.tsx | Sequence/place value past ten. Test exists. |
+| GP-ONE-HOUR-LATER | features/practice/oneHourLater.ts; OneHourLaterPracticePage.tsx | Time arithmetic on clock/time concepts. Test exists. |
+| GP-NUMBER-LINE | GraduatedNumberLineActivity.tsx; numberLineActivities.ts; numberLineUtils.ts; numberLineFeedback.ts; numberLineSupport.ts; GraduatedNumberLinePage.tsx | Place values/fractions/decimals with graduated line; drag plus keyboard/button paths, retry and targeted hints. Existing in main; feature branch adds helper tests. Static Learn renderer and interactive practice activity remain separate. |
+| GP-CATALOGUE-HELPERS | features/practice/exerciseCurriculum.ts; exerciseCataloguePolicy tests; materializeArithmeticDeck.ts; addUpTo100.ts | Catalogue policy, curriculum metadata and deck materialization; infrastructure rather than standalone teaching UI. |
+
+## D.03 — Cross-application integration matrix
+
+Statuses describe availability in the audited main/application surface. Feature branch sources remain isolated unless explicitly noted.
+
+| Module family | Tutor | Learn | Practice | Teacher/Admin | Adaptive remediation |
+|---|---|---|---|---|---|
+| TwoCards / CompactMathStepper | INTEGRATED — TwoCards imports/renders CompactMathStepper for supported examples. | REQUIRES DEVELOPMENT — no V2 lesson-block adapter. | REUSABLE WITH ADAPTER — mini-practice contract exists, no universal targeted catalogue adapter. | NOT VERIFIED — no authoring path verified. | REUSABLE WITH ADAPTER — existing explanation hints/check contract only. |
+| PedagogicalVisual / LessonVisualBlock | REQUIRES DEVELOPMENT — no Tutor call site verified. | INTEGRATED — LessonV2Player renders both. | REUSABLE WITH ADAPTER — visual prompt only where practice schema accepts it. | REUSABLE WITH ADAPTER — selected visual editors exist, not full kind coverage. | REUSABLE WITH ADAPTER — only validated visual data and kind. |
+| LessonV2Player / LessonV21Path | REQUIRES DEVELOPMENT — no Tutor homework bridge verified. | INTEGRATED — exact paths above; progression and mastery callbacks exist. | INTEGRATED for lesson-contained practice only; does not imply all practice routes use it. | INTEGRATED — GeneratedLessonsPage and StagingLessonVersionPanel review flows. | REUSABLE WITH ADAPTER — lesson prerequisites/remediation hints; cross-session adaptive selector not verified. |
+| Number line | REQUIRES DEVELOPMENT | INTEGRATED for static visual; drag activity not verified inside LessonV2Player. | INTEGRATED — GraduatedNumberLinePage and GraduatedNumberLineActivity. | REUSABLE WITH ADAPTER — config exists; parameter authoring not fully verified. | REUSABLE WITH ADAPTER — feedback/support helpers need shared misconception contract. |
+| Seven V2 activities | REQUIRES DEVELOPMENT for Tutor; do not assume UniversalTutor compatibility. | INTEGRATED on accepted branch through LessonV2Player activity rendering and InteractiveActivityHost; Task C player tests. | REUSABLE WITH ADAPTER — independent challenges exist; catalogue integration not verified. | REQUIRES DEVELOPMENT — no V2 editor authoring verified. | REUSABLE WITH ADAPTER — hints/outcomes exist; no shared misconception selector. |
 | feature/stuwy-explain-v2 modules | IMPLEMENTED BUT ISOLATED at cec2b07; absent from main/integration. | REQUIRES DEVELOPMENT | REQUIRES DEVELOPMENT | REQUIRES DEVELOPMENT; teacher engine is logic, not editor | REQUIRES DEVELOPMENT pending runtime and evidence integration |
 | guided-practice feature families | REQUIRES DEVELOPMENT for Tutor | REUSABLE WITH ADAPTER if lesson block schema can represent them; no current adapter verified | IMPLEMENTED BUT ISOLATED at a57846c, except number-line family already on main | IMPLEMENTED BUT ISOLATED for new arithmetic/coordinate/family/visual editors | REUSABLE WITH ADAPTER after common skill/error semantics; no adaptive routing verified |
 | Main admin visual/quiz tools | NOT VERIFIED | REQUIRES DEVELOPMENT for editor-to-player preview proof | REUSABLE WITH ADAPTER for current quiz schemas | INTEGRATED through admin learning/visual-editor paths | REQUIRES DEVELOPMENT |
@@ -318,7 +424,7 @@ The residual “explain why signed values cancel” question is EVAL-09 / IM-06 
 
 **Mandatory student-facing standard:** display fractions vertically, with the numerator above the denominator and a horizontal bar. New generated lesson content should use explicit LaTeX, preferably `\\frac{n}{d}` in inline text and `\\dfrac{n}{d}` when a larger display fraction improves readability. Multi-step arithmetic should use a display equation with coherent aligned rows when a mobile line would otherwise become too wide. Supported authoring syntax also includes powers (`x^{2}`), roots (`\\sqrt{...}`), negative values, operators (`\\times`, `\\div`, `\\pm`), parentheses, equations and aligned calculations. Display syntax is presentation only: validators, answer inputs and exact rational grading continue using their existing contracts. Never interpret arbitrary HTML or unsafe TeX commands.
 
-**Implementation paths:** `src/components/math/MathText.tsx` is the shared safe KaTeX boundary. It renders explicit `$...$`, `$$...$$`, `\\(...\\)`, `\\[...\\]` plus backward-compatible simple numeric `n/d` fractions in text. URL/path/date and explicitly named ratio contexts are preserved. Inputs, option values and code blocks are not rewritten. `MathTextTree` visits native elements and React fragments, but not custom components, SVG text or values; components that compose numerator/denominator as sibling nodes must wrap the complete sentence/expression in `MathText`, because separate nodes cannot safely be joined. `src/components/math/MathRenderer.tsx` delegates existing math-only call sites to the same renderer. `MathTextTree` is applied to the V2 player, concept and visual blocks, legacy lesson content, V2.1 level titles/goals, QuestionCard, and the interactive math lab/activities. CM2 authoring now uses explicit fraction markup and an aligned calculation in `src/features/explanation-v2/cm2FractionLesson.ts`; `LessonV2Player` tags its conclusion and the simulated CM2 preview tags its completion summary for browser checks. Practice prompts use QuestionCard; Tutor math-only content can use MathRenderer. No stored lesson data or answer grading schema was changed.
+**Implementation paths:** `src/components/math/MathText.tsx` is the shared safe KaTeX boundary. It renders explicit `$...$`, `$$...$$`, `\\(...\\)`, `\\[...\\]` plus backward-compatible simple numeric `n/d` fractions in text. URL/path/date and explicitly named ratio contexts are preserved. Inputs, option values and code blocks are not rewritten. `MathTextTree` visits native elements and React fragments, but not custom components, SVG text or values; components that compose numerator/denominator as sibling nodes must wrap the complete sentence/expression in `MathText`, because separate nodes cannot safely be joined. `src/components/math/MathRenderer.tsx` delegates existing math-only call sites to the same renderer. `MathTextTree` is applied to the V2 player, concept and visual blocks, legacy lesson content, V2.1 level titles/goals, QuestionCard, `AIResponse` Tutor text containing fractions, and the interactive math lab/activities. CM2 authoring now uses explicit fraction markup and an aligned calculation in `src/features/explanation-v2/cm2FractionLesson.ts`; `LessonV2Player` tags its conclusion and the simulated CM2 preview tags its completion summary for browser checks. Practice prompts use QuestionCard. No stored lesson data or answer grading schema was changed.
 
 **Evidence / limits:** focused renderer + lesson tests: 23/23 pass locally; TypeScript passes; focused lint reports 0 errors and 4 existing Fast Refresh warnings; production build passes with the repository's existing asset/chunk warnings. These are local results only until hosted workflow completes. Existing legacy contents with ambiguous bare `n/d` may be rendered as fractions; use explicit math delimiters for ratios. The separately implemented `ManipulativeMathRenderer`, any V2.1 content rendered outside `LessonV2Player`, other branch-specific apps, and any teacher/admin preview outside these shared paths need coverage in hosted QA and teacher review. Teacher/admin compatibility is not claimed solely from sharing the renderer. The required five viewport widths, actual lesson path, and before/after screenshots are pending the hosted run. No teacher approval is implied.
 

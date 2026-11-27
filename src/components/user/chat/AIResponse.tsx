@@ -2,6 +2,7 @@ import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { memo, useMemo, useState, useCallback } from 'react';
 import { Calculator, CheckCircle2, Send, Trash2, X, XCircle } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
+import { MathTextTree } from '@/components/math/MathText';
 import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,9 @@ interface ExerciseCardProps {
 
 // Inline helper to render text that may contain math
 const MathText = ({ text, className }: { text: string; className?: string }) => {
+  if (/(?:\d+\s*\/\s*\d+|\\(?:d?frac)\{)/.test(text)) {
+    return <MathTextTree><span className={className}>{text}</span></MathTextTree>;
+  }
   if (!containsMathContent(text)) return <span className={className}>{text}</span>;
   const { prefix, latex } = textToMathDisplay(text);
   return (

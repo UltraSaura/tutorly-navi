@@ -57,11 +57,13 @@ async function runAtWidth(width) {
       await page.getByTestId('math-demonstration').waitFor();
       assert.match(await page.getByTestId('demo-progress').innerText(), /1 sur 4/);
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
-      assert.match(await page.getByTestId('demo-equation').innerText(), /1\/2 = 2\/4/);
+      const demoEquation = page.getByTestId('demo-equation');
+      assert.equal(await demoEquation.locator('.katex-mathml mfrac').count(), 2, 'equivalent fractions are vertically rendered');
+      assert.doesNotMatch(await demoEquation.locator('.katex-html').innerText(), /\\frac/);
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
-      assert.match(await page.getByTestId('demo-equation').innerText(), /5\/4/);
+      assert.equal(await page.getByTestId('demo-equation').locator('.katex-mathml mfrac').count(), 3, 'fraction addition keeps all three stacked fractions');
       await page.getByRole('button', { name: 'Voir l’étape suivante' }).click();
-      assert.match(await page.getByTestId('demo-equation').innerText(), /1 \+ 1\/4/);
+      assert.equal(await page.getByTestId('demo-equation').locator('.katex-mathml mfrac').count(), 2, 'mixed-number result keeps its stacked fraction');
       await page.getByRole('button', { name: 'Revenir à l’exercice' }).first().click();
       assert.equal(await page.locator('#fraction-answer-qa-fraction').inputValue(), '3');
       assert.equal(await page.getByTestId('completion').count(), 0);

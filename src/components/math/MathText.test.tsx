@@ -36,6 +36,14 @@ describe('shared mathematical display', () => {
     expect(html.slice(html.indexOf('class="katex-html">'))).not.toContain('\\frac');
   });
 
+  it('renders negative legacy fractions even when separated into React text nodes', () => {
+    const solution = '-5/2';
+    const html = renderToStaticMarkup(<MathTextTree><p>Solution vérifiée : x = {solution}</p></MathTextTree>);
+    expect(html).toContain('<mfrac>');
+    expect(html).toContain('<mo>−</mo>');
+    expect(html).toContain('<mn>5</mn>');
+  });
+
   it('keeps raw HTML inert and renders an aligned display formula', () => {
     const html = renderToStaticMarkup(<MathFormula latex={'\\begin{aligned}\\frac{3}{4}\\\\&=\\frac{5}{4}\\end{aligned}'} />);
     expect(html).toContain('<mfrac>');
