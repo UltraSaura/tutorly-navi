@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Lightbulb, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLearner } from '@/context/FamilyProfileContext';
@@ -7,6 +7,9 @@ import type { LessonBlock, LessonV2 } from '@/types/lesson-generator';
 import { PedagogicalVisual } from './PedagogicalVisual';
 import { QuestionCard } from './QuestionCard';
 import type { Question } from '@/types/quiz-bank';
+import { InteractiveActivityHost } from '@/features/explanation-v2/InteractiveActivityHost';
+import type { ActivityProgress } from '@/features/explanation-v2/activityContract';
+import { MathTextTree } from '@/components/math/MathText';
 
 type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void };
 
@@ -46,7 +49,17 @@ function responseChoices(question: { choices?: string[]; correct_answer?: unknow
   return [...new Set(candidates)];
 }
 
-function practiceQuestion(question: any): Question | null {
+function practiceQuestion(question: {
+  id?: unknown;
+  question?: unknown;
+  answer_type?: unknown;
+  choices?: unknown;
+  correct_answer?: unknown;
+  answerUnit?: string;
+  answer_unit?: string;
+  targetUnit?: string;
+  target_unit?: string;
+}): Question | null {
   const base = {
     id: String(question.id),
     prompt: String(question.question),
@@ -111,13 +124,13 @@ function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) 
 function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'concept' }> }) {
   const compactPoint = (point: { label: string; text: string }) => point.text.trim().length <= 64 && point.label.trim().length <= 28;
   return (
-    <div className="space-y-3" data-concept-presentation>
+    <MathTextTree><div className="space-y-3" data-concept-presentation>
       {block.visual && (
         <PedagogicalVisual block={{ ...block, visual: block.visual, showText: false }} />
       )}
       <p className="max-w-2xl text-left text-base leading-7 text-[#344054]">{block.content}</p>
       {block.representation && (
-        <div className="rounded-xl border border-[#D8E1F0] bg-white px-4 py-2.5 text-left font-semibold text-[#3448A5]">
+        <div data-testid={block.id === 'cm2-conclusion' ? 'cm2-conclusion-math' : undefined} className="rounded-xl border border-[#D8E1F0] bg-white px-4 py-2.5 text-left font-semibold text-[#3448A5]">
           {block.representation}
         </div>
       )}
@@ -143,7 +156,7 @@ function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'c
           <p className="text-base font-semibold leading-6 text-[#111827]">{block.takeaway}</p>
         </div>
       )}
-    </div>
+    </div></MathTextTree>
   );
 }
 
@@ -161,9 +174,12 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   const [timeParts, setTimeParts] = useState({ hours: '', minutes: '', seconds: '' });
   const [prerequisiteResult, setPrerequisiteResult] = useState<boolean | null>(null);
   const [prerequisitesPassed, setPrerequisitesPassed] = useState(false);
+  const [activityProgressById, setActivityProgressById] = useState<Record<string, ActivityProgress>>({});
+  const completedActivityBlocks = useRef(new Set<string>());
   const block = lesson.sequence[index];
   useEffect(() => { onSequencePosition?.(index); }, [index, onSequencePosition]);
-  const required = block?.type === 'student_try' || block?.type === 'feedback_checkpoint' || block?.type === 'mastery_check' || block?.type === 'prediction';
+  const required = block?.type === 'student_try' || block?.type === 'feedback_checkpoint' || block?.type === 'mastery_check' || block?.type === 'prediction' || block?.type === 'interactive_activity';
+  const activityDone = block?.type === 'interactive_activity' && activityProgressById[block.id]?.completed === true;
   const question = block && (block.type === 'student_try' || block.type === 'feedback_checkpoint' ? block : block.type === 'prediction' ? block : null);
   const questionData = question && 'correct_answer' in question ? question : null;
   const practiceQuestionData = questionData ? practiceQuestion(questionData) : null;
@@ -234,7 +250,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
 
   if (!prerequisitesPassed) {
     return (
-      <div className="flex h-full flex-col bg-background">
+      <MathTextTree><div className="flex h-full flex-col bg-background">
         <div className="flex-1 overflow-y-auto p-4">
           <div className="mb-6">
             <div className="h-2 rounded-full bg-muted">
@@ -315,14 +331,14 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
             </button>
           </div>
         </div>}
-      </div>
+      </div></MathTextTree>
     );
   }
 
   if (!block) return <div className="p-6 text-center">Cette leçon ne contient aucun contenu valide.</div>;
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <MathTextTree><div className="flex h-full flex-col bg-background">
       <div className="flex-1 overflow-y-auto p-4">
         <div className="mb-4">
           <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -331,9 +347,22 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
           <p className="mt-1 text-xs text-muted-foreground">{index + 1} / {lesson.sequence.length}</p>
         </div>
         <div className="space-y-4">
-          <span className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase text-teal-800">{block.type.replace('_', ' ')}</span>
+          <span className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase text-teal-800">{block.type === 'interactive_activity' ? 'À toi de jouer' : block.type.replace(/_/g, ' ')}</span>
           {'title' in block && <h2 className="text-xl font-bold">{block.title}</h2>}
           {block.type === 'visual' && <PedagogicalVisual block={block} />}
+          {block.type === 'interactive_activity' && <InteractiveActivityHost
+            spec={block.activity}
+            progress={activityProgressById[block.id]}
+            onProgressChange={(progress) => setActivityProgressById((current) => ({ ...current, [block.id]: progress }))}
+            onComplete={(result) => {
+              setSubmitted(true);
+              setCorrect(true);
+              if (!completedActivityBlocks.current.has(block.id)) {
+                completedActivityBlocks.current.add(block.id);
+                record('quiz_completed', { activityId: block.activity.id, attempts: result.attempts, hintsUsed: result.hintsUsed, independent: result.independent });
+              }
+            }}
+          />}
           {block.type === 'concept' && <ConceptPresentation block={block} />}
           {block.type === 'hook' || block.type === 'rule' ? <p className="whitespace-pre-wrap rounded-xl bg-card p-4 leading-7">{block.content}</p> : null}
           {block.type === 'contrast' && <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-muted p-4">{block.left}</div><div className="rounded-xl bg-muted p-4">{block.right}</div><p className="sm:col-span-2">{block.explanation}</p></div>}
@@ -359,7 +388,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
             return <div key={item.id} className="space-y-2"><p className="font-medium">{item.question}</p>{hasChoices && item.choices?.map((choice) => <button key={choice} onClick={() => setMasteryAnswers((a) => ({ ...a, [item.id]: choice }))} className={`mr-2 rounded-lg border px-3 py-2 ${masteryAnswers[item.id] === choice ? 'border-primary bg-primary/10' : ''}`}>{choice}</button>)}{!hasChoices && <><p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{format.hint}</p><input className="w-full rounded-lg border p-2" value={masteryAnswers[item.id] ?? ''} placeholder={format.placeholder} inputMode={format.inputMode} onChange={(e) => setMasteryAnswers((a) => ({ ...a, [item.id]: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') submitMastery(); }} aria-label="Réponse" /></>}</div>;
           })}</div>}
           {questionData && <div className="space-y-3">{practiceQuestionData ? <QuestionCard question={practiceQuestionData} allowRetry={false} hideCorrect onFinish={(result) => { setSubmitted(true); setCorrect(result); record(result ? 'quiz_completed' : 'quiz_wrong_answer', { wasCorrect: result }); }} /> : <><p className="text-lg font-semibold">{questionData.question}</p>{(() => { const format = responseGuidance(questionData.question, questionData.answer_type); return <><p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{format.hint}</p><input className="w-full rounded-lg border p-3" value={answer} placeholder={format.placeholder} inputMode={format.inputMode} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && answer) submit(); }} aria-label="Réponse" /></>; })()}</>}</div>}
-          {submitted && correct !== null && <div className={`rounded-xl p-3 ${correct ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>{correct ? <CheckCircle2 className="mr-2 inline h-5 w-5" /> : <XCircle className="mr-2 inline h-5 w-5" />}{correct ? (questionData && 'success_feedback' in questionData ? questionData.success_feedback : 'Bonne réponse.') : (questionData && 'error_feedback' in questionData ? questionData.error_feedback : 'Relis la question et essaie encore.')}</div>}
+          {submitted && correct !== null && block.type !== 'interactive_activity' && <div className={`rounded-xl p-3 ${correct ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>{correct ? <CheckCircle2 className="mr-2 inline h-5 w-5" /> : <XCircle className="mr-2 inline h-5 w-5" />}{correct ? (questionData && 'success_feedback' in questionData ? questionData.success_feedback : 'Bonne réponse.') : (questionData && 'error_feedback' in questionData ? questionData.error_feedback : 'Relis la question et essaie encore.')}</div>}
           {questionData && !correct && questionData.hints?.[hint] && <p className="rounded-xl bg-blue-50 p-3 text-blue-900"><Lightbulb className="mr-2 inline h-4 w-4" />{questionData.hints[hint]}</p>}
         </div>
       </div>
@@ -367,7 +396,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
       {/* Pinned bottom action bar */}
       <div className="flex-shrink-0 border-t border-[#EAECEF] bg-white p-3 pb-[max(env(safe-area-inset-bottom),12px)] shadow-[0_-2px_10px_rgba(15,23,42,0.05)]">
         <div className="mx-auto w-full max-w-[680px] space-y-2">
-          {required && !submitted && !practiceQuestionData && !allMasteryPractice && (
+          {required && block.type !== 'interactive_activity' && !submitted && !practiceQuestionData && !allMasteryPractice && (
             <button
               onClick={questionData ? submit : submitMastery}
               disabled={questionData ? !answer : Object.keys(masteryAnswers).length < masteryQuestions.length}
@@ -384,7 +413,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
               Indice
             </button>
           )}
-          {(!required || (submitted && correct)) && (
+          {(!required || (submitted && correct) || activityDone) && (
             <button
               onClick={next}
               className="w-full rounded-xl bg-[#12C6A0] p-3.5 text-sm font-bold text-[#0F172A]"
@@ -394,6 +423,6 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
           )}
         </div>
       </div>
-    </div>
+    </div></MathTextTree>
   );
 }

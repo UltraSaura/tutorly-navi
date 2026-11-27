@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { InteractiveActivitySchema } from '@/features/explanation-v2/activityContract';
 import { validateLessonV21 } from './lesson-v21-contract';
 
 const base = { id: z.string().min(1) };
@@ -22,6 +23,7 @@ export const PrerequisiteSchema = z.object({
 export type LessonPrerequisite = z.infer<typeof PrerequisiteSchema>;
 
 export const LessonBlockSchema = z.discriminatedUnion('type', [
+  z.object({ ...base, type: z.literal('interactive_activity'), activity: InteractiveActivitySchema }),
   z.object({ ...base, type: z.literal('hook'), title: z.string(), content: z.string() }),
   z.object({ ...base, type: z.literal('concept'), title: z.string(), content: z.string(), key_points: z.array(ConceptKeyPointSchema).min(1).max(6).optional(), takeaway: z.string().min(1).optional(), visual: VisualSchema.optional(), representation: z.string().optional() }),
   z.object({ ...base, type: z.literal('visual'), title: z.string(), content: z.string(), visual: VisualSchema }),
@@ -50,6 +52,24 @@ export const LessonV2Schema = z.object({
 
 export type LessonV2 = z.infer<typeof LessonV2Schema>;
 
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+/** Block and activity IDs key player state and analytics within a lesson. */
+function hasUniqueInteractiveIdentities(lesson: LessonV2): boolean {
+  if (!lesson.sequence.some((block) => block.type === 'interactive_activity')) return true;
+  const blockIds = new Set<string>();
+  const activityIds = new Set<string>();
+  for (const block of lesson.sequence) {
+    if (blockIds.has(block.id)) return false;
+    blockIds.add(block.id);
+    if (block.type === 'interactive_activity') {
+      if (activityIds.has(block.activity.id)) return false;
+      activityIds.add(block.activity.id);
+    }
+  }
+  return true;
+}
+
 export type LessonV21 = {
   version: '2.1'; topic_goal: string; levels: LessonLevelV21[];
 };
@@ -70,38 +90,31 @@ export const LessonV21Schema = z.custom<LessonV21>((value) => validateLessonV21(
 
 export function parseLessonContent(value: unknown): LessonV2 | null {
   const result = LessonV2Schema.safeParse(value);
-  if (result.success) return result.data;
+  if (result.success) return hasUniqueInteractiveIdentities(result.data) ? result.data : null;
   // AI providers may add harmless block-specific fields or vary scalar
   // representations (for example difficulty 1 vs "1"). Keep the required
   // V2 envelope strict while normalizing those compatible representations so
   // a valid persisted lesson can never fall through to the legacy blank shell.
-  if (value && typeof value === 'object') {
-    const candidate = value as Record<string, unknown>;
+  if (isRecord(value)) {
+    const candidate = value;
     const sequence = candidate.sequence;
+    const candidateMastery = candidate.mastery;
     if (candidate.version === '2.0'
       && typeof candidate.lesson_goal === 'string'
       && Array.isArray(candidate.success_criteria)
       && Array.isArray(candidate.prerequisites)
       && Array.isArray(sequence) && sequence.length > 0
       && Array.isArray(candidate.misconceptions)
-      && candidate.mastery && typeof candidate.mastery === 'object') {
+      && isRecord(candidateMastery)) {
       const normalized = {
         ...candidate,
-        sequence: sequence.map((block, index) => ({ ...(block as Record<string, unknown>), id: String((block as Record<string, unknown>)?.id || `block-${index + 1}`) })),
-        mastery: { ...(candidate.mastery as Record<string, unknown>), threshold: Number((candidate.mastery as Record<string, unknown>).threshold ?? 0.8) },
+        sequence: sequence.map((block, index) => isRecord(block)
+          ? { ...block, id: typeof block.id === 'string' && block.id.trim() ? block.id : `block-${index + 1}` }
+          : block),
+        mastery: { ...candidateMastery, threshold: Number(candidateMastery.threshold ?? 0.8) },
       };
       const retry = LessonV2Schema.safeParse(normalized);
-      if (retry.success) return retry.data;
-      const supportedTypes = new Set(['hook','concept','visual','prediction','guided_example','student_try','feedback_checkpoint','contrast','rule','worked_example','reflection','mastery_check']);
-      if (sequence.every((block) => {
-        const item = block as Record<string, unknown>;
-        return typeof item.type === 'string' && supportedTypes.has(item.type) && typeof item.id === 'string';
-      }) && typeof (candidate.mastery as Record<string, unknown>).threshold === 'number') {
-        // The persisted payload has the complete V2 envelope and only differs
-        // in an optional provider-specific field. Keep it on the V2 player;
-        // unsupported optional fields are handled by the block fallback UI.
-        return normalized as unknown as LessonV2;
-      }
+      if (retry.success) return hasUniqueInteractiveIdentities(retry.data) ? retry.data : null;
       if (import.meta.env?.DEV) console.debug('[LessonV2] compatible payload rejected', retry.error.issues);
     }
   }
@@ -110,6 +123,6 @@ export function parseLessonContent(value: unknown): LessonV2 | null {
 }
 
 export function parseLessonV21(value: unknown): LessonV21 | null {
-  const contract = validateLessonV21(value);
-  return contract.success ? value as LessonV21 : null;
+  const parsed = LessonV21Schema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }

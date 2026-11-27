@@ -1,0 +1,92 @@
+name: Explanation V2 isolated QA
+
+on:
+  push:
+    branches:
+      - feature/explanation-v2-interactive-math
+  pull_request:
+    branches:
+      - parent
+    paths:
+      - 'src/features/explanation-v2/**'
+      - 'src/components/learning/LessonV2Player.tsx'
+      - 'src/components/learning/LessonV21Path.tsx'
+      - 'src/components/learning/LessonContentStudent.tsx'
+      - 'src/types/lesson-generator.ts'
+      - 'src/types/lesson-v21-contract.ts'
+      - 'src/pages/dev/ExplanationV2MathLab.tsx'
+      - 'src/features/explanation-v2/fixtures/**'
+      - 'qa/**'
+      - '.github/workflows/explanation-v2-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  unit-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Exact math and lesson parser tests
+        run: npx vitest run src/components/math/MathText.test.tsx src/features/explanation-v2/math.test.ts src/features/explanation-v2/lessonIntegration.test.ts src/features/explanation-v2/previewAccess.test.ts src/features/explanation-v2/pedagogicalQuestions.test.ts src/features/explanation-v2/MathDemonstration.test.ts src/features/explanation-v2/equationSolver.test.ts src/features/explanation-v2/equationTermVisual.test.ts src/features/explanation-v2/equationStepInstruction.test.ts src/types/lesson-generator.test.ts src/types/lesson-v21-contract.test.ts
+      - name: TypeScript check
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: npx eslint src/types/lesson-generator.ts src/types/lesson-v21-contract.ts src/components/learning/LessonContentStudent.tsx src/components/learning/LessonV21Path.tsx src/components/learning/LessonV2Player.tsx src/components/math/MathText.tsx src/components/math/MathRenderer.tsx src/features/explanation-v2 src/pages/dev/ExplanationV2MathLab.tsx
+      - name: Production build
+        run: npm run build
+      - name: Verify standalone demo artifact
+        run: test -s dist/demo.html
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Install browser test runner (non-persistent)
+        run: |
+          npm install --no-save --ignore-scripts playwright
+          npx playwright install --with-deps chromium
+      - name: Test desktop and mobile interactions
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/explanation-v2-vite.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/qa/explanation-v2.html > /dev/null; then break; fi
+            sleep 2
+          done
+          node qa/explanation-v2-browser.mjs
+          node qa/explanation-v2-player-browser.mjs
+      - name: Verify standalone demo in production preview server
+        run: |
+          npm run build
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/explanation-v2-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/demo.html > /dev/null; then break; fi
+            sleep 2
+          done
+          node qa/explanation-v2-demo-browser.mjs
+      - name: Upload screenshots and QA report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: explanation-v2-qa-screenshots
+          path: qa/screenshots/
+          if-no-files-found: warn
+          retention-days: 14

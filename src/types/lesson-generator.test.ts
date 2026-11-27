@@ -26,6 +26,58 @@ describe('Lesson Generator V2 validation', () => {
     };
     expect(parseLessonContent(stored)?.sequence).toHaveLength(4);
   });
+
+  const activity = {
+    schemaVersion: 1, id: 'fraction-select-3-4', kind: 'fraction-select', title: 'Construire trois quarts',
+    prompt: 'Sélectionne trois parts sur quatre.', schoolLevel: 'CM2', target: { n: 3, d: 4 }, transfer: { n: 2, d: 3 },
+  };
+
+  it('normalizes a harmless V2.0 lesson envelope and still validates the complete activity block', () => {
+    const normalized = { ...lesson, sequence: [{ type: 'interactive_activity', activity, provider_note: 'safe to strip' }], mastery: { skills: ['fractions'], threshold: '0.8' } };
+    const parsed = parseLessonContent(normalized);
+    expect(parsed?.sequence[0]?.type).toBe('interactive_activity');
+    if (parsed?.sequence[0]?.type === 'interactive_activity') {
+      expect(parsed.sequence[0].id).toBe('block-1');
+      expect(parsed.sequence[0].activity.id).toBe('fraction-select-3-4');
+    }
+    expect(parsed?.mastery.threshold).toBe(0.8);
+  });
+
+  it.each([
+    ['unsupported kind', { ...activity, kind: 'guess-activity' }],
+    ['unsupported schema version', { ...activity, schemaVersion: 2 }],
+    ['missing required title', { ...activity, title: undefined }],
+    ['invalid denominator', { ...activity, target: { n: 1, d: 0 } }],
+    ['invalid transfer configuration', { ...activity, transfer: { n: 1, d: 0 } }],
+  ])('rejects a normalized V2.0 activity with %s', (_name, badActivity) => {
+    const malformed = { ...lesson, sequence: [{ type: 'interactive_activity', activity: badActivity }], mastery: { skills: ['fractions'], threshold: '0.8' } };
+    expect(parseLessonContent(malformed)).toBeNull();
+  });
+
+  it('rejects repeated block IDs or repeated activity IDs when interactive state is present', () => {
+    const duplicateBlocks = {
+      ...lesson,
+      sequence: [
+        { id: 'same', type: 'interactive_activity', activity },
+        { id: 'same', type: 'concept', title: 'Titre', content: 'Texte' },
+      ],
+    };
+    const duplicateActivities = {
+      ...lesson,
+      sequence: [
+        { id: 'block-1', type: 'interactive_activity', activity },
+        { id: 'block-2', type: 'interactive_activity', activity: { ...activity, id: activity.id } },
+      ],
+    };
+    expect(parseLessonContent(duplicateBlocks)).toBeNull();
+    expect(parseLessonContent(duplicateActivities)).toBeNull();
+  });
+
+  it('fails closed on malformed modern lesson content without weakening legacy parsing', () => {
+    expect(parseLessonContent({ ...lesson, sequence: [{ id: 'bad', type: 'interactive_activity', activity: { ...activity, target: { n: 1, d: 0 } } }] })).toBeNull();
+    expect(parseLessonContent({ ...lesson, sequence: ['bad'] })).toBeNull();
+    expect(parseLessonContent({ explanation: 'Une ancienne leçon', example: '', common_mistakes: [] })).toBeNull();
+  });
 });
 
 describe('structured concept fixtures', () => {

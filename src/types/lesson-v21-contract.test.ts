@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { validateLessonV21 } from './lesson-v21-contract';
 import { LessonV21Schema, parseLessonV21 } from './lesson-generator';
+import { cm2FractionLessonV21Fixture } from '@/features/explanation-v2/fixtures/cm2FractionLessonV21.fixture';
+import { v21ActivityFixtures } from '@/features/explanation-v2/fixtures/v21ActivityFixtures';
 
 const valid = { version: '2.1', topic_goal: 'Durées', levels: [{ id: 'level_1', level_number: 1, title: 'Bases', purpose: 'Comprendre', difficulty: 'foundation', objective_ids: ['objective-1'], lesson: { lesson_goal: 'Comprendre', success_criteria: ['Je comprends'], prerequisites: [{ id: 'p1', description: 'Lire l’heure', check_question: 'Quelle heure ?', answer_type: 'time', expected_answer: '10 h', remediation_hint: 'Observe l’horloge.', visual: { kind: 'clock', data: { hour: 10, minute: 0 } } }], misconceptions: [{ id: 'm1', description: 'Erreur', detect_if: 'Réponse fausse', feedback: 'Recommence', remediation_strategy: 'Représente.' }], sequence: [{ id: 'c1', type: 'concept', title: 'Concept', content: 'Contenu' }, { id: 'm1', type: 'mastery_check', questions: [{ id: 'q1', question: 'Question', answer_type: 'text', correct_answer: 'oui', skill: 'skill', difficulty: 1, success_feedback: 'Oui', error_feedback: 'Non' }] }], mastery: { skills: ['skill'], threshold: 0.8 } } }] };
 
@@ -85,5 +87,71 @@ describe('Lesson V2.1 canonical contract', () => {
     expect(validateLessonV21(payload).success).toBe(true);
     expect(parseLessonV21(payload)).not.toBeNull();
     expect(LessonV21Schema.safeParse(payload).success).toBe(true);
+  });
+
+  it('accepts all seven V2.1 activity kinds through the shared activity schema', () => {
+    expect(v21ActivityFixtures).toHaveLength(7);
+    v21ActivityFixtures.forEach((activity, index) => {
+      const payload = { ...valid, levels: [{ ...valid.levels[0], lesson: { ...valid.levels[0].lesson, sequence: [{ id: `activity-block-${index}`, type: 'interactive_activity', activity }] } }] };
+      expect(validateLessonV21(payload).success).toBe(true);
+      expect(parseLessonV21(payload)).not.toBeNull();
+      expect(LessonV21Schema.safeParse(payload).success).toBe(true);
+    }
+    );
+  });
+
+  it('accepts the isolated four-level F.02 CM2 reference fixture without binding curriculum IDs', () => {
+    const result = validateLessonV21(cm2FractionLessonV21Fixture);
+    expect(result.success).toBe(true);
+    const lesson = parseLessonV21(cm2FractionLessonV21Fixture);
+    expect(lesson?.levels).toHaveLength(4);
+    if (!lesson) return;
+    expect(lesson.levels.map((level) => level.title)).toHaveLength(4);
+    expect(lesson.levels.every((level) => level.objective_ids.every((id) => id.startsWith('test-fixture:')))).toBe(true);
+    expect(lesson.levels.flatMap((level) => level.lesson.sequence.filter((block) => block.type === 'interactive_activity').map((block) => block.activity.kind))).toEqual(['fraction-select', 'fraction-select', 'fraction-bar', 'fraction-bar']);
+  });
+
+  it('reports exact interactive activity field paths for invalid schemas and parameters', () => {
+    const cases: Array<{ activity: Record<string, unknown>; path: string }> = [
+      { activity: { schemaVersion: 1, id: 'bad-kind', kind: 'unknown', title: 'T', prompt: 'P' }, path: '.activity.kind' },
+      { activity: { schemaVersion: 2, id: 'bad-version', kind: 'fraction-select', title: 'T', prompt: 'P', target: { n: 1, d: 2 } }, path: '.activity.schemaVersion' },
+      { activity: { schemaVersion: 1, id: 'missing-title', kind: 'fraction-select', prompt: 'P', target: { n: 1, d: 2 } }, path: '.activity.title' },
+      { activity: { schemaVersion: 1, id: 'bad-denom', kind: 'fraction-select', title: 'T', prompt: 'P', target: { n: 1, d: 0 } }, path: '.activity.target.d' },
+      { activity: { schemaVersion: 1, id: 'bad-transfer', kind: 'fraction-bar', title: 'T', prompt: 'P', left: { n: 1, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 4, transfer: { left: { n: 1, d: 4 }, right: { n: 1, d: 2 }, targetDenominator: 3 } }, path: '.activity.transfer.targetDenominator' },
+    ];
+    for (const { activity, path } of cases) {
+      const payload = { ...valid, levels: [{ ...valid.levels[0], lesson: { ...valid.levels[0].lesson, sequence: [{ id: 'invalid-activity', type: 'interactive_activity', activity }] } }] };
+      const result = validateLessonV21(payload);
+      expect(result.success).toBe(false);
+      if (!result.success) expect(result.issues.some((issue) => issue.path.endsWith(path))).toBe(true);
+      expect(parseLessonV21(payload)).toBeNull();
+    }
+  });
+
+  it('rejects duplicate block and activity IDs in V2.1 sequences', () => {
+    const activity = { schemaVersion: 1, id: 'same-activity', kind: 'fraction-select', title: 'Sélectionner', prompt: 'Choisis les parts.', target: { n: 1, d: 2 } };
+    const payload = { ...valid, levels: [{ ...valid.levels[0], lesson: { ...valid.levels[0].lesson, sequence: [
+      { id: 'same-block', type: 'interactive_activity', activity },
+      { id: 'same-block', type: 'interactive_activity', activity },
+    ] } }] };
+    const result = validateLessonV21(payload);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.issues.some((issue) => issue.path === 'levels[0].lesson.sequence[1].id' && /Duplicate/.test(issue.message))).toBe(true);
+      expect(result.issues.some((issue) => issue.path === 'levels[0].lesson.sequence[1].activity.id' && /Duplicate/.test(issue.message))).toBe(true);
+    }
+    expect(parseLessonV21(payload)).toBeNull();
+  });
+
+  it('accepts a shared activity schema in the existing staging prerequisite contract', () => {
+    const stagingPayload = {
+      ...valid,
+      levels: [{ ...valid.levels[0], lesson: {
+        ...valid.levels[0].lesson,
+        prerequisites: [{ id: 'staging-prerequisite', description: 'Connaître les quarts.', prompt: 'Combien de quarts dans un entier ?', type: 'numeric', expected_answer: 4, remediation_hint: 'Compte les quatre parts.' }],
+        sequence: [{ id: 'staging-fraction-activity', type: 'interactive_activity', activity: v21ActivityFixtures[0] }],
+      } }],
+    };
+    expect(validateLessonV21(stagingPayload, { prerequisiteFormat: 'staging' }).success).toBe(true);
   });
 });

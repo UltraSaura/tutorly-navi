@@ -1,5 +1,8 @@
 # Stuwy — Claude Code Project Context
 
+> **New interactive animation work (draft PR #56):** Before modifying or integrating any Explanation V2 math interaction, read [docs/TUTORLY_INTERACTIVE_INTELLIGENCE.md](docs/TUTORLY_INTERACTIVE_INTELLIGENCE.md). It lists the six implemented activities, source files, supported grade examples, schema contracts, Lesson/Practice/Homework integration status, QA evidence and restrictions. The catalogue is branch-specific; do not assume these features exist in `development` or production. Update the catalogue in the same PR as any new module. This pointer does not override existing safety instructions.
+
+
 This file is read automatically by Claude Code at the start of every session.
 It contains everything needed to work on this project without any prior briefing.
 
