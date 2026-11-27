@@ -17,7 +17,10 @@ export function LessonV21Path({ topicId, subjectId, topicName, lesson }: Props) 
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<number | null>(null);
   useEffect(() => { try { const raw = localStorage.getItem(key(topicId, user?.id)); setCompleted(raw ? JSON.parse(raw) : {}); const saved = localStorage.getItem(positionKey(topicId, user?.id)); setPositions(saved ? JSON.parse(saved) : {}); } catch { /* ignore */ } }, [topicId, user?.id]);
-  const current = useMemo(() => lesson.levels.findIndex((level) => !((completed[level.id] ?? 0) >= (level.lesson.mastery.threshold ?? 0.8))), [completed, lesson.levels]);
+  const current = useMemo(() => {
+    const nextIncomplete = lesson.levels.findIndex((level) => !((completed[level.id] ?? 0) >= (level.lesson.mastery.threshold ?? 0.8)));
+    return nextIncomplete === -1 ? lesson.levels.length : nextIncomplete;
+  }, [completed, lesson.levels]);
   const unlock = (index: number) => index <= Math.max(0, current);
   const persist = async (index: number, score: number, position = 0) => {
     const level = lesson.levels[index]; if (!level) return;
