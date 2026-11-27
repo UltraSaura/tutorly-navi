@@ -1,7 +1,10 @@
 /** Smoke test the production-built, standalone demo (not the Vite dev router). */
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import { chromium } from 'playwright';
 const base = process.env.DEMO_BASE_URL || 'http://127.0.0.1:4173';
+const screenshotDir = process.env.QA_SCREENSHOT_DIR || 'qa/screenshots';
+await fs.mkdir(screenshotDir, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
 let failed = 0;
 try {
@@ -73,7 +76,10 @@ try {
   await page.getByRole('button', { name: 'Valider le transfert' }).click();
   await page.getByRole('button', { name: 'Continuer', exact: true }).click();
   await page.getByRole('heading', { name: 'Exemple guidé terminé' }).waitFor();
+  const conclusion = page.getByTestId('cm2-preview-completion');
   await page.getByText('Leçon terminée !').waitFor();
+  assert.equal(await conclusion.locator('.katex-mathml mfrac').count(), 3, 'CM2 completion feedback uses stacked fractions');
+  await page.screenshot({ path: screenshotDir + '/cm2-preview-conclusion-375.png', fullPage: true });
   console.log('PASS five-step CM2 lesson preview enforces interactive completion');
   assert.deepEqual(errors, []);
   console.log('PASS standalone demo is interactive and has no page errors');

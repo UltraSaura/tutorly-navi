@@ -1,4 +1,4 @@
-import { Children, cloneElement, isValidElement, type ReactNode } from 'react';
+import { Children, cloneElement, Fragment, isValidElement, type ReactNode } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import './math-renderer.css';
@@ -122,6 +122,9 @@ export function MathTextTree({ children }: { children: ReactNode }) {
     if (Array.isArray(node)) return node.map((child, index) => visit(child, `${key}-${index}`));
     if (!isValidElement<{ children?: ReactNode }>(node)) return node;
     const type = node.type;
+    if (type === Fragment) {
+      return cloneElement(node, { key }, Children.map(node.props.children, (child, index) => visit(child, `${key}-${index}`)));
+    }
     if (type === MathText || type === MathFormula || typeof type !== 'string' || ['svg', 'math', 'code', 'pre', 'script', 'style', 'textarea', 'option'].includes(type)) return node;
     const nested = node.props.children;
     if (nested === undefined) return node;

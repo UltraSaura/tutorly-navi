@@ -61,7 +61,7 @@ export function Cm2LessonPreview({ onExit }: { onExit: () => void }) {
         onComplete={() => {}}
       />}
     </div>
-    {complete ? <div className="space-y-2 rounded-xl bg-teal-50 p-4">
+    {complete ? <div className="space-y-2 rounded-xl bg-teal-50 p-4" data-testid="cm2-preview-completion">
       <p className="font-bold text-teal-900">Leçon terminée !</p>
       <p className="text-sm text-teal-900">Tu as construit 3/4, représenté 1/2 par 2/4, puis essayé une addition avec d’autres valeurs.</p>
       <button type="button" onClick={reset} className="min-h-11 rounded-xl bg-teal-600 px-5 font-bold text-white">Recommencer le parcours</button>

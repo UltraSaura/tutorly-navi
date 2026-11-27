@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { MathFormula, MathText } from './MathText';
+import { MathFormula, MathText, MathTextTree } from './MathText';
 
 describe('shared mathematical display', () => {
   it('renders a plain fraction in vertical MathML and visual markup', () => {
@@ -27,6 +27,13 @@ describe('shared mathematical display', () => {
     const html = renderToStaticMarkup(<MathText>{question}</MathText>);
     expect(html).toContain('<mfrac>');
     expect(html).toContain('Sélectionne 3 quarts');
+  });
+
+  it('renders existing delimited fractions embedded in lesson prose', () => {
+    const prose = 'Chaque morceau représente un quart (\\(\\frac{1}{4}\\)).';
+    const html = renderToStaticMarkup(<MathTextTree><section><><p>{prose}</p></></section></MathTextTree>);
+    expect(html).toContain('<mfrac>');
+    expect(html.slice(html.indexOf('class="katex-html">'))).not.toContain('\\frac');
   });
 
   it('keeps raw HTML inert and renders an aligned display formula', () => {
