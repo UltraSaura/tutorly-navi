@@ -22,6 +22,13 @@ describe('shared mathematical display', () => {
     expect(html).toContain('https://example.com/3/4');
   });
 
+  it('renders a fraction inside a complete dynamic student instruction', () => {
+    const question = `Sélectionne 3 quarts sur les 4 parts de la barre pour représenter la fraction ${3}/${4}.`;
+    const html = renderToStaticMarkup(<MathText>{question}</MathText>);
+    expect(html).toContain('<mfrac>');
+    expect(html).toContain('Sélectionne 3 quarts');
+  });
+
   it('keeps raw HTML inert and renders an aligned display formula', () => {
     const html = renderToStaticMarkup(<MathFormula latex={'\\begin{aligned}\\frac{3}{4}\\\\&=\\frac{5}{4}\\end{aligned}'} />);
     expect(html).toContain('<mfrac>');

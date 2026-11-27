@@ -69,7 +69,7 @@ export function FractionSelectActivity({ spec, progress, onProgressChange, onCom
           : isYoung
             ? 'Cette barre est partagée en ' + target.d + ' parts égales. Chaque case représente un ' + (target.d === 4 ? 'quart' : 'morceau') + ' de la barre. Une fraction décrit une quantité de parts égales.'
             : 'Le dénominateur ' + target.d + ' donne le nombre de parts égales ; le numérateur ' + target.n + ' donne le nombre de parts à sélectionner.'}</p>
-      {p.phase !== 1 && <p className="text-base font-bold leading-7 text-slate-900" data-testid="fraction-select-question">Sélectionne {target.n} {parts} sur les {target.d} parts de la barre pour représenter la fraction {target.n}/{target.d}.</p>}
+      {p.phase !== 1 && <p className="text-base font-bold leading-7 text-slate-900" data-testid="fraction-select-question"><MathText>{`Sélectionne ${target.n} ${parts} sur les ${target.d} parts de la barre pour représenter la fraction ${target.n}/${target.d}.`}</MathText></p>}
       <p className="text-sm text-slate-700">{p.phase === 1 ? 'Choisis l’explication correcte.' : 'Touche les cases pour les colorier ou les effacer, puis appuie sur « Valider ».'}</p>
     </div>
     {p.phase === 1 ? <div className="grid gap-2" role="group" aria-label="Sens du numérateur et du dénominateur">

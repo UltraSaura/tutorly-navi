@@ -207,7 +207,9 @@ async function runAtWidth(width) {
     await page.screenshot({ path: dir + '/coordinate-' + width + '.png', fullPage: true });
     await page.getByTestId('tab-fraction-select').click();
     await run('fraction selection is a clear tappable CM2 question', async () => {
-      assert.match(await page.getByTestId('fraction-select-question').innerText(), /Sélectionne 3 quarts sur les 4 parts/i);
+      const question = page.getByTestId('fraction-select-question');
+      assert.match(await question.innerText(), /Sélectionne 3 quarts sur les 4 parts/i);
+      assert.equal(await question.locator('.katex-mathml mfrac').count(), 1, 'the target fraction uses stacked mathematical notation');
       assert.equal(await page.getByTestId('fraction-selected-count').innerText(), 'Parts sélectionnées : 0 sur 4');
       assert.equal(await page.locator('[data-testid^="fraction-part-"]').count(), 4);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
