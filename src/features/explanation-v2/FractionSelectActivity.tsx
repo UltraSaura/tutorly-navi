@@ -1,6 +1,6 @@
 import { initialActivityProgress, learningEvidence, type ActivityProgress, type InteractiveActivitySpec } from './activityContract';
 import { namedParts } from './pedagogicalQuestions';
-import { MathTextTree } from '@/components/math/MathText';
+import { MathText, MathTextTree } from '@/components/math/MathText';
 
 type Spec = Extract<InteractiveActivitySpec, { kind: 'fraction-select' }>;
 type Completion = { independent: boolean; attempts: number; hintsUsed: number };
