@@ -40,16 +40,18 @@ const v21ActivityLessons = v21ActivityFixtures.map((rawActivity) => {
 function App() {
   const [fixture, setFixture] = useState<'cm2' | 'equation' | 'cm2-v21' | string>('cm2');
   const v21Activity = v21ActivityLessons.find((item) => item.kind === fixture);
-  return <AuthProvider><div className="mx-auto h-[95vh] max-w-2xl border p-3">
-    <div className="mb-3 flex flex-wrap gap-2">
-      <button type="button" onClick={() => setFixture('cm2')}>Fixture CM2</button>
-      <button type="button" onClick={() => setFixture('equation')}>Fixture équation</button>
-      <button type="button" onClick={() => setFixture('cm2-v21')}>Fixture CM2 V2.1</button>
-      {v21ActivityLessons.map(({ kind }) => <button type="button" key={kind} onClick={() => setFixture(kind)}>Fixture V2.1 {kind}</button>)}
+  return <AuthProvider><div className="mx-auto flex h-[95vh] max-w-2xl flex-col border p-3">
+    <div className="mb-3 flex shrink-0 flex-nowrap gap-2 overflow-x-auto whitespace-nowrap">
+      <button className="shrink-0" type="button" onClick={() => setFixture('cm2')}>Fixture CM2</button>
+      <button className="shrink-0" type="button" onClick={() => setFixture('equation')}>Fixture équation</button>
+      <button className="shrink-0" type="button" onClick={() => setFixture('cm2-v21')}>Fixture CM2 V2.1</button>
+      {v21ActivityLessons.map(({ kind }) => <button className="shrink-0" type="button" key={kind} onClick={() => setFixture(kind)}>Fixture V2.1 {kind}</button>)}
     </div>
+    <div className="min-h-0 flex-1">
     {fixture === 'cm2-v21' ? <LessonV21Path key={fixture} lesson={cm2V21Lesson} topicId="qa-v21-cm2" topicName="QA — parcours CM2 V2.1" />
       : v21Activity ? <LessonV21Path key={fixture} lesson={v21Activity.lesson} topicId={`qa-v21-${v21Activity.kind}`} topicName={`QA — ${v21Activity.kind}`} />
         : <LessonV2Player key={fixture} lesson={fixture === 'cm2' ? cm2FractionLesson : equationLesson} topicId="qa-topic" topicName="QA — leçon interactive" />}
+    </div>
   </div></AuthProvider>;
 }
 const root = document.getElementById('root');

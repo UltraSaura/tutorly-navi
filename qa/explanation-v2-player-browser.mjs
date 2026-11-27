@@ -25,7 +25,7 @@ for (const width of [320, 375, 390, 447, 1280]) {
       const answer = page.getByRole('textbox', { name: 'Réponse au prérequis' });
       await answer.waitFor();
       const rect = await page.getByRole('button', { name: 'Valider', exact: true }).boundingBox();
-      assert.ok(rect && rect.height >= 44 && rect.y + rect.height <= 860);
+      assert.ok(rect && rect.height >= 44 && rect.y + rect.height <= 860, `prerequisite button must be at least 44px tall and fully visible: ${JSON.stringify(rect)}`);
     });
     await check('CM2 prerequisite uses a meaningful fractions question', async () => {
       assert.match(await page.getByText(/Combien de quarts faut-il pour reconstituer la barre entière/).innerText(), /Combien de quarts/i);
@@ -147,6 +147,7 @@ for (const width of [320, 375, 390, 447, 1280]) {
         }[kind];
         await page.getByTestId(testId).waitFor();
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+        await page.getByRole('button', { name: 'Retour', exact: true }).click();
       });
     }
     await check('complete four-level V2.1 CM2 path preserves mastery gates and transfer', async () => {
