@@ -238,6 +238,7 @@ for (const width of [320, 375, 390, 447, 1280]) {
       await completeAddition('cm2-fraction-transfer-2-4-plus-1-4', 1, 3, '3/4');
       await page.getByRole('button', { name: 'Continuer', exact: true }).click();
       await page.getByRole('button', { name: 'Continuer', exact: true }).click();
+      await page.getByRole('button', { name: 'Continuer', exact: true }).click();
       await answerMastery(/Pour résoudre/);
       await finishLevel();
       await page.getByText('✓ Parcours terminé', { exact: true }).waitFor();
