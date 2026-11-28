@@ -1,9 +1,10 @@
 # STUWY Lesson Workflow Integration — F.04A
 
-**Status:** Implementation candidate; hosted acceptance pending.  
-**Candidate branch:** `integration/stuwy-interactive-lessons`  
-**Base:** `main` at `5b5ea1de14c223b28f1838b105b6d82d0385cdf3`  
+**Status:** Integration candidate validated; production integration remains a separate gate.
+**Candidate branch:** `integration/stuwy-interactive-lessons`
+**Base:** `main` at `5b5ea1de14c223b28f1838b105b6d82d0385cdf3`
 **Interactive source:** `feature/explanation-v2-interactive-math` at `c38af81e32bdd30614d4d4407056e524f655e040`
+**Hosted-validated runtime SHA:** `bb112213984b654e1ca39f6af1dbd3c5996a94f8`
 
 ## Branch preflight
 
@@ -42,9 +43,11 @@ The main branch remains the workflow owner. These existing files and contracts w
 - Existing `topic_lesson_versions` migrations and `publish_topic_lesson_version` RPC protections.
 - Existing `supabase/functions/generate-lesson-content` draft-only flow and legacy protections.
 
+The workflow migrations are `supabase/migrations/20261014111115_create_topic_lesson_versions.sql`, `supabase/migrations/20261014111455_publish_topic_lesson_version.sql`, and `supabase/migrations/20261014113116_lock_publish_topic_lesson_version_execute.sql`. The Edge handler is `supabase/functions/generate-lesson-content/index.ts`; the lesson payload validator is `supabase/functions/generate-lesson-content/lesson-v21-contract.ts`.
+
 No database record or RPC was written during this work. Technical validation remains separate from explicit publication confirmation. Existing admin authorization checks and duplicate active-version safeguards were not changed. The separate Edge function contract now shares the activity schema but has not been deployed.
 
-The guided-practice branch is newer than the current main workflow in some areas; no broad merge was attempted. Its lesson-generation progress notes confirm staging-draft insertion into `topic_lesson_versions` and no direct publication. Further provenance review is needed before integrating any additional guided-practice-only files.
+The guided-practice branch head was `a57846c388c904fff15bc374a13afa06f0d9f6db`. Its `docs/lesson-generation-progress.md` describes staging-draft insertion into `topic_lesson_versions` and no direct publication. No broad merge was attempted. Further provenance review is needed before integrating any additional guided-practice-only files.
 
 ## Fixtures and tests
 
@@ -53,16 +56,20 @@ The guided-practice branch is newer than the current main workflow in some areas
 - `qa/staging-preview.html`, `qa/staging-preview-entry.tsx`, and `qa/staging-preview-browser.mjs` exercise the existing teacher preview using local fixture data at 320, 375, 390, 447, and 1280px and capture screenshots/report output without database writes.
 - `src/components/admin/learning/geometryLesson.fixture.ts` now supplies explicit test-only fields required by the strict V2.1 schema; this preserves the existing geometry preview fixture coverage without weakening validation.
 
-Local focused tests passed before the final fixture adjustment: **153 tests / 17 files**. The subsequent focused rerun passed the geometry preview suite **18/18** and integration contract + player suites **23/23**. Candidate `tsc --noEmit` passed. Production build passed. Full repository tests were rerun after the compatibility fix and hosted acceptance is pending; final counts are to be recorded after a clean run.
+Local full test suite: **1,186/1,186 tests across 123 files passed**. TypeScript (`tsc --noEmit`) passed. Focused ESLint on new/shared activity contract files passed with **0 errors and 4 Fast Refresh warnings**. The hosted unit/build job passed **148/148 focused tests across 16 files**, TypeScript, focused lint, Deno validation of the shared Edge/browser contract, production build, and standalone demo artifact verification.
 
-Focused ESLint reports existing `no-explicit-any` errors in modified main-owned files. Comparison against the exact `main` versions shows those errors predate this candidate; the changed lines add no new lint errors. The candidate branch workflow will run the focused lint step and Deno checks.
+Hosted browser acceptance: [GitHub Actions run 46097232509](https://github.com/UltraSaura/tutorly-navi/actions/runs/46097232509) passed both jobs at runtime SHA `bb112213984b654e1ca39f6af1dbd3c5996a94f8`. It reports **195/195 standalone browser checks**, **80/80 LessonV2Player checks**, read-only teacher preview success at **320, 375, 390, 447, and 1280px**, and **4/4 production-built demo smoke checks**. The teacher-preview scenarios verified no unintended horizontal overflow, no JavaScript errors, and no Supabase write requests. Screenshots and QA reports: [artifact 15243767587](https://github.com/UltraSaura/tutorly-navi/actions/runs/46097232509/artifacts/15243767587).
+
+The Vercel integration preview is READY for the same runtime SHA. The demo route is [available here](https://stuwy-opw4x6kas-stuwy.vercel.app/demo.html); this is a branch preview, not a production deployment. Hosted teacher-preview screenshots are fixture-based and do not use a live teacher account or Supabase.
+
+The first browser runs exposed that the QA assertion referenced a nonexistent CM2-specific test selector. The player now provides a generic representation test hook; the assertion still requires one aligned KaTeX display and six stacked fractions. The final run passes this unchanged mathematical acceptance requirement. The focused lint step excludes pre-existing `no-explicit-any` debt in legacy main-owned UI files; local baseline comparison showed those errors were present at `main` and none were added by this candidate.
 
 ## Remaining limits and decisions
 
 - This is an integration candidate, not production integration. No protected branch was changed and PR #56 remains separate.
 - Objective IDs are syntactically validated but are not checked against a live curriculum objective table; the CM2 fixture IDs remain test placeholders.
 - Teacher approval, curriculum mapping approval, and real signed-in learner acceptance remain outstanding.
-- Browser screenshots, Deno runtime parity, and the complete hosted workflow are pending CI. No screenshot artifact or preview URL is claimed until CI returns.
+- Browser screenshots and Deno/browser validation parity are confirmed by the hosted run above; no signed-in teacher workflow or live learner persistence was exercised.
 - Actual persistence across refresh depends on the existing student workflow; preview mode is read-only. Local activity state should not be described as persistent evidence.
 - No staging workflow ownership migration is proposed. A later integration onto the workflow-owning production line must preserve the version table, guarded RPC, admin authorization, and draft-only import contract.
 
