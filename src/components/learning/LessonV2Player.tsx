@@ -10,7 +10,7 @@ import { QuestionCard } from './QuestionCard';
 import type { Question } from '@/types/quiz-bank';
 import { InteractiveActivityHost } from '@/features/explanation-v2/InteractiveActivityHost';
 import type { ActivityProgress } from '@/features/explanation-v2/activityContract';
-import { MathTextTree } from '@/components/math/MathText';
+import { MathText, MathTextTree } from '@/components/math/MathText';
 
 type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void; readOnly?: boolean };
 
@@ -139,10 +139,10 @@ function ConceptPresentation({ block }: { block: any }) {
       {block.visual && (
         <LessonVisualBlock visual={block.visual} title={block.title} content={block.content} />
       )}
-      <p className="max-w-2xl text-left text-base leading-7 text-[#344054]">{block.content}</p>
+      <p className="max-w-2xl text-left text-base leading-7 text-[#344054]"><MathText>{block.content}</MathText></p>
       {block.representation && (
         <div className="rounded-xl border border-[#D8E1F0] bg-white px-4 py-2.5 text-left font-semibold text-[#3448A5]">
-          {block.representation}
+          <MathText>{block.representation}</MathText>
         </div>
       )}
       {block.key_points && block.key_points.length > 0 && (
@@ -151,12 +151,12 @@ function ConceptPresentation({ block }: { block: any }) {
             <div key={`${point.label}-${index}`} className="flex items-baseline gap-2 rounded-lg bg-white px-3 py-2 text-sm">
               <span className="font-extrabold text-[#3448A5]">{point.label}</span>
               <span aria-hidden className="text-[#4F6FD8]">→</span>
-              <span className="text-[#475467]">{point.text}</span>
+              <span className="text-[#475467]"><MathText>{point.text}</MathText></span>
             </div>
           ) : (
             <div key={`${point.label}-${index}`} className="rounded-xl border border-[#D8E1F0] bg-white px-3 py-2.5 shadow-sm">
               <p className="text-sm font-extrabold leading-5 text-[#111827]">{point.label}</p>
-              <p className="mt-0.5 text-sm leading-5 text-[#475467]">{point.text}</p>
+              <p className="mt-0.5 text-sm leading-5 text-[#475467]"><MathText>{point.text}</MathText></p>
             </div>
           ))}
         </div>
