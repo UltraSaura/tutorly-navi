@@ -1,3 +1,5 @@
+import { InteractiveActivitySchema } from '@/features/explanation-v2/activityContract';
+
 export type ContractIssue = { path: string; message: string; expected?: string; received?: string };
 export type LessonV21ValidationOptions = { prerequisiteFormat?: 'legacy' | 'staging' };
 
@@ -51,6 +53,28 @@ export function validateLessonV21(value: unknown, options: LessonV21ValidationOp
     const optionalStrings = (field: string) => { if (v[field] !== undefined && !text(v[field])) bad(`${path}.${field}`, 'Expected string'); };
     const optionalHints = () => { if (v.hints !== undefined) stringArray(v.hints, `${path}.hints`); };
     switch (v.type) {
+      case 'interactive_activity': {
+        const parsed = InteractiveActivitySchema.safeParse(v.activity);
+        if (!parsed.success) {
+          const flatten = (error: typeof parsed.error): Array<{ path: Array<string | number>; message: string; code: string }> => error.issues.flatMap((issue) => {
+            if (issue.code === 'invalid_union') return issue.unionErrors.flatMap(flatten);
+            return [{ path: issue.path, message: issue.message, code: issue.code }];
+          });
+          const selected = parsed.error.issues.flatMap((issue) => {
+            if (issue.code !== 'invalid_union') return [{ path: issue.path, message: issue.message }];
+            const candidates = issue.unionErrors.map(flatten);
+            const matchingKind = candidates.filter((candidate) => !candidate.some((entry) => entry.path[0] === 'kind' && entry.code === 'invalid_literal'));
+            if (matchingKind.length === 0) return [{ path: ['kind'], message: 'Unsupported interactive activity kind' }];
+            return matchingKind.sort((left, right) => left.length - right.length)[0].map(({ path: issuePath, message }) => ({ path: issuePath, message }));
+          });
+          if (selected.length === 0) bad(`${path}.activity`, 'Invalid interactive activity payload');
+          else selected.forEach((issue) => {
+            const suffix = issue.path.reduce((result, part) => typeof part === 'number' ? `${result}[${part}]` : `${result}.${part}`, '');
+            bad(`${path}.activity${suffix}`, issue.message);
+          });
+        }
+        break;
+      }
       case 'hook': required(v, path, ['title', 'content']); optionalStrings('representation'); break;
       case 'concept': required(v, path, ['title', 'content']); optionalStrings('representation'); conceptPresentation(v, path); break;
       case 'rule': required(v, path, ['title', 'content']); optionalStrings('representation'); break;
@@ -69,6 +93,17 @@ export function validateLessonV21(value: unknown, options: LessonV21ValidationOp
   if (value.version !== '2.1') bad('version', 'Invalid version', '2.1', value.version);
   if (!text(value.topic_goal)) bad('topic_goal', 'Required non-empty string', 'string', value.topic_goal);
   if (!array(value.levels) || value.levels.length < 1 || value.levels.length > 4) bad('levels', 'Expected 1–4 levels', 'array(1..4)', value.levels);
-  if (array(value.levels)) value.levels.forEach((level, li) => { const p = `levels[${li}]`; if (!obj(level)) return bad(p, 'Expected object'); required(level, p, ['id', 'title', 'purpose', 'difficulty']); if (typeof level.level_number !== 'number' || !Number.isInteger(level.level_number) || level.level_number < 1) bad(`${p}.level_number`, 'Expected integer >= 1'); if (!array(level.objective_ids) || level.objective_ids.some((id) => !text(id))) bad(`${p}.objective_ids`, 'Expected string array'); if (!obj(level.lesson)) return bad(`${p}.lesson`, 'Expected object'); const l = level.lesson; required(l, `${p}.lesson`, ['lesson_goal']); stringArray(l.success_criteria, `${p}.lesson.success_criteria`, 1, 5); if (!array(l.prerequisites)) bad(`${p}.lesson.prerequisites`, 'Expected array'); else l.prerequisites.forEach((item, index) => prerequisite(item, `${p}.lesson.prerequisites[${index}]`)); structured(l.misconceptions, `${p}.lesson.misconceptions`, ['id', 'description', 'detect_if', 'feedback', 'remediation_strategy']); if (!array(l.sequence) || l.sequence.length < 1) bad(`${p}.lesson.sequence`, 'Expected non-empty array'); else l.sequence.forEach((b, bi) => block(b, `${p}.lesson.sequence[${bi}]`)); if (!obj(l.mastery)) bad(`${p}.lesson.mastery`, 'Expected object'); else { stringArray(l.mastery.skills, `${p}.lesson.mastery.skills`); if (typeof l.mastery.threshold !== 'number' || l.mastery.threshold < 0 || l.mastery.threshold > 1) bad(`${p}.lesson.mastery.threshold`, 'Expected number between 0 and 1'); } });
+  if (array(value.levels)) value.levels.forEach((level, li) => { const p = `levels[${li}]`; if (!obj(level)) return bad(p, 'Expected object'); required(level, p, ['id', 'title', 'purpose', 'difficulty']); if (typeof level.level_number !== 'number' || !Number.isInteger(level.level_number) || level.level_number < 1) bad(`${p}.level_number`, 'Expected integer >= 1'); if (!array(level.objective_ids) || level.objective_ids.some((id) => !text(id))) bad(`${p}.objective_ids`, 'Expected string array'); if (!obj(level.lesson)) return bad(`${p}.lesson`, 'Expected object'); const l = level.lesson; const blockIds = new Set<string>(); const activityIds = new Set<string>(); required(l, `${p}.lesson`, ['lesson_goal']); stringArray(l.success_criteria, `${p}.lesson.success_criteria`, 1, 5); if (!array(l.prerequisites)) bad(`${p}.lesson.prerequisites`, 'Expected array'); else l.prerequisites.forEach((item, index) => prerequisite(item, `${p}.lesson.prerequisites[${index}]`)); structured(l.misconceptions, `${p}.lesson.misconceptions`, ['id', 'description', 'detect_if', 'feedback', 'remediation_strategy']); if (!array(l.sequence) || l.sequence.length < 1) bad(`${p}.lesson.sequence`, 'Expected non-empty array'); else l.sequence.forEach((b, bi) => {
+    const blockPath = `${p}.lesson.sequence[${bi}]`;
+    if (obj(b) && typeof b.id === 'string' && b.id.trim()) {
+      if (blockIds.has(b.id)) bad(`${blockPath}.id`, `Duplicate lesson block id "${b.id}"`);
+      else blockIds.add(b.id);
+    }
+    if (obj(b) && b.type === 'interactive_activity' && obj(b.activity) && typeof b.activity.id === 'string' && b.activity.id.trim()) {
+      if (activityIds.has(b.activity.id)) bad(`${blockPath}.activity.id`, `Duplicate interactive activity id "${b.activity.id}"`);
+      else activityIds.add(b.activity.id);
+    }
+    block(b, blockPath);
+  }); if (!obj(l.mastery)) bad(`${p}.lesson.mastery`, 'Expected object'); else { stringArray(l.mastery.skills, `${p}.lesson.mastery.skills`); if (typeof l.mastery.threshold !== 'number' || l.mastery.threshold < 0 || l.mastery.threshold > 1) bad(`${p}.lesson.mastery.threshold`, 'Expected number between 0 and 1'); } });
   return issues.length ? { success: false, issues } : { success: true };
 }

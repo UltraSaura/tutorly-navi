@@ -20,6 +20,10 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
+      input: {
+        app: path.resolve(__dirname, 'index.html'),
+        interactiveMathDemo: path.resolve(__dirname, 'demo.html'),
+      },
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {

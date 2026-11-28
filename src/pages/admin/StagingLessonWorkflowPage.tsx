@@ -180,6 +180,12 @@ export function StagingLessonDraftPreviewPage() {
   const reviewWarnings = previewReviewWarnings(row.lesson_content);
   const kinds = levels.flatMap((level) => previewVisualKinds(level.lesson));
   if (!current) return <p role="alert">Draft has no lesson levels.</p>;
+  if (!validation.canonicalValid) return <div className="space-y-4" data-testid="invalid-staging-preview" role="alert">
+    <PageMeta title="Draft preview unavailable" description="Invalid lesson-version draft" />
+    <p className="font-semibold">This draft cannot be previewed until its canonical lesson contract is valid.</p>
+    {[...validation.canonicalIssues, ...validation.pedagogicalIssues, ...validation.geometryIssues].map((issue, index) => <p key={`${issue.path}-${index}`}>{issue.path}: {issue.message}</p>)}
+    <Button asChild variant="outline"><Link to="/admin/staging-lessons">Back to staging workflow</Link></Button>
+  </div>;
   return <div className="space-y-6">
     <PageMeta title={`Draft preview · ${topic.name}`} description="Protected admin preview using the student lesson player" />
     <div className="flex flex-wrap items-center justify-between gap-3"><div><Badge variant="outline">PROTECTED ADMIN DRAFT</Badge><h1 className="mt-2 text-3xl font-bold">{topic.name}</h1><p className="text-xs text-muted-foreground">{row.id} · topic {row.topic_id} · status={row.status}</p></div><Button asChild variant="outline"><Link to="/admin/staging-lessons">Back to staging workflow</Link></Button></div>

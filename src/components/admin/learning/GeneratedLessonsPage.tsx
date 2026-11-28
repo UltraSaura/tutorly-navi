@@ -12,6 +12,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CheckCircle2, ChevronDown, ExternalLink, Search, XCircle, AlertTriangle, Eye } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { LessonVisualBlock } from '@/components/learning/LessonVisualBlock';
+import { LessonV2Player } from '@/components/learning/LessonV2Player';
+import type { LessonV2, LessonV21 } from '@/types/lesson-generator';
+import { MathTextTree } from '@/components/math/MathText';
 import { storedGeometryVisualFixture } from './geometryLesson.fixture';
 import { geometryDraftLesson, validateGeometryDraft } from './geometryDraft';
 import { StagingLessonVersionPanel } from './StagingLessonVersionPanel';
@@ -60,13 +63,24 @@ export const deriveLessonReview = (value: unknown): { format: string; status: st
 };
 
 export function GeneratedLessonPreview({ lesson, topicId }: { lesson: any; topicId?: string }) {
-  const v21 = lesson?.version === '2.1' ? lesson : null;
+  const parsedV21 = parseLessonV21(lesson);
+  const isVersionedV21 = lesson?.version === '2.1';
+  const v21 = parsedV21;
   const levels = v21 ? v21.levels : [{ title: 'Leçon', lesson }];
   const [level, setLevel] = useState(0);
   const current = parseStoredLesson(levels[Math.min(level, levels.length - 1)]?.lesson) as Record<string, any> ?? {};
   const sequence = Array.isArray(current.sequence) ? current.sequence : [];
+  const hasInteractiveActivity = sequence.some((block: unknown) => Boolean(block && typeof block === 'object' && (block as { type?: unknown }).type === 'interactive_activity'));
   const discovered = discoverLessonVisuals(current);
   if (import.meta.env.DEV) console.info('[AdminLessonPreview] visual diagnostics', { topicId, lessonContentType: typeof lesson, levels: levels.length, selectedLevel: level + 1, blocks: sequence.length, visuals: discovered.length, kinds: discovered.map((entry) => safeText(entry.visual.kind)), reachedPedagogicalVisual: discovered.length });
+  if (isVersionedV21 && !v21) {
+    const contract = validateLessonV21(lesson, { prerequisiteFormat: 'staging' });
+    const issues = 'issues' in contract ? contract.issues : [];
+    return <div role="alert" data-testid="invalid-v21-admin-preview" className="rounded border border-destructive p-4 text-sm">
+      <p className="font-semibold">Aperçu indisponible : le contenu V2.1 ne respecte pas le contrat.</p>
+      {issues.slice(0, 8).map((issue, index) => <p key={`${issue.path}-${index}`}>{issue.path}: {issue.message}</p>)}
+    </div>;
+  }
   const renderVisual = (entry: VisualEntry, index: number) => {
     const rawVisual = entry.visual;
     const visualKind = safeText(rawVisual.kind);
@@ -79,13 +93,14 @@ export function GeneratedLessonPreview({ lesson, topicId }: { lesson: any; topic
       </div>
     </div>;
   };
-  return <div className="space-y-4">
+  const playerLesson = v21 ? ({ version: '2.0', ...current } as LessonV2) : null;
+  return <MathTextTree><div className="space-y-4">
     {import.meta.env.DEV && <div data-testid="admin-lesson-visual-diagnostics" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">payload visuals found: {discovered.length} · visual components rendered: {discovered.length}</div>}
     {v21 && <div className="flex flex-wrap gap-2">{levels.map((item: any, index: number) => <Button key={item.id ?? index} size="sm" variant={index === level ? 'default' : 'outline'} onClick={() => setLevel(index)}>Niveau {item.level_number ?? index + 1}: {item.title}</Button>)}</div>}
     <Card><CardHeader><CardTitle>{safeText(current.lesson_goal || v21?.topic_goal)}</CardTitle></CardHeader><CardContent><h4 className="font-semibold">Critères de réussite</h4><ul className="list-disc pl-5 text-sm">{(current.success_criteria ?? []).map((x: unknown, i: number) => <li key={i}>{safeText(x)}</li>)}</ul></CardContent></Card>
-    {sequence.map((block: any, index: number) => <Card key={block.id ?? index}><CardHeader><CardTitle className="text-base">{block.title || block.type || `Étape ${index + 1}`}</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><Badge variant="outline">{block.type}</Badge>{block.content && <p>{safeText(block.content)}</p>}{block.question && <p className="font-medium">{safeText(block.question)}</p>}{block.context && <p>{safeText(block.context)}</p>}{block.takeaway && <p className="font-medium">À retenir : {safeText(block.takeaway)}</p>}{block.type === 'mastery_check' && Array.isArray(block.questions) && <div className="space-y-2">{block.questions.map((q: any, qi: number) => <div key={q.id ?? qi} className="rounded border p-2"><p>{safeText(q.question)}</p><p className="text-xs text-muted-foreground">Réponse (admin) : {safeText(q.correct_answer)}</p></div>)}</div>}</CardContent></Card>)}
+    {v21 && playerLesson && hasInteractiveActivity ? <Card><CardHeader><CardTitle>{current.title}</CardTitle></CardHeader><CardContent><div className="min-h-[600px]" data-testid="admin-v21-interactive-player"><LessonV2Player topicId={topicId ?? 'admin-preview'} topicName={String(current.title ?? 'Aperçu enseignant')} lesson={playerLesson} readOnly /></div></CardContent></Card> : sequence.map((block: any, index: number) => <Card key={block.id ?? index}><CardHeader><CardTitle className="text-base">{block.title || block.type || `Étape ${index + 1}`}</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><Badge variant="outline">{block.type}</Badge>{block.content && <p>{safeText(block.content)}</p>}{block.question && <p className="font-medium">{safeText(block.question)}</p>}{block.context && <p>{safeText(block.context)}</p>}{block.takeaway && <p className="font-medium">À retenir : {safeText(block.takeaway)}</p>}{block.type === 'mastery_check' && Array.isArray(block.questions) && <div className="space-y-2">{block.questions.map((q: any, qi: number) => <div key={q.id ?? qi} className="rounded border p-2"><p>{safeText(q.question)}</p><p className="text-xs text-muted-foreground">Réponse (admin) : {safeText(q.correct_answer)}</p></div>)}</div>}</CardContent></Card>)}
     {discovered.length > 0 && <section data-testid="admin-lesson-visuals" aria-label={`Visuels du niveau ${level + 1}`} className="space-y-4"><h3 className="text-xl font-semibold">Visuels du niveau</h3>{discovered.map(renderVisual)}</section>}
-  </div>;
+  </div></MathTextTree>;
 }
 
 export default function GeneratedLessonsPage() {

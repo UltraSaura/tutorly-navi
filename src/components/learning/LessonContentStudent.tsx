@@ -12,6 +12,7 @@ import { useGenerateLessonContent } from '@/hooks/useGenerateLessonContent';
 import { LessonV2Player } from '@/components/learning/LessonV2Player';
 import { LessonV21Path } from '@/components/learning/LessonV21Path';
 import { parseLessonContent, parseLessonV21 } from '@/types/lesson-generator';
+import { MathTextTree } from '@/components/math/MathText';
 
 interface LessonContentStudentProps {
   topicId: string;
@@ -113,8 +114,24 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
     );
   }
 
+  const storedVersion = topic.lesson_content && typeof topic.lesson_content === 'object' && 'version' in topic.lesson_content
+    ? topic.lesson_content.version
+    : undefined;
+  if (typeof storedVersion === 'string' && /^\d+\.\d+$/.test(storedVersion)) {
+    return (
+      <div id="lesson-section" data-testid="invalid-modern-lesson" role="alert" className="mx-auto max-w-2xl p-4">
+        <Card className="border-amber-300">
+          <CardHeader><CardTitle className="flex items-center gap-2"><AlertCircle className="h-5 w-5 text-amber-600" />Leçon indisponible</CardTitle></CardHeader>
+          <CardContent>
+            <p>Le contenu de cette leçon ne peut pas être affiché pour le moment. Demande à ton professeur de vérifier la leçon avant de réessayer.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div id="lesson-section" className="space-y-6">
+    <MathTextTree><div id="lesson-section" className="space-y-6">
       {/* Explanation */}
       <Card>
         <CardHeader>
@@ -197,6 +214,6 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
       )}
 
       <Separator />
-    </div>
+    </div></MathTextTree>
   );
 }

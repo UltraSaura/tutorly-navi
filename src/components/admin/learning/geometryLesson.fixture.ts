@@ -35,5 +35,21 @@ export const storedGeometryVisualFixture = {
       { id: 'c4', type: 'concept', title: 'Le cercle et le compas', visual: { data: { center: { x: 150, y: 100, label: 'O' }, radius: 50, radius_label: 'OA = 3 cm', diameter: true, diameter_label: 'BC = 6 cm' }, kind: 'circle' } },
       { id: 'c5', type: 'concept', title: 'La symétrie axiale sur quadrillage', visual: { data: { axis: { x: 150, y: 0 }, grid: { width: 8, height: 8 }, original: [{ x: 80, y: 60 }, { x: 80, y: 100 }, { x: 120, y: 100 }], reflected: [{ x: 220, y: 60 }, { x: 220, y: 100 }, { x: 180, y: 100 }] }, kind: 'symmetry' } },
     ] } },
-  ],
+  ].map((level, index) => ({
+    ...level,
+    id: `geometry-fixture-level-${level.level_number}`,
+    title: `Géométrie — niveau ${level.level_number}`,
+    purpose: 'Réviser les représentations géométriques',
+    difficulty: ['foundation', 'developing', 'proficient', 'advanced'][index],
+    objective_ids: [`fixture-geometry-objective-${level.level_number}`],
+    lesson: {
+      ...level.lesson,
+      lesson_goal: 'Identifier et représenter des objets géométriques',
+      success_criteria: ['Je peux reconnaître et décrire une représentation géométrique.'],
+      prerequisites: [],
+      sequence: level.lesson.sequence.map((block) => ({ content: block.title, ...block })),
+      misconceptions: [],
+      mastery: { skills: ['fixture-geometry-skill'], threshold: 0.8 },
+    },
+  })),
 };

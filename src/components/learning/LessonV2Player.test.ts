@@ -52,4 +52,11 @@ describe('LessonV2Player lesson-change isolation', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/pages/admin/StagingLessonWorkflowPage.tsx'), 'utf8');
     expect(source).toContain('<LessonV2Player topicId={row.topic_id} subjectId={topic.curriculum_subject_id} topicName={topic.name} lesson={playerLesson(current)} readOnly />');
   });
+
+  it('renders valid V2.1 teacher previews through the existing player in read-only mode', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/admin/learning/GeneratedLessonsPage.tsx'), 'utf8');
+    expect(source).toContain('data-testid="admin-v21-interactive-player"');
+    expect(source).toContain('lesson={playerLesson} readOnly');
+    expect(source).toContain('if (isVersionedV21 && !v21)');
+  });
 });
