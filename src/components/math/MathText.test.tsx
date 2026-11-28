@@ -52,6 +52,13 @@ describe('shared mathematical display', () => {
     expect(text).not.toContain('<img');
   });
 
+  it('renders the complete CM2 conclusion as one aligned display with six stacked fractions', () => {
+    const summary = '$$\\begin{aligned}\\frac{3}{4}+\\frac{1}{2}\\\\&=\\frac{3}{4}+\\frac{2}{4}\\\\&=\\frac{5}{4}=1+\\frac{1}{4}\\end{aligned}$$';
+    const html = renderToStaticMarkup(<MathText>{summary}</MathText>);
+    expect((html.match(/class="katex-display"/g) ?? []).length).toBe(1);
+    expect((html.match(/<mfrac>/g) ?? []).length).toBe(6);
+  });
+
   it('renders unsupported LaTeX commands as a safe message, not raw source', () => {
     const html = renderToStaticMarkup(<MathText>{'\\(\\href{javascript:alert(1)}{ouvrir}\\)'}</MathText>);
     expect(html).toContain('Expression mathématique non prise en charge.');
