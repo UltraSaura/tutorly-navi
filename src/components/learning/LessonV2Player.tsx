@@ -141,7 +141,7 @@ function ConceptPresentation({ block }: { block: any }) {
       )}
       <p className="max-w-2xl text-left text-base leading-7 text-[#344054]"><MathText>{block.content}</MathText></p>
       {block.representation && (
-        <div className="rounded-xl border border-[#D8E1F0] bg-white px-4 py-2.5 text-left font-semibold text-[#3448A5]">
+        <div data-testid="lesson-concept-representation" className="rounded-xl border border-[#D8E1F0] bg-white px-4 py-2.5 text-left font-semibold text-[#3448A5]">
           <MathText>{block.representation}</MathText>
         </div>
       )}
